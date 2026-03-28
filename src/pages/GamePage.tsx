@@ -415,9 +415,12 @@ export default function GamePage() {
 
           {/* Move */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              🚶 Moure's · {TOKEN_COSTS.move}🪙
-            </h3>
+           <div>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                🚶 Moure's · {TOKEN_COSTS.move}🪙
+              </h3>
+              <Tip>Ves a una altra habitació per explorar els seus mobles</Tip>
+            </div>
             <div className="grid grid-cols-3 gap-1.5">
               {scenarios.filter(s => s.id !== player.current_scenario_id).map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
