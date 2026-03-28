@@ -121,8 +121,8 @@ export default function GamePage() {
   useEffect(() => {
     if (!gameId || !user) return;
     loadGame();
-    getScenarios().then(setScenarios);
-    getObjects().then(setObjects);
+    getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
+    getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
 
     const channel = supabase
       .channel(`game-${gameId}`)
@@ -226,7 +226,7 @@ export default function GamePage() {
   const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
 
   return (
-    <div className={`min-h-screen bg-background p-4 max-w-md mx-auto relative ${bananaEffect ? "blur-sm" : ""}`}>
+    <div className={`min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative ${bananaEffect ? "blur-sm" : ""}`}>
       {/* BG glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
@@ -298,15 +298,13 @@ export default function GamePage() {
 
       {/* WAITING — show code + allow hiding */}
       {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
-        <div>
-          <Card className="glass glow-primary mb-4">
-            <CardContent className="py-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
-              <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
-              <p className="text-[11px] text-muted-foreground/60 mt-2">Mentre esperes, amaga el teu objecte! 👇</p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="glass glow-primary mb-4">
+          <CardContent className="py-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
+            <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
+            <p className="text-[11px] text-muted-foreground/60 mt-2">Mentre esperes, amaga el teu objecte! 👇</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* WAITING — already hidden, just waiting */}
