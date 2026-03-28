@@ -436,6 +436,11 @@ export default function GamePage() {
 
           {/* Status badges */}
           <div className="flex gap-2 flex-wrap">
+            {rivalNearby && (
+              <span className="bg-destructive/15 text-destructive text-[11px] font-semibold px-3 py-1 rounded-full animate-pulse border border-destructive/30">
+                ⚠️ Rival a prop del teu objecte!
+              </span>
+            )}
             {player.shield_active && (
               <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
             )}
