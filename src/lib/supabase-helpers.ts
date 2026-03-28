@@ -105,7 +105,7 @@ export async function getAvailableGames(currentUserId: string) {
   // Filter: not own games, and either no invite or invited to me
   const otherGames = data.filter(g =>
     g.created_by !== currentUserId &&
-    (!(g as any).invited_user_id || (g as any).invited_user_id === currentUserId)
+    (!g.invited_user_id || g.invited_user_id === currentUserId)
   );
   if (otherGames.length === 0) return [];
 
@@ -208,6 +208,10 @@ export async function checkBothPlayersHidden(gameId: string) {
 }
 
 export async function startGame(gameId: string) {
+  // Guard: only transition if still in hiding phase (prevents race condition)
+  const { data: game } = await supabase.from("games").select("status").eq("id", gameId).single();
+  if (game?.status === "playing") return; // Already started by the other player
+
   const scenarios = await getScenarios();
   const { data: players, error } = await supabase
     .from("game_players").select("user_id, hidden_item_id").eq("game_id", gameId);
@@ -241,14 +245,14 @@ async function ensureTokensReset(player: any) {
   // Check for bonus tokens from sold rewards
   const { data: profile } = await supabase
     .from("profiles").select("*").eq("user_id", player.user_id).single();
-  const bonus = (profile as any)?.bonus_tokens ?? 0;
+  const bonus = profile?.bonus_tokens ?? 0;
 
   await supabase.from("game_players").update({
     tokens_remaining: 5.0 + bonus, tokens_last_reset: today, social_item_used_today: false,
   }).eq("id", player.id);
 
   if (bonus > 0) {
-    await supabase.from("profiles").update({ bonus_tokens: 0 } as any).eq("user_id", player.user_id);
+    await supabase.from("profiles").update({ bonus_tokens: 0 }).eq("user_id", player.user_id);
   }
   return 5.0 + bonus;
 }

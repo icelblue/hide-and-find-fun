@@ -1,193 +1,246 @@
-# 🔍 DEDUCTION DUEL
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Platform-Mobile--first%20PWA-blueviolet?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Players-1v1-orange?style=for-the-badge" />
+</p>
 
-<div align="center">
+<h1 align="center">🔍 DEDUCTION DUEL</h1>
 
-**Joc PvP de deducció en temps real — Amaga, busca i guanya!**
+<p align="center">
+  <strong>Joc PvP de deducció estratègica en temps real</strong><br/>
+  <em>Amaga un objecte. Dedueix on l'ha amagat el rival. Guanya la partida.</em>
+</p>
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Tailwind](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Supabase](https://img.shields.io/badge/Supabase-Realtime-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+<p align="center">
+  <a href="https://hide-and-find-fun.lovable.app"><strong>▶️ Jugar ara</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-com-funciona">📖 Com funciona</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-stack-tècnic">🏗️ Stack tècnic</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-base-de-dades">🗃️ Base de dades</a>
+</p>
 
-[🎮 Jugar ara](https://hide-and-find-fun.lovable.app) · [📖 Com jugar](#-com-jugar) · [🏗️ Arquitectura](#%EF%B8%8F-arquitectura)
-
-</div>
-
----
-
-## 🎯 Què és?
-
-**Deduction Duel** és un joc 1v1 on dos jugadors amaguen un objecte en una casa i han de trobar el de l'altre. Combina estratègia, deducció i una mica de sort en partides asíncrones que poden durar fins a 7 dies.
-
-```
-🏠 EL CIRCUIT DE LA CASA (7 habitacions)
-
-   🍳 Cuina ←→ 🍽️ Menjador ←→ 🌿 Jardí ←→ 🌅 Balcó
-      ↕                                          ↕
-   🚿 Lavabo ←→ 💼 Despatx ←→ 🛏️ Habitació ←──┘
-```
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-Realtime-3FCF8E?logo=supabase&logoColor=white" />
+</p>
 
 ---
 
-## 📖 Com jugar
+## 🎯 Visió general
+
+**Deduction Duel** és un joc 1v1 asíncron on dos jugadors amaguen un objecte dins una casa interconnectada i han de trobar el de l'altre mitjançant deducció lògica. Les partides es desenvolupen al llarg de diversos dies amb un sistema de **tokens diaris** que limita les accions i obliga a pensar estratègicament.
+
+### ✨ Característiques principals
+
+| Funcionalitat | Descripció |
+|:---|:---|
+| 🏠 **Casa amb 7 habitacions** | Circuit interconnectat amb escenaris, mobles i posicions |
+| ⚔️ **PvP en temps real** | Matchmaking aleatori, reptes directes o codi de partida |
+| 🪙 **Economia de tokens** | 5 tokens/dia amb costos variables per acció |
+| 🎁 **Sistema de recompenses** | Mobles amb 5 nivells de raresa (Comú → Llegendari) |
+| 📈 **Elo + Lligues** | Sistema competitiu de Bronze a Diamond |
+| ⚡ **Ítems socials** | Plàtan, bomba de fum, pistes falses, escuts i missatges |
+| 💬 **Murs de perfil** | Missatges efímers de 22h entre jugadors |
+| 🔔 **Realtime** | Transicions de fase instantànies sense recarregar |
+| 📱 **Mobile-first** | Disseny optimitzat per a 390px amb glassmorphism |
+
+---
+
+## 📖 Com funciona
 
 ### Fase 1 — Amagar 🫣
 
-| Pas | Acció | Descripció |
-|-----|-------|------------|
-| 1 | 📍 Escenari | Tria una de les 7 habitacions |
-| 2 | 🎯 Objecte | Escull l'objecte a amagar |
-| 3 | 🪑 Moble | Selecciona el moble del escenari |
-| 4 | 📌 Posició | Sobre ⬆️ · Sota ⬇️ · Dins 📦 |
+Cada jugador selecciona, de manera **simultània i secreta**:
 
-> Tots dos jugadors amaguen **simultàniament** — no saps on amaga el rival!
+```
+📍 Escenari  →  🎯 Objecte  →  🪑 Moble  →  📌 Posició (sobre / sota / dins)
+```
+
+Cap jugador sap què ha triat l'altre. Quan tots dos han amagat, la partida comença automàticament.
 
 ### Fase 2 — Buscar 🔍
 
-| Acció | Cost | Descripció |
-|-------|------|------------|
-| 🚶 Moure's | 0.5 🪙 | Ves a una habitació adjacent |
-| 👀 Observar | 0.3 🪙 | Mira una posició — pot revelar bonus! |
-| 🔍 Confirmar | 1.5 🪙 | Aposta que l'objecte és aquí! |
+El jugador navega per les habitacions interconnectades buscant l'objecte del rival:
 
-- **5 tokens/dia** que es reinicien automàticament
-- **7 dies** de límit per partida
-- El primer que **confirma** correctament → **GUANYA** 🏆
+| Acció | Cost | Efecte |
+|:------|:----:|:-------|
+| 🚶 **Moure's** | 0.5 🪙 | Ves a una habitació adjacent (connexions bidireccionals) |
+| 👀 **Observar** | 0.3 🪙 | Inspecciona una posició — pot revelar bonus ocults |
+| 🔍 **Confirmar** | 1.5 🪙 | Aposta que l'objecte és aquí — si encertes, **guanyes** |
 
----
+> **5 tokens/dia** · Es reinicien automàticament a mitjanit · Bonus tokens per mobles venuts
 
-## ⚡ Ítems Socials (1/dia)
+### Victòria 🏆
 
-| Ítem | Efecte |
-|------|--------|
-| 🍌 Plàtan | Pantalla borrosa del rival 3s |
-| 💣 Bomba de fum | Mou el teu objecte a altra posició |
-| 🔮 Pista falsa | Indicador fals al rival |
-| 🛡️ Escut | Bloqueja el pròxim ítem social |
-| 💬 Missatge | Envia text al rival |
+El primer jugador que executa un **Confirmar** correcte guanya la partida i rep:
+- **+25 Elo** (el perdedor rep -20, mínim 100)
+- **Un moble aleatori** amb raresa ponderada
+- Actualització de **ratxa** i **estadístiques**
 
 ---
 
-## 📈 Sistema de Ranking
+## ⚡ Ítems socials
 
-### Elo + Lligues
+Cada jugador pot usar **1 ítem social per dia** per afectar el rival:
 
-| Lliga | Elo | Icona |
-|-------|-----|-------|
-| Bronze | < 1200 | 🥉 |
-| Silver | 1200+ | 🥈 |
-| Gold | 1400+ | 🥇 |
-| Platinum | 1600+ | 💎 |
-| Diamond | 1800+ | 👑 |
+| Ítem | Efecte | Bloqueig |
+|:-----|:-------|:---------|
+| 🍌 **Plàtan** | Borra la pantalla del rival durant 3 segons | 🛡️ Sí |
+| 💣 **Bomba de fum** | Mou el teu objecte a una posició diferent | 🛡️ Sí |
+| 🔮 **Pista falsa** | Mostra un indicador enganyós al rival | 🛡️ Sí |
+| 🛡️ **Escut** | Bloqueja el pròxim ítem social del rival | — |
+| 💬 **Missatge** | Envia un text curt al rival | 🛡️ Sí |
 
-- **Victòria**: +25 Elo
-- **Derrota**: -20 Elo (mínim 100)
-
-### Rival Favorit ⚔️
-
-El perfil mostra amb quin jugador has fet més partides — el teu etern rival!
+L'escut es consumeix en bloquejar un atac. Un ítem bloquejat no té efecte.
 
 ---
 
-## 🎁 Sistema de Recompenses
+## 📈 Sistema competitiu
 
-Cada victòria atorga un **moble aleatori** amb rareses ponderades:
+### Lligues
 
-| Raresa | Prob. | Valor | Color |
-|--------|-------|-------|-------|
-| ⚪ Comú | 50% | 1 🪙 | — |
-| 🟢 Poc comú | 30% | 2 🪙 | Verd |
-| 🔵 Rar | 13% | 3 🪙 | Blau |
-| 🟣 Èpic | 5% | 5 🪙 | Porpra |
-| 🟡 Llegendari | 2% | 8 🪙 | Daurat |
+| Lliga | Elo mínim | Icona |
+|:------|:---------:|:-----:|
+| Bronze | 0 | 🥉 |
+| Silver | 1200 | 🥈 |
+| Gold | 1400 | 🥇 |
+| Platinum | 1600 | 💎 |
+| Diamond | 1800 | 👑 |
 
-Amb els mobles pots:
-- **📍 Col·locar-los** en escenaris → amplien el joc amb nous amagatalls
-- **🪙 Vendre'ls** → tokens bonus al pròxim reset diari
+### Perfil del jugador
 
----
-
-## 💬 Mur de Perfil
-
-Cada jugador té un mur on altres poden deixar missatges curts. Els missatges **desapareixen en 22h** — efímers com les partides!
+- **Estadístiques**: Partides, victòries, win rate, millor ratxa
+- **Rival favorit**: El jugador amb qui has jugat més partides
+- **Inventari**: Mobles obtinguts per victòries (col·locar o vendre)
+- **Mur**: Missatges efímers d'altres jugadors (22h TTL)
 
 ---
 
-## 🏗️ Arquitectura
+## 🎁 Recompenses
 
-### Stack
+Cada victòria atorga un moble aleatori amb probabilitat ponderada:
 
-| Capa | Tecnologia |
-|------|-----------|
-| Frontend | React 18 + TypeScript + Vite |
-| Estils | Tailwind CSS + Design system semàntic |
-| UI | shadcn/ui + glassmorphism custom |
-| Backend | Supabase (Lovable Cloud) |
-| Realtime | Supabase Realtime (postgres_changes) |
-| Auth | Supabase Auth (email + password) |
-| Fonts | Orbitron (títols neon) · Space Grotesk (headings) · Inter (body) |
+| Raresa | Probabilitat | Valor de venda | Indicador |
+|:-------|:------------:|:--------------:|:---------:|
+| Comú | 50% | 1 🪙 | ⚪ |
+| Poc comú | 30% | 2 🪙 | 🟢 |
+| Rar | 13% | 3 🪙 | 🔵 |
+| Èpic | 5% | 5 🪙 | 🟣 |
+| Llegendari | 2% | 8 🪙 | 🟡 |
 
-### Estructura
+**Opcions amb mobles:**
+- 📍 **Col·locar** en un escenari → Afegeix un nou moble al joc per a tothom
+- 🪙 **Vendre** → Obté tokens bonus que s'afegeixen al reset diari
+
+---
+
+## 🏗️ Stack tècnic
+
+| Capa | Tecnologia | Propòsit |
+|:-----|:-----------|:---------|
+| **Frontend** | React 18 + TypeScript 5 | SPA amb components funcionals i hooks |
+| **Bundler** | Vite 5 | HMR ràpid i build optimitzat |
+| **Estils** | Tailwind CSS 3.4 | Design system semàntic amb tokens CSS |
+| **Components** | shadcn/ui | Base amb glassmorphism i gradients custom |
+| **Backend** | Supabase (Lovable Cloud) | Auth, DB, Realtime, RPC functions |
+| **Realtime** | Supabase Postgres Changes | Subscripcions per taula amb filtres |
+| **Fonts** | Orbitron · Space Grotesk · Inter | Neon headers · Headings · Body text |
+| **Routing** | React Router v6 | Rutes protegides amb AuthProvider |
+| **State** | TanStack Query + useState | Server state + UI state local |
+
+### Disseny visual
+
+- **Tema fosc** per defecte amb mode clar opcional
+- **Glassmorphism**: `backdrop-blur-xl` + bordes semitransparents
+- **Gradients** neon: primari (violeta), secundari (verd-blau), accent (taronja)
+- **Tipografia**: Orbitron per al títol neon, Space Grotesk per a headings, Inter per al cos
+- **Mobile-first**: Viewport de referència 390px amb max-width 448px
+
+---
+
+## 🗃️ Base de dades
+
+### Diagrama relacional
 
 ```
-src/
-├── pages/
-│   ├── AuthPage.tsx        # Login / Registre
-│   ├── LobbyPage.tsx       # Crear, buscar, unir-se a partides
-│   ├── GamePage.tsx         # Fases: amagar → jugar → resultat
-│   ├── ProfilePage.tsx      # Stats, inventari, mur, rival favorit
-│   └── PlayerProfilePage.tsx # Perfil públic + mur d'altres jugadors
-├── components/
-│   ├── HelpButton.tsx       # Panell d'ajuda amb regles completes
-│   └── ui/                  # shadcn/ui components
-├── hooks/
-│   └── useAuth.tsx          # Context d'autenticació
-├── lib/
-│   ├── supabase-helpers.ts  # Lògica de joc, matchmaking, social
-│   └── reward-helpers.ts    # Recompenses, venda, col·locació
-└── integrations/
-    └── supabase/            # Client + tipus auto-generats
-```
+┌─────────────┐     ┌────────────────────┐     ┌───────────┐
+│  scenarios   │◄───►│ scenario_connections │     │  objects   │
+│  (7 rooms)   │     │   (bidirectional)    │     │ (hideable) │
+└──────┬───────┘     └────────────────────┘     └───────────┘
+       │
+       ▼
+┌──────────────┐     ┌──────────────────┐
+│    items      │◄───│ scenario_bonuses   │
+│ (furniture)   │    │ (hidden bonuses)   │
+└──────────────┘    └──────────────────┘
 
-### Base de dades
+┌──────────┐     ┌──────────────┐     ┌────────────┐
+│  games    │◄───│ game_players   │     │ game_moves  │
+│ (matches) │    │ (2 per game)   │     │ (history)   │
+└────┬─────┘    └──────────────┘     └────────────┘
+     │
+     ├──► game_social_items (banana, shield, etc.)
+     │
+     └──► player_rewards ──► reward_items (furniture prizes)
 
-```
-scenarios ←→ scenario_connections    # Graf d'habitacions
-    ↓
-  items ← scenario_bonuses          # Mobles + bonus ocults
-    
-games ← game_players                # Partides + jugadors
-    ↓
-game_moves                           # Historial de moviments
-game_social_items                    # Ítems socials enviats
+┌───────────┐     ┌────────────────┐
+│ profiles   │     │ wall_messages   │
+│ (stats/elo)│     │ (ephemeral 22h) │
+└───────────┘     └────────────────┘
 
-profiles                             # Stats, elo, lliga
-player_rewards ← reward_items        # Inventari de mobles
-wall_messages                        # Mur efímer 22h
-objects                              # Objectes amagables
+player_inventory (collected bonuses, gifts)
 ```
 
 ### Seguretat
 
-- **RLS (Row Level Security)** a totes les taules
-- Funcions `SECURITY DEFINER` per operacions crítiques
-- `is_player_in_game()` per validar accés a dades de partida
-- Trigger `handle_game_finished()` per Elo, recompenses i estadístiques
+- **Row Level Security (RLS)** habilitada a totes les taules
+- **Funcions SECURITY DEFINER**:
+  - `is_player_in_game()` — Valida accés a dades de partida
+  - `handle_game_finished()` — Trigger per actualitzar Elo, lligues i recompenses
+  - `sell_reward_item()` / `place_reward_item()` — Operacions atòmiques d'inventari
+  - `handle_new_user()` — Creació automàtica de perfil al registre
+- **Realtime** amb filtres per `game_id` a taules `games`, `game_players`, `game_social_items`
 
 ---
 
-## 🚀 Desenvolupament
+## 📁 Estructura del projecte
 
-```bash
-# El projecte es construeix i desplega automàticament amb Lovable
-# URL pública: https://hide-and-find-fun.lovable.app
+```
+src/
+├── pages/
+│   ├── AuthPage.tsx            # Login i registre amb email
+│   ├── LobbyPage.tsx           # Matchmaking, reptes, cerca de jugadors
+│   ├── GamePage.tsx             # Motor de joc: amagar → jugar → resultat
+│   ├── ProfilePage.tsx          # Perfil propi: stats, inventari, mur, rival favorit
+│   ├── PlayerProfilePage.tsx    # Perfil públic amb mur interactiu
+│   └── NotFound.tsx             # Pàgina 404
+├── components/
+│   ├── HelpButton.tsx           # Panell d'ajuda flotant amb regles completes
+│   ├── NavLink.tsx              # Component de navegació
+│   └── ui/                      # shadcn/ui (40+ components)
+├── hooks/
+│   └── useAuth.tsx              # Context d'autenticació amb AuthProvider
+├── lib/
+│   ├── supabase-helpers.ts      # Lògica de joc, matchmaking, tokens, social items
+│   └── reward-helpers.ts        # Recompenses: obtenció, venda, col·locació
+└── integrations/
+    └── supabase/                # Client auto-configurat + tipus generats
 ```
 
 ---
 
-<div align="center">
+## 🚀 Desplegament
 
-Fet amb 💜 a Catalunya · Powered by [Lovable](https://lovable.dev)
+El projecte es construeix i desplega automàticament amb **Lovable**. El backend (autenticació, base de dades, funcions i realtime) corre sobre **Lovable Cloud**.
 
-</div>
+```
+🌐 URL pública:  https://hide-and-find-fun.lovable.app
+```
+
+---
+
+<p align="center">
+  <sub>Fet amb 💜 a Catalunya · Powered by <a href="https://lovable.dev">Lovable</a></sub>
+</p>

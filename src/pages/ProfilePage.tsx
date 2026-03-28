@@ -123,7 +123,7 @@ export default function ProfilePage() {
   const winRate = profile.games_played > 0
     ? Math.round((profile.games_won / profile.games_played) * 100)
     : 0;
-  const bonusTokens = (profile as any).bonus_tokens ?? 0;
+  const bonusTokens = profile.bonus_tokens ?? 0;
   const eloProgress = Math.min(((profile.elo % 200) / 200) * 100, 100);
 
   return (

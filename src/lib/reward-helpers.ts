@@ -1,8 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// Use untyped client for new tables until types regenerate
-const db = supabase as any;
-
 export const RARITY_CONFIG: Record<string, { label: string; emoji: string; sell: number }> = {
   common: { label: "Comú", emoji: "⚪", sell: 1 },
   uncommon: { label: "Poc comú", emoji: "🟢", sell: 2 },
@@ -12,7 +9,7 @@ export const RARITY_CONFIG: Record<string, { label: string; emoji: string; sell:
 };
 
 export async function getMyRewards(userId: string) {
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from("player_rewards")
     .select("*, reward_items(*)")
     .eq("user_id", userId)
@@ -23,7 +20,7 @@ export async function getMyRewards(userId: string) {
 }
 
 export async function getGameReward(gameId: string, userId: string) {
-  const { data } = await db
+  const { data } = await supabase
     .from("player_rewards")
     .select("*, reward_items(*)")
     .eq("game_id", gameId)
@@ -33,7 +30,7 @@ export async function getGameReward(gameId: string, userId: string) {
 }
 
 export async function placeRewardItem(playerRewardId: string, scenarioId: string) {
-  const { error } = await supabase.rpc("place_reward_item" as any, {
+  const { error } = await supabase.rpc("place_reward_item", {
     _player_reward_id: playerRewardId,
     _scenario_id: scenarioId,
   });
@@ -41,7 +38,7 @@ export async function placeRewardItem(playerRewardId: string, scenarioId: string
 }
 
 export async function sellRewardItem(playerRewardId: string): Promise<number> {
-  const { data, error } = await supabase.rpc("sell_reward_item" as any, {
+  const { data, error } = await supabase.rpc("sell_reward_item", {
     _player_reward_id: playerRewardId,
   });
   if (error) throw error;
@@ -49,7 +46,7 @@ export async function sellRewardItem(playerRewardId: string): Promise<number> {
 }
 
 export async function getRewardCatalog() {
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from("reward_items")
     .select("*")
     .order("rarity");
