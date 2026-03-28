@@ -64,7 +64,7 @@ export function HelpButton() {
         >
           <div
             className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl"
-            style={{ maxHeight: "calc(100dvh - 2rem)" }}
+            style={{ maxHeight: "calc(100vh - 2rem)", maxHeight: "calc(100dvh - 2rem)" } as any}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-2">
