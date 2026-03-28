@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getScenarios } from "@/lib/supabase-helpers";
 import { getMyRewards, placeRewardItem, sellRewardItem, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { toast } from "sonner";
+import { Tip } from "@/components/HelpButton";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
