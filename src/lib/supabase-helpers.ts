@@ -208,6 +208,10 @@ export async function checkBothPlayersHidden(gameId: string) {
 }
 
 export async function startGame(gameId: string) {
+  // Guard: only transition if still in hiding phase (prevents race condition)
+  const { data: game } = await supabase.from("games").select("status").eq("id", gameId).single();
+  if (game?.status === "playing") return; // Already started by the other player
+
   const scenarios = await getScenarios();
   const { data: players, error } = await supabase
     .from("game_players").select("user_id, hidden_item_id").eq("game_id", gameId);
