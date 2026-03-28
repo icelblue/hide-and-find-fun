@@ -8,6 +8,7 @@ import AuthPage from "./pages/AuthPage";
 import LobbyPage from "./pages/LobbyPage";
 import GamePage from "./pages/GamePage";
 import ProfilePage from "./pages/ProfilePage";
+import PlayerProfilePage from "./pages/PlayerProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
