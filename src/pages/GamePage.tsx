@@ -299,10 +299,11 @@ export default function GamePage() {
             ))}
           </div>
 
-          {hideStep === 0 && (
+           {hideStep === 0 && (
             <div>
               <h2 className="text-lg font-bold mb-1">On amagues?</h2>
-              <p className="text-xs text-muted-foreground mb-3">Tria l'escenari on vols amagar l'objecte</p>
+              <Tip>Tria l'habitació on el rival haurà de buscar. Un bon lloc és on hi ha molts mobles!</Tip>
+              <div className="h-2" />
               <div className="grid grid-cols-2 gap-2">
                 {scenarios.map(s => (
                   <Card key={s.id} className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all active:scale-[0.98]" onClick={() => handleSelectScenario(s.id)}>
