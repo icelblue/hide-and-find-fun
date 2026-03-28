@@ -34,7 +34,7 @@ export default function PlayerProfilePage() {
     setProfile(prof);
 
     // Fetch author names
-    const wallMsgs = msgs ?? [];
+    const wallMsgs: any[] = msgs ?? [];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
