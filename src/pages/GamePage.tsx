@@ -298,15 +298,13 @@ export default function GamePage() {
 
       {/* WAITING — show code + allow hiding */}
       {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
-        <div>
-          <Card className="glass glow-primary mb-4">
-            <CardContent className="py-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
-              <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
-              <p className="text-[11px] text-muted-foreground/60 mt-2">Mentre esperes, amaga el teu objecte! 👇</p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="glass glow-primary mb-4">
+          <CardContent className="py-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
+            <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
+            <p className="text-[11px] text-muted-foreground/60 mt-2">Mentre esperes, amaga el teu objecte! 👇</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* WAITING — already hidden, just waiting */}
