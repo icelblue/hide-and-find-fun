@@ -10,6 +10,7 @@ import {
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
 } from "@/lib/supabase-helpers";
+import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
