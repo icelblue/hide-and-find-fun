@@ -14,7 +14,389 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      game_moves: {
+        Row: {
+          action: Database["public"]["Enums"]["action_type"]
+          bonus_value: string | null
+          created_at: string
+          found_bonus: Database["public"]["Enums"]["bonus_type"] | null
+          found_object: boolean | null
+          game_id: string
+          id: string
+          player_id: string
+          target_item_id: string | null
+          target_position: Database["public"]["Enums"]["position_type"] | null
+          target_scenario_id: string | null
+          token_cost: number
+          turn_number: number
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["action_type"]
+          bonus_value?: string | null
+          created_at?: string
+          found_bonus?: Database["public"]["Enums"]["bonus_type"] | null
+          found_object?: boolean | null
+          game_id: string
+          id?: string
+          player_id: string
+          target_item_id?: string | null
+          target_position?: Database["public"]["Enums"]["position_type"] | null
+          target_scenario_id?: string | null
+          token_cost: number
+          turn_number: number
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["action_type"]
+          bonus_value?: string | null
+          created_at?: string
+          found_bonus?: Database["public"]["Enums"]["bonus_type"] | null
+          found_object?: boolean | null
+          game_id?: string
+          id?: string
+          player_id?: string
+          target_item_id?: string | null
+          target_position?: Database["public"]["Enums"]["position_type"] | null
+          target_scenario_id?: string | null
+          token_cost?: number
+          turn_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_moves_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_moves_target_item_id_fkey"
+            columns: ["target_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_moves_target_scenario_id_fkey"
+            columns: ["target_scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_players: {
+        Row: {
+          created_at: string
+          current_scenario_id: string | null
+          game_id: string
+          has_hidden: boolean
+          hidden_item_id: string | null
+          hidden_object_id: string | null
+          hidden_position: Database["public"]["Enums"]["position_type"] | null
+          id: string
+          shield_active: boolean
+          social_item_used_today: boolean
+          tokens_last_reset: string
+          tokens_remaining: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_scenario_id?: string | null
+          game_id: string
+          has_hidden?: boolean
+          hidden_item_id?: string | null
+          hidden_object_id?: string | null
+          hidden_position?: Database["public"]["Enums"]["position_type"] | null
+          id?: string
+          shield_active?: boolean
+          social_item_used_today?: boolean
+          tokens_last_reset?: string
+          tokens_remaining?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_scenario_id?: string | null
+          game_id?: string
+          has_hidden?: boolean
+          hidden_item_id?: string | null
+          hidden_object_id?: string | null
+          hidden_position?: Database["public"]["Enums"]["position_type"] | null
+          id?: string
+          shield_active?: boolean
+          social_item_used_today?: boolean
+          tokens_last_reset?: string
+          tokens_remaining?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_players_current_scenario_id_fkey"
+            columns: ["current_scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_players_hidden_item_id_fkey"
+            columns: ["hidden_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_players_hidden_object_id_fkey"
+            columns: ["hidden_object_id"]
+            isOneToOne: false
+            referencedRelation: "objects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_social_items: {
+        Row: {
+          blocked_by_shield: boolean
+          created_at: string
+          from_player_id: string
+          game_id: string
+          id: string
+          item_type: Database["public"]["Enums"]["social_item_type"]
+          message_text: string | null
+          to_player_id: string
+        }
+        Insert: {
+          blocked_by_shield?: boolean
+          created_at?: string
+          from_player_id: string
+          game_id: string
+          id?: string
+          item_type: Database["public"]["Enums"]["social_item_type"]
+          message_text?: string | null
+          to_player_id: string
+        }
+        Update: {
+          blocked_by_shield?: boolean
+          created_at?: string
+          from_player_id?: string
+          game_id?: string
+          id?: string
+          item_type?: Database["public"]["Enums"]["social_item_type"]
+          message_text?: string | null
+          to_player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_social_items_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          id: string
+          scenario_id: string | null
+          status: Database["public"]["Enums"]["game_status"]
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          id?: string
+          scenario_id?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          scenario_id?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "games_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          display_order: number
+          icon: string | null
+          id: string
+          name: string
+          scenario_id: string
+        }
+        Insert: {
+          display_order?: number
+          icon?: string | null
+          id?: string
+          name: string
+          scenario_id: string
+        }
+        Update: {
+          display_order?: number
+          icon?: string | null
+          id?: string
+          name?: string
+          scenario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      objects: {
+        Row: {
+          display_order: number
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          display_order?: number
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          display_order?: number
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          best_streak: number
+          created_at: string
+          current_streak: number
+          display_name: string | null
+          elo: number
+          games_played: number
+          games_won: number
+          id: string
+          league: Database["public"]["Enums"]["league_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          best_streak?: number
+          created_at?: string
+          current_streak?: number
+          display_name?: string | null
+          elo?: number
+          games_played?: number
+          games_won?: number
+          id?: string
+          league?: Database["public"]["Enums"]["league_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          best_streak?: number
+          created_at?: string
+          current_streak?: number
+          display_name?: string | null
+          elo?: number
+          games_played?: number
+          games_won?: number
+          id?: string
+          league?: Database["public"]["Enums"]["league_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scenario_bonuses: {
+        Row: {
+          bonus_type: Database["public"]["Enums"]["bonus_type"]
+          id: string
+          item_id: string
+          position: Database["public"]["Enums"]["position_type"]
+          value: string | null
+        }
+        Insert: {
+          bonus_type: Database["public"]["Enums"]["bonus_type"]
+          id?: string
+          item_id: string
+          position: Database["public"]["Enums"]["position_type"]
+          value?: string | null
+        }
+        Update: {
+          bonus_type?: Database["public"]["Enums"]["bonus_type"]
+          id?: string
+          item_id?: string
+          position?: Database["public"]["Enums"]["position_type"]
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_bonuses_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenarios: {
+        Row: {
+          created_at: string
+          display_order: number
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          icon: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +405,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      action_type: "move" | "look" | "confirm"
+      bonus_type: "extra_token" | "hint_yes" | "hint_no"
+      game_status: "waiting" | "hiding" | "playing" | "finished"
+      league_tier: "bronze" | "silver" | "gold" | "platinum" | "diamond"
+      position_type: "sobre" | "sota" | "dins"
+      social_item_type:
+        | "banana"
+        | "smoke_bomb"
+        | "false_clue"
+        | "shield"
+        | "message"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +542,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      action_type: ["move", "look", "confirm"],
+      bonus_type: ["extra_token", "hint_yes", "hint_no"],
+      game_status: ["waiting", "hiding", "playing", "finished"],
+      league_tier: ["bronze", "silver", "gold", "platinum", "diamond"],
+      position_type: ["sobre", "sota", "dins"],
+      social_item_type: [
+        "banana",
+        "smoke_bomb",
+        "false_clue",
+        "shield",
+        "message",
+      ],
+    },
   },
 } as const
