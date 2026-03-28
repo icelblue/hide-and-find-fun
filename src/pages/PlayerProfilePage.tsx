@@ -37,7 +37,7 @@ export default function PlayerProfilePage() {
     const wallMsgs = msgs ?? [];
     // Fetch author names separately if join failed
     if (wallMsgs.length > 0 && !wallMsgs[0]?.author) {
-      const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))];
+      const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
         .from("profiles").select("user_id, display_name").in("user_id", authorIds);
       const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
