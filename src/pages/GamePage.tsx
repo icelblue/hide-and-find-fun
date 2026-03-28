@@ -13,6 +13,7 @@ import {
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { HelpButton, Tip } from "@/components/HelpButton";
 
 type Phase = "waiting" | "hiding" | "playing" | "finished";
 
