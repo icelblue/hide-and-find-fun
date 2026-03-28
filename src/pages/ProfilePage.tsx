@@ -9,6 +9,8 @@ import { getMyRewards, placeRewardItem, sellRewardItem, RARITY_CONFIG } from "@/
 import { toast } from "sonner";
 import { Tip } from "@/components/HelpButton";
 
+const WALL_TTL_HOURS = 22;
+
 const RARITY_BORDER: Record<string, string> = {
   common: "border-muted-foreground/30",
   uncommon: "border-green-500/40",
