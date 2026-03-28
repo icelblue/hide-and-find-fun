@@ -121,8 +121,8 @@ export default function GamePage() {
   useEffect(() => {
     if (!gameId || !user) return;
     loadGame();
-    getScenarios().then(setScenarios);
-    getObjects().then(setObjects);
+    getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
+    getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
 
     const channel = supabase
       .channel(`game-${gameId}`)
