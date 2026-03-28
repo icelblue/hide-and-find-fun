@@ -261,7 +261,15 @@ export default function GamePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
         <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">← Lobby</button>
-        <span className="font-mono text-[11px] bg-muted/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/30 tracking-wider font-semibold">{game.code}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[11px] bg-muted/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/30 tracking-wider font-semibold">{game.code}</span>
+          {rival && (
+            <button onClick={() => navigate(`/player/${rival.user_id}`)}
+              className="text-[11px] bg-secondary/10 text-secondary px-2.5 py-1.5 rounded-full border border-secondary/20 hover:bg-secondary/20 transition-colors font-medium">
+              👤 Rival
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-1">
           {phase === "playing" && (
             <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
