@@ -424,7 +424,7 @@ export default function GamePage() {
 
           {/* False clue indicator */}
           {falseClueItem && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-600 text-xs px-3 py-2 rounded-lg mb-3">
+            <div className="bg-destructive/10 border border-destructive/30 text-destructive text-xs px-3 py-2 rounded-lg mb-3">
               🔮 Indicador sospitós detectat! (pot ser fals)
             </div>
           )}
