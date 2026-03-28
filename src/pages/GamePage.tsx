@@ -59,7 +59,7 @@ export default function GamePage() {
     const [{ data: gameData }, { data: playerData }, { data: rivalData }] = await Promise.all([
       supabase.from("games").select("*").eq("id", gameId).single(),
       supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
-      supabase.from("game_players").select("*").eq("game_id", gameId).neq("user_id", user.id).single(),
+      supabase.from("game_players").select("*").eq("game_id", gameId).neq("user_id", user.id).maybeSingle(),
     ]);
 
     setGame(gameData);

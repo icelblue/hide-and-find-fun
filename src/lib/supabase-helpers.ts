@@ -118,7 +118,8 @@ export async function checkBothPlayersHidden(gameId: string) {
   const { data, error } = await supabase
     .from("game_players").select("has_hidden").eq("game_id", gameId);
   if (error) throw error;
-  return (data?.length === 2 && data.every(p => p.has_hidden)) ?? false;
+  // Need exactly 2 players and both must have hidden
+  return data?.length === 2 && data.every(p => p.has_hidden);
 }
 
 export async function startGame(gameId: string) {
