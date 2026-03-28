@@ -91,7 +91,7 @@ export default function LobbyPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div>
-          <h1 className="text-xl font-bold text-gradient">🔍 Deduction Duel</h1>
+          <h1 className="text-xl text-neon">🔍 DEDUCTION DUEL</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             {profile?.display_name && (
               <span className="text-foreground/80 font-medium">{profile.display_name}</span>
