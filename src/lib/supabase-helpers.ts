@@ -105,7 +105,7 @@ export async function getAvailableGames(currentUserId: string) {
   // Filter: not own games, and either no invite or invited to me
   const otherGames = data.filter(g =>
     g.created_by !== currentUserId &&
-    (!(g as any).invited_user_id || (g as any).invited_user_id === currentUserId)
+    (!g.invited_user_id || g.invited_user_id === currentUserId)
   );
   if (otherGames.length === 0) return [];
 
