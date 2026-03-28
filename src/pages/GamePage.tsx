@@ -262,12 +262,15 @@ export default function GamePage() {
       <div className="flex items-center justify-between mb-4">
         <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">← Lobby</button>
         <span className="font-mono text-xs bg-muted px-2.5 py-1 rounded-full">{game.code}</span>
-        {phase === "playing" && (
-          <div className="flex items-center gap-1 bg-muted px-2.5 py-1 rounded-full">
-            <span className="text-sm">🪙</span>
-            <span className="font-bold text-sm">{player.tokens_remaining}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {phase === "playing" && (
+            <div className="flex items-center gap-1 bg-muted px-2.5 py-1 rounded-full">
+              <span className="text-sm">🪙</span>
+              <span className="font-bold text-sm">{player.tokens_remaining}</span>
+            </div>
+          )}
+          <HelpButton />
+        </div>
       </div>
 
       {/* WAITING */}
