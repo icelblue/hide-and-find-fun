@@ -75,7 +75,7 @@ export function HelpButton() {
             </div>
             <div
               className="px-5 pb-5 space-y-3 overflow-y-auto"
-              style={{ maxHeight: "calc(100dvh - 6rem)", WebkitOverflowScrolling: "touch" }}
+              style={{ maxHeight: "calc(100vh - 6rem)", maxHeight: "calc(100dvh - 6rem)", WebkitOverflowScrolling: "touch" } as any}
             >
               {RULES.map((r, i) => (
                 <div key={i}>
