@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [placingReward, setPlacingReward] = useState<any>(null);
   const [sellingReward, setSellingReward] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [wallMessages, setWallMessages] = useState<any[]>([]);
 
   const loadData = useCallback(async () => {
     if (!user) return;
