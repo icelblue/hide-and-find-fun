@@ -126,11 +126,11 @@ export async function challengePlayer(userId: string, rivalUserId: string) {
 }
 
 export async function getMyInvites(userId: string) {
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("games")
     .select("*")
     .eq("status", "waiting")
-    .eq("invited_user_id" as any, userId)
+    .eq("invited_user_id", userId)
     .order("created_at", { ascending: false });
   return data ?? [];
 }
