@@ -145,10 +145,19 @@ async function ensureTokensReset(player: any) {
   const today = new Date().toISOString().split("T")[0];
   if (player.tokens_last_reset === today) return player.tokens_remaining;
 
+  // Check for bonus tokens from sold rewards
+  const { data: profile } = await supabase
+    .from("profiles").select("*").eq("user_id", player.user_id).single();
+  const bonus = (profile as any)?.bonus_tokens ?? 0;
+
   await supabase.from("game_players").update({
-    tokens_remaining: 5.0, tokens_last_reset: today, social_item_used_today: false,
+    tokens_remaining: 5.0 + bonus, tokens_last_reset: today, social_item_used_today: false,
   }).eq("id", player.id);
-  return 5.0;
+
+  if (bonus > 0) {
+    await supabase.from("profiles").update({ bonus_tokens: 0 } as any).eq("user_id", player.user_id);
+  }
+  return 5.0 + bonus;
 }
 
 export async function performMove(
