@@ -314,13 +314,14 @@ export async function performMove(
 
   if (action === "move" && targetScenarioId) {
     // Validate connection exists
-    const { data: conn } = await (supabase as any)
-      .from("scenario_connections")
-      .select("id")
-      .eq("scenario_a", player.current_scenario_id)
-      .eq("scenario_b", targetScenarioId)
-      .maybeSingle();
-    if (!conn) throw new Error("No pots anar a aquesta habitació des d'aquí!");
+    // Validate connection in either direction
+    const [{ data: fwd }, { data: rev }] = await Promise.all([
+      supabase.from("scenario_connections").select("id")
+        .eq("scenario_a", player.current_scenario_id).eq("scenario_b", targetScenarioId).maybeSingle(),
+      supabase.from("scenario_connections").select("id")
+        .eq("scenario_a", targetScenarioId).eq("scenario_b", player.current_scenario_id).maybeSingle(),
+    ]);
+    if (!fwd && !rev) throw new Error("No pots anar a aquesta habitació des d'aquí!");
 
     await supabase.from("game_players")
       .update({ current_scenario_id: targetScenarioId }).eq("id", player.id);
