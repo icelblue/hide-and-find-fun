@@ -80,6 +80,12 @@ export default function GamePage() {
       .order("turn_number", { ascending: false });
     setMoveHistory(moves ?? []);
 
+    // Load reward if finished
+    if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
+      const r = await getGameReward(gameId, user.id);
+      setReward(r);
+    }
+
     // Process social items (only unprocessed)
     if (gameData?.status === "playing") {
       const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
