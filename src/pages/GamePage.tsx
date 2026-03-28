@@ -81,13 +81,11 @@ export default function GamePage() {
       .order("turn_number", { ascending: false });
     setMoveHistory(moves ?? []);
 
-    // Load reward if finished
     if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
       const r = await getGameReward(gameId, user.id);
       setReward(r);
     }
 
-    // Process social items (only unprocessed)
     if (gameData?.status === "playing") {
       const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
       for (const item of unprocessed) {
@@ -204,37 +202,39 @@ export default function GamePage() {
   if (!game || !player) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
-        <div className="text-4xl mb-2 animate-pulse">🔍</div>
+        <div className="text-5xl mb-3 animate-pulse">🔍</div>
         <p className="text-muted-foreground text-sm">Carregant partida...</p>
       </div>
     </div>;
   }
 
-  // Step indicator for hiding phase
   const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
 
   return (
     <div className={`min-h-screen bg-background p-4 max-w-md mx-auto relative ${bananaEffect ? "blur-sm" : ""}`}>
+      {/* BG glow */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
+
       {/* Banana overlay */}
       {bananaEffect && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-accent/40 pointer-events-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-accent/30 pointer-events-none backdrop-blur-sm">
           <span className="text-[120px] animate-bounce">🍌</span>
         </div>
       )}
 
       {/* Confirm dialog */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowConfirmDialog(null)}>
-          <Card className="mx-4 max-w-sm" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setShowConfirmDialog(null)}>
+          <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-6 text-center">
-              <div className="text-3xl mb-2">🔍</div>
+              <div className="w-14 h-14 mx-auto mb-3 rounded-2xl gradient-accent flex items-center justify-center text-2xl shadow-lg">🔍</div>
               <p className="font-bold mb-1">Confirmar obertura?</p>
               <p className="text-sm text-muted-foreground mb-1">
                 {positions.find(p => p.value === showConfirmDialog.position)?.icon}{" "}
                 {positions.find(p => p.value === showConfirmDialog.position)?.label}{" "}
                 de {showConfirmDialog.itemName}
               </p>
-              <p className="text-xs text-destructive mb-4">Costa {TOKEN_COSTS.confirm} tokens!</p>
+              <p className="text-xs text-destructive font-medium mb-4">Costa {TOKEN_COSTS.confirm} tokens!</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowConfirmDialog(null)}>Cancel·lar</Button>
                 <Button className="flex-1" onClick={handleConfirm}>Confirmar 🔍</Button>
@@ -246,12 +246,12 @@ export default function GamePage() {
 
       {/* Message popup */}
       {receivedMessage && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setReceivedMessage(null)}>
-          <Card className="mx-4 max-w-sm" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setReceivedMessage(null)}>
+          <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-6 text-center">
-              <div className="text-3xl mb-2">💬</div>
-              <p className="text-sm text-muted-foreground mb-1">El rival diu:</p>
-              <p className="text-lg font-medium italic my-3">"{receivedMessage}"</p>
+              <div className="text-4xl mb-2">💬</div>
+              <p className="text-xs text-muted-foreground mb-1">El rival diu:</p>
+              <p className="text-lg font-medium italic my-3 text-primary">"{receivedMessage}"</p>
               <Button size="sm" onClick={() => setReceivedMessage(null)}>Tancar</Button>
             </CardContent>
           </Card>
@@ -259,14 +259,14 @@ export default function GamePage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">← Lobby</button>
-        <span className="font-mono text-xs bg-muted px-2.5 py-1 rounded-full">{game.code}</span>
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">← Lobby</button>
+        <span className="font-mono text-[11px] bg-muted/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/30 tracking-wider font-semibold">{game.code}</span>
         <div className="flex items-center gap-1">
           {phase === "playing" && (
-            <div className="flex items-center gap-1 bg-muted px-2.5 py-1 rounded-full">
-              <span className="text-sm">🪙</span>
-              <span className="font-bold text-sm">{player.tokens_remaining}</span>
+            <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
+              <span className="text-xs">🪙</span>
+              <span className="font-bold text-xs text-primary-foreground">{player.tokens_remaining}</span>
             </div>
           )}
           <HelpButton />
@@ -276,13 +276,15 @@ export default function GamePage() {
       {/* WAITING */}
       {phase === "waiting" && (
         <div className="text-center py-16">
-          <div className="text-6xl mb-4 animate-pulse">⏳</div>
+          <div className="text-7xl mb-4 animate-pulse">⏳</div>
           <h2 className="text-xl font-bold mb-2">Esperant rival</h2>
-          <p className="text-sm text-muted-foreground mb-2">Comparteix el codi perquè algú s'uneixi:</p>
-          <div className="bg-card border-2 border-dashed border-primary/30 rounded-xl p-6 font-mono text-4xl tracking-[0.4em] font-bold">
-            {game.code}
-          </div>
-          <p className="text-xs text-muted-foreground mt-4">L'altra persona ha d'entrar el codi al lobby</p>
+          <p className="text-sm text-muted-foreground mb-4">Comparteix el codi:</p>
+          <Card className="glass glow-primary">
+            <CardContent className="py-6">
+              <div className="font-mono text-4xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
+            </CardContent>
+          </Card>
+          <p className="text-xs text-muted-foreground/60 mt-4">L'altra persona ha d'entrar el codi al lobby</p>
         </div>
       )}
 
@@ -290,26 +292,26 @@ export default function GamePage() {
       {phase === "hiding" && hideStep < 4 && (
         <div>
           {/* Step indicator */}
-          <div className="flex items-center gap-1 mb-4">
+          <div className="flex items-center gap-1 mb-5">
             {hideSteps.map((step, i) => (
-              <div key={i} className={`flex-1 text-center text-[10px] py-1 rounded-full ${
-                i === hideStep ? "bg-primary text-primary-foreground font-medium" : 
-                i < hideStep ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+              <div key={i} className={`flex-1 text-center text-[10px] py-1.5 rounded-full font-medium transition-all ${
+                i === hideStep ? "gradient-primary text-primary-foreground shadow-md" : 
+                i < hideStep ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
               }`}>{step}</div>
             ))}
           </div>
 
-           {hideStep === 0 && (
+          {hideStep === 0 && (
             <div>
               <h2 className="text-lg font-bold mb-1">On amagues?</h2>
               <Tip>Tria l'habitació on el rival haurà de buscar. Un bon lloc és on hi ha molts mobles!</Tip>
-              <div className="h-2" />
-              <div className="grid grid-cols-2 gap-2">
+              <div className="h-3" />
+              <div className="grid grid-cols-2 gap-2.5">
                 {scenarios.map(s => (
-                  <Card key={s.id} className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all active:scale-[0.98]" onClick={() => handleSelectScenario(s.id)}>
-                    <CardContent className="py-4 text-center">
-                      <div className="text-3xl mb-1">{s.icon}</div>
-                      <div className="text-sm font-medium">{s.name}</div>
+                  <Card key={s.id} className="cursor-pointer glass hover:border-primary/40 hover:glow-primary transition-all active:scale-[0.97]" onClick={() => handleSelectScenario(s.id)}>
+                    <CardContent className="py-5 text-center">
+                      <div className="text-4xl mb-2">{s.icon}</div>
+                      <div className="text-sm font-semibold">{s.name}</div>
                     </CardContent>
                   </Card>
                 ))}
@@ -317,17 +319,17 @@ export default function GamePage() {
             </div>
           )}
 
-           {hideStep === 1 && (
+          {hideStep === 1 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
-              <Tip>Escull l'objecte que el rival haurà de trobar. És el mateix per tots dos!</Tip>
-              <div className="h-2" />
+              <Tip>Escull l'objecte que el rival haurà de trobar.</Tip>
+              <div className="h-3" />
               <div className="grid grid-cols-3 gap-2">
                 {objects.map(o => (
-                  <Card key={o.id} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => { setSelectedObject(o.id); setHideStep(2); }}>
-                    <CardContent className="py-2.5 text-center">
-                      <div className="text-xl mb-0.5">{o.icon}</div>
-                      <div className="text-[11px]">{o.name}</div>
+                  <Card key={o.id} className="cursor-pointer glass hover:border-secondary/40 transition-all active:scale-[0.97]" onClick={() => { setSelectedObject(o.id); setHideStep(2); }}>
+                    <CardContent className="py-3 text-center">
+                      <div className="text-2xl mb-1">{o.icon}</div>
+                      <div className="text-[11px] font-medium">{o.name}</div>
                     </CardContent>
                   </Card>
                 ))}
@@ -336,17 +338,17 @@ export default function GamePage() {
             </div>
           )}
 
-           {hideStep === 2 && (
+          {hideStep === 2 && (
             <div>
               <h2 className="text-lg font-bold mb-1">A quin moble?</h2>
-              <Tip>Amaga'l en un moble de l'escenari. El rival buscarà aquí!</Tip>
-              <div className="h-2" />
-              <div className="grid grid-cols-2 gap-2">
+              <Tip>Amaga'l en un moble de l'escenari.</Tip>
+              <div className="h-3" />
+              <div className="grid grid-cols-2 gap-2.5">
                 {items.map(item => (
-                  <Card key={item.id} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => { setSelectedItem(item.id); setHideStep(3); }}>
-                    <CardContent className="py-3 text-center">
-                      <div className="text-2xl mb-1">{item.icon}</div>
-                      <div className="text-sm">{item.name}</div>
+                  <Card key={item.id} className="cursor-pointer glass hover:border-accent/40 transition-all active:scale-[0.97]" onClick={() => { setSelectedItem(item.id); setHideStep(3); }}>
+                    <CardContent className="py-4 text-center">
+                      <div className="text-3xl mb-1">{item.icon}</div>
+                      <div className="text-sm font-medium">{item.name}</div>
                     </CardContent>
                   </Card>
                 ))}
@@ -355,17 +357,17 @@ export default function GamePage() {
             </div>
           )}
 
-           {hideStep === 3 && (
+          {hideStep === 3 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
-              <Tip>Sobre, sota o dins del moble. Cada posició costa tokens per investigar!</Tip>
-              <div className="h-2" />
+              <Tip>Sobre, sota o dins del moble.</Tip>
+              <div className="h-3" />
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => (
-                  <Card key={pos.value} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => handleHidePosition(pos.value)}>
-                    <CardContent className="py-5 text-center">
+                  <Card key={pos.value} className="cursor-pointer glass hover:border-primary/40 transition-all active:scale-[0.97]" onClick={() => handleHidePosition(pos.value)}>
+                    <CardContent className="py-6 text-center">
                       <div className="text-4xl mb-2">{pos.icon}</div>
-                      <div className="text-sm font-medium">{pos.label}</div>
+                      <div className="text-sm font-semibold">{pos.label}</div>
                     </CardContent>
                   </Card>
                 ))}
@@ -379,7 +381,7 @@ export default function GamePage() {
       {/* HIDING - Done */}
       {phase === "hiding" && hideStep === 4 && (
         <div className="text-center py-16">
-          <div className="text-6xl mb-4">✅</div>
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
           <h2 className="text-xl font-bold mb-2">Objecte amagat!</h2>
           <p className="text-sm text-muted-foreground animate-pulse">Esperant que el rival amagui...</p>
         </div>
@@ -389,45 +391,45 @@ export default function GamePage() {
       {phase === "playing" && (
         <div className="space-y-4">
           {/* Location bar */}
-          <div className="bg-card border rounded-xl p-3 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Ubicació</span>
-              <div className="font-bold text-lg leading-tight">{currentScenario?.icon} {currentScenario?.name}</div>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Tokens</span>
-              <div className="font-bold text-lg leading-tight">🪙 {player.tokens_remaining}</div>
-            </div>
-          </div>
+          <Card className="glass">
+            <CardContent className="py-3 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Ubicació</span>
+                <div className="font-bold text-lg leading-tight">{currentScenario?.icon} {currentScenario?.name}</div>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Tokens</span>
+                <div className="font-bold text-lg leading-tight text-accent">🪙 {player.tokens_remaining}</div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Status badges */}
           <div className="flex gap-2 flex-wrap">
             {player.shield_active && (
-              <span className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full">🛡️ Escut actiu</span>
+              <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
             )}
             {falseClueItem && (
-              <span className="bg-destructive/10 text-destructive text-xs font-medium px-2.5 py-1 rounded-full animate-pulse">🔮 Sospitós detectat!</span>
+              <span className="bg-destructive/10 text-destructive text-[11px] font-semibold px-3 py-1 rounded-full animate-pulse border border-destructive/20">🔮 Sospitós!</span>
             )}
             {noTokens && (
-              <span className="bg-accent/10 text-accent-foreground text-xs font-medium px-2.5 py-1 rounded-full">😴 Sense tokens — torna demà</span>
+              <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
           </div>
 
           {/* Move */}
           <div>
-           <div>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
-                🚶 Moure's · {TOKEN_COSTS.move}🪙
-              </h3>
-              <Tip>Ves a una altra habitació per explorar els seus mobles</Tip>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              🚶 Moure's · {TOKEN_COSTS.move}🪙
+            </h3>
+            <Tip>Ves a una altra habitació per explorar</Tip>
+            <div className="grid grid-cols-3 gap-1.5 mt-2">
               {scenarios.filter(s => s.id !== player.current_scenario_id).map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
                   disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move}
-                  className="bg-card border rounded-lg p-2 text-center hover:border-primary/50 transition-all disabled:opacity-30 active:scale-[0.97]">
-                  <div className="text-lg">{s.icon}</div>
-                  <div className="text-[10px] leading-tight">{s.name}</div>
+                  className="glass rounded-xl p-2.5 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
+                  <div className="text-xl">{s.icon}</div>
+                  <div className="text-[10px] leading-tight font-medium mt-0.5">{s.name}</div>
                 </button>
               ))}
             </div>
@@ -435,13 +437,11 @@ export default function GamePage() {
 
           {/* Look / Confirm */}
           <div>
-           <div>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
-                👀 Investigar
-              </h3>
-              <Tip>Observar ({TOKEN_COSTS.look}🪙) mira si hi ha bonus. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que l'objecte és allà!</Tip>
-            </div>
-            <div className="space-y-1.5">
+            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              👀 Investigar
+            </h3>
+            <Tip>Observar ({TOKEN_COSTS.look}🪙) busca bonus. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que és allà!</Tip>
+            <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
@@ -465,18 +465,18 @@ export default function GamePage() {
                   <div key={item.type}>
                     <button
                       onClick={() => item.type !== "message" && handleSendSocial(item.type)}
-                      className="w-full bg-card border rounded-lg p-2.5 flex items-center gap-3 hover:border-accent/50 transition-all text-left active:scale-[0.99]">
+                      className="w-full glass rounded-xl p-3 flex items-center gap-3 hover:border-accent/40 transition-all text-left active:scale-[0.99]">
                       <span className="text-2xl">{item.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium">{item.name}</div>
+                        <div className="text-sm font-semibold">{item.name}</div>
                         <div className="text-[11px] text-muted-foreground">{item.desc}</div>
                       </div>
-                      {item.type !== "message" && <span className="text-xs text-primary">→</span>}
+                      {item.type !== "message" && <span className="text-xs text-primary font-bold">→</span>}
                     </button>
                     {item.type === "message" && (
-                      <div className="flex gap-1.5 mt-1">
+                      <div className="flex gap-1.5 mt-1.5">
                         <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-                          placeholder="Escriu..." maxLength={80} className="text-sm" />
+                          placeholder="Escriu..." maxLength={80} className="text-sm bg-muted/50 border-border/50" />
                         <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")}>💬</Button>
                       </div>
                     )}
@@ -489,12 +489,12 @@ export default function GamePage() {
           {/* History */}
           {moveHistory.length > 0 && (
             <div>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">📋 Historial</h3>
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">📋 Historial</h3>
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {moveHistory.map(m => (
-                  <div key={m.id} className="text-[11px] bg-muted rounded-lg px-2.5 py-1.5 flex justify-between">
+                  <div key={m.id} className="text-[11px] bg-muted/30 rounded-lg px-3 py-1.5 flex justify-between border border-border/20">
                     <span>
-                      <span className="text-muted-foreground">#{m.turn_number}</span>{" "}
+                      <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
                       {m.action === "move" && `🚶 → ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
                       {m.action === "look" && `👀 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
                       {m.action === "confirm" && `🔍 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
@@ -513,26 +513,29 @@ export default function GamePage() {
       {/* FINISHED */}
       {phase === "finished" && (
         <div className="text-center py-16">
-          <div className="text-7xl mb-4">{game.winner_id === user?.id ? "🏆" : "😢"}</div>
+          {game.winner_id === user?.id ? (
+            <div className="w-24 h-24 mx-auto mb-4 rounded-3xl gradient-primary flex items-center justify-center text-5xl shadow-xl glow-primary">🏆</div>
+          ) : (
+            <div className="text-7xl mb-4 opacity-60">😢</div>
+          )}
           <h2 className="text-2xl font-bold mb-2">
-            {game.winner_id === user?.id ? "Victòria!" : "Derrota..."}
+            {game.winner_id === user?.id ? <span className="text-gradient">Victòria!</span> : "Derrota..."}
           </h2>
           <p className="text-sm text-muted-foreground mb-4">
             {game.winner_id === user?.id ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
           </p>
 
-          {/* Reward display */}
           {reward?.reward_items && (
-            <Card className="mb-6 mx-auto max-w-xs">
-              <CardContent className="py-4 text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">🎁 Recompensa</p>
-                <div className="text-4xl mb-1">{reward.reward_items.icon}</div>
-                <p className="font-bold">{reward.reward_items.name}</p>
-                <p className="text-xs text-muted-foreground">
+            <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
+              <CardContent className="py-5 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🎁 Recompensa</p>
+                <div className="text-5xl mb-2">{reward.reward_items.icon}</div>
+                <p className="font-bold text-lg">{reward.reward_items.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
                   {RARITY_CONFIG[reward.reward_items.rarity]?.emoji}{" "}
                   {RARITY_CONFIG[reward.reward_items.rarity]?.label}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-1">
+                <p className="text-[10px] text-muted-foreground/60 mt-2">
                   Ves al perfil per col·locar-lo o vendre'l
                 </p>
               </CardContent>
@@ -560,25 +563,25 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-card border rounded-lg overflow-hidden">
+    <div className="glass rounded-xl overflow-hidden">
       <button onClick={() => setExpanded(!expanded)}
-        className="w-full p-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors">
-        <span className="font-medium text-sm">{item.icon} {item.name}</span>
+        className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
+        <span className="font-semibold text-sm">{item.icon} {item.name}</span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>
       {expanded && (
-        <div className="border-t p-2 grid grid-cols-3 gap-1.5">
+        <div className="border-t border-border/30 p-2.5 grid grid-cols-3 gap-2">
           {positions.map(pos => (
             <div key={pos.value} className="space-y-1">
               <button onClick={() => onLook(item.id, pos.value)}
                 disabled={disabled || tokensRemaining < TOKEN_COSTS.look}
-                className="w-full bg-muted rounded-md p-1.5 text-xs hover:bg-primary/10 transition-colors disabled:opacity-30 active:scale-[0.97]">
+                className="w-full bg-muted/40 rounded-lg p-2 text-xs hover:bg-primary/10 transition-colors disabled:opacity-30 active:scale-[0.97] font-medium">
                 {pos.icon} {pos.label}
-                <span className="block text-[9px] text-muted-foreground">{TOKEN_COSTS.look}🪙</span>
+                <span className="block text-[9px] text-muted-foreground mt-0.5">{TOKEN_COSTS.look}🪙</span>
               </button>
               <button onClick={() => onConfirm(item.id, pos.value)}
                 disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm}
-                className="w-full bg-primary/10 text-primary rounded-md p-1 text-[10px] font-medium hover:bg-primary/20 transition-colors disabled:opacity-30 active:scale-[0.97]">
+                className="w-full gradient-accent rounded-lg p-1.5 text-[10px] font-bold text-accent-foreground hover:opacity-90 transition-all disabled:opacity-30 active:scale-[0.97] shadow-sm">
                 🔍 {TOKEN_COSTS.confirm}🪙
               </button>
             </div>

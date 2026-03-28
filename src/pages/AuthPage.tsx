@@ -32,23 +32,32 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="text-5xl mb-2">🔍</div>
-          <CardTitle className="text-2xl font-bold">Deduction Duel</CardTitle>
-          <p className="text-sm text-muted-foreground">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-secondary/5 blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-sm glass glow-primary relative z-10">
+        <CardHeader className="text-center pb-2">
+          <div className="w-16 h-16 mx-auto mb-3 rounded-2xl gradient-primary flex items-center justify-center shadow-lg glow-primary">
+            <span className="text-3xl">🔍</span>
+          </div>
+          <CardTitle className="text-2xl font-bold text-gradient">Deduction Duel</CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
             Amaga. Busca. Guanya.
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {!isLogin && (
               <Input
                 placeholder="Nom de jugador"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
+                className="bg-muted/50 border-border/50 h-11"
               />
             )}
             <Input
@@ -57,6 +66,7 @@ export default function AuthPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="bg-muted/50 border-border/50 h-11"
             />
             <Input
               type="password"
@@ -65,14 +75,15 @@ export default function AuthPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              className="bg-muted/50 border-border/50 h-11"
             />
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? "..." : isLogin ? "Entrar" : "Crear compte"}
             </Button>
           </form>
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             {isLogin ? "No tens compte? Registra't" : "Ja tens compte? Entra"}
           </button>
