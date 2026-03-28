@@ -274,8 +274,7 @@ export async function performMove(
       .update({ status: "finished" as const, winner_id: playerId })
       .eq("id", gameId);
 
-    // Update profiles
-    await supabase.rpc("increment_games_played" as any, { p_user_id: playerId });
+    // Profile stats updated via trigger or manually later
   }
 
   return { move, foundObject, foundBonus, bonusValue, tokensRemaining: tokensRemaining - cost };
