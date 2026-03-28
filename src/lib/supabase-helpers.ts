@@ -248,7 +248,7 @@ async function ensureTokensReset(player: any) {
   }).eq("id", player.id);
 
   if (bonus > 0) {
-    await supabase.from("profiles").update({ bonus_tokens: 0 } as any).eq("user_id", player.user_id);
+    await supabase.from("profiles").update({ bonus_tokens: 0 }).eq("user_id", player.user_id);
   }
   return 5.0 + bonus;
 }
