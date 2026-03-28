@@ -63,8 +63,7 @@ export function HelpButton() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl"
-            style={{ maxHeight: "calc(100vh - 2rem)", maxHeight: "calc(100dvh - 2rem)" } as any}
+            className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl max-h-[calc(100vh-2rem)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-2">
@@ -74,8 +73,8 @@ export function HelpButton() {
               </Button>
             </div>
             <div
-              className="px-5 pb-5 space-y-3 overflow-y-auto"
-              style={{ maxHeight: "calc(100vh - 6rem)", maxHeight: "calc(100dvh - 6rem)", WebkitOverflowScrolling: "touch" } as any}
+              className="px-5 pb-5 space-y-3 overflow-y-auto max-h-[calc(100vh-6rem)]"
+              style={{ WebkitOverflowScrolling: "touch" }}
             >
               {RULES.map((r, i) => (
                 <div key={i}>
