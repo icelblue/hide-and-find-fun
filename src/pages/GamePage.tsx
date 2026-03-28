@@ -81,8 +81,12 @@ export default function GamePage() {
     }
 
     if (gameData?.status === "playing" && playerData?.current_scenario_id) {
-      const itemsData = await getItemsByScenario(playerData.current_scenario_id);
+      const [itemsData, connected] = await Promise.all([
+        getItemsByScenario(playerData.current_scenario_id),
+        getConnectedScenarios(playerData.current_scenario_id),
+      ]);
       setCurrentScenarioItems(itemsData);
+      setConnectedScenarios(connected);
     }
 
     const { data: moves } = await supabase
