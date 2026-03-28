@@ -506,6 +506,39 @@ export type Database = {
           },
         ]
       }
+      scenario_connections: {
+        Row: {
+          id: string
+          scenario_a: string
+          scenario_b: string
+        }
+        Insert: {
+          id?: string
+          scenario_a: string
+          scenario_b: string
+        }
+        Update: {
+          id?: string
+          scenario_a?: string
+          scenario_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_connections_scenario_a_fkey"
+            columns: ["scenario_a"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenario_connections_scenario_b_fkey"
+            columns: ["scenario_b"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scenarios: {
         Row: {
           created_at: string
