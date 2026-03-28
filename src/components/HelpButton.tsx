@@ -18,7 +18,7 @@ const RULES = [
   },
   {
     title: "🚶 Moure's",
-    text: "Canvia d'escenari per explorar altres habitacions. No pots investigar sense ser-hi.",
+    text: "Cada habitació té 2 portes. Només pots anar a les sales adjacents (circuit: Cuina → Menjador → Jardí → Balcó → Habitació → Despatx → Lavabo → Cuina).",
   },
   {
     title: "👀 Observar",
