@@ -391,7 +391,7 @@ export default function GamePage() {
       )}
 
       {/* HIDING - Done */}
-      {phase === "hiding" && hideStep === 4 && (
+      {phase === "hiding" && player.has_hidden && (
         <div className="text-center py-16">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
           <h2 className="text-xl font-bold mb-2">Objecte amagat!</h2>
