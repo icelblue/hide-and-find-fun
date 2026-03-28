@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { createGame, getAvailableGames, joinGame, getMyGames } from "@/lib/supabase-helpers";
+import { createGame, getAvailableGames, joinGame, getMyGames, deleteGame } from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { HelpButton } from "@/components/HelpButton";
@@ -162,7 +162,23 @@ export default function LobbyPage() {
                         <p className={`text-[11px] ${s.color}`}>{s.label}</p>
                       </div>
                     </div>
-                    <span className="text-muted-foreground text-xs">→</span>
+                    <div className="flex items-center gap-2">
+                      {game.status === "waiting" && game.created_by === user?.id && (
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-xl"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await deleteGame(game.id);
+                              toast.success("Partida eliminada");
+                              loadAll();
+                            } catch (err: any) { toast.error(err.message); }
+                          }}
+                        >🗑️</Button>
+                      )}
+                      <span className="text-muted-foreground text-xs">→</span>
+                    </div>
                   </CardContent>
                 </Card>
               );

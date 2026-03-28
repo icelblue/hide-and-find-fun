@@ -92,6 +92,13 @@ export async function getMyGames(userId: string) {
   return data ?? [];
 }
 
+export async function deleteGame(gameId: string) {
+  // Delete players first, then game
+  await supabase.from("game_players").delete().eq("game_id", gameId);
+  const { error } = await supabase.from("games").delete().eq("id", gameId);
+  if (error) throw error;
+}
+
 // ============================================
 // HIDING PHASE
 // ============================================
