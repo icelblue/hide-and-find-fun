@@ -278,7 +278,7 @@ export default function GamePage() {
         <div className="text-center py-16">
           <div className="text-6xl mb-4 animate-pulse">⏳</div>
           <h2 className="text-xl font-bold mb-2">Esperant rival</h2>
-          <p className="text-sm text-muted-foreground mb-6">Comparteix el codi:</p>
+          <p className="text-sm text-muted-foreground mb-2">Comparteix el codi perquè algú s'uneixi:</p>
           <div className="bg-card border-2 border-dashed border-primary/30 rounded-xl p-6 font-mono text-4xl tracking-[0.4em] font-bold">
             {game.code}
           </div>
