@@ -556,6 +556,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_player_in_game: {
+        Args: { _game_id: string; _user_id: string }
+        Returns: boolean
+      }
       place_reward_item: {
         Args: { _player_reward_id: string; _scenario_id: string }
         Returns: undefined
