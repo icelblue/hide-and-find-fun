@@ -178,46 +178,31 @@ export default function LobbyPage() {
               {searching ? "..." : "🔍"}
             </Button>
           </div>
-          {showSearch && (
-            <div className="mt-3">
-              <div className="flex gap-2 mb-2">
-                <Input
-                  placeholder="Nom del jugador..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="text-sm bg-muted/50 border-border/50"
-                  onKeyDown={e => e.key === "Enter" && handleSearch()}
-                />
-                <Button size="sm" onClick={handleSearch} disabled={searching || searchQuery.length < 2}>
-                  {searching ? "..." : "🔍"}
-                </Button>
-              </div>
-              {searchResults.length > 0 && (
-                <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                  {searchResults.map((p: any) => (
-                    <div key={p.user_id} className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2 border border-border/20">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm">{leagueBadge[p.league] ?? "🥉"}</span>
-                        <div className="min-w-0">
-                          <button
-                            onClick={() => navigate(`/player/${p.user_id}`)}
-                            className="text-sm font-semibold hover:text-primary transition-colors truncate block"
-                          >
-                            {p.display_name}
-                          </button>
-                          <span className="text-[10px] text-muted-foreground">Elo {p.elo}</span>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline" className="text-xs shrink-0"
-                        onClick={() => handleChallenge(p.user_id, p.display_name)}
-                        disabled={loading}>
-                        ⚔️ Repte
-                      </Button>
+          {searchResults.length > 0 && (
+            <div className="space-y-1.5 max-h-48 overflow-y-auto mt-2">
+              {searchResults.map((p: any) => (
+                <div key={p.user_id} className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2 border border-border/20">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm">{leagueBadge[p.league] ?? "🥉"}</span>
+                    <div className="min-w-0">
+                      <button
+                        onClick={() => navigate(`/player/${p.user_id}`)}
+                        className="text-sm font-semibold hover:text-primary transition-colors truncate block"
+                      >
+                        {p.display_name}
+                      </button>
+                      <span className="text-[10px] text-muted-foreground">Elo {p.elo}</span>
                     </div>
-                  ))}
+                  </div>
+                  <Button size="sm" variant="outline" className="text-xs shrink-0"
+                    onClick={() => handleChallenge(p.user_id, p.display_name)}
+                    disabled={loading}>
+                    ⚔️ Repte
+                  </Button>
                 </div>
-              )}
+              ))}
             </div>
+          )
           )}
         </CardContent>
       </Card>
