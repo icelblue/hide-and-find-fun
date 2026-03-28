@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { createGame, getAvailableGames, joinGame, getMyGames } from "@/lib/supabase-helpers";
+import { createGame, getAvailableGames, joinGame, getMyGames, deleteGame } from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { HelpButton } from "@/components/HelpButton";
