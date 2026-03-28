@@ -30,7 +30,7 @@ export default function LobbyPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
+  
 
   const loadAll = useCallback(async () => {
     if (!user) return;
