@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { createGame, getAvailableGames, joinGame, getMyGames } from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function LobbyPage() {
