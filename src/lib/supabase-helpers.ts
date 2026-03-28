@@ -30,12 +30,33 @@ export async function getObjects() {
 }
 
 export async function getConnectedScenarios(scenarioId: string) {
-  const { data, error } = await (supabase as any)
-    .from("scenario_connections")
-    .select("scenario_b, scenarios!scenario_connections_scenario_b_fkey(id, name, icon, display_order)")
-    .eq("scenario_a", scenarioId);
+  // Query both directions: A→B and B→A
+  const [{ data: forward, error: e1 }, { data: reverse, error: e2 }] = await Promise.all([
+    supabase
+      .from("scenario_connections")
+      .select("scenario_b")
+      .eq("scenario_a", scenarioId),
+    supabase
+      .from("scenario_connections")
+      .select("scenario_a")
+      .eq("scenario_b", scenarioId),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  const connectedIds = [
+    ...(forward ?? []).map(c => c.scenario_b),
+    ...(reverse ?? []).map(c => c.scenario_a),
+  ];
+  if (connectedIds.length === 0) return [];
+
+  const { data: scenarios, error } = await supabase
+    .from("scenarios")
+    .select("id, name, icon, display_order")
+    .in("id", connectedIds)
+    .order("display_order");
   if (error) throw error;
-  return (data ?? []).map((c: any) => c.scenarios).filter(Boolean);
+  return scenarios ?? [];
 }
 
 // ============================================
