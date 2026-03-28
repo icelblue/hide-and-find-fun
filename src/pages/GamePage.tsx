@@ -10,6 +10,7 @@ import {
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
 } from "@/lib/supabase-helpers";
+import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ export default function GamePage() {
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState<{ itemId: string; position: "sobre" | "sota" | "dins"; itemName: string } | null>(null);
+  const [reward, setReward] = useState<any>(null);
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
@@ -77,6 +79,12 @@ export default function GamePage() {
       .eq("game_id", gameId).eq("player_id", user.id)
       .order("turn_number", { ascending: false });
     setMoveHistory(moves ?? []);
+
+    // Load reward if finished
+    if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
+      const r = await getGameReward(gameId, user.id);
+      setReward(r);
+    }
 
     // Process social items (only unprocessed)
     if (gameData?.status === "playing") {
@@ -493,12 +501,34 @@ export default function GamePage() {
         <div className="text-center py-16">
           <div className="text-7xl mb-4">{game.winner_id === user?.id ? "🏆" : "😢"}</div>
           <h2 className="text-2xl font-bold mb-2">
-            {game.winner_id === user?.id ? "Victoria!" : "Derrota..."}
+            {game.winner_id === user?.id ? "Victòria!" : "Derrota..."}
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-muted-foreground mb-4">
             {game.winner_id === user?.id ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
           </p>
-          <Button onClick={() => navigate("/")} size="lg">Tornar al lobby</Button>
+
+          {/* Reward display */}
+          {reward?.reward_items && (
+            <Card className="mb-6 mx-auto max-w-xs">
+              <CardContent className="py-4 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">🎁 Recompensa</p>
+                <div className="text-4xl mb-1">{reward.reward_items.icon}</div>
+                <p className="font-bold">{reward.reward_items.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {RARITY_CONFIG[reward.reward_items.rarity]?.emoji}{" "}
+                  {RARITY_CONFIG[reward.reward_items.rarity]?.label}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Ves al perfil per col·locar-lo o vendre'l
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
+            <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
+          </div>
         </div>
       )}
     </div>
