@@ -36,6 +36,7 @@ export default function GamePage() {
   const [hideStep, setHideStep] = useState(0);
 
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
+  const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
