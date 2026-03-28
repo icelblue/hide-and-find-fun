@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { createGame, getAvailableGames, joinGame, getMyGames } from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function LobbyPage() {
@@ -93,6 +94,7 @@ export default function LobbyPage() {
           </p>
         </div>
         <div className="flex gap-1">
+          <HelpButton />
           <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>👤</Button>
           <Button variant="ghost" size="icon" onClick={signOut}>🚪</Button>
         </div>

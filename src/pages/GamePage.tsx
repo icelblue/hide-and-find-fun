@@ -13,6 +13,7 @@ import {
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { HelpButton, Tip } from "@/components/HelpButton";
 
 type Phase = "waiting" | "hiding" | "playing" | "finished";
 
@@ -261,12 +262,15 @@ export default function GamePage() {
       <div className="flex items-center justify-between mb-4">
         <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">← Lobby</button>
         <span className="font-mono text-xs bg-muted px-2.5 py-1 rounded-full">{game.code}</span>
-        {phase === "playing" && (
-          <div className="flex items-center gap-1 bg-muted px-2.5 py-1 rounded-full">
-            <span className="text-sm">🪙</span>
-            <span className="font-bold text-sm">{player.tokens_remaining}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {phase === "playing" && (
+            <div className="flex items-center gap-1 bg-muted px-2.5 py-1 rounded-full">
+              <span className="text-sm">🪙</span>
+              <span className="font-bold text-sm">{player.tokens_remaining}</span>
+            </div>
+          )}
+          <HelpButton />
+        </div>
       </div>
 
       {/* WAITING */}
@@ -274,7 +278,7 @@ export default function GamePage() {
         <div className="text-center py-16">
           <div className="text-6xl mb-4 animate-pulse">⏳</div>
           <h2 className="text-xl font-bold mb-2">Esperant rival</h2>
-          <p className="text-sm text-muted-foreground mb-6">Comparteix el codi:</p>
+          <p className="text-sm text-muted-foreground mb-2">Comparteix el codi perquè algú s'uneixi:</p>
           <div className="bg-card border-2 border-dashed border-primary/30 rounded-xl p-6 font-mono text-4xl tracking-[0.4em] font-bold">
             {game.code}
           </div>
@@ -295,10 +299,11 @@ export default function GamePage() {
             ))}
           </div>
 
-          {hideStep === 0 && (
+           {hideStep === 0 && (
             <div>
               <h2 className="text-lg font-bold mb-1">On amagues?</h2>
-              <p className="text-xs text-muted-foreground mb-3">Tria l'escenari on vols amagar l'objecte</p>
+              <Tip>Tria l'habitació on el rival haurà de buscar. Un bon lloc és on hi ha molts mobles!</Tip>
+              <div className="h-2" />
               <div className="grid grid-cols-2 gap-2">
                 {scenarios.map(s => (
                   <Card key={s.id} className="cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all active:scale-[0.98]" onClick={() => handleSelectScenario(s.id)}>
@@ -312,10 +317,11 @@ export default function GamePage() {
             </div>
           )}
 
-          {hideStep === 1 && (
+           {hideStep === 1 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
-              <p className="text-xs text-muted-foreground mb-3">Tria un objecte del llistat</p>
+              <Tip>Escull l'objecte que el rival haurà de trobar. És el mateix per tots dos!</Tip>
+              <div className="h-2" />
               <div className="grid grid-cols-3 gap-2">
                 {objects.map(o => (
                   <Card key={o.id} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => { setSelectedObject(o.id); setHideStep(2); }}>
@@ -330,10 +336,11 @@ export default function GamePage() {
             </div>
           )}
 
-          {hideStep === 2 && (
+           {hideStep === 2 && (
             <div>
               <h2 className="text-lg font-bold mb-1">A quin moble?</h2>
-              <p className="text-xs text-muted-foreground mb-3">On poses l'objecte?</p>
+              <Tip>Amaga'l en un moble de l'escenari. El rival buscarà aquí!</Tip>
+              <div className="h-2" />
               <div className="grid grid-cols-2 gap-2">
                 {items.map(item => (
                   <Card key={item.id} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => { setSelectedItem(item.id); setHideStep(3); }}>
@@ -348,10 +355,11 @@ export default function GamePage() {
             </div>
           )}
 
-          {hideStep === 3 && (
+           {hideStep === 3 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
-              <p className="text-xs text-muted-foreground mb-3">A sobre, a sota o a dins?</p>
+              <Tip>Sobre, sota o dins del moble. Cada posició costa tokens per investigar!</Tip>
+              <div className="h-2" />
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => (
                   <Card key={pos.value} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => handleHidePosition(pos.value)}>
@@ -407,9 +415,12 @@ export default function GamePage() {
 
           {/* Move */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              🚶 Moure's · {TOKEN_COSTS.move}🪙
-            </h3>
+           <div>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                🚶 Moure's · {TOKEN_COSTS.move}🪙
+              </h3>
+              <Tip>Ves a una altra habitació per explorar els seus mobles</Tip>
+            </div>
             <div className="grid grid-cols-3 gap-1.5">
               {scenarios.filter(s => s.id !== player.current_scenario_id).map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
@@ -424,9 +435,12 @@ export default function GamePage() {
 
           {/* Look / Confirm */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              👀 Investigar
-            </h3>
+           <div>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                👀 Investigar
+              </h3>
+              <Tip>Observar ({TOKEN_COSTS.look}🪙) mira si hi ha bonus. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que l'objecte és allà!</Tip>
+            </div>
             <div className="space-y-1.5">
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
