@@ -92,11 +92,11 @@ export async function getAvailableGames(currentUserId: string) {
 
 export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
   // Try to join an existing public waiting game
-  const { data: available } = await supabase
+  const { data: available } = await (supabase as any)
     .from("games").select("id")
     .eq("status", "waiting")
     .neq("created_by", userId)
-    .is("invited_user_id" as any, null)
+    .is("invited_user_id", null)
     .order("created_at", { ascending: true })
     .limit(1);
 
