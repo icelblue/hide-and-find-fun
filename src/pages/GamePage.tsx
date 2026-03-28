@@ -128,7 +128,7 @@ export default function GamePage() {
       .channel(`game-${gameId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => loadGame())
       .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${gameId}` }, () => loadGame())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items" }, () => loadGame())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, () => loadGame())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [gameId, user, loadGame]);

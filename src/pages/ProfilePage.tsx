@@ -30,6 +30,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [wallMessages, setWallMessages] = useState<any[]>([]);
 
+  const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
+
   const loadData = useCallback(async () => {
     if (!user) return;
     const [prof, rew, scen, { data: msgs }] = await Promise.all([
@@ -45,6 +47,28 @@ export default function ProfilePage() {
     setProfile(prof);
     setRewards(rew);
     setScenarios(scen);
+
+    // Find top rival
+    const { data: myGames } = await supabase
+      .from("game_players").select("game_id").eq("user_id", user.id);
+    if (myGames && myGames.length > 0) {
+      const gameIds = myGames.map(g => g.game_id);
+      const { data: allPlayers } = await supabase
+        .from("game_players").select("game_id, user_id").in("game_id", gameIds).neq("user_id", user.id);
+      if (allPlayers && allPlayers.length > 0) {
+        const counts: Record<string, number> = {};
+        for (const p of allPlayers) {
+          counts[p.user_id] = (counts[p.user_id] || 0) + 1;
+        }
+        const topId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+        if (topId) {
+          const { data: rivalProf } = await supabase
+            .from("profiles").select("display_name").eq("user_id", topId[0]).single();
+          setTopRival({ name: rivalProf?.display_name ?? "Anònim", count: topId[1], userId: topId[0] });
+        }
+      }
+    }
+
     // Fetch author names
     const wallMsgs = msgs ?? [];
     if (wallMsgs.length > 0) {
@@ -181,6 +205,30 @@ export default function ProfilePage() {
           </Card>
         ))}
       </div>
+
+      {/* Top rival */}
+      {topRival && (
+        <Card className="mb-4 glass border-secondary/30">
+          <CardContent className="py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚔️</span>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Rival favorit</p>
+                <button
+                  onClick={() => navigate(`/player/${topRival.userId}`)}
+                  className="font-bold text-sm text-primary hover:underline"
+                >
+                  {topRival.name}
+                </button>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-lg leading-tight">{topRival.count}</div>
+              <div className="text-[9px] text-muted-foreground">partides</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Elo bar */}
       <Card className="mb-5 glass">
