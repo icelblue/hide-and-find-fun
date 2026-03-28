@@ -30,7 +30,7 @@ export async function getObjects() {
 }
 
 export async function getConnectedScenarios(scenarioId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("scenario_connections")
     .select("scenario_b, scenarios!scenario_connections_scenario_b_fkey(id, name, icon, display_order)")
     .eq("scenario_a", scenarioId);
