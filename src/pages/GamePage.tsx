@@ -271,7 +271,7 @@ export default function GamePage() {
     <div className={`min-h-screen bg-background p-4 max-w-md mx-auto relative ${bananaEffect ? "animate-pulse blur-[2px]" : ""}`}>
       {/* Banana overlay */}
       {bananaEffect && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-yellow-400/30 pointer-events-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-accent/30 pointer-events-none">
           <span className="text-8xl animate-bounce">🍌</span>
         </div>
       )}
