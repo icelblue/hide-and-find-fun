@@ -32,14 +32,31 @@ export default function ProfilePage() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [prof, rew, scen] = await Promise.all([
+    const [prof, rew, scen, { data: msgs }] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
       getMyRewards(user.id).catch(() => []),
       getScenarios().catch(() => []),
+      (supabase as any).from("wall_messages")
+        .select("*")
+        .eq("target_user_id", user.id)
+        .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false }),
     ]);
     setProfile(prof);
     setRewards(rew);
     setScenarios(scen);
+    // Fetch author names
+    const wallMsgs = msgs ?? [];
+    if (wallMsgs.length > 0) {
+      const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
+      const { data: authors } = await supabase
+        .from("profiles").select("user_id, display_name").in("user_id", authorIds);
+      const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
+      for (const m of wallMsgs) {
+        m._author_name = authorMap.get(m.author_user_id) ?? "Anònim";
+      }
+    }
+    setWallMessages(wallMsgs);
   }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
