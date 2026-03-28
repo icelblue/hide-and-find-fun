@@ -138,7 +138,7 @@ export async function getMyInvites(userId: string) {
 export async function getMyGames(userId: string) {
   const { data } = await supabase
     .from("game_players")
-    .select("game_id, games!inner(id, code, status, created_by)")
+    .select("game_id, games!inner(id, code, status, created_by, created_at)")
     .eq("user_id", userId);
   // Filter out old finished games (keep last 24h)
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
