@@ -527,6 +527,30 @@ export type Database = {
         }
         Relationships: []
       }
+      wall_messages: {
+        Row: {
+          author_user_id: string
+          created_at: string
+          id: string
+          message: string
+          target_user_id: string
+        }
+        Insert: {
+          author_user_id: string
+          created_at?: string
+          id?: string
+          message: string
+          target_user_id: string
+        }
+        Update: {
+          author_user_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
