@@ -109,7 +109,14 @@ export default function ProfilePage() {
     finally { setLoading(false); }
   };
 
-  if (!profile) return null;
+  if (!profile) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        <div className="text-5xl mb-3 animate-pulse">👤</div>
+        <p className="text-muted-foreground text-sm">Carregant perfil...</p>
+      </div>
+    </div>
+  );
 
   const leagueInfo: Record<string, { icon: string; next: string; eloNeeded: number; gradient: string }> = {
     bronze: { icon: "🥉", next: "Silver", eloNeeded: 1200, gradient: "from-amber-700 to-amber-600" },

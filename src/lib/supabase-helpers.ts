@@ -170,11 +170,12 @@ export async function getMyGames(userId: string) {
     .from("game_players")
     .select("game_id, games!inner(id, code, status, created_by, created_at)")
     .eq("user_id", userId);
-  // Filter out old finished games (keep last 24h)
+  // Filter out old finished games (keep last 24h), sort active first
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  return (data ?? []).filter((gp: any) =>
-    gp.games.status !== "finished" || gp.games.created_at > cutoff
-  );
+  const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
+  return (data ?? [])
+    .filter((gp: any) => gp.games.status !== "finished" || gp.games.created_at > cutoff)
+    .sort((a: any, b: any) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
 }
 
 export async function deleteGame(gameId: string) {
