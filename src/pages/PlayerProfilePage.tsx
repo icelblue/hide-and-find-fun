@@ -25,18 +25,17 @@ export default function PlayerProfilePage() {
     if (!userId) return;
     const [{ data: prof }, { data: msgs }] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
-      (supabase as any).from("wall_messages")
-        .select("*, author:profiles!wall_messages_author_user_id_fkey(display_name)")
+      supabase.from("wall_messages")
+        .select("*")
         .eq("target_user_id", userId)
         .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false }),
     ]);
     setProfile(prof);
 
-    // Client-side filter for author join — fallback if FK doesn't exist
-    const wallMsgs = msgs ?? [];
-    // Fetch author names separately if join failed
-    if (wallMsgs.length > 0 && !wallMsgs[0]?.author) {
+    // Fetch author names
+    const wallMsgs: any[] = msgs ?? [];
+    if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
         .from("profiles").select("user_id, display_name").in("user_id", authorIds);
@@ -54,7 +53,7 @@ export default function PlayerProfilePage() {
     if (!user || !userId || !newMsg.trim()) return;
     setSending(true);
     try {
-      const { error } = await (supabase as any).from("wall_messages").insert({
+      const { error } = await supabase.from("wall_messages").insert({
         target_user_id: userId,
         author_user_id: user.id,
         message: newMsg.trim().slice(0, MAX_MSG_LENGTH),
@@ -185,7 +184,7 @@ export default function PlayerProfilePage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-primary">
-                        {m.author?.display_name ?? m._author_name ?? "Anònim"}
+                        {m._author_name ?? "Anònim"}
                       </span>
                       <p className="text-sm mt-0.5 break-words">{m.message}</p>
                     </div>

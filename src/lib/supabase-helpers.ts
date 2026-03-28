@@ -30,12 +30,33 @@ export async function getObjects() {
 }
 
 export async function getConnectedScenarios(scenarioId: string) {
-  const { data, error } = await (supabase as any)
-    .from("scenario_connections")
-    .select("scenario_b, scenarios!scenario_connections_scenario_b_fkey(id, name, icon, display_order)")
-    .eq("scenario_a", scenarioId);
+  // Query both directions: A→B and B→A
+  const [{ data: forward, error: e1 }, { data: reverse, error: e2 }] = await Promise.all([
+    supabase
+      .from("scenario_connections")
+      .select("scenario_b")
+      .eq("scenario_a", scenarioId),
+    supabase
+      .from("scenario_connections")
+      .select("scenario_a")
+      .eq("scenario_b", scenarioId),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  const connectedIds = [
+    ...(forward ?? []).map(c => c.scenario_b),
+    ...(reverse ?? []).map(c => c.scenario_a),
+  ];
+  if (connectedIds.length === 0) return [];
+
+  const { data: scenarios, error } = await supabase
+    .from("scenarios")
+    .select("id, name, icon, display_order")
+    .in("id", connectedIds)
+    .order("display_order");
   if (error) throw error;
-  return (data ?? []).map((c: any) => c.scenarios).filter(Boolean);
+  return scenarios ?? [];
 }
 
 // ============================================
@@ -101,7 +122,7 @@ export async function getAvailableGames(currentUserId: string) {
 
 export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
   // Try to join an existing public waiting game
-  const { data: available } = await (supabase as any)
+  const { data: available } = await supabase
     .from("games").select("id")
     .eq("status", "waiting")
     .neq("created_by", userId)
@@ -135,7 +156,7 @@ export async function challengePlayer(userId: string, rivalUserId: string) {
 }
 
 export async function getMyInvites(userId: string) {
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from("games")
     .select("*")
     .eq("status", "waiting")
@@ -293,13 +314,14 @@ export async function performMove(
 
   if (action === "move" && targetScenarioId) {
     // Validate connection exists
-    const { data: conn } = await (supabase as any)
-      .from("scenario_connections")
-      .select("id")
-      .eq("scenario_a", player.current_scenario_id)
-      .eq("scenario_b", targetScenarioId)
-      .maybeSingle();
-    if (!conn) throw new Error("No pots anar a aquesta habitació des d'aquí!");
+    // Validate connection in either direction
+    const [{ data: fwd }, { data: rev }] = await Promise.all([
+      supabase.from("scenario_connections").select("id")
+        .eq("scenario_a", player.current_scenario_id).eq("scenario_b", targetScenarioId).maybeSingle(),
+      supabase.from("scenario_connections").select("id")
+        .eq("scenario_a", targetScenarioId).eq("scenario_b", player.current_scenario_id).maybeSingle(),
+    ]);
+    if (!fwd && !rev) throw new Error("No pots anar a aquesta habitació des d'aquí!");
 
     await supabase.from("game_players")
       .update({ current_scenario_id: targetScenarioId }).eq("id", player.id);

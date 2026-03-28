@@ -38,7 +38,7 @@ export default function ProfilePage() {
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
       getMyRewards(user.id).catch(() => []),
       getScenarios().catch(() => []),
-      (supabase as any).from("wall_messages")
+      supabase.from("wall_messages")
         .select("*")
         .eq("target_user_id", user.id)
         .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
@@ -70,7 +70,7 @@ export default function ProfilePage() {
     }
 
     // Fetch author names
-    const wallMsgs = msgs ?? [];
+    const wallMsgs: any[] = msgs ?? [];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
