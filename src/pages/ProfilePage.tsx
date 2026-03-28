@@ -178,9 +178,11 @@ export default function ProfilePage() {
 
       {/* Inventory */}
       <div className="mb-6">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1">
           🎒 Inventari ({rewards.length})
         </h2>
+        <Tip>📍 Col·loca mobles en escenaris per ampliar el joc · 🪙 Ven-los per tokens bonus</Tip>
+        <div className="h-1.5" />
         {rewards.length === 0 ? (
           <Card>
             <CardContent className="py-6 text-center">

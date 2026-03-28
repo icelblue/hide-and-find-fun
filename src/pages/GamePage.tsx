@@ -435,9 +435,12 @@ export default function GamePage() {
 
           {/* Look / Confirm */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              👀 Investigar
-            </h3>
+           <div>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                👀 Investigar
+              </h3>
+              <Tip>Observar ({TOKEN_COSTS.look}🪙) mira si hi ha bonus. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que l'objecte és allà!</Tip>
+            </div>
             <div className="space-y-1.5">
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
