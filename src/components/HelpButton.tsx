@@ -62,27 +62,29 @@ export function HelpButton() {
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/30 backdrop-blur-sm"
           onClick={() => setOpen(false)}
         >
-          <Card
-            className="mx-2 mb-2 sm:mb-0 max-w-md w-full max-h-[85vh] overflow-hidden flex flex-col"
+          <div
+            className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl"
+            style={{ maxHeight: "calc(100dvh - 2rem)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <CardContent className="pt-5 pb-4 flex flex-col gap-0 overflow-hidden">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold">📖 Com jugar</h2>
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                  ✕
-                </Button>
-              </div>
-              <div className="space-y-3 overflow-y-auto pr-1">
-                {RULES.map((r, i) => (
-                  <div key={i}>
-                    <p className="text-sm font-semibold mb-0.5">{r.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{r.text}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            <div className="flex items-center justify-between px-5 pt-5 pb-2">
+              <h2 className="text-lg font-bold">📖 Com jugar</h2>
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                ✕
+              </Button>
+            </div>
+            <div
+              className="px-5 pb-5 space-y-3 overflow-y-auto -webkit-overflow-scrolling-touch"
+              style={{ maxHeight: "calc(100dvh - 6rem)", WebkitOverflowScrolling: "touch" }}
+            >
+              {RULES.map((r, i) => (
+                <div key={i}>
+                  <p className="text-sm font-semibold mb-0.5">{r.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{r.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </>
