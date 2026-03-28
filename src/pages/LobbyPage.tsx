@@ -3,31 +3,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { createGame, getAvailableGames, joinGame, getMyGames, deleteGame } from "@/lib/supabase-helpers";
+import {
+  createGame, getAvailableGames, joinGame, getMyGames, deleteGame,
+  findRandomMatch, searchPlayers, challengePlayer, getMyInvites,
+} from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
+
+const leagueBadge: Record<string, string> = {
+  bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎", diamond: "👑",
+};
 
 export default function LobbyPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [games, setGames] = useState<any[]>([]);
   const [myGames, setMyGames] = useState<any[]>([]);
+  const [invites, setInvites] = useState<any[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
 
+  // Search rival
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
   const loadAll = useCallback(async () => {
     if (!user) return;
-    const [available, mine, prof] = await Promise.all([
+    const [available, mine, prof, inv] = await Promise.all([
       getAvailableGames(user.id).catch(() => []),
-      getMyGames(user.id),
+      getMyGames(user.id).catch(() => []),
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
+      getMyInvites(user.id).catch(() => []),
     ]);
     setGames(available);
     setMyGames(mine);
     setProfile(prof);
+    setInvites(inv);
   }, [user]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -39,11 +55,23 @@ export default function LobbyPage() {
       const game = await createGame(user.id);
       toast.success(`Partida creada! Codi: ${game.code}`);
       navigate(`/game/${game.id}`);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleRandomMatch = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const result = await findRandomMatch(user.id);
+      if (result.type === "joined") {
+        toast.success("Rival trobat! 🎯");
+      } else {
+        toast.success("Cercant rival... Espera que algú s'uneixi!");
+      }
+      navigate(`/game/${result.gameId}`);
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleJoinByCode = async () => {
@@ -58,11 +86,8 @@ export default function LobbyPage() {
       await joinGame(game.id, user.id);
       toast.success("T'has unit a la partida!");
       navigate(`/game/${game.id}`);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleJoinGame = async (gameId: string) => {
@@ -72,20 +97,34 @@ export default function LobbyPage() {
       await joinGame(gameId, user.id);
       toast.success("T'has unit a la partida!");
       navigate(`/game/${gameId}`);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
   };
 
-  const leagueBadge: Record<string, string> = {
-    bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎", diamond: "👑",
+  const handleSearch = async () => {
+    if (!user || searchQuery.length < 2) return;
+    setSearching(true);
+    try {
+      const results = await searchPlayers(searchQuery, user.id);
+      setSearchResults(results);
+      if (results.length === 0) toast.info("Cap jugador trobat");
+    } catch (err: any) { toast.error(err.message); }
+    finally { setSearching(false); }
+  };
+
+  const handleChallenge = async (rivalUserId: string, rivalName: string) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const game = await challengePlayer(user.id, rivalUserId);
+      toast.success(`⚔️ Repte enviat a ${rivalName}! Codi: ${game.code}`);
+      navigate(`/game/${game.id}`);
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
   };
 
   return (
     <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative">
-      {/* BG glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
 
       {/* Header */}
@@ -108,20 +147,85 @@ export default function LobbyPage() {
         </div>
       </div>
 
-      {/* Create */}
-      <Button onClick={handleCreate} className="w-full mb-4" size="lg" disabled={loading}>
-        ➕ Crear partida nova
-      </Button>
+      {/* Main actions */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <Button onClick={handleRandomMatch} size="lg" disabled={loading} className="h-14">
+          <span className="flex flex-col items-center">
+            <span className="text-lg">🎲</span>
+            <span className="text-xs mt-0.5">Rival aleatori</span>
+          </span>
+        </Button>
+        <Button onClick={handleCreate} size="lg" disabled={loading} variant="secondary" className="h-14">
+          <span className="flex flex-col items-center">
+            <span className="text-lg">➕</span>
+            <span className="text-xs mt-0.5">Crear partida</span>
+          </span>
+        </Button>
+      </div>
+
+      {/* Search rival */}
+      <Card className="mb-4 glass">
+        <CardContent className="pt-3 pb-3">
+          <button
+            onClick={() => setShowSearch(!showSearch)}
+            className="w-full flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+          >
+            <span>🔍 Buscar rival per nom</span>
+            <span>{showSearch ? "▲" : "▼"}</span>
+          </button>
+          {showSearch && (
+            <div className="mt-3">
+              <div className="flex gap-2 mb-2">
+                <Input
+                  placeholder="Nom del jugador..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="text-sm bg-muted/50 border-border/50"
+                  onKeyDown={e => e.key === "Enter" && handleSearch()}
+                />
+                <Button size="sm" onClick={handleSearch} disabled={searching || searchQuery.length < 2}>
+                  {searching ? "..." : "🔍"}
+                </Button>
+              </div>
+              {searchResults.length > 0 && (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {searchResults.map((p: any) => (
+                    <div key={p.user_id} className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2 border border-border/20">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm">{leagueBadge[p.league] ?? "🥉"}</span>
+                        <div className="min-w-0">
+                          <button
+                            onClick={() => navigate(`/player/${p.user_id}`)}
+                            className="text-sm font-semibold hover:text-primary transition-colors truncate block"
+                          >
+                            {p.display_name}
+                          </button>
+                          <span className="text-[10px] text-muted-foreground">Elo {p.elo}</span>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline" className="text-xs shrink-0"
+                        onClick={() => handleChallenge(p.user_id, p.display_name)}
+                        disabled={loading}>
+                        ⚔️ Repte
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Join by code */}
-      <Card className="mb-6 glass">
-        <CardContent className="pt-4 pb-4">
+      <Card className="mb-5 glass">
+        <CardContent className="pt-3 pb-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Unir-se amb codi</p>
           <div className="flex gap-2">
             <Input
               placeholder="Ex: A3B7K2"
               value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())}
               maxLength={6}
               className="uppercase tracking-[0.25em] font-mono text-center text-lg bg-muted/50 border-border/50 h-11"
             />
@@ -132,9 +236,36 @@ export default function LobbyPage() {
         </CardContent>
       </Card>
 
+      {/* Invites */}
+      {invites.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+            ⚔️ Reptes rebuts
+          </h2>
+          <div className="space-y-2">
+            {invites.map((game: any) => (
+              <Card key={game.id} className="glass border-accent/30 glow-accent">
+                <CardContent className="py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">⚔️</span>
+                    <div>
+                      <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
+                      <p className="text-[11px] text-accent">Repte directe!</p>
+                    </div>
+                  </div>
+                  <Button size="sm" onClick={() => handleJoinGame(game.id)} disabled={loading}>
+                    Acceptar
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* My games */}
       {myGames.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
             Les meves partides
           </h2>
@@ -149,11 +280,9 @@ export default function LobbyPage() {
               };
               const s = statusMap[game.status] ?? statusMap.waiting;
               return (
-                <Card
-                  key={gp.game_id}
+                <Card key={gp.game_id}
                   className="cursor-pointer glass hover:border-primary/40 transition-all hover:glow-primary"
-                  onClick={() => navigate(`/game/${game.id}`)}
-                >
+                  onClick={() => navigate(`/game/${game.id}`)}>
                   <CardContent className="py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{s.icon}</span>
@@ -164,8 +293,7 @@ export default function LobbyPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {game.status === "waiting" && game.created_by === user?.id && (
-                        <Button
-                          variant="ghost" size="icon"
+                        <Button variant="ghost" size="icon"
                           className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-xl"
                           onClick={async (e) => {
                             e.stopPropagation();
@@ -174,8 +302,7 @@ export default function LobbyPage() {
                               toast.success("Partida eliminada");
                               loadAll();
                             } catch (err: any) { toast.error(err.message); }
-                          }}
-                        >🗑️</Button>
+                          }}>🗑️</Button>
                       )}
                       <span className="text-muted-foreground text-xs">→</span>
                     </div>
@@ -196,10 +323,10 @@ export default function LobbyPage() {
           <Button variant="ghost" size="sm" onClick={loadAll} className="text-xs">🔄</Button>
         </div>
         {games.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-5xl mb-3 opacity-60">🏜️</div>
+          <div className="text-center py-8">
+            <div className="text-4xl mb-2 opacity-60">🏜️</div>
             <p className="text-sm text-muted-foreground font-medium">Cap partida disponible</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Crea'n una o comparteix el teu codi!</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Usa 🎲 per trobar rival automàticament!</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -208,9 +335,7 @@ export default function LobbyPage() {
                 <CardContent className="py-3 flex items-center justify-between">
                   <div>
                     <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
-                    <span className="ml-2 text-[11px] text-muted-foreground">
-                      per {game.creator_name}
-                    </span>
+                    <span className="ml-2 text-[11px] text-muted-foreground">per {game.creator_name}</span>
                   </div>
                   <Button size="sm" variant="secondary" onClick={() => handleJoinGame(game.id)} disabled={loading}>
                     Unir-se
