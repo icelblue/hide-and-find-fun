@@ -83,10 +83,15 @@ export function HelpButton() {
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/30 backdrop-blur-sm"
           onClick={() => setOpen(false)}
-          style={{ touchAction: "none" }}
+          style={{
+            touchAction: "none",
+            paddingTop: "env(safe-area-inset-top, 0px)",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          }}
         >
           <div
-            className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl max-h-[80vh] flex flex-col"
+            className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl flex flex-col"
+            style={{ maxHeight: "calc(80vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
