@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { TOKEN_COSTS } from "@/lib/supabase-helpers";
 
 const RULES = [
@@ -45,6 +44,29 @@ const RULES = [
 export function HelpButton() {
   const [open, setOpen] = useState(false);
 
+  // Lock body scroll when modal is open (prevents Safari scroll-through)
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      window.scrollTo(0, parseInt(scrollY || "0") * -1);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [open]);
+
   return (
     <>
       <Button
@@ -61,20 +83,24 @@ export function HelpButton() {
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/30 backdrop-blur-sm"
           onClick={() => setOpen(false)}
+          style={{ touchAction: "none" }}
         >
           <div
-            className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl max-h-[calc(100vh-2rem)]"
+            className="mx-2 mb-2 sm:mb-0 max-w-md w-full bg-card border border-border rounded-2xl shadow-xl max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 pt-5 pb-2">
+            <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
               <h2 className="text-lg font-bold">📖 Com jugar</h2>
               <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
                 ✕
               </Button>
             </div>
             <div
-              className="px-5 pb-5 space-y-3 overflow-y-auto max-h-[calc(100vh-6rem)]"
-              style={{ WebkitOverflowScrolling: "touch" }}
+              className="px-5 pb-5 space-y-3 overflow-y-auto flex-1 overscroll-contain"
+              style={{
+                WebkitOverflowScrolling: "touch",
+                overscrollBehavior: "contain",
+              }}
             >
               {RULES.map((r, i) => (
                 <div key={i}>
