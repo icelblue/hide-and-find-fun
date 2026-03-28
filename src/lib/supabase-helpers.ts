@@ -72,8 +72,11 @@ export async function getAvailableGames(currentUserId: string) {
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
-  // Filter out own games
-  const otherGames = data.filter(g => g.created_by !== currentUserId);
+  // Filter: not own games, and either no invite or invited to me
+  const otherGames = data.filter(g =>
+    g.created_by !== currentUserId &&
+    (!(g as any).invited_user_id || (g as any).invited_user_id === currentUserId)
+  );
   if (otherGames.length === 0) return [];
 
   const creatorIds = [...new Set(otherGames.map(g => g.created_by))];
@@ -85,6 +88,51 @@ export async function getAvailableGames(currentUserId: string) {
     ...game,
     creator_name: profileMap.get(game.created_by) ?? "Anònim",
   }));
+}
+
+export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
+  // Try to join an existing public waiting game
+  const { data: available } = await supabase
+    .from("games").select("id")
+    .eq("status", "waiting")
+    .neq("created_by", userId)
+    .is("invited_user_id" as any, null)
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (available && available.length > 0) {
+    await joinGame(available[0].id, userId);
+    return { type: "joined", gameId: available[0].id };
+  }
+
+  // No games available — create one and wait
+  const game = await createGame(userId);
+  return { type: "created", gameId: game.id };
+}
+
+export async function searchPlayers(query: string, currentUserId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_id, display_name, elo, league")
+    .neq("user_id", currentUserId)
+    .ilike("display_name", `%${query}%`)
+    .limit(10);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function challengePlayer(userId: string, rivalUserId: string) {
+  return createGame(userId, rivalUserId);
+}
+
+export async function getMyInvites(userId: string) {
+  const { data } = await supabase
+    .from("games")
+    .select("*")
+    .eq("status", "waiting")
+    .eq("invited_user_id" as any, userId)
+    .order("created_at", { ascending: false });
+  return data ?? [];
 }
 
 export async function getMyGames(userId: string) {
