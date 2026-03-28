@@ -250,6 +250,45 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* Wall messages */}
+      <div className="mb-6">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          💬 El teu mur · <span className="normal-case">missatges de {WALL_TTL_HOURS}h</span>
+        </h2>
+        {wallMessages.length === 0 ? (
+          <Card className="glass">
+            <CardContent className="py-6 text-center">
+              <div className="text-3xl mb-2 opacity-50">🤫</div>
+              <p className="text-xs text-muted-foreground">Cap missatge recent</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-1.5">
+            {wallMessages.map((m: any) => {
+              const mins = Math.floor((Date.now() - new Date(m.created_at).getTime()) / 60000);
+              const timeStr = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h`;
+              return (
+                <Card key={m.id} className="glass">
+                  <CardContent className="py-2 px-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <button
+                          onClick={() => navigate(`/player/${m.author_user_id}`)}
+                          className="text-xs font-semibold text-primary hover:underline">
+                          {m._author_name}
+                        </button>
+                        <p className="text-sm break-words">{m.message}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeStr}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <Button variant="outline" className="w-full" onClick={signOut}>
         🚪 Tancar sessió
       </Button>
