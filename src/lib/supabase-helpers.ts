@@ -122,7 +122,7 @@ export async function getAvailableGames(currentUserId: string) {
 
 export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
   // Try to join an existing public waiting game
-  const { data: available } = await (supabase as any)
+  const { data: available } = await supabase
     .from("games").select("id")
     .eq("status", "waiting")
     .neq("created_by", userId)
