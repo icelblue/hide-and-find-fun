@@ -53,7 +53,7 @@ export default function PlayerProfilePage() {
     if (!user || !userId || !newMsg.trim()) return;
     setSending(true);
     try {
-      const { error } = await (supabase as any).from("wall_messages").insert({
+      const { error } = await supabase.from("wall_messages").insert({
         target_user_id: userId,
         author_user_id: user.id,
         message: newMsg.trim().slice(0, MAX_MSG_LENGTH),
