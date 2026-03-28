@@ -46,6 +46,7 @@ export default function GamePage() {
   const [messageInput, setMessageInput] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState<{ itemId: string; position: "sobre" | "sota" | "dins"; itemName: string } | null>(null);
   const [reward, setReward] = useState<any>(null);
+  const [rivalNearby, setRivalNearby] = useState(false);
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
