@@ -74,7 +74,7 @@ export function HelpButton() {
               </Button>
             </div>
             <div
-              className="px-5 pb-5 space-y-3 overflow-y-auto -webkit-overflow-scrolling-touch"
+              className="px-5 pb-5 space-y-3 overflow-y-auto"
               style={{ maxHeight: "calc(100dvh - 6rem)", WebkitOverflowScrolling: "touch" }}
             >
               {RULES.map((r, i) => (
