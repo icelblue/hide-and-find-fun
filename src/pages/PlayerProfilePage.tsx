@@ -25,8 +25,8 @@ export default function PlayerProfilePage() {
     if (!userId) return;
     const [{ data: prof }, { data: msgs }] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
-      (supabase as any).from("wall_messages")
-        .select("*, author:profiles!wall_messages_author_user_id_fkey(display_name)")
+      supabase.from("wall_messages")
+        .select("*")
         .eq("target_user_id", userId)
         .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false }),
