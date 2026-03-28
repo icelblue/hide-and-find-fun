@@ -317,10 +317,11 @@ export default function GamePage() {
             </div>
           )}
 
-          {hideStep === 1 && (
+           {hideStep === 1 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
-              <p className="text-xs text-muted-foreground mb-3">Tria un objecte del llistat</p>
+              <Tip>Escull l'objecte que el rival haurà de trobar. És el mateix per tots dos!</Tip>
+              <div className="h-2" />
               <div className="grid grid-cols-3 gap-2">
                 {objects.map(o => (
                   <Card key={o.id} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => { setSelectedObject(o.id); setHideStep(2); }}>
