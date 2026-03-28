@@ -33,10 +33,9 @@ export default function PlayerProfilePage() {
     ]);
     setProfile(prof);
 
-    // Client-side filter for author join — fallback if FK doesn't exist
+    // Fetch author names
     const wallMsgs = msgs ?? [];
-    // Fetch author names separately if join failed
-    if (wallMsgs.length > 0 && !wallMsgs[0]?.author) {
+    if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
         .from("profiles").select("user_id, display_name").in("user_id", authorIds);
