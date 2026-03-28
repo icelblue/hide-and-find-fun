@@ -211,6 +211,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          invited_user_id: string | null
           scenario_id: string | null
           status: Database["public"]["Enums"]["game_status"]
           updated_at: string
@@ -221,6 +222,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          invited_user_id?: string | null
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
           updated_at?: string
@@ -231,6 +233,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          invited_user_id?: string | null
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
           updated_at?: string
