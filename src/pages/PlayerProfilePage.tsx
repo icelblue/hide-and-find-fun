@@ -184,7 +184,7 @@ export default function PlayerProfilePage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-primary">
-                        {m.author?.display_name ?? m._author_name ?? "Anònim"}
+                        {m._author_name ?? "Anònim"}
                       </span>
                       <p className="text-sm mt-0.5 break-words">{m.message}</p>
                     </div>

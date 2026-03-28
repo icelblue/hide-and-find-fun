@@ -156,7 +156,7 @@ export async function challengePlayer(userId: string, rivalUserId: string) {
 }
 
 export async function getMyInvites(userId: string) {
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from("games")
     .select("*")
     .eq("status", "waiting")
