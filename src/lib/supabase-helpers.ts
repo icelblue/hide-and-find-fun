@@ -29,6 +29,15 @@ export async function getObjects() {
   return data;
 }
 
+export async function getConnectedScenarios(scenarioId: string) {
+  const { data, error } = await supabase
+    .from("scenario_connections")
+    .select("scenario_b, scenarios!scenario_connections_scenario_b_fkey(id, name, icon, display_order)")
+    .eq("scenario_a", scenarioId);
+  if (error) throw error;
+  return (data ?? []).map((c: any) => c.scenarios).filter(Boolean);
+}
+
 // ============================================
 // GAME LIFECYCLE
 // ============================================

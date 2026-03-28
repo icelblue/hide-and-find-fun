@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  getScenarios, getItemsByScenario, getObjects,
+  getScenarios, getItemsByScenario, getObjects, getConnectedScenarios,
   hideObject, checkBothPlayersHidden, startGame, performMove,
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
