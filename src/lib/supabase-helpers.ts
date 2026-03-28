@@ -29,6 +29,15 @@ export async function getObjects() {
   return data;
 }
 
+export async function getConnectedScenarios(scenarioId: string) {
+  const { data, error } = await (supabase as any)
+    .from("scenario_connections")
+    .select("scenario_b, scenarios!scenario_connections_scenario_b_fkey(id, name, icon, display_order)")
+    .eq("scenario_a", scenarioId);
+  if (error) throw error;
+  return (data ?? []).map((c: any) => c.scenarios).filter(Boolean);
+}
+
 // ============================================
 // GAME LIFECYCLE
 // ============================================
@@ -283,6 +292,15 @@ export async function performMove(
   }
 
   if (action === "move" && targetScenarioId) {
+    // Validate connection exists
+    const { data: conn } = await (supabase as any)
+      .from("scenario_connections")
+      .select("id")
+      .eq("scenario_a", player.current_scenario_id)
+      .eq("scenario_b", targetScenarioId)
+      .maybeSingle();
+    if (!conn) throw new Error("No pots anar a aquesta habitació des d'aquí!");
+
     await supabase.from("game_players")
       .update({ current_scenario_id: targetScenarioId }).eq("id", player.id);
   }

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  getScenarios, getItemsByScenario, getObjects,
+  getScenarios, getItemsByScenario, getObjects, getConnectedScenarios,
   hideObject, checkBothPlayersHidden, startGame, performMove,
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
@@ -36,6 +36,7 @@ export default function GamePage() {
   const [hideStep, setHideStep] = useState(0);
 
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
+  const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -80,8 +81,12 @@ export default function GamePage() {
     }
 
     if (gameData?.status === "playing" && playerData?.current_scenario_id) {
-      const itemsData = await getItemsByScenario(playerData.current_scenario_id);
+      const [itemsData, connected] = await Promise.all([
+        getItemsByScenario(playerData.current_scenario_id),
+        getConnectedScenarios(playerData.current_scenario_id),
+      ]);
       setCurrentScenarioItems(itemsData);
+      setConnectedScenarios(connected);
     }
 
     const { data: moves } = await supabase
@@ -457,14 +462,15 @@ export default function GamePage() {
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               🚶 Moure's · {TOKEN_COSTS.move}🪙
             </h3>
-            <Tip>Ves a una altra habitació per explorar</Tip>
-            <div className="grid grid-cols-3 gap-1.5 mt-2">
-              {scenarios.filter(s => s.id !== player.current_scenario_id).map(s => (
+            <Tip>Ves a una habitació adjacent (cada sala té 2 portes)</Tip>
+            <div className="grid grid-cols-2 gap-1.5 mt-2">
+              {connectedScenarios.map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
                   disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move}
-                  className="glass rounded-xl p-2.5 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
-                  <div className="text-xl">{s.icon}</div>
-                  <div className="text-[10px] leading-tight font-medium mt-0.5">{s.name}</div>
+                  className="glass rounded-xl p-3 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
+                  <div className="text-2xl">{s.icon}</div>
+                  <div className="text-[11px] leading-tight font-medium mt-1">{s.name}</div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">🚪 porta</div>
                 </button>
               ))}
             </div>
