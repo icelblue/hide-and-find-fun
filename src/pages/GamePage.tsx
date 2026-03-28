@@ -355,10 +355,11 @@ export default function GamePage() {
             </div>
           )}
 
-          {hideStep === 3 && (
+           {hideStep === 3 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
-              <p className="text-xs text-muted-foreground mb-3">A sobre, a sota o a dins?</p>
+              <Tip>Sobre, sota o dins del moble. Cada posició costa tokens per investigar!</Tip>
+              <div className="h-2" />
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => (
                   <Card key={pos.value} className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.98]" onClick={() => handleHidePosition(pos.value)}>
