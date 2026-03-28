@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { createGame, getAvailableGames, joinGame } from "@/lib/supabase-helpers";
+import { createGame, getAvailableGames, joinGame, getMyGames } from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,48 +12,24 @@ export default function LobbyPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [games, setGames] = useState<any[]>([]);
+  const [myGames, setMyGames] = useState<any[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
 
-  useEffect(() => {
-    loadGames();
-    loadProfile();
+  const loadAll = useCallback(async () => {
+    if (!user) return;
+    const [available, mine, prof] = await Promise.all([
+      getAvailableGames(user.id).catch(() => []),
+      getMyGames(user.id),
+      supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
+    ]);
+    setGames(available);
+    setMyGames(mine);
+    setProfile(prof);
   }, [user]);
 
-  const loadProfile = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-    setProfile(data);
-  };
-
-  const loadGames = async () => {
-    try {
-      const data = await getAvailableGames();
-      // Filter out own games
-      setGames(data?.filter((g: any) => g.created_by !== user?.id) ?? []);
-    } catch (err: any) {
-      console.error(err);
-    }
-  };
-
-  // Also load active games for this user
-  const [myGames, setMyGames] = useState<any[]>([]);
-  useEffect(() => {
-    if (!user) return;
-    const loadMyGames = async () => {
-      const { data } = await supabase
-        .from("game_players")
-        .select("game_id, games!inner(id, code, status, created_by)")
-        .eq("user_id", user.id);
-      setMyGames(data ?? []);
-    };
-    loadMyGames();
-  }, [user]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   const handleCreate = async () => {
     if (!user) return;
@@ -74,14 +50,10 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       const { data: game } = await supabase
-        .from("games")
-        .select("id, status")
-        .eq("code", joinCode.toUpperCase())
-        .single();
-
+        .from("games").select("id, status")
+        .eq("code", joinCode.toUpperCase()).single();
       if (!game) throw new Error("Partida no trobada");
       if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
-
       await joinGame(game.id, user.id);
       toast.success("T'has unit a la partida!");
       navigate(`/game/${game.id}`);
@@ -107,15 +79,11 @@ export default function LobbyPage() {
   };
 
   const leagueBadge: Record<string, string> = {
-    bronze: "🥉",
-    silver: "🥈",
-    gold: "🥇",
-    platinum: "💎",
-    diamond: "👑",
+    bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎", diamond: "👑",
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 max-w-md mx-auto">
+    <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -124,70 +92,67 @@ export default function LobbyPage() {
             {profile?.display_name} · {leagueBadge[profile?.league ?? "bronze"]} {profile?.league}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/profile")}>
-            👤
-          </Button>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            🚪
-          </Button>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>👤</Button>
+          <Button variant="ghost" size="icon" onClick={signOut}>🚪</Button>
         </div>
       </div>
 
-      {/* Create Game */}
-      <Card className="mb-4">
-        <CardContent className="pt-4">
-          <Button onClick={handleCreate} className="w-full" disabled={loading}>
-            ➕ Crear partida
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Create */}
+      <Button onClick={handleCreate} className="w-full mb-4" size="lg" disabled={loading}>
+        ➕ Crear partida nova
+      </Button>
 
       {/* Join by code */}
-      <Card className="mb-4">
+      <Card className="mb-6">
         <CardContent className="pt-4">
           <p className="text-sm font-medium mb-2">Unir-se amb codi</p>
           <div className="flex gap-2">
             <Input
-              placeholder="CODI 6 dígits"
+              placeholder="Ex: A3B7K2"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               maxLength={6}
-              className="uppercase tracking-widest font-mono"
+              className="uppercase tracking-[0.2em] font-mono text-center text-lg"
             />
             <Button onClick={handleJoinByCode} disabled={loading || joinCode.length < 4}>
-              Unir-se
+              Entrar
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* My active games */}
+      {/* My games */}
       {myGames.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-2">
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
             Les meves partides
           </h2>
           <div className="space-y-2">
             {myGames.map((gp: any) => {
               const game = gp.games;
+              const statusMap: Record<string, { icon: string; label: string }> = {
+                waiting: { icon: "⏳", label: "Esperant rival" },
+                hiding: { icon: "🫣", label: "Amaga l'objecte" },
+                playing: { icon: "🎮", label: "En joc" },
+                finished: { icon: "🏁", label: "Acabada" },
+              };
+              const s = statusMap[game.status] ?? statusMap.waiting;
               return (
                 <Card
                   key={gp.game_id}
-                  className="cursor-pointer hover:border-primary/50 transition-colors"
+                  className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-sm"
                   onClick={() => navigate(`/game/${game.id}`)}
                 >
                   <CardContent className="py-3 flex items-center justify-between">
-                    <div>
-                      <span className="font-mono text-sm">{game.code}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {game.status === "waiting" && "⏳ Esperant rival"}
-                        {game.status === "hiding" && "🫣 Amagant"}
-                        {game.status === "playing" && "🎮 Jugant"}
-                        {game.status === "finished" && "🏁 Acabada"}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{s.icon}</span>
+                      <div>
+                        <span className="font-mono text-sm font-medium">{game.code}</span>
+                        <p className="text-xs text-muted-foreground">{s.label}</p>
+                      </div>
                     </div>
-                    <span className="text-sm">→</span>
+                    <span className="text-muted-foreground">→</span>
                   </CardContent>
                 </Card>
               );
@@ -199,29 +164,29 @@ export default function LobbyPage() {
       {/* Available games */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            Partides disponibles
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Partides obertes
           </h2>
-          <button onClick={loadGames} className="text-xs text-primary">
-            🔄 Actualitzar
-          </button>
+          <Button variant="ghost" size="sm" onClick={loadAll}>🔄</Button>
         </div>
         {games.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-8">
-            No hi ha partides disponibles. Crea'n una!
-          </p>
+          <div className="text-center py-10">
+            <div className="text-4xl mb-2">🏜️</div>
+            <p className="text-sm text-muted-foreground">Cap partida disponible</p>
+            <p className="text-xs text-muted-foreground">Crea'n una o comparteix el teu codi!</p>
+          </div>
         ) : (
           <div className="space-y-2">
             {games.map((game: any) => (
-              <Card key={game.id}>
+              <Card key={game.id} className="hover:border-primary/50 transition-all">
                 <CardContent className="py-3 flex items-center justify-between">
                   <div>
-                    <span className="font-mono text-sm">{game.code}</span>
+                    <span className="font-mono text-sm font-medium">{game.code}</span>
                     <span className="ml-2 text-xs text-muted-foreground">
-                      per {game.creator_name ?? "Anònim"}
+                      per {game.creator_name}
                     </span>
                   </div>
-                  <Button size="sm" onClick={() => handleJoinGame(game.id)} disabled={loading}>
+                  <Button size="sm" variant="secondary" onClick={() => handleJoinGame(game.id)} disabled={loading}>
                     Unir-se
                   </Button>
                 </CardContent>

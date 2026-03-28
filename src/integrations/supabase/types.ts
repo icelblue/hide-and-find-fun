@@ -170,6 +170,7 @@ export type Database = {
           id: string
           item_type: Database["public"]["Enums"]["social_item_type"]
           message_text: string | null
+          processed: boolean
           to_player_id: string
         }
         Insert: {
@@ -180,6 +181,7 @@ export type Database = {
           id?: string
           item_type: Database["public"]["Enums"]["social_item_type"]
           message_text?: string | null
+          processed?: boolean
           to_player_id: string
         }
         Update: {
@@ -190,6 +192,7 @@ export type Database = {
           id?: string
           item_type?: Database["public"]["Enums"]["social_item_type"]
           message_text?: string | null
+          processed?: boolean
           to_player_id?: string
         }
         Relationships: [
@@ -295,6 +298,47 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      player_inventory: {
+        Row: {
+          collected_at: string
+          game_id: string
+          gifted_at: string | null
+          gifted_to: string | null
+          id: string
+          item_type: string
+          item_value: string | null
+          user_id: string
+        }
+        Insert: {
+          collected_at?: string
+          game_id: string
+          gifted_at?: string | null
+          gifted_to?: string | null
+          id?: string
+          item_type: string
+          item_value?: string | null
+          user_id: string
+        }
+        Update: {
+          collected_at?: string
+          game_id?: string
+          gifted_at?: string | null
+          gifted_to?: string | null
+          id?: string
+          item_type?: string
+          item_value?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_inventory_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
