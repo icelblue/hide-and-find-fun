@@ -273,18 +273,30 @@ export default function GamePage() {
         </div>
       </div>
 
-      {/* WAITING */}
-      {phase === "waiting" && (
-        <div className="text-center py-16">
-          <div className="text-7xl mb-4 animate-pulse">⏳</div>
-          <h2 className="text-xl font-bold mb-2">Esperant rival</h2>
-          <p className="text-sm text-muted-foreground mb-4">Comparteix el codi:</p>
-          <Card className="glass glow-primary">
-            <CardContent className="py-6">
-              <div className="font-mono text-4xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
+      {/* WAITING — show code + allow hiding */}
+      {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
+        <div>
+          <Card className="glass glow-primary mb-4">
+            <CardContent className="py-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
+              <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
+              <p className="text-[11px] text-muted-foreground/60 mt-2">Mentre esperes, amaga el teu objecte! 👇</p>
             </CardContent>
           </Card>
-          <p className="text-xs text-muted-foreground/60 mt-4">L'altra persona ha d'entrar el codi al lobby</p>
+        </div>
+      )}
+
+      {/* WAITING — already hidden, just waiting */}
+      {phase === "waiting" && player.has_hidden && (
+        <div className="text-center py-16">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
+          <h2 className="text-xl font-bold mb-2">Objecte amagat!</h2>
+          <p className="text-sm text-muted-foreground mb-4">Esperant rival...</p>
+          <Card className="glass glow-primary">
+            <CardContent className="py-4">
+              <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient text-center">{game.code}</div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
