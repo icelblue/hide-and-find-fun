@@ -218,7 +218,7 @@ export default function LobbyPage() {
                   <div>
                     <span className="font-mono text-sm">{game.code}</span>
                     <span className="ml-2 text-xs text-muted-foreground">
-                      per {(game.profiles as any)?.display_name ?? "Anònim"}
+                      per {game.creator_name ?? "Anònim"}
                     </span>
                   </div>
                   <Button size="sm" onClick={() => handleJoinGame(game.id)} disabled={loading}>
