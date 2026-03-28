@@ -9,6 +9,8 @@ import { getMyRewards, placeRewardItem, sellRewardItem, RARITY_CONFIG } from "@/
 import { toast } from "sonner";
 import { Tip } from "@/components/HelpButton";
 
+const WALL_TTL_HOURS = 22;
+
 const RARITY_BORDER: Record<string, string> = {
   common: "border-muted-foreground/30",
   uncommon: "border-green-500/40",
@@ -26,17 +28,35 @@ export default function ProfilePage() {
   const [placingReward, setPlacingReward] = useState<any>(null);
   const [sellingReward, setSellingReward] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [wallMessages, setWallMessages] = useState<any[]>([]);
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [prof, rew, scen] = await Promise.all([
+    const [prof, rew, scen, { data: msgs }] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
       getMyRewards(user.id).catch(() => []),
       getScenarios().catch(() => []),
+      (supabase as any).from("wall_messages")
+        .select("*")
+        .eq("target_user_id", user.id)
+        .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false }),
     ]);
     setProfile(prof);
     setRewards(rew);
     setScenarios(scen);
+    // Fetch author names
+    const wallMsgs = msgs ?? [];
+    if (wallMsgs.length > 0) {
+      const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
+      const { data: authors } = await supabase
+        .from("profiles").select("user_id, display_name").in("user_id", authorIds);
+      const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
+      for (const m of wallMsgs) {
+        m._author_name = authorMap.get(m.author_user_id) ?? "Anònim";
+      }
+    }
+    setWallMessages(wallMsgs);
   }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -221,6 +241,45 @@ export default function ProfilePage() {
                         onClick={() => setPlacingReward(r)}>📍</Button>
                       <Button size="sm" variant="ghost" className="text-xs h-7 px-2 rounded-lg"
                         onClick={() => setSellingReward(r)}>🪙</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Wall messages */}
+      <div className="mb-6">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          💬 El teu mur · <span className="normal-case">missatges de {WALL_TTL_HOURS}h</span>
+        </h2>
+        {wallMessages.length === 0 ? (
+          <Card className="glass">
+            <CardContent className="py-6 text-center">
+              <div className="text-3xl mb-2 opacity-50">🤫</div>
+              <p className="text-xs text-muted-foreground">Cap missatge recent</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-1.5">
+            {wallMessages.map((m: any) => {
+              const mins = Math.floor((Date.now() - new Date(m.created_at).getTime()) / 60000);
+              const timeStr = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h`;
+              return (
+                <Card key={m.id} className="glass">
+                  <CardContent className="py-2 px-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <button
+                          onClick={() => navigate(`/player/${m.author_user_id}`)}
+                          className="text-xs font-semibold text-primary hover:underline">
+                          {m._author_name}
+                        </button>
+                        <p className="text-sm break-words">{m.message}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeStr}</span>
                     </div>
                   </CardContent>
                 </Card>
