@@ -417,7 +417,7 @@ export default function GamePage() {
 
           {/* Social item badge */}
           {player.shield_active && (
-            <div className="bg-blue-500/10 text-blue-600 text-xs font-medium px-3 py-1 rounded-full mb-3 inline-block">
+            <div className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full mb-3 inline-block">
               🛡️ Escut actiu
             </div>
           )}
