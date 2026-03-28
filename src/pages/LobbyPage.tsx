@@ -166,13 +166,18 @@ export default function LobbyPage() {
       {/* Search rival */}
       <Card className="mb-4 glass">
         <CardContent className="pt-3 pb-3">
-          <button
-            onClick={() => setShowSearch(!showSearch)}
-            className="w-full flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-          >
-            <span>🔍 Buscar rival per nom</span>
-            <span>{showSearch ? "▲" : "▼"}</span>
-          </button>
+          <div className="flex gap-2 mb-2">
+            <Input
+              placeholder="Buscar jugador per nom..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="text-sm bg-muted/50 border-border/50"
+              onKeyDown={e => e.key === "Enter" && handleSearch()}
+            />
+            <Button size="sm" onClick={handleSearch} disabled={searching || searchQuery.length < 2}>
+              {searching ? "..." : "🔍"}
+            </Button>
+          </div>
           {showSearch && (
             <div className="mt-3">
               <div className="flex gap-2 mb-2">

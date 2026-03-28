@@ -206,6 +206,30 @@ export default function ProfilePage() {
         ))}
       </div>
 
+      {/* Top rival */}
+      {topRival && (
+        <Card className="mb-4 glass border-secondary/30">
+          <CardContent className="py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚔️</span>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Rival favorit</p>
+                <button
+                  onClick={() => navigate(`/player/${topRival.userId}`)}
+                  className="font-bold text-sm text-primary hover:underline"
+                >
+                  {topRival.name}
+                </button>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-lg leading-tight">{topRival.count}</div>
+              <div className="text-[9px] text-muted-foreground">partides</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Elo bar */}
       <Card className="mb-5 glass">
         <CardContent className="py-3">
