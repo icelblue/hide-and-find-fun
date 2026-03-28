@@ -116,4 +116,10 @@
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(135deg, hsl(265 90% 70%), hsl(175 70% 50%));
   }
+  .text-neon {
+    font-family: 'Orbitron', sans-serif;
+    @apply bg-clip-text text-transparent font-black tracking-wider;
+    background-image: linear-gradient(90deg, hsl(330 100% 65%), hsl(280 100% 70%), hsl(330 100% 60%));
+    filter: drop-shadow(0 0 8px hsl(330 100% 65% / 0.6)) drop-shadow(0 0 20px hsl(280 100% 70% / 0.3));
+  }
 }
