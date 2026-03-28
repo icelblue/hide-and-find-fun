@@ -140,7 +140,11 @@ export async function getMyGames(userId: string) {
     .from("game_players")
     .select("game_id, games!inner(id, code, status, created_by)")
     .eq("user_id", userId);
-  return data ?? [];
+  // Filter out old finished games (keep last 24h)
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  return (data ?? []).filter((gp: any) =>
+    gp.games.status !== "finished" || gp.games.created_at > cutoff
+  );
 }
 
 export async function deleteGame(gameId: string) {
