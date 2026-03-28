@@ -340,10 +340,53 @@ export type Database = {
           },
         ]
       }
+      player_rewards: {
+        Row: {
+          game_id: string
+          id: string
+          obtained_at: string
+          reward_item_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          game_id: string
+          id?: string
+          obtained_at?: string
+          reward_item_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          game_id?: string
+          id?: string
+          obtained_at?: string
+          reward_item_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_rewards_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_rewards_reward_item_id_fkey"
+            columns: ["reward_item_id"]
+            isOneToOne: false
+            referencedRelation: "reward_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           best_streak: number
+          bonus_tokens: number
           created_at: string
           current_streak: number
           display_name: string | null
@@ -358,6 +401,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           best_streak?: number
+          bonus_tokens?: number
           created_at?: string
           current_streak?: number
           display_name?: string | null
@@ -372,6 +416,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           best_streak?: number
+          bonus_tokens?: number
           created_at?: string
           current_streak?: number
           display_name?: string | null
@@ -384,6 +429,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reward_items: {
+        Row: {
+          icon: string
+          id: string
+          name: string
+          placed_at: string | null
+          placed_by: string | null
+          placed_in_scenario_id: string | null
+          rarity: Database["public"]["Enums"]["item_rarity"]
+          sell_value: number
+        }
+        Insert: {
+          icon: string
+          id?: string
+          name: string
+          placed_at?: string | null
+          placed_by?: string | null
+          placed_in_scenario_id?: string | null
+          rarity: Database["public"]["Enums"]["item_rarity"]
+          sell_value?: number
+        }
+        Update: {
+          icon?: string
+          id?: string
+          name?: string
+          placed_at?: string | null
+          placed_by?: string | null
+          placed_in_scenario_id?: string | null
+          rarity?: Database["public"]["Enums"]["item_rarity"]
+          sell_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_items_placed_in_scenario_id_fkey"
+            columns: ["placed_in_scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scenario_bonuses: {
         Row: {
@@ -446,12 +532,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      place_reward_item: {
+        Args: { _player_reward_id: string; _scenario_id: string }
+        Returns: undefined
+      }
+      sell_reward_item: { Args: { _player_reward_id: string }; Returns: number }
     }
     Enums: {
       action_type: "move" | "look" | "confirm"
       bonus_type: "extra_token" | "hint_yes" | "hint_no"
       game_status: "waiting" | "hiding" | "playing" | "finished"
+      item_rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"
       league_tier: "bronze" | "silver" | "gold" | "platinum" | "diamond"
       position_type: "sobre" | "sota" | "dins"
       social_item_type:
@@ -590,6 +681,7 @@ export const Constants = {
       action_type: ["move", "look", "confirm"],
       bonus_type: ["extra_token", "hint_yes", "hint_no"],
       game_status: ["waiting", "hiding", "playing", "finished"],
+      item_rarity: ["common", "uncommon", "rare", "epic", "legendary"],
       league_tier: ["bronze", "silver", "gold", "platinum", "diamond"],
       position_type: ["sobre", "sota", "dins"],
       social_item_type: [
