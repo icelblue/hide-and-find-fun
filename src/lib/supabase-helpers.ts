@@ -33,10 +33,13 @@ export async function getObjects() {
 // GAME LIFECYCLE
 // ============================================
 
-export async function createGame(userId: string) {
+export async function createGame(userId: string, invitedUserId?: string) {
   const code = generateGameCode();
+  const insertData: any = { code, created_by: userId };
+  if (invitedUserId) insertData.invited_user_id = invitedUserId;
+
   const { data: game, error: gameError } = await supabase
-    .from("games").insert({ code, created_by: userId }).select().single();
+    .from("games").insert(insertData).select().single();
   if (gameError) throw gameError;
 
   const { error: playerError } = await supabase
