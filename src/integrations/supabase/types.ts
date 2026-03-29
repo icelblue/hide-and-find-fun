@@ -126,6 +126,8 @@ export type Database = {
           current_scenario_id: string | null
           game_id: string
           has_hidden: boolean
+          hidden_clue_1: string | null
+          hidden_clue_2: string | null
           hidden_item_id: string | null
           hidden_object_id: string | null
           hidden_position: Database["public"]["Enums"]["position_type"] | null
@@ -142,6 +144,8 @@ export type Database = {
           current_scenario_id?: string | null
           game_id: string
           has_hidden?: boolean
+          hidden_clue_1?: string | null
+          hidden_clue_2?: string | null
           hidden_item_id?: string | null
           hidden_object_id?: string | null
           hidden_position?: Database["public"]["Enums"]["position_type"] | null
@@ -158,6 +162,8 @@ export type Database = {
           current_scenario_id?: string | null
           game_id?: string
           has_hidden?: boolean
+          hidden_clue_1?: string | null
+          hidden_clue_2?: string | null
           hidden_item_id?: string | null
           hidden_object_id?: string | null
           hidden_position?: Database["public"]["Enums"]["position_type"] | null
@@ -293,6 +299,7 @@ export type Database = {
           display_order: number
           icon: string | null
           id: string
+          inner_capacity: number
           name: string
           scenario_id: string
         }
@@ -300,6 +307,7 @@ export type Database = {
           display_order?: number
           icon?: string | null
           id?: string
+          inner_capacity?: number
           name: string
           scenario_id: string
         }
@@ -307,6 +315,7 @@ export type Database = {
           display_order?: number
           icon?: string | null
           id?: string
+          inner_capacity?: number
           name?: string
           scenario_id?: string
         }
@@ -326,18 +335,21 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          size: number
         }
         Insert: {
           display_order?: number
           icon?: string | null
           id?: string
           name: string
+          size?: number
         }
         Update: {
           display_order?: number
           icon?: string | null
           id?: string
           name?: string
+          size?: number
         }
         Relationships: []
       }
