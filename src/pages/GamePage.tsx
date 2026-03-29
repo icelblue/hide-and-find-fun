@@ -299,7 +299,7 @@ export default function GamePage() {
     </div>;
   }
 
-  const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició", "💡 Pistes"];
+  const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
 
   return (
     <div className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative">
