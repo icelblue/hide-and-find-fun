@@ -183,15 +183,12 @@ export default function GamePage() {
       }
     }
     setSelectedPosition(pos);
-    setHideStep(4); // Go to clues step
-  };
-
-  const handleHideWithClues = async () => {
-    if (!gameId || !user || !selectedPosition) return;
+    // Directly hide — no clue step needed (traits are predefined)
+    if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      await hideObject(gameId, user.id, selectedObject, selectedItem, selectedPosition as any, clue1, clue2);
-      setHideStep(5);
+      await hideObject(gameId, user.id, selectedObject, selectedItem, pos);
+      setHideStep(4);
       toast.success("Objecte amagat! 🫣");
       if (await checkBothPlayersHidden(gameId)) {
         await startGame(gameId);
