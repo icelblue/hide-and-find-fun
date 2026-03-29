@@ -375,7 +375,7 @@ export async function performMove(
       .update({ status: "finished" as const, winner_id: playerId }).eq("id", gameId);
   }
 
-  return { move, foundObject, foundBonus, bonusValue, tokensRemaining: newTokens };
+  return { move, foundObject, foundBonus, bonusValue, tokensRemaining: newTokens, hintLevel };
 }
 
 // ============================================
