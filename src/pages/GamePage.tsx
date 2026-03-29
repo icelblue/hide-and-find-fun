@@ -175,7 +175,18 @@ export default function GamePage() {
       const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
-      else toast.info(`${posLabel} ${item?.icon} ${item?.name}: buit (-${TOKEN_COSTS.look}🪙)`);
+      else {
+        // Progressive hints
+        const hints = [
+          `❄️ ${posLabel} ${item?.icon} ${item?.name}: fred... no és per aquí (-${TOKEN_COSTS.look}🪙)`,
+          `🌡️ ${posLabel} ${item?.icon} ${item?.name}: calent! Alguna cosa a prop... (-${TOKEN_COSTS.look}🪙)`,
+          `🔥 ${posLabel} ${item?.icon} ${item?.name}: MOLT CALENT! Quasi ho tens! (-${TOKEN_COSTS.look}🪙)`,
+        ];
+        const level = result.hintLevel ?? 0;
+        if (level === 0) toast.info(hints[0]);
+        else if (level === 1) toast.warning(hints[1]);
+        else toast.success(hints[2]);
+      }
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
