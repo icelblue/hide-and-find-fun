@@ -488,30 +488,6 @@ export default function GamePage() {
               <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>← Canviar moble</Button>
             </div>
           )}
-
-          {hideStep === 4 && (
-            <div>
-              <h2 className="text-lg font-bold mb-1">💡 Pistes per al rival</h2>
-              <Tip>Escriu 2 característiques de l'objecte. El rival les veurà durant la partida com a pistes per deduir què busca!</Tip>
-              <div className="h-3" />
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Pista 1 (es revela al torn 2)</label>
-                  <Input value={clue1} onChange={e => setClue1(e.target.value)} placeholder="Ex: Són dues i van juntes" maxLength={60} className="bg-muted/50" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Pista 2 (es revela al torn 5)</label>
-                  <Input value={clue2} onChange={e => setClue2(e.target.value)} placeholder="Ex: Fan pudor" maxLength={60} className="bg-muted/50" />
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button variant="ghost" size="sm" onClick={() => setHideStep(3)}>← Posició</Button>
-                <Button className="flex-1" onClick={handleHideWithClues} disabled={actionLoading}>
-                  {clue1.trim() && clue2.trim() ? "Amagar amb pistes 💡" : "Amagar sense pistes"}
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
