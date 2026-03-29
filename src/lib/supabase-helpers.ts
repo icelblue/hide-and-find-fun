@@ -397,7 +397,7 @@ export async function sendSocialItem(
   itemType: SocialItemType, messageText?: string
 ) {
   const { data: fromPlayer } = await supabase
-    .from("game_players").select("social_item_used_today, id, tokens_last_reset")
+    .from("game_players").select("social_item_used_today, id, tokens_last_reset, smoke_bomb_used")
     .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
   if (!fromPlayer) throw new Error("Jugador no trobat");
 
