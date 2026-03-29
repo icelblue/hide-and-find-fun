@@ -106,8 +106,16 @@ export default function GamePage() {
       const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
-          setBananaEffect(true);
-          setTimeout(() => setBananaEffect(false), 8000); // 8 seconds
+          // Pick a random position to block
+          const allPositions = ["sobre", "sota", "dins"] as const;
+          const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
+          // Pick a random item from current scenario
+          const itemsForBanana = currentScenarioItems.length > 0 ? currentScenarioItems : (itemsData ?? []);
+          if (itemsForBanana.length > 0) {
+            const randomItem = itemsForBanana[Math.floor(Math.random() * itemsForBanana.length)];
+            setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
+            setBananaEffect(true);
+          }
         } else if (item.item_type === "false_clue") {
           setFalseClueItem(true);
           setTimeout(() => setFalseClueItem(false), 10000);
