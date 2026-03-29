@@ -494,20 +494,28 @@ export default function GamePage() {
           </div>
 
           {/* Look / Confirm */}
+          {!bananaEffect && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               👀 Investigar
             </h3>
-            <Tip>Observar ({TOKEN_COSTS.look}🪙) busca bonus. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que és allà!</Tip>
+            <Tip>Observar ({TOKEN_COSTS.look}🪙) dona pistes: ❄️ fred / 🌡️ calent / 🔥 molt calent. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que és allà!</Tip>
             <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
                   onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
-                  disabled={actionLoading} tokensRemaining={player.tokens_remaining} />
+                  disabled={actionLoading} tokensRemaining={player.tokens_remaining}
+                  exploredSpots={exploredSpots} />
               ))}
             </div>
           </div>
+          )}
+          {bananaEffect && (
+            <div className="text-center py-6">
+              <p className="text-sm text-muted-foreground animate-pulse">🍌 No pots investigar ara!</p>
+            </div>
+          )}
 
           {/* Social */}
           <div>
