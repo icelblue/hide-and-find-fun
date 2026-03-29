@@ -81,11 +81,13 @@ export default function GamePage() {
       setRivalNearby(false);
     }
 
+    let loadedItems: any[] = [];
     if (gameData?.status === "playing" && playerData?.current_scenario_id) {
       const [itemsData, connected] = await Promise.all([
         getItemsByScenario(playerData.current_scenario_id),
         getConnectedScenarios(playerData.current_scenario_id),
       ]);
+      loadedItems = itemsData;
       setCurrentScenarioItems(itemsData);
       setConnectedScenarios(connected);
     }
@@ -106,13 +108,10 @@ export default function GamePage() {
       const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
-          // Pick a random position to block
           const allPositions = ["sobre", "sota", "dins"] as const;
           const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
-          // Pick a random item from current scenario
-          const itemsForBanana = currentScenarioItems.length > 0 ? currentScenarioItems : [];
-          if (itemsForBanana.length > 0) {
-            const randomItem = itemsForBanana[Math.floor(Math.random() * itemsForBanana.length)];
+          if (loadedItems.length > 0) {
+            const randomItem = loadedItems[Math.floor(Math.random() * loadedItems.length)];
             setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
             setBananaEffect(true);
           }
