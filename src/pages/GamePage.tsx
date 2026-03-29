@@ -668,11 +668,3 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
     </div>
   );
 }
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
