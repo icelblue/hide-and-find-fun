@@ -658,8 +658,8 @@ export default function GamePage() {
                     {item.type === "message" && (
                       <div className="flex gap-1.5 mt-1.5">
                         <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-                          placeholder="Escriu..." maxLength={80} className="text-sm bg-muted/50 border-border/50" />
-                        <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")}>💬</Button>
+                          placeholder="Escriu pista o farol..." maxLength={80} className="text-sm bg-muted/50 border-border/50" />
+                        <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")}>💡</Button>
                       </div>
                     )}
                   </div>
