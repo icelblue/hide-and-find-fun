@@ -163,12 +163,28 @@ export default function GamePage() {
     setHideStep(1);
   };
 
-  const handleHidePosition = async (pos: "sobre" | "sota" | "dins") => {
-    if (!gameId || !user) return;
+  const handleSelectPosition = (pos: "sobre" | "sota" | "dins") => {
+    // Check size restriction for "dins"
+    if (pos === "dins") {
+      const obj = objects.find((o: any) => o.id === selectedObject);
+      const itm = items.find((i: any) => i.id === selectedItem);
+      const objSize = (obj as any)?.size ?? 2;
+      const capacity = (itm as any)?.inner_capacity ?? 2;
+      if (objSize > capacity) {
+        toast.error(`${obj?.icon} ${obj?.name} és massa gran per amagar dins de ${itm?.icon} ${itm?.name}!`);
+        return;
+      }
+    }
+    setSelectedPosition(pos);
+    setHideStep(4); // Go to clues step
+  };
+
+  const handleHideWithClues = async () => {
+    if (!gameId || !user || !selectedPosition) return;
     setActionLoading(true);
     try {
-      await hideObject(gameId, user.id, selectedObject, selectedItem, pos);
-      setHideStep(4);
+      await hideObject(gameId, user.id, selectedObject, selectedItem, selectedPosition as any, clue1, clue2);
+      setHideStep(5);
       toast.success("Objecte amagat! 🫣");
       if (await checkBothPlayersHidden(gameId)) {
         await startGame(gameId);
