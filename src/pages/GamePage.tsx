@@ -51,7 +51,7 @@ export default function GamePage() {
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
-  const [rivalClues, setRivalClues] = useState<{ clue1: string | null; clue2: string | null }>({ clue1: null, clue2: null });
+  const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
