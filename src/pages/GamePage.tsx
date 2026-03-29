@@ -369,7 +369,7 @@ export default function GamePage() {
       </div>
 
       {/* WAITING — show code + allow hiding */}
-      {phase === "waiting" && !player.has_hidden && hideStep < 5 && (
+      {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
         <Card className="glass glow-primary mb-4">
           <CardContent className="py-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
