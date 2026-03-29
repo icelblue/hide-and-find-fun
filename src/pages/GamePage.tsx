@@ -163,6 +163,14 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  // Clear banana block after any token-spending action
+  const clearBanana = () => {
+    if (bananaEffect) {
+      setBananaEffect(false);
+      setBananaBlockedSpot(null);
+    }
+  };
+
   const handleMove = async (scenarioId: string) => {
     if (!gameId || !user) return;
     setActionLoading(true);
@@ -170,6 +178,7 @@ export default function GamePage() {
       await performMove(gameId, user.id, "move", scenarioId);
       const s = scenarios.find(s => s.id === scenarioId);
       toast.success(`${s?.icon} ${s?.name} (-${TOKEN_COSTS.move}🪙)`);
+      clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
