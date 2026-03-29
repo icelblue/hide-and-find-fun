@@ -35,8 +35,6 @@ export default function GamePage() {
   const [selectedObject, setSelectedObject] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
-  const [clue1, setClue1] = useState("");
-  const [clue2, setClue2] = useState("");
   const [hideStep, setHideStep] = useState(0);
 
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
