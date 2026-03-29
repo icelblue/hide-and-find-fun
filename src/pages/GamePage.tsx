@@ -618,13 +618,14 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, exploredSpots }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
   onConfirm: (id: string, pos: "sobre" | "sota" | "dins") => void;
   disabled: boolean;
   tokensRemaining: number;
+  exploredSpots: Set<string>;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -637,18 +638,36 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
       </button>
       {expanded && (
         <div className="border-t border-border/30 p-2.5 grid grid-cols-3 gap-2">
-          {positions.map(pos => (
-            <div key={pos.value} className="space-y-1">
-              <button onClick={() => onLook(item.id, pos.value)}
-                disabled={disabled || tokensRemaining < TOKEN_COSTS.look}
-                className="w-full bg-muted/40 rounded-lg p-2 text-xs hover:bg-primary/10 transition-colors disabled:opacity-30 active:scale-[0.97] font-medium">
-                {pos.icon} {pos.label}
-                <span className="block text-[9px] text-muted-foreground mt-0.5">{TOKEN_COSTS.look}🪙</span>
-              </button>
-              <button onClick={() => onConfirm(item.id, pos.value)}
-                disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm}
-                className="w-full gradient-accent rounded-lg p-1.5 text-[10px] font-bold text-accent-foreground hover:opacity-90 transition-all disabled:opacity-30 active:scale-[0.97] shadow-sm">
-                🔍 {TOKEN_COSTS.confirm}🪙
+          {positions.map(pos => {
+            const spotKey = `${item.id}:${pos.value}`;
+            const alreadyExplored = exploredSpots.has(spotKey);
+            return (
+              <div key={pos.value} className="space-y-1">
+                <button onClick={() => onLook(item.id, pos.value)}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyExplored}
+                  className={`w-full rounded-lg p-2 text-xs transition-colors active:scale-[0.97] font-medium ${
+                    alreadyExplored ? "bg-muted/20 opacity-40 line-through" : "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
+                  }`}>
+                  {pos.icon} {pos.label}
+                  <span className="block text-[9px] text-muted-foreground mt-0.5">
+                    {alreadyExplored ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                  </span>
+                </button>
+                <button onClick={() => onConfirm(item.id, pos.value)}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyExplored}
+                  className={`w-full rounded-lg p-1.5 text-[10px] font-bold transition-all active:scale-[0.97] shadow-sm ${
+                    alreadyExplored ? "bg-muted/20 opacity-40" : "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
+                  }`}>
+                  {alreadyExplored ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
               </button>
             </div>
           ))}
