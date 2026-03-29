@@ -84,15 +84,24 @@ export default function GamePage() {
       setRivalNearby(false);
     }
 
-    // Reveal rival's clues progressively based on move count
-    if (gameData?.status === "playing" && rivalData) {
+    // Load rival's object traits progressively
+    if (gameData?.status === "playing" && rivalData?.hidden_object_id) {
       const { count: myMoves } = await supabase
         .from("game_moves").select("*", { count: "exact", head: true })
         .eq("game_id", gameId).eq("player_id", user.id);
       const totalMoves = myMoves ?? 0;
-      const c1 = totalMoves >= 2 ? ((rivalData as any).hidden_clue_1 ?? null) : null;
-      const c2 = totalMoves >= 5 ? ((rivalData as any).hidden_clue_2 ?? null) : null;
-      setRivalClues({ clue1: c1, clue2: c2 });
+
+      if (totalMoves >= 2) {
+        const { data: traits } = await supabase
+          .from("object_traits").select("trait_number, trait_text")
+          .eq("object_id", rivalData.hidden_object_id)
+          .order("trait_number");
+        const t1 = traits?.find((t: any) => t.trait_number === 1)?.trait_text ?? null;
+        const t2 = totalMoves >= 5 ? (traits?.find((t: any) => t.trait_number === 2)?.trait_text ?? null) : null;
+        setRivalTraits({ trait1: t1, trait2: t2 });
+      } else {
+        setRivalTraits({ trait1: null, trait2: null });
+      }
     }
 
     let loadedItems: any[] = [];
