@@ -48,6 +48,7 @@ export default function GamePage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState<{ itemId: string; position: "sobre" | "sota" | "dins"; itemName: string } | null>(null);
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
+  const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null); // "itemId:position" blocked by banana
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
@@ -105,8 +106,16 @@ export default function GamePage() {
       const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
-          setBananaEffect(true);
-          setTimeout(() => setBananaEffect(false), 8000); // 8 seconds
+          // Pick a random position to block
+          const allPositions = ["sobre", "sota", "dins"] as const;
+          const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
+          // Pick a random item from current scenario
+          const itemsForBanana = currentScenarioItems.length > 0 ? currentScenarioItems : [];
+          if (itemsForBanana.length > 0) {
+            const randomItem = itemsForBanana[Math.floor(Math.random() * itemsForBanana.length)];
+            setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
+            setBananaEffect(true);
+          }
         } else if (item.item_type === "false_clue") {
           setFalseClueItem(true);
           setTimeout(() => setFalseClueItem(false), 10000);
@@ -154,6 +163,14 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  // Clear banana block after any token-spending action
+  const clearBanana = () => {
+    if (bananaEffect) {
+      setBananaEffect(false);
+      setBananaBlockedSpot(null);
+    }
+  };
+
   const handleMove = async (scenarioId: string) => {
     if (!gameId || !user) return;
     setActionLoading(true);
@@ -161,6 +178,7 @@ export default function GamePage() {
       await performMove(gameId, user.id, "move", scenarioId);
       const s = scenarios.find(s => s.id === scenarioId);
       toast.success(`${s?.icon} ${s?.name} (-${TOKEN_COSTS.move}🪙)`);
+      clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
@@ -187,6 +205,7 @@ export default function GamePage() {
         else if (level === 1) toast.warning(hints[1]);
         else toast.success(hints[2]);
       }
+      clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
@@ -201,6 +220,7 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "confirm", undefined, itemId, position);
       if (result.foundObject) toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
       else toast.error(`❌ No era aquí... (-${TOKEN_COSTS.confirm}🪙)`);
+      clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
@@ -225,11 +245,13 @@ export default function GamePage() {
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
 
-  // Build set of explored spots from move history (look + confirm actions in current scenario)
-  const exploredSpots = new Set<string>();
+  // Separate tracking: looked spots vs confirmed spots
+  const lookedSpots = new Set<string>();
+  const confirmedSpots = new Set<string>();
   for (const m of moveHistory) {
-    if ((m.action === "look" || m.action === "confirm") && m.target_item_id && m.target_position) {
-      exploredSpots.add(`${m.target_item_id}:${m.target_position}`);
+    if (m.target_item_id && m.target_position) {
+      if (m.action === "look") lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
+      if (m.action === "confirm") confirmedSpots.add(`${m.target_item_id}:${m.target_position}`);
     }
   }
 
@@ -245,16 +267,11 @@ export default function GamePage() {
   const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
 
   return (
-    <div className={`min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative ${bananaEffect ? "blur-sm" : ""}`}>
+    <div className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative">
       {/* BG glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
-      {/* Banana overlay */}
-      {bananaEffect && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-accent/30 pointer-events-none backdrop-blur-sm">
-          <span className="text-[120px] animate-bounce">🍌</span>
-        </div>
-      )}
+      {/* Banana notification toast (no longer full-screen block) */}
 
       {/* Confirm dialog */}
       {showConfirmDialog && (
@@ -483,7 +500,7 @@ export default function GamePage() {
             <div className="grid grid-cols-2 gap-1.5 mt-2">
               {connectedScenarios.map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
-                  disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move || bananaEffect}
+                  disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move}
                   className="glass rounded-xl p-3 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
                   <div className="text-2xl">{s.icon}</div>
                   <div className="text-[11px] leading-tight font-medium mt-1">{s.name}</div>
@@ -494,28 +511,25 @@ export default function GamePage() {
           </div>
 
           {/* Look / Confirm */}
-          {!bananaEffect && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              👀 Investigar
+              👀 Investigar mobles
             </h3>
-            <Tip>Observar ({TOKEN_COSTS.look}🪙) dona pistes: ❄️ fred / 🌡️ calent / 🔥 molt calent. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que és allà!</Tip>
+            <Tip>👀 Observar ({TOKEN_COSTS.look}🪙) = pista (❄️/🌡️/🔥). 🔍 Confirmar ({TOKEN_COSTS.confirm}🪙) = trobar l'objecte!</Tip>
+            {bananaEffect && bananaBlockedSpot && (
+              <p className="text-xs text-destructive mt-1 animate-pulse">🍌 Una posició està bloquejada! Fes una altra acció per desbloquejar-la.</p>
+            )}
             <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
                   onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
-                  exploredSpots={exploredSpots} />
+                  lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
+                  bananaBlockedSpot={bananaBlockedSpot} />
               ))}
             </div>
           </div>
-          )}
-          {bananaEffect && (
-            <div className="text-center py-6">
-              <p className="text-sm text-muted-foreground animate-pulse">🍌 No pots investigar ara!</p>
-            </div>
-          )}
 
           {/* Social */}
           <div>
@@ -624,14 +638,16 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, exploredSpots }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
   onConfirm: (id: string, pos: "sobre" | "sota" | "dins") => void;
   disabled: boolean;
   tokensRemaining: number;
-  exploredSpots: Set<string>;
+  lookedSpots: Set<string>;
+  confirmedSpots: Set<string>;
+  bananaBlockedSpot: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -646,25 +662,33 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
         <div className="border-t border-border/30 p-2.5 grid grid-cols-3 gap-2">
           {positions.map(pos => {
             const spotKey = `${item.id}:${pos.value}`;
-            const alreadyExplored = exploredSpots.has(spotKey);
+            const alreadyLooked = lookedSpots.has(spotKey);
+            const alreadyConfirmed = confirmedSpots.has(spotKey);
+            const isBananaBlocked = bananaBlockedSpot === spotKey;
             return (
               <div key={pos.value} className="space-y-1">
+                {/* LOOK button: disabled if already looked OR confirmed OR banana blocked */}
                 <button onClick={() => onLook(item.id, pos.value)}
-                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyExplored}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || alreadyConfirmed || isBananaBlocked}
                   className={`w-full rounded-lg p-2 text-xs transition-colors active:scale-[0.97] font-medium ${
-                    alreadyExplored ? "bg-muted/20 opacity-40 line-through" : "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
+                    isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
+                    alreadyLooked || alreadyConfirmed ? "bg-muted/20 opacity-40 line-through" :
+                    "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
                   }`}>
-                  {pos.icon} {pos.label}
+                  {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
                   <span className="block text-[9px] text-muted-foreground mt-0.5">
-                    {alreadyExplored ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                    {isBananaBlocked ? "bloquejat" : alreadyLooked || alreadyConfirmed ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
                   </span>
                 </button>
+                {/* CONFIRM button: disabled if already confirmed OR banana blocked, BUT allowed even if looked */}
                 <button onClick={() => onConfirm(item.id, pos.value)}
-                  disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyExplored}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyConfirmed || isBananaBlocked}
                   className={`w-full rounded-lg p-1.5 text-[10px] font-bold transition-all active:scale-[0.97] shadow-sm ${
-                    alreadyExplored ? "bg-muted/20 opacity-40" : "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
+                    isBananaBlocked ? "bg-destructive/20 opacity-60" :
+                    alreadyConfirmed ? "bg-muted/20 opacity-40" :
+                    "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
                   }`}>
-                  {alreadyExplored ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
+                  {isBananaBlocked ? "🍌" : alreadyConfirmed ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
                 </button>
               </div>
             );
