@@ -126,8 +126,6 @@ export type Database = {
           current_scenario_id: string | null
           game_id: string
           has_hidden: boolean
-          hidden_clue_1: string | null
-          hidden_clue_2: string | null
           hidden_item_id: string | null
           hidden_object_id: string | null
           hidden_position: Database["public"]["Enums"]["position_type"] | null
@@ -144,8 +142,6 @@ export type Database = {
           current_scenario_id?: string | null
           game_id: string
           has_hidden?: boolean
-          hidden_clue_1?: string | null
-          hidden_clue_2?: string | null
           hidden_item_id?: string | null
           hidden_object_id?: string | null
           hidden_position?: Database["public"]["Enums"]["position_type"] | null
@@ -162,8 +158,6 @@ export type Database = {
           current_scenario_id?: string | null
           game_id?: string
           has_hidden?: boolean
-          hidden_clue_1?: string | null
-          hidden_clue_2?: string | null
           hidden_item_id?: string | null
           hidden_object_id?: string | null
           hidden_position?: Database["public"]["Enums"]["position_type"] | null
@@ -325,6 +319,35 @@ export type Database = {
             columns: ["scenario_id"]
             isOneToOne: false
             referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      object_traits: {
+        Row: {
+          id: string
+          object_id: string
+          trait_number: number
+          trait_text: string
+        }
+        Insert: {
+          id?: string
+          object_id: string
+          trait_number: number
+          trait_text: string
+        }
+        Update: {
+          id?: string
+          object_id?: string
+          trait_number?: number
+          trait_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "object_traits_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "objects"
             referencedColumns: ["id"]
           },
         ]
