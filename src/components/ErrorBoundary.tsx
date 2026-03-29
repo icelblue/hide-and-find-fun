@@ -54,7 +54,8 @@ export async function logError(
 ) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("error_logs").insert({
+    // Use rpc-style raw insert since error_logs may not be in generated types yet
+    await (supabase as any).from("error_logs").insert({
       user_id: user?.id ?? null,
       error_message: message.slice(0, 1000),
       error_stack: stack?.slice(0, 5000) ?? null,
@@ -62,7 +63,7 @@ export async function logError(
       url: window.location.href,
       user_agent: navigator.userAgent.slice(0, 500),
       metadata: metadata ?? {},
-    } as any);
+    });
   } catch {
     // silently fail - don't recurse errors
   }
