@@ -389,7 +389,7 @@ export default function GamePage() {
       )}
 
       {/* HIDING */}
-      {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep < 4 && (
+      {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep < 5 && (
         <div>
           {/* Step indicator */}
           <div className="flex items-center gap-1 mb-5">
