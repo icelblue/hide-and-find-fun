@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { logError } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -81,11 +82,13 @@ export default function GamePage() {
       setRivalNearby(false);
     }
 
+    let loadedItems: any[] = [];
     if (gameData?.status === "playing" && playerData?.current_scenario_id) {
       const [itemsData, connected] = await Promise.all([
         getItemsByScenario(playerData.current_scenario_id),
         getConnectedScenarios(playerData.current_scenario_id),
       ]);
+      loadedItems = itemsData;
       setCurrentScenarioItems(itemsData);
       setConnectedScenarios(connected);
     }
@@ -106,13 +109,10 @@ export default function GamePage() {
       const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
-          // Pick a random position to block
           const allPositions = ["sobre", "sota", "dins"] as const;
           const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
-          // Pick a random item from current scenario
-          const itemsForBanana = currentScenarioItems.length > 0 ? currentScenarioItems : [];
-          if (itemsForBanana.length > 0) {
-            const randomItem = itemsForBanana[Math.floor(Math.random() * itemsForBanana.length)];
+          if (loadedItems.length > 0) {
+            const randomItem = loadedItems[Math.floor(Math.random() * loadedItems.length)];
             setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
             setBananaEffect(true);
           }
@@ -159,7 +159,7 @@ export default function GamePage() {
         await startGame(gameId);
         toast.success("Comença la cerca! 🔍");
       }
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -180,7 +180,7 @@ export default function GamePage() {
       toast.success(`${s?.icon} ${s?.name} (-${TOKEN_COSTS.move}🪙)`);
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -207,7 +207,7 @@ export default function GamePage() {
       }
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -222,7 +222,7 @@ export default function GamePage() {
       else toast.error(`❌ No era aquí... (-${TOKEN_COSTS.confirm}🪙)`);
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -238,7 +238,7 @@ export default function GamePage() {
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -459,7 +459,19 @@ export default function GamePage() {
       {/* PLAYING */}
       {phase === "playing" && (
         <div className="space-y-4">
-          {/* Location bar */}
+          {/* First-time tips */}
+          {moveHistory.length === 0 && (
+            <Card className="glass border-primary/30 glow-primary">
+              <CardContent className="py-3">
+                <p className="text-xs font-semibold mb-1">🎮 Com jugar:</p>
+                <div className="space-y-1 text-[11px] text-muted-foreground">
+                  <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
+                  <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
+                  <p>🔍 <strong>Confirma</strong> (1.5🪙) quan creguis saber on és. Si encertes, guanyes!</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card className="glass">
             <CardContent className="py-3 flex items-center justify-between">
               <div>
