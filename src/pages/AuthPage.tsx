@@ -1,10 +1,23 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const FEATURES = [
+  { icon: "🧩", title: "Deducció pura", desc: "Res de sort. Observa, dedueix i troba!" },
+  { icon: "⚔️", title: "PvP en temps real", desc: "Amaga el teu objecte i busca el del rival" },
+  { icon: "🌡️", title: "Pistes progressives", desc: "Fred... Calent... MOLT CALENT! 🔥" },
+  { icon: "🏆", title: "Elo i Lligues", desc: "Puja de Bronze a Diamond amb cada victòria" },
+];
+
+const HOW_IT_WORKS = [
+  { step: "1", icon: "🫣", text: "Amaga un objecte en un moble d'una habitació" },
+  { step: "2", icon: "👀", text: "Observa posicions per rebre pistes (fred/calent/molt calent)" },
+  { step: "3", icon: "🔍", text: "Quan ho tinguis clar, confirma per trobar l'objecte i guanyar!" },
+];
 
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
@@ -51,95 +64,131 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
-      {/* Background decoration */}
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* BG effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-secondary/5 blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/8 blur-[120px]" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-secondary/8 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-accent/3 blur-[150px]" />
       </div>
 
-      <Card className="w-full max-w-sm glass glow-primary relative z-10">
-        <CardHeader className="text-center pb-2">
-          <div className="w-16 h-16 mx-auto mb-3 rounded-2xl gradient-primary flex items-center justify-center shadow-lg glow-primary">
-            <span className="text-3xl">🔍</span>
+      <div className="relative z-10 max-w-md mx-auto px-4 py-8 space-y-6">
+        {/* Hero */}
+        <div className="text-center pt-4">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-xl glow-primary">
+            <span className="text-4xl">🔍</span>
           </div>
-          <CardTitle className="text-xl text-neon">🔍 DEDUCTION DUEL</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            Amaga. Busca. Guanya.
+          <h1 className="text-2xl text-neon mb-2">DEDUCTION DUEL</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
+            El joc de deducció PvP on la lògica guanya a la sort. 
+            Amaga, investiga i dedueix! 🧠
           </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {!isLogin && (
+        </div>
+
+        {/* How it works */}
+        <div className="space-y-2">
+          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Com funciona?</h2>
+          <div className="flex gap-2">
+            {HOW_IT_WORKS.map(h => (
+              <div key={h.step} className="flex-1 glass rounded-xl p-3 text-center">
+                <div className="text-2xl mb-1">{h.icon}</div>
+                <p className="text-[10px] text-muted-foreground leading-tight">{h.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="grid grid-cols-2 gap-2">
+          {FEATURES.map(f => (
+            <div key={f.title} className="glass rounded-xl p-3">
+              <div className="text-xl mb-1">{f.icon}</div>
+              <div className="text-xs font-semibold mb-0.5">{f.title}</div>
+              <p className="text-[10px] text-muted-foreground leading-tight">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Auth Form */}
+        <Card className="glass glow-primary">
+          <CardContent className="pt-5 pb-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              {!isLogin && (
+                <Input
+                  placeholder="Nom de jugador"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
+                  className="bg-muted/50 border-border/50 h-11"
+                />
+              )}
               <Input
-                placeholder="Nom de jugador"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="bg-muted/50 border-border/50 h-11"
               />
+              <Input
+                type="password"
+                placeholder="Contrasenya"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="bg-muted/50 border-border/50 h-11"
+              />
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? "..." : isLogin ? "Entrar 🎮" : "Crear compte 🚀"}
+              </Button>
+            </form>
+            {isLogin && (
+              <button
+                type="button"
+                onClick={() => setShowForgot(true)}
+                className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Has oblidat la contrasenya?
+              </button>
             )}
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-muted/50 border-border/50 h-11"
-            />
-            <Input
-              type="password"
-              placeholder="Contrasenya"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="bg-muted/50 border-border/50 h-11"
-            />
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? "..." : isLogin ? "Entrar" : "Crear compte"}
-            </Button>
-          </form>
-          {isLogin && (
             <button
-              type="button"
-              onClick={() => setShowForgot(true)}
-              className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => setIsLogin(!isLogin)}
+              className="mt-3 w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              Has oblidat la contrasenya?
+              {isLogin ? "No tens compte? Registra't" : "Ja tens compte? Entra"}
             </button>
-          )}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            {isLogin ? "No tens compte? Registra't" : "Ja tens compte? Entra"}
-          </button>
+          </CardContent>
+        </Card>
 
-          {/* Forgot password modal */}
-          {showForgot && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowForgot(false)}>
-              <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
-                <CardContent className="py-6">
-                  <h3 className="text-lg font-bold mb-2">Recuperar contrasenya</h3>
-                  <p className="text-xs text-muted-foreground mb-3">Introdueix el teu email i t'enviarem un enllaç per restablir la contrasenya.</p>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={forgotEmail}
-                    onChange={e => setForgotEmail(e.target.value)}
-                    className="mb-3 bg-muted/50 border-border/50 h-11"
-                  />
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1" onClick={() => setShowForgot(false)}>Cancel·lar</Button>
-                    <Button className="flex-1" disabled={loading || !forgotEmail} onClick={handleForgotPassword}>Enviar</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Tagline */}
+        <p className="text-center text-[10px] text-muted-foreground/50">
+          🧠 No és qüestió de sort. És qüestió de lògica.
+        </p>
+      </div>
+
+      {/* Forgot password modal */}
+      {showForgot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowForgot(false)}>
+          <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
+            <CardContent className="py-6">
+              <h3 className="text-lg font-bold mb-2">Recuperar contrasenya</h3>
+              <p className="text-xs text-muted-foreground mb-3">Introdueix el teu email i t'enviarem un enllaç per restablir la contrasenya.</p>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={forgotEmail}
+                onChange={e => setForgotEmail(e.target.value)}
+                className="mb-3 bg-muted/50 border-border/50 h-11"
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setShowForgot(false)}>Cancel·lar</Button>
+                <Button className="flex-1" disabled={loading || !forgotEmail} onClick={handleForgotPassword}>Enviar</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
