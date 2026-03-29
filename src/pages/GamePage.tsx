@@ -547,24 +547,24 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* Rival's clues */}
-          {(rivalClues.clue1 || rivalClues.clue2) && (
+          {/* Rival's object traits */}
+          {(rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes del rival</p>
-                {rivalClues.clue1 && (
-                  <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalClues.clue1}"</span></p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes de l'objecte rival</p>
+                {rivalTraits.trait1 && (
+                  <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalTraits.trait1}"</span></p>
                 )}
-                {rivalClues.clue2 && (
-                  <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalClues.clue2}"</span></p>
+                {rivalTraits.trait2 && (
+                  <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalTraits.trait2}"</span></p>
                 )}
-                {!rivalClues.clue2 && rivalClues.clue1 && (
+                {!rivalTraits.trait2 && rivalTraits.trait1 && (
                   <p className="text-[10px] text-muted-foreground mt-1">🔒 2a pista al torn 5</p>
                 )}
               </CardContent>
             </Card>
           )}
-          {!rivalClues.clue1 && moveHistory.length < 2 && (
+          {!rivalTraits.trait1 && moveHistory.length < 2 && (
             <p className="text-[10px] text-center text-muted-foreground">💡 Pista de l'objecte rival al torn 2</p>
           )}
 
