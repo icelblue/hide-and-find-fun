@@ -209,16 +209,15 @@ export async function checkBothPlayersHidden(gameId: string) {
 }
 
 export async function startGame(gameId: string) {
-  // Guard: only transition if still in hiding phase (prevents race condition)
-  const { data: game } = await supabase.from("games").select("status").eq("id", gameId).single();
-  if (game?.status === "playing") return; // Already started by the other player
-
+  // Assign starting scenarios to ALL players BEFORE changing status
   const scenarios = await getScenarios();
   const { data: players, error } = await supabase
-    .from("game_players").select("user_id, hidden_item_id").eq("game_id", gameId);
+    .from("game_players").select("user_id, hidden_item_id, current_scenario_id").eq("game_id", gameId);
   if (error) throw error;
 
+  // Only assign scenarios to players who don't have one yet
   for (const player of players) {
+    if (player.current_scenario_id) continue; // already assigned (by another call)
     const { data: hiddenItem } = await supabase
       .from("items").select("scenario_id").eq("id", player.hidden_item_id!).single();
 
@@ -230,7 +229,11 @@ export async function startGame(gameId: string) {
       .eq("game_id", gameId).eq("user_id", player.user_id);
   }
 
-  await supabase.from("games").update({ status: "playing" as const }).eq("id", gameId);
+  // Only transition status if still in hiding (prevents double-transition)
+  await supabase.from("games")
+    .update({ status: "playing" as const })
+    .eq("id", gameId)
+    .in("status", ["hiding", "waiting"]);
 }
 
 // ============================================
