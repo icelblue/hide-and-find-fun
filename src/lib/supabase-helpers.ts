@@ -405,7 +405,7 @@ export const SOCIAL_ITEMS = [
   { type: "smoke_bomb" as const, icon: "💣", name: "Bomba de fum", desc: "Mou el teu objecte a altra posició" },
   { type: "false_clue" as const, icon: "🔮", name: "Pista falsa", desc: "Indicador fals al rival" },
   { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim ítem social" },
-  { type: "message" as const, icon: "💬", name: "Missatge", desc: "Envia text al rival" },
+  { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
 ] as const;
 
 export async function sendSocialItem(
