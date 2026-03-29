@@ -205,6 +205,7 @@ export default function GamePage() {
         else if (level === 1) toast.warning(hints[1]);
         else toast.success(hints[2]);
       }
+      clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
