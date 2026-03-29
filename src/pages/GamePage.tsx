@@ -225,6 +225,14 @@ export default function GamePage() {
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
 
+  // Build set of explored spots from move history (look + confirm actions in current scenario)
+  const exploredSpots = new Set<string>();
+  for (const m of moveHistory) {
+    if ((m.action === "look" || m.action === "confirm") && m.target_item_id && m.target_position) {
+      exploredSpots.add(`${m.target_item_id}:${m.target_position}`);
+    }
+  }
+
   if (!game || !player) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
