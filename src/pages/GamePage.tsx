@@ -460,19 +460,51 @@ export default function GamePage() {
           {hideStep === 3 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
-              <Tip>Sobre, sota o dins del moble.</Tip>
+              <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
               <div className="grid grid-cols-3 gap-3">
-                {positions.map(pos => (
-                  <Card key={pos.value} className="cursor-pointer glass hover:border-primary/40 transition-all active:scale-[0.97]" onClick={() => handleHidePosition(pos.value)}>
-                    <CardContent className="py-6 text-center">
-                      <div className="text-4xl mb-2">{pos.icon}</div>
-                      <div className="text-sm font-semibold">{pos.label}</div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {positions.map(pos => {
+                  const obj = objects.find((o: any) => o.id === selectedObject);
+                  const itm = items.find((i: any) => i.id === selectedItem);
+                  const blocked = pos.value === "dins" && ((obj as any)?.size ?? 2) > ((itm as any)?.inner_capacity ?? 2);
+                  return (
+                    <Card key={pos.value}
+                      className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
+                      onClick={() => !blocked && handleSelectPosition(pos.value)}>
+                      <CardContent className="py-6 text-center">
+                        <div className="text-4xl mb-2">{pos.icon}</div>
+                        <div className="text-sm font-semibold">{pos.label}</div>
+                        {blocked && <div className="text-[9px] text-destructive mt-1">🚫 No hi cap</div>}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
               <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>← Canviar moble</Button>
+            </div>
+          )}
+
+          {hideStep === 4 && (
+            <div>
+              <h2 className="text-lg font-bold mb-1">💡 Pistes per al rival</h2>
+              <Tip>Escriu 2 característiques de l'objecte. El rival les veurà durant la partida com a pistes per deduir què busca!</Tip>
+              <div className="h-3" />
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Pista 1 (es revela al torn 2)</label>
+                  <Input value={clue1} onChange={e => setClue1(e.target.value)} placeholder="Ex: Són dues i van juntes" maxLength={60} className="bg-muted/50" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Pista 2 (es revela al torn 5)</label>
+                  <Input value={clue2} onChange={e => setClue2(e.target.value)} placeholder="Ex: Fan pudor" maxLength={60} className="bg-muted/50" />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button variant="ghost" size="sm" onClick={() => setHideStep(3)}>← Posició</Button>
+                <Button className="flex-1" onClick={handleHideWithClues} disabled={actionLoading}>
+                  {clue1.trim() && clue2.trim() ? "Amagar amb pistes 💡" : "Amagar sense pistes"}
+                </Button>
+              </div>
             </div>
           )}
         </div>
