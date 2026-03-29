@@ -95,6 +95,7 @@ export type Database = {
           hidden_position: Database["public"]["Enums"]["position_type"] | null
           id: string
           shield_active: boolean
+          smoke_bomb_used: boolean
           social_item_used_today: boolean
           tokens_last_reset: string
           tokens_remaining: number
@@ -110,6 +111,7 @@ export type Database = {
           hidden_position?: Database["public"]["Enums"]["position_type"] | null
           id?: string
           shield_active?: boolean
+          smoke_bomb_used?: boolean
           social_item_used_today?: boolean
           tokens_last_reset?: string
           tokens_remaining?: number
@@ -125,6 +127,7 @@ export type Database = {
           hidden_position?: Database["public"]["Enums"]["position_type"] | null
           id?: string
           shield_active?: boolean
+          smoke_bomb_used?: boolean
           social_item_used_today?: boolean
           tokens_last_reset?: string
           tokens_remaining?: number

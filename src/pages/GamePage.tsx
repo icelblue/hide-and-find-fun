@@ -106,7 +106,7 @@ export default function GamePage() {
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
           setBananaEffect(true);
-          setTimeout(() => setBananaEffect(false), 3000);
+          setTimeout(() => setBananaEffect(false), 8000); // 8 seconds
         } else if (item.item_type === "false_clue") {
           setFalseClueItem(true);
           setTimeout(() => setFalseClueItem(false), 10000);
@@ -175,7 +175,18 @@ export default function GamePage() {
       const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
-      else toast.info(`${posLabel} ${item?.icon} ${item?.name}: buit (-${TOKEN_COSTS.look}🪙)`);
+      else {
+        // Progressive hints
+        const hints = [
+          `❄️ ${posLabel} ${item?.icon} ${item?.name}: fred... no és per aquí (-${TOKEN_COSTS.look}🪙)`,
+          `🌡️ ${posLabel} ${item?.icon} ${item?.name}: calent! Alguna cosa a prop... (-${TOKEN_COSTS.look}🪙)`,
+          `🔥 ${posLabel} ${item?.icon} ${item?.name}: MOLT CALENT! Quasi ho tens! (-${TOKEN_COSTS.look}🪙)`,
+        ];
+        const level = result.hintLevel ?? 0;
+        if (level === 0) toast.info(hints[0]);
+        else if (level === 1) toast.warning(hints[1]);
+        else toast.success(hints[2]);
+      }
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
@@ -213,6 +224,14 @@ export default function GamePage() {
 
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
+
+  // Build set of explored spots from move history (look + confirm actions in current scenario)
+  const exploredSpots = new Set<string>();
+  for (const m of moveHistory) {
+    if ((m.action === "look" || m.action === "confirm") && m.target_item_id && m.target_position) {
+      exploredSpots.add(`${m.target_item_id}:${m.target_position}`);
+    }
+  }
 
   if (!game || !player) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
@@ -464,7 +483,7 @@ export default function GamePage() {
             <div className="grid grid-cols-2 gap-1.5 mt-2">
               {connectedScenarios.map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
-                  disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move}
+                  disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move || bananaEffect}
                   className="glass rounded-xl p-3 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
                   <div className="text-2xl">{s.icon}</div>
                   <div className="text-[11px] leading-tight font-medium mt-1">{s.name}</div>
@@ -475,20 +494,28 @@ export default function GamePage() {
           </div>
 
           {/* Look / Confirm */}
+          {!bananaEffect && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               👀 Investigar
             </h3>
-            <Tip>Observar ({TOKEN_COSTS.look}🪙) busca bonus. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que és allà!</Tip>
+            <Tip>Observar ({TOKEN_COSTS.look}🪙) dona pistes: ❄️ fred / 🌡️ calent / 🔥 molt calent. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que és allà!</Tip>
             <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
                   onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
-                  disabled={actionLoading} tokensRemaining={player.tokens_remaining} />
+                  disabled={actionLoading} tokensRemaining={player.tokens_remaining}
+                  exploredSpots={exploredSpots} />
               ))}
             </div>
           </div>
+          )}
+          {bananaEffect && (
+            <div className="text-center py-6">
+              <p className="text-sm text-muted-foreground animate-pulse">🍌 No pots investigar ara!</p>
+            </div>
+          )}
 
           {/* Social */}
           <div>
@@ -500,17 +527,22 @@ export default function GamePage() {
 
             {showSocialPanel && (
               <div className="mt-2 space-y-1.5">
-                {SOCIAL_ITEMS.map(item => (
+                {SOCIAL_ITEMS.map(item => {
+                  const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
+                  return (
                   <div key={item.type}>
                     <button
-                      onClick={() => item.type !== "message" && handleSendSocial(item.type)}
-                      className="w-full glass rounded-xl p-3 flex items-center gap-3 hover:border-accent/40 transition-all text-left active:scale-[0.99]">
+                      onClick={() => item.type !== "message" && !isBombUsed && handleSendSocial(item.type)}
+                      disabled={isBombUsed}
+                      className={`w-full glass rounded-xl p-3 flex items-center gap-3 hover:border-accent/40 transition-all text-left active:scale-[0.99] ${isBombUsed ? "opacity-40" : ""}`}>
                       <span className="text-2xl">{item.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold">{item.name}</div>
-                        <div className="text-[11px] text-muted-foreground">{item.desc}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
+                        </div>
                       </div>
-                      {item.type !== "message" && <span className="text-xs text-primary font-bold">→</span>}
+                      {item.type !== "message" && !isBombUsed && <span className="text-xs text-primary font-bold">→</span>}
                     </button>
                     {item.type === "message" && (
                       <div className="flex gap-1.5 mt-1.5">
@@ -520,7 +552,8 @@ export default function GamePage() {
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -591,13 +624,14 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, exploredSpots }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
   onConfirm: (id: string, pos: "sobre" | "sota" | "dins") => void;
   disabled: boolean;
   tokensRemaining: number;
+  exploredSpots: Set<string>;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -610,21 +644,31 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
       </button>
       {expanded && (
         <div className="border-t border-border/30 p-2.5 grid grid-cols-3 gap-2">
-          {positions.map(pos => (
-            <div key={pos.value} className="space-y-1">
-              <button onClick={() => onLook(item.id, pos.value)}
-                disabled={disabled || tokensRemaining < TOKEN_COSTS.look}
-                className="w-full bg-muted/40 rounded-lg p-2 text-xs hover:bg-primary/10 transition-colors disabled:opacity-30 active:scale-[0.97] font-medium">
-                {pos.icon} {pos.label}
-                <span className="block text-[9px] text-muted-foreground mt-0.5">{TOKEN_COSTS.look}🪙</span>
-              </button>
-              <button onClick={() => onConfirm(item.id, pos.value)}
-                disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm}
-                className="w-full gradient-accent rounded-lg p-1.5 text-[10px] font-bold text-accent-foreground hover:opacity-90 transition-all disabled:opacity-30 active:scale-[0.97] shadow-sm">
-                🔍 {TOKEN_COSTS.confirm}🪙
-              </button>
-            </div>
-          ))}
+          {positions.map(pos => {
+            const spotKey = `${item.id}:${pos.value}`;
+            const alreadyExplored = exploredSpots.has(spotKey);
+            return (
+              <div key={pos.value} className="space-y-1">
+                <button onClick={() => onLook(item.id, pos.value)}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyExplored}
+                  className={`w-full rounded-lg p-2 text-xs transition-colors active:scale-[0.97] font-medium ${
+                    alreadyExplored ? "bg-muted/20 opacity-40 line-through" : "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
+                  }`}>
+                  {pos.icon} {pos.label}
+                  <span className="block text-[9px] text-muted-foreground mt-0.5">
+                    {alreadyExplored ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                  </span>
+                </button>
+                <button onClick={() => onConfirm(item.id, pos.value)}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyExplored}
+                  className={`w-full rounded-lg p-1.5 text-[10px] font-bold transition-all active:scale-[0.97] shadow-sm ${
+                    alreadyExplored ? "bg-muted/20 opacity-40" : "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
+                  }`}>
+                  {alreadyExplored ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
