@@ -170,7 +170,7 @@ export default function GamePage() {
     setHideStep(1);
   };
 
-  const handleSelectPosition = (pos: "sobre" | "sota" | "dins") => {
+  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
     // Check size restriction for "dins"
     if (pos === "dins") {
       const obj = objects.find((o: any) => o.id === selectedObject);
