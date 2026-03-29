@@ -73,7 +73,7 @@ export default function GamePage() {
     setPlayer(playerData);
     setRival(rivalData);
 
-    if (playerData?.has_hidden) setHideStep(5);
+    if (playerData?.has_hidden) setHideStep(4);
 
     // Proximity alert: check if rival is at the scenario where we hid our object
     if (gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
