@@ -110,7 +110,7 @@ export default function GamePage() {
           const allPositions = ["sobre", "sota", "dins"] as const;
           const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
           // Pick a random item from current scenario
-          const itemsForBanana = currentScenarioItems.length > 0 ? currentScenarioItems : (itemsData ?? []);
+          const itemsForBanana = currentScenarioItems.length > 0 ? currentScenarioItems : [];
           if (itemsForBanana.length > 0) {
             const randomItem = itemsForBanana[Math.floor(Math.random() * itemsForBanana.length)];
             setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
