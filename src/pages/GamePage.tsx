@@ -220,6 +220,7 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "confirm", undefined, itemId, position);
       if (result.foundObject) toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
       else toast.error(`❌ No era aquí... (-${TOKEN_COSTS.confirm}🪙)`);
+      clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
