@@ -34,6 +34,9 @@ export default function GamePage() {
   const [selectedScenario, setSelectedScenario] = useState("");
   const [selectedObject, setSelectedObject] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
+  const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
+  const [clue1, setClue1] = useState("");
+  const [clue2, setClue2] = useState("");
   const [hideStep, setHideStep] = useState(0);
 
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
@@ -49,7 +52,8 @@ export default function GamePage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState<{ itemId: string; position: "sobre" | "sota" | "dins"; itemName: string } | null>(null);
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
-  const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null); // "itemId:position" blocked by banana
+  const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
+  const [rivalClues, setRivalClues] = useState<{ clue1: string | null; clue2: string | null }>({ clue1: null, clue2: null });
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
