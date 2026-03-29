@@ -1,0 +1,1 @@
+UPDATE game_players SET current_scenario_id = 'ee0d1a9a-d8bd-434f-8b65-e564ea86b0aa' WHERE game_id = '3e9831df-6f63-4d7c-a3a5-c50ad0633645' AND user_id = 'fe4d0f7b-4ec0-435f-bf97-14c124772c78' AND current_scenario_id IS NULL;
