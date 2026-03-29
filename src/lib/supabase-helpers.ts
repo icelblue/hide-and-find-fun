@@ -191,12 +191,28 @@ export async function deleteGame(gameId: string) {
 
 export async function hideObject(
   gameId: string, userId: string, objectId: string, itemId: string,
-  position: "sobre" | "sota" | "dins"
+  position: "sobre" | "sota" | "dins",
+  clue1?: string, clue2?: string
 ) {
+  // Validate position restriction: object size vs furniture capacity
+  if (position === "dins") {
+    const [{ data: obj }, { data: itm }] = await Promise.all([
+      supabase.from("objects").select("size").eq("id", objectId).single(),
+      supabase.from("items").select("inner_capacity").eq("id", itemId).single(),
+    ]);
+    const objSize = (obj as any)?.size ?? 2;
+    const capacity = (itm as any)?.inner_capacity ?? 2;
+    if (objSize > capacity) {
+      throw new Error("L'objecte és massa gran per amagar-lo dins d'aquest moble! Tria una altra posició.");
+    }
+  }
+
   const { error } = await supabase.from("game_players").update({
     hidden_object_id: objectId, hidden_item_id: itemId,
     hidden_position: position, has_hidden: true,
-  }).eq("game_id", gameId).eq("user_id", userId);
+    hidden_clue_1: clue1?.trim()?.slice(0, 60) || null,
+    hidden_clue_2: clue2?.trim()?.slice(0, 60) || null,
+  } as any).eq("game_id", gameId).eq("user_id", userId);
   if (error) throw error;
 }
 
