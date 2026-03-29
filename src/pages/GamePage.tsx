@@ -271,12 +271,7 @@ export default function GamePage() {
       {/* BG glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
-      {/* Banana overlay */}
-      {bananaEffect && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-accent/30 pointer-events-none backdrop-blur-sm">
-          <span className="text-[120px] animate-bounce">🍌</span>
-        </div>
-      )}
+      {/* Banana notification toast (no longer full-screen block) */}
 
       {/* Confirm dialog */}
       {showConfirmDialog && (
