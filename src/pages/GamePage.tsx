@@ -159,7 +159,7 @@ export default function GamePage() {
         await startGame(gameId);
         toast.success("Comença la cerca! 🔍");
       }
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -180,7 +180,7 @@ export default function GamePage() {
       toast.success(`${s?.icon} ${s?.name} (-${TOKEN_COSTS.move}🪙)`);
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -207,7 +207,7 @@ export default function GamePage() {
       }
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -222,7 +222,7 @@ export default function GamePage() {
       else toast.error(`❌ No era aquí... (-${TOKEN_COSTS.confirm}🪙)`);
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -238,7 +238,7 @@ export default function GamePage() {
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
