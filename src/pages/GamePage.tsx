@@ -483,7 +483,7 @@ export default function GamePage() {
             <div className="grid grid-cols-2 gap-1.5 mt-2">
               {connectedScenarios.map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
-                  disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move}
+                  disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move || bananaEffect}
                   className="glass rounded-xl p-3 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
                   <div className="text-2xl">{s.icon}</div>
                   <div className="text-[11px] leading-tight font-medium mt-1">{s.name}</div>
