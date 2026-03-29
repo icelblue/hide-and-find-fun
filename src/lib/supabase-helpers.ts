@@ -191,8 +191,7 @@ export async function deleteGame(gameId: string) {
 
 export async function hideObject(
   gameId: string, userId: string, objectId: string, itemId: string,
-  position: "sobre" | "sota" | "dins",
-  clue1?: string, clue2?: string
+  position: "sobre" | "sota" | "dins"
 ) {
   // Validate position restriction: object size vs furniture capacity
   if (position === "dins") {
@@ -210,9 +209,7 @@ export async function hideObject(
   const { error } = await supabase.from("game_players").update({
     hidden_object_id: objectId, hidden_item_id: itemId,
     hidden_position: position, has_hidden: true,
-    hidden_clue_1: clue1?.trim()?.slice(0, 60) || null,
-    hidden_clue_2: clue2?.trim()?.slice(0, 60) || null,
-  } as any).eq("game_id", gameId).eq("user_id", userId);
+  }).eq("game_id", gameId).eq("user_id", userId);
   if (error) throw error;
 }
 

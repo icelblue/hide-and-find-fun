@@ -35,8 +35,6 @@ export default function GamePage() {
   const [selectedObject, setSelectedObject] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
-  const [clue1, setClue1] = useState("");
-  const [clue2, setClue2] = useState("");
   const [hideStep, setHideStep] = useState(0);
 
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
@@ -53,7 +51,7 @@ export default function GamePage() {
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
-  const [rivalClues, setRivalClues] = useState<{ clue1: string | null; clue2: string | null }>({ clue1: null, clue2: null });
+  const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
@@ -75,7 +73,7 @@ export default function GamePage() {
     setPlayer(playerData);
     setRival(rivalData);
 
-    if (playerData?.has_hidden) setHideStep(5);
+    if (playerData?.has_hidden) setHideStep(4);
 
     // Proximity alert: check if rival is at the scenario where we hid our object
     if (gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
@@ -86,15 +84,24 @@ export default function GamePage() {
       setRivalNearby(false);
     }
 
-    // Reveal rival's clues progressively based on move count
-    if (gameData?.status === "playing" && rivalData) {
+    // Load rival's object traits progressively
+    if (gameData?.status === "playing" && rivalData?.hidden_object_id) {
       const { count: myMoves } = await supabase
         .from("game_moves").select("*", { count: "exact", head: true })
         .eq("game_id", gameId).eq("player_id", user.id);
       const totalMoves = myMoves ?? 0;
-      const c1 = totalMoves >= 2 ? ((rivalData as any).hidden_clue_1 ?? null) : null;
-      const c2 = totalMoves >= 5 ? ((rivalData as any).hidden_clue_2 ?? null) : null;
-      setRivalClues({ clue1: c1, clue2: c2 });
+
+      if (totalMoves >= 2) {
+        const { data: traits } = await supabase
+          .from("object_traits").select("trait_number, trait_text")
+          .eq("object_id", rivalData.hidden_object_id)
+          .order("trait_number");
+        const t1 = traits?.find((t: any) => t.trait_number === 1)?.trait_text ?? null;
+        const t2 = totalMoves >= 5 ? (traits?.find((t: any) => t.trait_number === 2)?.trait_text ?? null) : null;
+        setRivalTraits({ trait1: t1, trait2: t2 });
+      } else {
+        setRivalTraits({ trait1: null, trait2: null });
+      }
     }
 
     let loadedItems: any[] = [];
@@ -163,7 +170,7 @@ export default function GamePage() {
     setHideStep(1);
   };
 
-  const handleSelectPosition = (pos: "sobre" | "sota" | "dins") => {
+  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
     // Check size restriction for "dins"
     if (pos === "dins") {
       const obj = objects.find((o: any) => o.id === selectedObject);
@@ -176,15 +183,12 @@ export default function GamePage() {
       }
     }
     setSelectedPosition(pos);
-    setHideStep(4); // Go to clues step
-  };
-
-  const handleHideWithClues = async () => {
-    if (!gameId || !user || !selectedPosition) return;
+    // Directly hide — no clue step needed (traits are predefined)
+    if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      await hideObject(gameId, user.id, selectedObject, selectedItem, selectedPosition as any, clue1, clue2);
-      setHideStep(5);
+      await hideObject(gameId, user.id, selectedObject, selectedItem, pos);
+      setHideStep(4);
       toast.success("Objecte amagat! 🫣");
       if (await checkBothPlayersHidden(gameId)) {
         await startGame(gameId);
@@ -295,7 +299,7 @@ export default function GamePage() {
     </div>;
   }
 
-  const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició", "💡 Pistes"];
+  const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
 
   return (
     <div className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative">
@@ -365,7 +369,7 @@ export default function GamePage() {
       </div>
 
       {/* WAITING — show code + allow hiding */}
-      {phase === "waiting" && !player.has_hidden && hideStep < 5 && (
+      {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
         <Card className="glass glow-primary mb-4">
           <CardContent className="py-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
@@ -390,7 +394,7 @@ export default function GamePage() {
       )}
 
       {/* HIDING */}
-      {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep < 5 && (
+      {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep < 4 && (
         <div>
           {/* Step indicator */}
           <div className="flex items-center gap-1 mb-5">
@@ -484,30 +488,6 @@ export default function GamePage() {
               <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>← Canviar moble</Button>
             </div>
           )}
-
-          {hideStep === 4 && (
-            <div>
-              <h2 className="text-lg font-bold mb-1">💡 Pistes per al rival</h2>
-              <Tip>Escriu 2 característiques de l'objecte. El rival les veurà durant la partida com a pistes per deduir què busca!</Tip>
-              <div className="h-3" />
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Pista 1 (es revela al torn 2)</label>
-                  <Input value={clue1} onChange={e => setClue1(e.target.value)} placeholder="Ex: Són dues i van juntes" maxLength={60} className="bg-muted/50" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Pista 2 (es revela al torn 5)</label>
-                  <Input value={clue2} onChange={e => setClue2(e.target.value)} placeholder="Ex: Fan pudor" maxLength={60} className="bg-muted/50" />
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button variant="ghost" size="sm" onClick={() => setHideStep(3)}>← Posició</Button>
-                <Button className="flex-1" onClick={handleHideWithClues} disabled={actionLoading}>
-                  {clue1.trim() && clue2.trim() ? "Amagar amb pistes 💡" : "Amagar sense pistes"}
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -567,24 +547,24 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* Rival's clues */}
-          {(rivalClues.clue1 || rivalClues.clue2) && (
+          {/* Rival's object traits */}
+          {(rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes del rival</p>
-                {rivalClues.clue1 && (
-                  <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalClues.clue1}"</span></p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes de l'objecte rival</p>
+                {rivalTraits.trait1 && (
+                  <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalTraits.trait1}"</span></p>
                 )}
-                {rivalClues.clue2 && (
-                  <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalClues.clue2}"</span></p>
+                {rivalTraits.trait2 && (
+                  <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalTraits.trait2}"</span></p>
                 )}
-                {!rivalClues.clue2 && rivalClues.clue1 && (
+                {!rivalTraits.trait2 && rivalTraits.trait1 && (
                   <p className="text-[10px] text-muted-foreground mt-1">🔒 2a pista al torn 5</p>
                 )}
               </CardContent>
             </Card>
           )}
-          {!rivalClues.clue1 && moveHistory.length < 2 && (
+          {!rivalTraits.trait1 && moveHistory.length < 2 && (
             <p className="text-[10px] text-center text-muted-foreground">💡 Pista de l'objecte rival al torn 2</p>
           )}
 
