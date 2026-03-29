@@ -267,7 +267,7 @@ export default function GamePage() {
   const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
 
   return (
-    <div className={`min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative ${bananaEffect ? "blur-sm" : ""}`}>
+    <div className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative">
       {/* BG glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
