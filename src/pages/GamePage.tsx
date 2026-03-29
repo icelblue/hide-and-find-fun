@@ -516,28 +516,25 @@ export default function GamePage() {
           </div>
 
           {/* Look / Confirm */}
-          {!bananaEffect && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              👀 Investigar
+              👀 Investigar mobles
             </h3>
-            <Tip>Observar ({TOKEN_COSTS.look}🪙) dona pistes: ❄️ fred / 🌡️ calent / 🔥 molt calent. Confirmar ({TOKEN_COSTS.confirm}🪙) aposta que és allà!</Tip>
+            <Tip>👀 Observar ({TOKEN_COSTS.look}🪙) = pista (❄️/🌡️/🔥). 🔍 Confirmar ({TOKEN_COSTS.confirm}🪙) = trobar l'objecte!</Tip>
+            {bananaEffect && bananaBlockedSpot && (
+              <p className="text-xs text-destructive mt-1 animate-pulse">🍌 Una posició està bloquejada! Fes una altra acció per desbloquejar-la.</p>
+            )}
             <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
                   onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
-                  exploredSpots={exploredSpots} />
+                  lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
+                  bananaBlockedSpot={bananaBlockedSpot} />
               ))}
             </div>
           </div>
-          )}
-          {bananaEffect && (
-            <div className="text-center py-6">
-              <p className="text-sm text-muted-foreground animate-pulse">🍌 No pots investigar ara!</p>
-            </div>
-          )}
 
           {/* Social */}
           <div>
