@@ -106,7 +106,7 @@ export default function GamePage() {
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
           setBananaEffect(true);
-          setTimeout(() => setBananaEffect(false), 3000);
+          setTimeout(() => setBananaEffect(false), 8000); // 8 seconds
         } else if (item.item_type === "false_clue") {
           setFalseClueItem(true);
           setTimeout(() => setFalseClueItem(false), 10000);
