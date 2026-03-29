@@ -425,6 +425,10 @@ export async function sendSocialItem(
       await supabase.from("game_players")
         .update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
+      // Check if already used this game
+      if (fromPlayer.smoke_bomb_used) {
+        throw new Error("Ja has usat la bomba de fum en aquesta partida!");
+      }
       const { data: self } = await supabase
         .from("game_players").select("hidden_position, id")
         .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
@@ -433,7 +437,7 @@ export async function sendSocialItem(
         const other = all.filter(p => p !== self.hidden_position);
         const newPos = other[Math.floor(Math.random() * other.length)];
         await supabase.from("game_players")
-          .update({ hidden_position: newPos }).eq("id", self.id);
+          .update({ hidden_position: newPos, smoke_bomb_used: true }).eq("id", self.id);
       }
     }
     if (toPlayer?.shield_active) {
