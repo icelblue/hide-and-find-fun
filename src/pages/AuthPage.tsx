@@ -44,7 +44,7 @@ export default function AuthPage() {
           <div className="w-16 h-16 mx-auto mb-3 rounded-2xl gradient-primary flex items-center justify-center shadow-lg glow-primary">
             <span className="text-3xl">🔍</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-gradient">Deduction Duel</CardTitle>
+          <CardTitle className="text-xl text-neon">🔍 DEDUCTION DUEL</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Amaga. Busca. Guanya.
           </p>
