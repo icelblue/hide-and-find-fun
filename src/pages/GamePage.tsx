@@ -527,17 +527,22 @@ export default function GamePage() {
 
             {showSocialPanel && (
               <div className="mt-2 space-y-1.5">
-                {SOCIAL_ITEMS.map(item => (
+                {SOCIAL_ITEMS.map(item => {
+                  const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
+                  return (
                   <div key={item.type}>
                     <button
-                      onClick={() => item.type !== "message" && handleSendSocial(item.type)}
-                      className="w-full glass rounded-xl p-3 flex items-center gap-3 hover:border-accent/40 transition-all text-left active:scale-[0.99]">
+                      onClick={() => item.type !== "message" && !isBombUsed && handleSendSocial(item.type)}
+                      disabled={isBombUsed}
+                      className={`w-full glass rounded-xl p-3 flex items-center gap-3 hover:border-accent/40 transition-all text-left active:scale-[0.99] ${isBombUsed ? "opacity-40" : ""}`}>
                       <span className="text-2xl">{item.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold">{item.name}</div>
-                        <div className="text-[11px] text-muted-foreground">{item.desc}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
+                        </div>
                       </div>
-                      {item.type !== "message" && <span className="text-xs text-primary font-bold">→</span>}
+                      {item.type !== "message" && !isBombUsed && <span className="text-xs text-primary font-bold">→</span>}
                     </button>
                     {item.type === "message" && (
                       <div className="flex gap-1.5 mt-1.5">
