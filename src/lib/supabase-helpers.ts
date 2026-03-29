@@ -286,16 +286,39 @@ export async function performMove(
   let foundBonus: string | null = null;
   let bonusValue: string | null = null;
   let bonusTokens = 0;
+  let hintLevel: number | null = null; // 0=cold, 1=warm(right scenario), 2=hot(right item)
 
-  // LOOK: only checks bonus, NOT rival's object
+  // Get rival's hidden info for both look and confirm
+  const { data: rival } = await supabase
+    .from("game_players").select("hidden_item_id, hidden_position")
+    .eq("game_id", gameId).neq("user_id", playerId).single();
+
   // CONFIRM: checks rival's object AND costs more
   if (action === "confirm" && targetItemId && targetPosition) {
-    const { data: rival } = await supabase
-      .from("game_players").select("hidden_item_id, hidden_position")
-      .eq("game_id", gameId).neq("user_id", playerId).single();
-
     if (rival && targetItemId === rival.hidden_item_id && targetPosition === rival.hidden_position) {
       foundObject = true;
+    }
+  }
+
+  // LOOK: gives progressive hints + checks bonus
+  if (action === "look" && targetItemId && targetPosition && rival) {
+    // Get the scenario of the rival's hidden item
+    const { data: rivalHiddenItem } = await supabase
+      .from("items").select("scenario_id").eq("id", rival.hidden_item_id!).single();
+    // Get scenario of the item we're looking at
+    const { data: targetItem } = await supabase
+      .from("items").select("scenario_id").eq("id", targetItemId).single();
+
+    if (rivalHiddenItem && targetItem) {
+      if (targetItem.scenario_id !== rivalHiddenItem.scenario_id) {
+        hintLevel = 0; // Cold - wrong scenario
+      } else if (targetItemId !== rival.hidden_item_id) {
+        hintLevel = 1; // Warm - right scenario, wrong item
+      } else if (targetPosition !== rival.hidden_position) {
+        hintLevel = 2; // Hot - right item, wrong position!
+      } else {
+        hintLevel = 2; // Also hot (but they'd need confirm to actually find it)
+      }
     }
   }
 
