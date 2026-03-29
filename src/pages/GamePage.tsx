@@ -331,9 +331,10 @@ export default function GamePage() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setReceivedMessage(null)}>
           <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-6 text-center">
-              <div className="text-4xl mb-2">💬</div>
-              <p className="text-xs text-muted-foreground mb-1">El rival diu:</p>
+              <div className="text-4xl mb-2">💡</div>
+              <p className="text-xs text-muted-foreground mb-1">Pista del rival:</p>
               <p className="text-lg font-medium italic my-3 text-primary">"{receivedMessage}"</p>
+              <p className="text-[10px] text-muted-foreground mb-3">⚠️ Pot ser veritat o un farol!</p>
               <Button size="sm" onClick={() => setReceivedMessage(null)}>Tancar</Button>
             </CardContent>
           </Card>
