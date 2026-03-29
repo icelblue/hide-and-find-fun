@@ -13,38 +13,41 @@ const RULES = [
   },
   {
     title: "🪙 Tokens",
-    text: `Tens 5 tokens/dia. Moure's: ${TOKEN_COSTS.move}🪙 · Observar: ${TOKEN_COSTS.look}🪙 · Confirmar: ${TOKEN_COSTS.confirm}🪙. Es reinicien cada dia.`,
+    text: `Tens 5 tokens/dia. Es reinicien cada dia. Usa'ls bé!`,
   },
   {
-    title: "🚶 Moure's",
-    text: "Cada habitació té 2 portes. Només pots anar a les sales adjacents (circuit: Cuina → Menjador → Jardí → Balcó → Habitació → Despatx → Lavabo → Cuina).",
+    title: "🚶 Moure's · " + TOKEN_COSTS.move + "🪙",
+    text: "Canvia d'habitació. Cada sala té portes que connecten amb altres sales.",
   },
   {
-    title: "👀 Observar",
-    text: "Mira una posició d'un moble. Si no hi ha l'objecte, potser trobes un bonus (token extra, pista...).",
+    title: "👀 Observar · " + TOKEN_COSTS.look + "🪙",
+    text: "Mira una posició d'un moble. Reps una pista: ❄️ Fred (habitació incorrecta) · 🌡️ Calent (bona habitació, moble incorrecte) · 🔥 Molt calent (moble correcte, posició incorrecta!). NO TROBA l'objecte, només dona pistes per deduir.",
   },
   {
-    title: "🔍 Confirmar",
-    text: "Aposta forta! Si l'objecte és allà, guanyes. Si no, perds 1.5 tokens. Pensa bé!",
+    title: "🔍 Confirmar · " + TOKEN_COSTS.confirm + "🪙",
+    text: "L'ÚNICA acció que pot trobar l'objecte! Si encertes moble + posició, guanyes. Si falles, perds tokens. Usa les pistes d'observar per saber on confirmar!",
   },
   {
-    title: "⚡ Ítems socials (1/dia)",
-    text: "🍌 Plàtan: Borrós 3s · 💣 Bomba fum: Mou el teu objecte · 🔮 Pista falsa: Confon rival · 🛡️ Escut: Bloqueja un ítem · 💬 Missatge: Envia text.",
+    title: "🍌 Plàtan (ítem social)",
+    text: "Bloqueja una posició aleatòria del rival. Es desbloqueja quan el rival gasta tokens en una altra acció.",
+  },
+  {
+    title: "⚡ Altres ítems socials (1/dia)",
+    text: "💣 Bomba fum: Mou el teu objecte (1 cop/partida) · 🔮 Pista falsa: Confon rival · 🛡️ Escut: Bloqueja ítem · 💬 Missatge: Envia text.",
   },
   {
     title: "🏆 Recompenses",
-    text: "Guanya partides per obtenir mobles. Col·loca'ls en escenaris (amplien el joc) o ven-los per tokens bonus.",
+    text: "Guanya partides per obtenir mobles. Col·loca'ls en escenaris o ven-los per tokens bonus.",
   },
   {
     title: "📈 Elo i Lligues",
-    text: "Guanyar: +25 Elo · Perdre: -20 Elo. Puja de lliga: Bronze → Silver → Gold → Platinum → Diamond.",
+    text: "Guanyar: +25 Elo · Perdre: -20 Elo. Lligues: Bronze → Silver → Gold → Platinum → Diamond.",
   },
 ];
 
 export function HelpButton() {
   const [open, setOpen] = useState(false);
 
-  // Lock body scroll when modal is open (prevents Safari scroll-through)
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
