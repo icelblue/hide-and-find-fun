@@ -1,0 +1,1 @@
+ALTER TABLE public.game_players ADD COLUMN smoke_bomb_used boolean NOT NULL DEFAULT false;
