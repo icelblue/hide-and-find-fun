@@ -458,7 +458,19 @@ export default function GamePage() {
       {/* PLAYING */}
       {phase === "playing" && (
         <div className="space-y-4">
-          {/* Location bar */}
+          {/* First-time tips */}
+          {moveHistory.length === 0 && (
+            <Card className="glass border-primary/30 glow-primary">
+              <CardContent className="py-3">
+                <p className="text-xs font-semibold mb-1">🎮 Com jugar:</p>
+                <div className="space-y-1 text-[11px] text-muted-foreground">
+                  <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
+                  <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
+                  <p>🔍 <strong>Confirma</strong> (1.5🪙) quan creguis saber on és. Si encertes, guanyes!</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card className="glass">
             <CardContent className="py-3 flex items-center justify-between">
               <div>
