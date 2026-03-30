@@ -83,6 +83,58 @@ export default function ProfilePage() {
       }
     }
     setWallMessages(wallMsgs);
+
+    // Load active games with hidden object info
+    const { data: myGamePlayers } = await supabase
+      .from("game_players")
+      .select("game_id, hidden_object_id, hidden_item_id, hidden_position, has_hidden, special_data, tokens_remaining")
+      .eq("user_id", user.id);
+    if (myGamePlayers && myGamePlayers.length > 0) {
+      const gpGameIds = myGamePlayers.map(gp => gp.game_id);
+      const { data: activeGameData } = await supabase
+        .from("games").select("id, code, status, created_at")
+        .in("id", gpGameIds)
+        .in("status", ["waiting", "hiding", "playing"])
+        .order("created_at", { ascending: false });
+      if (activeGameData && activeGameData.length > 0) {
+        // Get object and item names
+        const objIds = myGamePlayers.filter(gp => gp.hidden_object_id).map(gp => gp.hidden_object_id!);
+        const itmIds = myGamePlayers.filter(gp => gp.hidden_item_id).map(gp => gp.hidden_item_id!);
+        const [{ data: objs }, { data: itms }] = await Promise.all([
+          objIds.length > 0 ? supabase.from("objects").select("id, name, icon").in("id", objIds) : { data: [] },
+          itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
+        ]);
+        const objMap = new Map((objs ?? []).map(o => [o.id, o]));
+        const itmMap = new Map((itms ?? []).map(i => [i.id, i]));
+        const scenMap = new Map(scen.map((s: any) => [s.id, s]));
+
+        const enriched = activeGameData.map(g => {
+          const gp = myGamePlayers.find(p => p.game_id === g.id);
+          const obj = gp?.hidden_object_id ? objMap.get(gp.hidden_object_id) : null;
+          const itm = gp?.hidden_item_id ? itmMap.get(gp.hidden_item_id) : null;
+          const scn = itm ? scenMap.get((itm as any).scenario_id) : null;
+          return {
+            ...g, 
+            hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
+            hiddenPosition: gp?.hidden_position, hasHidden: gp?.has_hidden,
+            tokens: gp?.tokens_remaining,
+          };
+        });
+        setActiveGames(enriched);
+      } else {
+        setActiveGames([]);
+      }
+    }
+
+    // Load trophies
+    const { data: trophyData } = await supabase
+      .from("player_inventory")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("item_type", "special_trophy")
+      .is("gifted_to", null)
+      .order("collected_at", { ascending: false });
+    setTrophies(trophyData ?? []);
   }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
