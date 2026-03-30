@@ -18,20 +18,28 @@ export default function PlayerProfilePage() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
+  const [trophies, setTrophies] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
-    const [{ data: prof }, { data: msgs }] = await Promise.all([
+    const [{ data: prof }, { data: msgs }, { data: trophyData }] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
       supabase.from("wall_messages")
         .select("*")
         .eq("target_user_id", userId)
         .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false }),
+      supabase.from("player_inventory")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("item_type", "special_trophy")
+        .is("gifted_to", null)
+        .order("collected_at", { ascending: false }),
     ]);
     setProfile(prof);
+    setTrophies(trophyData ?? []);
 
     // Fetch author names
     const wallMsgs: any[] = msgs ?? [];
@@ -129,7 +137,38 @@ export default function PlayerProfilePage() {
         ))}
       </div>
 
-      {/* Wall messages */}
+      {/* Trophies */}
+      {trophies.length > 0 && (
+        <div className="mb-5 relative z-10">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            🏆 Trofeus ({trophies.length})
+          </h2>
+          <div className="space-y-2">
+            {trophies.map((t: any) => {
+              const sd = t.special_data as any;
+              return (
+                <Card key={t.id} className="glass border-accent/30">
+                  <CardContent className="py-2.5 flex items-center gap-3">
+                    <span className="text-2xl">{sd?.object_icon ?? "⭐"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm">
+                        {sd?.custom_name ? `"${sd.custom_name}"` : sd?.variant_label ? `${sd.variant_label}` : sd?.object_name ?? "Trofeu"}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
+                      </div>
+                      {sd?.custom_message && (
+                        <div className="text-[11px] italic text-primary/80 mt-0.5">💌 "{sd.custom_message}"</div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
           💬 Mur · <span className="normal-case">missatges desapareixen en {WALL_TTL_HOURS}h</span>
