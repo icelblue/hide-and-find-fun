@@ -37,6 +37,9 @@ export default function GamePage() {
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
   const [hideStep, setHideStep] = useState(0);
+  const [objectSpecial, setObjectSpecial] = useState<any>(null);
+  const [specialInput, setSpecialInput] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
 
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
   const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
@@ -53,6 +56,8 @@ export default function GamePage() {
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
+  const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
+  const [specialFoundInput, setSpecialFoundInput] = useState("");
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
