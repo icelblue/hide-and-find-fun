@@ -133,6 +133,7 @@ export type Database = {
           shield_active: boolean
           smoke_bomb_used: boolean
           social_item_used_today: boolean
+          special_data: Json | null
           tokens_last_reset: string
           tokens_remaining: number
           user_id: string
@@ -149,6 +150,7 @@ export type Database = {
           shield_active?: boolean
           smoke_bomb_used?: boolean
           social_item_used_today?: boolean
+          special_data?: Json | null
           tokens_last_reset?: string
           tokens_remaining?: number
           user_id: string
@@ -165,6 +167,7 @@ export type Database = {
           shield_active?: boolean
           smoke_bomb_used?: boolean
           social_item_used_today?: boolean
+          special_data?: Json | null
           tokens_last_reset?: string
           tokens_remaining?: number
           user_id?: string
@@ -291,6 +294,7 @@ export type Database = {
       items: {
         Row: {
           display_order: number
+          environment: Database["public"]["Enums"]["item_environment"]
           icon: string | null
           id: string
           inner_capacity: number
@@ -299,6 +303,7 @@ export type Database = {
         }
         Insert: {
           display_order?: number
+          environment?: Database["public"]["Enums"]["item_environment"]
           icon?: string | null
           id?: string
           inner_capacity?: number
@@ -307,6 +312,7 @@ export type Database = {
         }
         Update: {
           display_order?: number
+          environment?: Database["public"]["Enums"]["item_environment"]
           icon?: string | null
           id?: string
           inner_capacity?: number
@@ -319,6 +325,41 @@ export type Database = {
             columns: ["scenario_id"]
             isOneToOne: false
             referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      object_specials: {
+        Row: {
+          id: string
+          object_id: string
+          prompt_on: string
+          prompt_text: string
+          special_type: string
+          variants: Json | null
+        }
+        Insert: {
+          id?: string
+          object_id: string
+          prompt_on: string
+          prompt_text: string
+          special_type: string
+          variants?: Json | null
+        }
+        Update: {
+          id?: string
+          object_id?: string
+          prompt_on?: string
+          prompt_text?: string
+          special_type?: string
+          variants?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "object_specials_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: true
+            referencedRelation: "objects"
             referencedColumns: ["id"]
           },
         ]
@@ -357,6 +398,7 @@ export type Database = {
           display_order: number
           icon: string | null
           id: string
+          material: Database["public"]["Enums"]["object_material"]
           name: string
           size: number
         }
@@ -364,6 +406,7 @@ export type Database = {
           display_order?: number
           icon?: string | null
           id?: string
+          material?: Database["public"]["Enums"]["object_material"]
           name: string
           size?: number
         }
@@ -371,6 +414,7 @@ export type Database = {
           display_order?: number
           icon?: string | null
           id?: string
+          material?: Database["public"]["Enums"]["object_material"]
           name?: string
           size?: number
         }
@@ -385,6 +429,7 @@ export type Database = {
           id: string
           item_type: string
           item_value: string | null
+          special_data: Json | null
           user_id: string
         }
         Insert: {
@@ -395,6 +440,7 @@ export type Database = {
           id?: string
           item_type: string
           item_value?: string | null
+          special_data?: Json | null
           user_id: string
         }
         Update: {
@@ -405,6 +451,7 @@ export type Database = {
           id?: string
           item_type?: string
           item_value?: string | null
+          special_data?: Json | null
           user_id?: string
         }
         Relationships: [
@@ -680,8 +727,16 @@ export type Database = {
       action_type: "move" | "look" | "confirm"
       bonus_type: "extra_token" | "hint_yes" | "hint_no"
       game_status: "waiting" | "hiding" | "playing" | "finished"
+      item_environment: "generic" | "wet" | "hot"
       item_rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"
       league_tier: "bronze" | "silver" | "gold" | "platinum" | "diamond"
+      object_material:
+        | "generic"
+        | "paper"
+        | "glass"
+        | "metal"
+        | "plastic"
+        | "fabric"
       position_type: "sobre" | "sota" | "dins"
       social_item_type:
         | "banana"
@@ -819,8 +874,17 @@ export const Constants = {
       action_type: ["move", "look", "confirm"],
       bonus_type: ["extra_token", "hint_yes", "hint_no"],
       game_status: ["waiting", "hiding", "playing", "finished"],
+      item_environment: ["generic", "wet", "hot"],
       item_rarity: ["common", "uncommon", "rare", "epic", "legendary"],
       league_tier: ["bronze", "silver", "gold", "platinum", "diamond"],
+      object_material: [
+        "generic",
+        "paper",
+        "glass",
+        "metal",
+        "plastic",
+        "fabric",
+      ],
       position_type: ["sobre", "sota", "dins"],
       social_item_type: [
         "banana",

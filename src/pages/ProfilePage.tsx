@@ -29,6 +29,8 @@ export default function ProfilePage() {
   const [sellingReward, setSellingReward] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [wallMessages, setWallMessages] = useState<any[]>([]);
+  const [activeGames, setActiveGames] = useState<any[]>([]);
+  const [trophies, setTrophies] = useState<any[]>([]);
 
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
 
@@ -81,6 +83,58 @@ export default function ProfilePage() {
       }
     }
     setWallMessages(wallMsgs);
+
+    // Load active games with hidden object info
+    const { data: myGamePlayers } = await supabase
+      .from("game_players")
+      .select("game_id, hidden_object_id, hidden_item_id, hidden_position, has_hidden, special_data, tokens_remaining")
+      .eq("user_id", user.id);
+    if (myGamePlayers && myGamePlayers.length > 0) {
+      const gpGameIds = myGamePlayers.map(gp => gp.game_id);
+      const { data: activeGameData } = await supabase
+        .from("games").select("id, code, status, created_at")
+        .in("id", gpGameIds)
+        .in("status", ["waiting", "hiding", "playing"])
+        .order("created_at", { ascending: false });
+      if (activeGameData && activeGameData.length > 0) {
+        // Get object and item names
+        const objIds = myGamePlayers.filter(gp => gp.hidden_object_id).map(gp => gp.hidden_object_id!);
+        const itmIds = myGamePlayers.filter(gp => gp.hidden_item_id).map(gp => gp.hidden_item_id!);
+        const [{ data: objs }, { data: itms }] = await Promise.all([
+          objIds.length > 0 ? supabase.from("objects").select("id, name, icon").in("id", objIds) : { data: [] },
+          itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
+        ]);
+        const objMap = new Map((objs ?? []).map((o: any) => [o.id, o] as [string, any]));
+        const itmMap = new Map((itms ?? []).map((i: any) => [i.id, i] as [string, any]));
+        const scenMap = new Map(scen.map((s: any) => [s.id, s] as [string, any]));
+
+        const enriched = activeGameData.map(g => {
+          const gp = myGamePlayers.find(p => p.game_id === g.id);
+          const obj = gp?.hidden_object_id ? objMap.get(gp.hidden_object_id) : null;
+          const itm = gp?.hidden_item_id ? itmMap.get(gp.hidden_item_id) : null;
+          const scn = itm ? scenMap.get((itm as any).scenario_id) : null;
+          return {
+            ...g, 
+            hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
+            hiddenPosition: gp?.hidden_position, hasHidden: gp?.has_hidden,
+            tokens: gp?.tokens_remaining,
+          };
+        });
+        setActiveGames(enriched);
+      } else {
+        setActiveGames([]);
+      }
+    }
+
+    // Load trophies
+    const { data: trophyData } = await supabase
+      .from("player_inventory")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("item_type", "special_trophy")
+      .is("gifted_to", null)
+      .order("collected_at", { ascending: false });
+    setTrophies(trophyData ?? []);
   }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -259,6 +313,74 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Active Games */}
+      {activeGames.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            🎮 Partides actives ({activeGames.length})
+          </h2>
+          <div className="space-y-2">
+            {activeGames.map((g: any) => {
+              const statusLabels: Record<string, string> = { waiting: "⏳ Esperant", hiding: "🫣 Amagant", playing: "🔍 Jugant" };
+              const posLabels: Record<string, string> = { sobre: "⬆️ Sobre", sota: "⬇️ Sota", dins: "📦 Dins" };
+              return (
+                <Card key={g.id} className="glass cursor-pointer hover:border-primary/40 transition-all" onClick={() => navigate(`/game/${g.id}`)}>
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-xs font-bold tracking-wider">{g.code}</span>
+                      <span className="text-[10px] text-muted-foreground">{statusLabels[g.status] ?? g.status}</span>
+                    </div>
+                    {g.hasHidden && g.hiddenObj ? (
+                      <div className="text-[11px] text-muted-foreground">
+                        <span className="text-foreground font-medium">{g.hiddenObj.icon} {g.hiddenObj.name}</span>
+                        {" → "}
+                        {g.hiddenScenario && <span>{g.hiddenScenario.icon} {g.hiddenScenario.name} · </span>}
+                        {g.hiddenItem && <span>{g.hiddenItem.icon} {g.hiddenItem.name} · </span>}
+                        {g.hiddenPosition && <span>{posLabels[g.hiddenPosition]}</span>}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground italic">Encara no has amagat cap objecte</p>
+                    )}
+                    {g.status === "playing" && g.tokens != null && (
+                      <p className="text-[10px] text-accent mt-0.5 font-medium">🪙 {g.tokens} tokens</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Trophies */}
+      {trophies.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            🏆 Trofeus ({trophies.length})
+          </h2>
+          <div className="space-y-2">
+            {trophies.map((t: any) => {
+              const sd = t.special_data as any;
+              return (
+                <Card key={t.id} className="glass border-accent/30">
+                  <CardContent className="py-2.5 flex items-center gap-3">
+                    <span className="text-2xl">{sd?.object_icon ?? "⭐"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm">
+                        {sd?.custom_name ? `"${sd.custom_name}"` : sd?.object_name ?? "Trofeu"}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Inventory */}
       <div className="mb-6">
