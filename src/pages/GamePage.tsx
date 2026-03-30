@@ -83,6 +83,12 @@ export default function GamePage() {
       const resetTokens = await ensureTokensReset(playerData);
       playerData.tokens_remaining = resetTokens;
       playerData.tokens_last_reset = new Date().toISOString().split("T")[0];
+
+      // Safety: auto-fix missing scenario
+      if (gameData?.status === "playing" && !playerData.current_scenario_id && playerData.hidden_item_id) {
+        const fixedId = await autoFixMissingScenario(gameId, user.id, playerData.hidden_item_id);
+        playerData.current_scenario_id = fixedId;
+      }
     }
     setPlayer(playerData);
 
