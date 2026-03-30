@@ -24,15 +24,22 @@ export default function PlayerProfilePage() {
 
   const loadData = useCallback(async () => {
     if (!userId) return;
-    const [{ data: prof }, { data: msgs }] = await Promise.all([
+    const [{ data: prof }, { data: msgs }, { data: trophyData }] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
       supabase.from("wall_messages")
         .select("*")
         .eq("target_user_id", userId)
         .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false }),
+      supabase.from("player_inventory")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("item_type", "special_trophy")
+        .is("gifted_to", null)
+        .order("collected_at", { ascending: false }),
     ]);
     setProfile(prof);
+    setTrophies(trophyData ?? []);
 
     // Fetch author names
     const wallMsgs: any[] = msgs ?? [];
