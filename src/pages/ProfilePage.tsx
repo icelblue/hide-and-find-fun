@@ -104,9 +104,9 @@ export default function ProfilePage() {
           objIds.length > 0 ? supabase.from("objects").select("id, name, icon").in("id", objIds) : { data: [] },
           itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
         ]);
-        const objMap = new Map((objs ?? []).map(o => [o.id, o]));
-        const itmMap = new Map((itms ?? []).map(i => [i.id, i]));
-        const scenMap = new Map(scen.map((s: any) => [s.id, s]));
+        const objMap = new Map((objs ?? []).map((o: any) => [o.id, o] as [string, any]));
+        const itmMap = new Map((itms ?? []).map((i: any) => [i.id, i] as [string, any]));
+        const scenMap = new Map(scen.map((s: any) => [s.id, s] as [string, any]));
 
         const enriched = activeGameData.map(g => {
           const gp = myGamePlayers.find(p => p.game_id === g.id);
