@@ -255,7 +255,7 @@ export async function startGame(gameId: string) {
 
 export const TOKEN_COSTS = { move: 0.5, look: 0.3, confirm: 1.5 } as const;
 
-async function ensureTokensReset(player: any) {
+export async function ensureTokensReset(player: any) {
   const today = new Date().toISOString().split("T")[0];
   if (player.tokens_last_reset === today) return player.tokens_remaining;
 
