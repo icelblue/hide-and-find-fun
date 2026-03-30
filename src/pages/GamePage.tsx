@@ -189,11 +189,20 @@ export default function GamePage() {
     setHideStep(1);
   };
 
+  const handleSelectObject = async (objId: string) => {
+    setSelectedObject(objId);
+    const special = await getObjectSpecial(objId);
+    setObjectSpecial(special);
+    setSpecialInput("");
+    setSelectedVariant(null);
+    setHideStep(2);
+  };
+
   const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
     // Check size restriction for "dins"
+    const obj = objects.find((o: any) => o.id === selectedObject);
+    const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
-      const obj = objects.find((o: any) => o.id === selectedObject);
-      const itm = items.find((i: any) => i.id === selectedItem);
       const objSize = (obj as any)?.size ?? 2;
       const capacity = (itm as any)?.inner_capacity ?? 2;
       if (objSize > capacity) {
@@ -201,12 +210,37 @@ export default function GamePage() {
         return;
       }
     }
+    // Check material vs environment in UI
+    const material = (obj as any)?.material ?? "generic";
+    const environment = (itm as any)?.environment ?? "generic";
+    if (material === "paper" && (environment === "wet" || environment === "hot")) {
+      const reason = environment === "wet" ? "es mullaria" : "es cremaria";
+      toast.error(`📄🚫 ${obj?.icon} ${obj?.name} no pot anar aquí, ${reason}!`);
+      return;
+    }
+    if (material === "glass" && environment === "hot") {
+      toast.error(`🔥🚫 ${obj?.icon} ${obj?.name} no pot anar aquí, es trencaria amb la calor!`);
+      return;
+    }
     setSelectedPosition(pos);
-    // Directly hide — no clue step needed (traits are predefined)
-    if (!gameId || !user) return;
+
+    // Check if special object needs extra input on hide
+    if (objectSpecial && objectSpecial.prompt_on === "hide") {
+      setHideStep(5); // Extra step for special input
+      return;
+    }
+
+    // Directly hide
+    await doHide(pos);
+  };
+
+  const doHide = async (pos?: "sobre" | "sota" | "dins", extraSpecialData?: any) => {
+    const finalPos = pos || selectedPosition as "sobre" | "sota" | "dins";
+    if (!gameId || !user || !finalPos) return;
     setActionLoading(true);
     try {
-      await hideObject(gameId, user.id, selectedObject, selectedItem, pos);
+      const specialData = extraSpecialData || undefined;
+      await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
       setHideStep(4);
       toast.success("Objecte amagat! 🫣");
       if (await checkBothPlayersHidden(gameId)) {
