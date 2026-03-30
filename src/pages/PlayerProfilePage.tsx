@@ -169,7 +169,7 @@ export default function PlayerProfilePage() {
         </div>
       )}
 
-      {/* Wall messages */}
+      <div className="relative z-10">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
           💬 Mur · <span className="normal-case">missatges desapareixen en {WALL_TTL_HOURS}h</span>
         </h2>
