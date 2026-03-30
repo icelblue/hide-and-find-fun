@@ -314,6 +314,74 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+      {/* Active Games */}
+      {activeGames.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            🎮 Partides actives ({activeGames.length})
+          </h2>
+          <div className="space-y-2">
+            {activeGames.map((g: any) => {
+              const statusLabels: Record<string, string> = { waiting: "⏳ Esperant", hiding: "🫣 Amagant", playing: "🔍 Jugant" };
+              const posLabels: Record<string, string> = { sobre: "⬆️ Sobre", sota: "⬇️ Sota", dins: "📦 Dins" };
+              return (
+                <Card key={g.id} className="glass cursor-pointer hover:border-primary/40 transition-all" onClick={() => navigate(`/game/${g.id}`)}>
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-xs font-bold tracking-wider">{g.code}</span>
+                      <span className="text-[10px] text-muted-foreground">{statusLabels[g.status] ?? g.status}</span>
+                    </div>
+                    {g.hasHidden && g.hiddenObj ? (
+                      <div className="text-[11px] text-muted-foreground">
+                        <span className="text-foreground font-medium">{g.hiddenObj.icon} {g.hiddenObj.name}</span>
+                        {" → "}
+                        {g.hiddenScenario && <span>{g.hiddenScenario.icon} {g.hiddenScenario.name} · </span>}
+                        {g.hiddenItem && <span>{g.hiddenItem.icon} {g.hiddenItem.name} · </span>}
+                        {g.hiddenPosition && <span>{posLabels[g.hiddenPosition]}</span>}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground italic">Encara no has amagat cap objecte</p>
+                    )}
+                    {g.status === "playing" && g.tokens != null && (
+                      <p className="text-[10px] text-accent mt-0.5 font-medium">🪙 {g.tokens} tokens</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Trophies */}
+      {trophies.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            🏆 Trofeus ({trophies.length})
+          </h2>
+          <div className="space-y-2">
+            {trophies.map((t: any) => {
+              const sd = t.special_data as any;
+              return (
+                <Card key={t.id} className="glass border-accent/30">
+                  <CardContent className="py-2.5 flex items-center gap-3">
+                    <span className="text-2xl">{sd?.object_icon ?? "⭐"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm">
+                        {sd?.custom_name ? `"${sd.custom_name}"` : sd?.object_name ?? "Trofeu"}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Inventory */}
       <div className="mb-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
