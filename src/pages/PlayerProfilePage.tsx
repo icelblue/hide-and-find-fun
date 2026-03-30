@@ -138,11 +138,21 @@ export default function PlayerProfilePage() {
       </div>
 
       {/* Trophies */}
-      {trophies.length > 0 && (
-        <div className="mb-5 relative z-10">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            🏆 Trofeus ({trophies.length})
-          </h2>
+      <div className="mb-5 relative z-10">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          🏆 Trofeus ({trophies.length})
+        </h2>
+        {trophies.length === 0 ? (
+          <Card className="glass">
+            <CardContent className="py-6 text-center">
+              <div className="text-3xl mb-1.5 opacity-50">🏆</div>
+              <p className="text-sm text-muted-foreground">Cap trofeu encara</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                {isOwnProfile ? "Troba objectes especials per guanyar trofeus!" : "Aquest jugador encara no té trofeus."}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
           <div className="space-y-2">
             {trophies.map((t: any) => {
               const sd = t.special_data as any;
@@ -166,8 +176,8 @@ export default function PlayerProfilePage() {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="relative z-10">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
