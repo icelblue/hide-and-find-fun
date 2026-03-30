@@ -70,8 +70,15 @@ export default function GamePage() {
 
     setGame(gameData);
     setPhase((gameData?.status as Phase) ?? "waiting");
-    setPlayer(playerData);
     setRival(rivalData);
+
+    // Ensure daily token reset on load
+    if (playerData && (gameData?.status === "playing" || gameData?.status === "hiding")) {
+      const resetTokens = await ensureTokensReset(playerData);
+      playerData.tokens_remaining = resetTokens;
+      playerData.tokens_last_reset = new Date().toISOString().split("T")[0];
+    }
+    setPlayer(playerData);
 
     if (playerData?.has_hidden) setHideStep(4);
 
