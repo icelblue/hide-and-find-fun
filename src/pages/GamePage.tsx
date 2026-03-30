@@ -480,11 +480,11 @@ export default function GamePage() {
           {hideStep === 1 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
-              <Tip>Escull l'objecte que el rival haurà de trobar.</Tip>
+              <Tip>Escull l'objecte que el rival haurà de trobar. ⭐ = objecte especial!</Tip>
               <div className="h-3" />
               <div className="grid grid-cols-3 gap-2">
                 {objects.map(o => (
-                  <Card key={o.id} className="cursor-pointer glass hover:border-secondary/40 transition-all active:scale-[0.97]" onClick={() => { setSelectedObject(o.id); setHideStep(2); }}>
+                  <Card key={o.id} className="cursor-pointer glass hover:border-secondary/40 transition-all active:scale-[0.97] relative" onClick={() => handleSelectObject(o.id)}>
                     <CardContent className="py-3 text-center">
                       <div className="text-2xl mb-1">{o.icon}</div>
                       <div className="text-[11px] font-medium">{o.name}</div>
@@ -499,17 +499,26 @@ export default function GamePage() {
           {hideStep === 2 && (
             <div>
               <h2 className="text-lg font-bold mb-1">A quin moble?</h2>
-              <Tip>Amaga'l en un moble de l'escenari.</Tip>
+              <Tip>Amaga'l en un moble de l'escenari. 🚫 = incompatible amb el material.</Tip>
               <div className="h-3" />
               <div className="grid grid-cols-2 gap-2.5">
-                {items.map(item => (
-                  <Card key={item.id} className="cursor-pointer glass hover:border-accent/40 transition-all active:scale-[0.97]" onClick={() => { setSelectedItem(item.id); setHideStep(3); }}>
-                    <CardContent className="py-4 text-center">
-                      <div className="text-3xl mb-1">{item.icon}</div>
-                      <div className="text-sm font-medium">{item.name}</div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {items.map(item => {
+                  const obj = objects.find((o: any) => o.id === selectedObject);
+                  const mat = (obj as any)?.material ?? "generic";
+                  const env = (item as any)?.environment ?? "generic";
+                  const matBlocked = (mat === "paper" && (env === "wet" || env === "hot")) || (mat === "glass" && env === "hot");
+                  return (
+                    <Card key={item.id}
+                      className={`glass transition-all active:scale-[0.97] ${matBlocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-accent/40"}`}
+                      onClick={() => !matBlocked && (() => { setSelectedItem(item.id); setHideStep(3); })()}>
+                      <CardContent className="py-4 text-center">
+                        <div className="text-3xl mb-1">{item.icon}</div>
+                        <div className="text-sm font-medium">{item.name}</div>
+                        {matBlocked && <div className="text-[9px] text-destructive mt-1">🚫 {env === "wet" ? "Es mulla" : "Es crema"}</div>}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
               <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(1)}>← Canviar objecte</Button>
             </div>
@@ -541,6 +550,53 @@ export default function GamePage() {
               <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>← Canviar moble</Button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* SPECIAL HIDE STEP — extra input for carta (message) or pilota (variant) */}
+      {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep === 5 && objectSpecial && (
+        <div className="py-4">
+          <Card className="glass glow-accent">
+            <CardContent className="py-6 text-center">
+              <div className="text-4xl mb-3">{objects.find((o: any) => o.id === selectedObject)?.icon}</div>
+              <p className="font-bold mb-1">⭐ Objecte especial!</p>
+              <p className="text-sm text-muted-foreground mb-4">{objectSpecial.prompt_text}</p>
+
+              {objectSpecial.special_type === "custom_message" && (
+                <div className="space-y-3">
+                  <Input value={specialInput} onChange={e => setSpecialInput(e.target.value)}
+                    placeholder="El teu missatge..." maxLength={100} className="text-center bg-muted/50" />
+                  <Button disabled={!specialInput.trim() || actionLoading} className="w-full"
+                    onClick={() => doHide(undefined, { type: "custom_message", message: specialInput.trim() })}>
+                    Amagar amb missatge ✉️
+                  </Button>
+                </div>
+              )}
+
+              {objectSpecial.special_type === "choose_variant" && objectSpecial.variants && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    {(objectSpecial.variants as any[]).map((v: any) => (
+                      <Card key={v.value}
+                        className={`cursor-pointer glass transition-all active:scale-[0.97] ${selectedVariant?.value === v.value ? "border-primary glow-primary" : "hover:border-primary/40"}`}
+                        onClick={() => setSelectedVariant(v)}>
+                        <CardContent className="py-4 text-center">
+                          <div className="text-3xl mb-1">{v.icon}</div>
+                          <div className="text-[11px] font-medium">{v.label}</div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <Button disabled={!selectedVariant || actionLoading} className="w-full"
+                    onClick={() => doHide(undefined, { type: "choose_variant", variant: selectedVariant })}>
+                    Amagar {selectedVariant?.icon ?? "⚽"} 
+                  </Button>
+                </div>
+              )}
+
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(3)}>← Canviar posició</Button>
+            </CardContent>
+          </Card>
         </div>
       )}
 
