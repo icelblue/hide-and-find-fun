@@ -191,14 +191,16 @@ export async function deleteGame(gameId: string) {
 
 export async function hideObject(
   gameId: string, userId: string, objectId: string, itemId: string,
-  position: "sobre" | "sota" | "dins"
+  position: "sobre" | "sota" | "dins",
+  specialData?: any
 ) {
-  // Validate position restriction: object size vs furniture capacity
+  const [{ data: obj }, { data: itm }] = await Promise.all([
+    supabase.from("objects").select("size, material").eq("id", objectId).single(),
+    supabase.from("items").select("inner_capacity, environment").eq("id", itemId).single(),
+  ]);
+
+  // Validate size restriction for "dins"
   if (position === "dins") {
-    const [{ data: obj }, { data: itm }] = await Promise.all([
-      supabase.from("objects").select("size").eq("id", objectId).single(),
-      supabase.from("items").select("inner_capacity").eq("id", itemId).single(),
-    ]);
     const objSize = (obj as any)?.size ?? 2;
     const capacity = (itm as any)?.inner_capacity ?? 2;
     if (objSize > capacity) {
@@ -206,11 +208,48 @@ export async function hideObject(
     }
   }
 
-  const { error } = await supabase.from("game_players").update({
+  // Validate material vs environment
+  const material = (obj as any)?.material ?? "generic";
+  const environment = (itm as any)?.environment ?? "generic";
+  if (material === "paper" && (environment === "wet" || environment === "hot")) {
+    const reason = environment === "wet" ? "es mullaria" : "es cremaria";
+    throw new Error(`No pots amagar paper aquí, ${reason}! 📄🚫`);
+  }
+  if (material === "glass" && environment === "hot") {
+    throw new Error("No pots amagar vidre aquí, es podria trencar amb la calor! 🔥🚫");
+  }
+
+  const updateData: any = {
     hidden_object_id: objectId, hidden_item_id: itemId,
     hidden_position: position, has_hidden: true,
-  }).eq("game_id", gameId).eq("user_id", userId);
+  };
+  if (specialData) updateData.special_data = specialData;
+
+  const { error } = await supabase.from("game_players").update(updateData)
+    .eq("game_id", gameId).eq("user_id", userId);
   if (error) throw error;
+}
+
+// ============================================
+// OBJECT SPECIALS
+// ============================================
+
+export async function getObjectSpecial(objectId: string) {
+  const { data } = await supabase
+    .from("object_specials").select("*").eq("object_id", objectId).maybeSingle();
+  return data;
+}
+
+export async function autoFixMissingScenario(gameId: string, userId: string, hiddenItemId: string) {
+  const scenarios = await getScenarios();
+  const { data: hiddenItem } = await supabase
+    .from("items").select("scenario_id").eq("id", hiddenItemId).single();
+  const available = scenarios.filter(s => s.id !== hiddenItem?.scenario_id);
+  const random = available[Math.floor(Math.random() * available.length)];
+  await supabase.from("game_players")
+    .update({ current_scenario_id: random.id })
+    .eq("game_id", gameId).eq("user_id", userId);
+  return random.id;
 }
 
 export async function checkBothPlayersHidden(gameId: string) {
