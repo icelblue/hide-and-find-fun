@@ -29,6 +29,8 @@ export default function ProfilePage() {
   const [sellingReward, setSellingReward] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [wallMessages, setWallMessages] = useState<any[]>([]);
+  const [activeGames, setActiveGames] = useState<any[]>([]);
+  const [trophies, setTrophies] = useState<any[]>([]);
 
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
 
