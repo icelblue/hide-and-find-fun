@@ -306,12 +306,46 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       const result = await performMove(gameId, user.id, "confirm", undefined, itemId, position);
-      if (result.foundObject) toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
+      if (result.foundObject) {
+        toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
+        // Check if rival's object has a "find" special (joguina/anell)
+        if (rival?.hidden_object_id) {
+          const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
+          if (rivalSpecial && rivalSpecial.prompt_on === "find") {
+            // Also check if carta had a message from hider
+            setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+          }
+          // Check carta message from hider's special_data
+          if (rival.special_data && (rival.special_data as any)?.type === "custom_message") {
+            toast.info(`✉️ Missatge del rival: "${(rival.special_data as any).message}"`, { duration: 8000 });
+          }
+        }
+      }
       else toast.error(`❌ No era aquí... (-${TOKEN_COSTS.confirm}🪙)`);
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
+  };
+
+  const handleSpecialFoundSubmit = async () => {
+    if (!gameId || !user || !showSpecialFoundPopup) return;
+    const { special } = showSpecialFoundPopup;
+    // Save as trophy to player_inventory
+    await supabase.from("player_inventory").insert({
+      user_id: user.id, game_id: gameId,
+      item_type: "special_trophy",
+      item_value: special.special_type === "custom_name" ? specialFoundInput.trim() : null,
+      special_data: {
+        object_name: objects.find((o: any) => o.id === rival?.hidden_object_id)?.name,
+        object_icon: objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon,
+        custom_name: specialFoundInput.trim() || null,
+        special_type: special.special_type,
+      },
+    });
+    toast.success(`🏆 Trofeu desat!`);
+    setShowSpecialFoundPopup(null);
+    setSpecialFoundInput("");
   };
 
   const handleSendSocial = async (type: SocialItemType) => {
