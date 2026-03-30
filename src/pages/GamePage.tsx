@@ -393,6 +393,27 @@ export default function GamePage() {
       {/* BG glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
+      {/* Special found popup (joguina/anell name input) */}
+      {showSpecialFoundPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md">
+          <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
+            <CardContent className="py-6 text-center">
+              <div className="text-5xl mb-3">{objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon ?? "⭐"}</div>
+              <p className="font-bold text-lg mb-1">⭐ Objecte especial trobat!</p>
+              <p className="text-sm text-muted-foreground mb-4">{showSpecialFoundPopup.special.prompt_text}</p>
+              <Input value={specialFoundInput} onChange={e => setSpecialFoundInput(e.target.value)}
+                placeholder="Escriu un nom..." maxLength={40} className="text-center bg-muted/50 mb-3" />
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); }}>Saltar</Button>
+                <Button className="flex-1" disabled={!specialFoundInput.trim()} onClick={handleSpecialFoundSubmit}>
+                  Desar trofeu 🏆
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Banana notification toast (no longer full-screen block) */}
 
       {/* Confirm dialog */}
