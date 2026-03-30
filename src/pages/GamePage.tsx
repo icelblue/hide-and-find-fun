@@ -283,15 +283,14 @@ export default function GamePage() {
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
       else {
         // Progressive hints
-        const hints = [
-          `❄️ ${posLabel} ${item?.icon} ${item?.name}: fred... no és per aquí (-${TOKEN_COSTS.look}🪙)`,
-          `🌡️ ${posLabel} ${item?.icon} ${item?.name}: calent! Alguna cosa a prop... (-${TOKEN_COSTS.look}🪙)`,
-          `🔥 ${posLabel} ${item?.icon} ${item?.name}: MOLT CALENT! Quasi ho tens! (-${TOKEN_COSTS.look}🪙)`,
-        ];
         const level = result.hintLevel ?? 0;
-        if (level === 0) toast.info(hints[0]);
-        else if (level === 1) toast.warning(hints[1]);
-        else toast.success(hints[2]);
+        if (level === 0) {
+          toast.info(`❄️ Fred! L'objecte NO és a ${currentScenario?.icon} ${currentScenario?.name}. (-${TOKEN_COSTS.look}🪙)`);
+        } else if (level === 1) {
+          toast.warning(`🌡️ Calent! L'objecte ÉS en aquesta habitació, però no a ${item?.icon} ${item?.name}. (-${TOKEN_COSTS.look}🪙)`);
+        } else {
+          toast.success(`🔥 MOLT CALENT! ${item?.icon} ${item?.name} és el moble correcte! Prova altra posició. (-${TOKEN_COSTS.look}🪙)`);
+        }
       }
       clearBanana();
       await loadGame();
