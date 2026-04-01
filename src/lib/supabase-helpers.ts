@@ -1,6 +1,35 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // ============================================
+// MATERIAL vs ENVIRONMENT VALIDATION
+// ============================================
+
+/** Returns a user-facing block reason if material can't go in environment, or null if OK */
+export function getMaterialBlockReason(material: string, environment: string): string | null {
+  if (environment === "generic") return null; // interior — tot hi cap
+
+  const rules: Record<string, Record<string, string>> = {
+    paper: {
+      wet: "es mullaria 💧",
+      hot: "es cremaria 🔥",
+      dirty: "es faria malbé 🗑️",
+      outdoor: "volaria amb el vent 🌬️",
+    },
+    glass: {
+      hot: "es trencaria amb la calor 🔥",
+      outdoor: "es trencaria amb el vent 🌬️",
+    },
+    fabric: {
+      wet: "es pudriria 💧",
+      hot: "es cremaria 🔥",
+      dirty: "s'embrutiria 🗑️",
+    },
+  };
+
+  return rules[material]?.[environment] ?? null;
+}
+
+// ============================================
 // DATA FETCHING
 // ============================================
 
