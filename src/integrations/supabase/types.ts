@@ -727,7 +727,17 @@ export type Database = {
       action_type: "move" | "look" | "confirm"
       bonus_type: "extra_token" | "hint_yes" | "hint_no"
       game_status: "waiting" | "hiding" | "playing" | "finished"
-      item_environment: "generic" | "wet" | "hot" | "dirty" | "outdoor"
+      item_environment:
+        | "generic"
+        | "wet"
+        | "hot"
+        | "dirty"
+        | "outdoor"
+        | "frozen"
+        | "sorrenc"
+        | "ventós"
+        | "submergit"
+        | "químic"
       item_rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"
       league_tier: "bronze" | "silver" | "gold" | "platinum" | "diamond"
       object_material:
@@ -737,6 +747,13 @@ export type Database = {
         | "metal"
         | "plastic"
         | "fabric"
+        | "wood"
+        | "cardboard"
+        | "rubber"
+        | "ceramic"
+        | "electronic"
+        | "leather"
+        | "stone"
       position_type: "sobre" | "sota" | "dins"
       social_item_type:
         | "banana"
@@ -874,7 +891,18 @@ export const Constants = {
       action_type: ["move", "look", "confirm"],
       bonus_type: ["extra_token", "hint_yes", "hint_no"],
       game_status: ["waiting", "hiding", "playing", "finished"],
-      item_environment: ["generic", "wet", "hot", "dirty", "outdoor"],
+      item_environment: [
+        "generic",
+        "wet",
+        "hot",
+        "dirty",
+        "outdoor",
+        "frozen",
+        "sorrenc",
+        "ventós",
+        "submergit",
+        "químic",
+      ],
       item_rarity: ["common", "uncommon", "rare", "epic", "legendary"],
       league_tier: ["bronze", "silver", "gold", "platinum", "diamond"],
       object_material: [
@@ -884,6 +912,13 @@ export const Constants = {
         "metal",
         "plastic",
         "fabric",
+        "wood",
+        "cardboard",
+        "rubber",
+        "ceramic",
+        "electronic",
+        "leather",
+        "stone",
       ],
       position_type: ["sobre", "sota", "dins"],
       social_item_type: [
