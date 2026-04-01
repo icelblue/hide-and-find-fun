@@ -288,13 +288,14 @@ src/
 ├── pages/
 │   ├── AuthPage.tsx              # Login / registre amb email
 │   ├── LobbyPage.tsx             # Matchmaking: aleatori, codi, reptes, cerca
-│   ├── GamePage.tsx              # Motor de joc complet (634 línies)
+│   ├── GamePage.tsx              # Motor de joc complet (940 línies)
 │   │                               Amagar → Jugar → Resultat + Social items
 │   ├── ProfilePage.tsx           # Perfil: stats, Elo, inventari, mur, rival favorit
 │   ├── PlayerProfilePage.tsx     # Perfil públic amb mur interactiu
 │   └── NotFound.tsx              # 404 en català
 │
 ├── components/
+│   ├── ErrorBoundary.tsx         # Error boundary + log automàtic a DB
 │   ├── HelpButton.tsx            # Panel flotant amb regles + component Tip
 │   └── ui/                       # 40+ components shadcn/ui personalitzats
 │
@@ -308,7 +309,22 @@ src/
 │
 └── integrations/
     └── supabase/                 # Client auto-configurat + tipus TypeScript generats
+
+supabase/
+├── functions/
+│   └── cleanup-old-games/        # Edge fn: neteja partides >7d i missatges >22h
+└── migrations/                   # Esquema DB (gestionat per Lovable)
 ```
+
+<br/>
+
+## 📘 Documentació tècnica completa
+
+Per a una guia detallada d'arquitectura, base de dades, debugging, modificació i escalabilitat:
+
+**→ [docs/TECHNICAL.md](docs/TECHNICAL.md)**
+
+Inclou: diagrama ER complet, matriu RLS, mecàniques detallades, guia d'instal·lació local, consultes de debug, i opcions d'escalabilitat fins a centenars de milers d'usuaris.
 
 <br/>
 
