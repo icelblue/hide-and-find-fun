@@ -160,6 +160,11 @@ export default function GamePage() {
         } else if (item.item_type === "false_clue") {
           setFalseClueItem(true);
           setTimeout(() => setFalseClueItem(false), 10000);
+        } else if (item.item_type === "smoke_bomb") {
+          toast.warning("💨 El rival ha usat una bomba de fum! El seu objecte ha canviat de posició!", { duration: 5000 });
+        } else if (item.item_type === "shield") {
+          // Shield effect is applied on the sender side, just notify
+          toast.info("🛡️ El rival ha activat un escut!", { duration: 4000 });
         } else if (item.item_type === "message" && item.message_text) {
           setReceivedMessage(item.message_text);
         }
