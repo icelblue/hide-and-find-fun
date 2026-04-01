@@ -7,47 +7,136 @@ const supabase = createClient(
 
 Deno.serve(async () => {
   try {
-    let deletedGames = 0;
+    const stats = {
+      deleted_finished_games: 0,
+      deleted_stale_waiting: 0,
+      deleted_stale_hiding: 0,
+      deleted_game_moves: 0,
+      deleted_game_social_items: 0,
+      deleted_game_players: 0,
+      deleted_player_inventory: 0,
+      deleted_player_rewards_sold: 0,
+      deleted_wall_messages: 0,
+      deleted_error_logs: 0,
+      fixed_blocked_social_items: 0,
+    };
 
-    // 1. Clean up old finished games (>7 days)
-    const gameCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: oldGames } = await supabase
-      .from("games")
-      .select("id")
+    // ─────────────────────────────────────────────
+    // 1. Finished games > 7 days — full cascade delete
+    // ─────────────────────────────────────────────
+    const finishedCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: oldFinished } = await supabase
+      .from("games").select("id")
       .eq("status", "finished")
-      .lt("updated_at", gameCutoff);
+      .lt("updated_at", finishedCutoff);
 
-    if (oldGames && oldGames.length > 0) {
-      const gameIds = oldGames.map((g) => g.id);
+    // ─────────────────────────────────────────────
+    // 2. Stale "waiting" games > 3 days (never joined)
+    // ─────────────────────────────────────────────
+    const waitingCutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: staleWaiting } = await supabase
+      .from("games").select("id")
+      .eq("status", "waiting")
+      .lt("created_at", waitingCutoff);
 
-      // Delete transient inventory (bonuses), keep special_trophy
-      await supabase.from("player_inventory").delete()
-        .in("game_id", gameIds)
-        .neq("item_type", "special_trophy");
+    // ─────────────────────────────────────────────
+    // 3. Stale "hiding" games > 7 days (started but never played)
+    // ─────────────────────────────────────────────
+    const { data: staleHiding } = await supabase
+      .from("games").select("id")
+      .eq("status", "hiding")
+      .lt("updated_at", finishedCutoff);
 
-      await supabase.from("game_moves").delete().in("game_id", gameIds);
-      await supabase.from("game_social_items").delete().in("game_id", gameIds);
-      await supabase.from("game_players").delete().in("game_id", gameIds);
-      await supabase.from("games").delete().in("id", gameIds);
-      deletedGames = gameIds.length;
+    // Collect all game IDs to purge
+    const allGameIds = [
+      ...(oldFinished ?? []).map(g => g.id),
+      ...(staleWaiting ?? []).map(g => g.id),
+      ...(staleHiding ?? []).map(g => g.id),
+    ];
+
+    stats.deleted_finished_games = oldFinished?.length ?? 0;
+    stats.deleted_stale_waiting = staleWaiting?.length ?? 0;
+    stats.deleted_stale_hiding = staleHiding?.length ?? 0;
+
+    if (allGameIds.length > 0) {
+      // Process in batches of 100 to avoid query limits
+      for (let i = 0; i < allGameIds.length; i += 100) {
+        const batch = allGameIds.slice(i, i + 100);
+
+        // Delete transient inventory (keep special_trophy — permanent collectible)
+        const { data: inv } = await supabase.from("player_inventory").delete()
+          .in("game_id", batch)
+          .neq("item_type", "special_trophy")
+          .select("id");
+        stats.deleted_player_inventory += inv?.length ?? 0;
+
+        // Delete game moves
+        const { data: moves } = await supabase.from("game_moves").delete()
+          .in("game_id", batch).select("id");
+        stats.deleted_game_moves += moves?.length ?? 0;
+
+        // Delete ALL social items for these games (including blocked ones)
+        const { data: social } = await supabase.from("game_social_items").delete()
+          .in("game_id", batch).select("id");
+        stats.deleted_game_social_items += social?.length ?? 0;
+
+        // Delete game players
+        const { data: players } = await supabase.from("game_players").delete()
+          .in("game_id", batch).select("id");
+        stats.deleted_game_players += players?.length ?? 0;
+
+        // Finally delete the games themselves
+        await supabase.from("games").delete().in("id", batch);
+      }
     }
 
-    // 2. Clean up expired wall messages (>22 hours)
+    // ─────────────────────────────────────────────
+    // 4. Sold rewards > 30 days (no longer useful data)
+    // ─────────────────────────────────────────────
+    const soldCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: soldRewards } = await supabase.from("player_rewards").delete()
+      .eq("status", "sold")
+      .lt("obtained_at", soldCutoff)
+      .select("id");
+    stats.deleted_player_rewards_sold = soldRewards?.length ?? 0;
+
+    // ─────────────────────────────────────────────
+    // 5. Wall messages > 22 hours (ephemeral by design)
+    // ─────────────────────────────────────────────
     const wallCutoff = new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString();
     const { data: deletedWall } = await supabase
       .from("wall_messages").delete()
       .lt("created_at", wallCutoff)
       .select("id");
+    stats.deleted_wall_messages = deletedWall?.length ?? 0;
 
-    return new Response(
-      JSON.stringify({
-        deleted_games: deletedGames,
-        deleted_wall_messages: deletedWall?.length ?? 0,
-      }),
-      { headers: { "Content-Type": "application/json" } }
-    );
+    // ─────────────────────────────────────────────
+    // 6. Error logs > 30 days
+    // ─────────────────────────────────────────────
+    const errorCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: deletedErrors } = await supabase
+      .from("error_logs").delete()
+      .lt("created_at", errorCutoff)
+      .select("id");
+    stats.deleted_error_logs = deletedErrors?.length ?? 0;
+
+    // ─────────────────────────────────────────────
+    // 7. Fix orphan social items: mark blocked items as processed
+    //    (they'll never be fetched by the client but stay dirty)
+    // ─────────────────────────────────────────────
+    const { data: fixedBlocked } = await supabase
+      .from("game_social_items")
+      .update({ processed: true })
+      .eq("blocked_by_shield", true)
+      .eq("processed", false)
+      .select("id");
+    stats.fixed_blocked_social_items = fixedBlocked?.length ?? 0;
+
+    return new Response(JSON.stringify(stats), {
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
