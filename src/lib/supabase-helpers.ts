@@ -84,6 +84,17 @@ export async function joinGame(gameId: string, userId: string) {
     .from("game_players").select("id").eq("game_id", gameId).eq("user_id", userId).maybeSingle();
   if (existing) throw new Error("Ja ets a aquesta partida!");
 
+  // Check game is waiting
+  const { data: game } = await supabase
+    .from("games").select("id, status, invited_user_id").eq("id", gameId).single();
+  if (!game) throw new Error("Partida no trobada");
+  if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
+
+  // If it's a private challenge, only the invited user can join
+  if (game.invited_user_id && game.invited_user_id !== userId) {
+    throw new Error("Aquesta partida és un repte privat!");
+  }
+
   // Check game has room
   const { count } = await supabase
     .from("game_players").select("*", { count: "exact", head: true }).eq("game_id", gameId);
