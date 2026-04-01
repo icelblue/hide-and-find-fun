@@ -58,6 +58,7 @@ export default function GamePage() {
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
+  const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
