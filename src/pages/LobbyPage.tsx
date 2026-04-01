@@ -320,7 +320,7 @@ export default function LobbyPage() {
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Partides obertes
           </h2>
-          <Button variant="ghost" size="sm" onClick={loadAll} className="text-xs">🔄</Button>
+          <Button variant="ghost" size="sm" onClick={invalidateLobby} className="text-xs">🔄</Button>
         </div>
         {games.length === 0 ? (
           <div className="text-center py-8">
