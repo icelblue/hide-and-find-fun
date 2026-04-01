@@ -896,6 +896,23 @@ export default function GamePage() {
           </div>
         </div>
       )}
+
+      {/* Troll effect popup overlay */}
+      {trollEffect && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className={`text-center space-y-4 p-8 rounded-2xl glass max-w-sm mx-4 ${
+            trollEffect.animation === "shake" ? "animate-troll-shake" :
+            trollEffect.animation === "flash" ? "animate-troll-flash" :
+            "animate-troll-bounce"
+          }`}>
+            <div className="text-8xl">{trollEffect.emoji}</div>
+            <p className="text-lg font-bold text-foreground leading-relaxed">{trollEffect.message}</p>
+            <Button onClick={() => setTrollEffect(null)} variant="outline" size="sm">
+              😂 Bona broma!
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
