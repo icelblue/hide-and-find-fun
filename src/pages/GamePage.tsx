@@ -147,6 +147,17 @@ export default function GamePage() {
     }
 
     if (gameData?.status === "playing") {
+      // Check items blocked by YOUR shield (notify you that it worked)
+      const { data: blockedItems } = await supabase
+        .from("game_social_items").select("*")
+        .eq("game_id", gameId).eq("to_player_id", user.id)
+        .eq("blocked_by_shield", true).eq("processed", false);
+      for (const blocked of blockedItems ?? []) {
+        const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
+        toast.success(`🛡️ El teu escut ha bloquejat ${info?.icon} ${info?.name} del rival!`, { duration: 5000 });
+        await markSocialItemProcessed(blocked.id);
+      }
+
       const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
@@ -161,10 +172,9 @@ export default function GamePage() {
           setFalseClueItem(true);
           setTimeout(() => setFalseClueItem(false), 10000);
         } else if (item.item_type === "smoke_bomb") {
-          toast.warning("💨 El rival ha usat una bomba de fum! El seu objecte ha canviat de posició!", { duration: 5000 });
+          toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
         } else if (item.item_type === "shield") {
-          // Shield effect is applied on the sender side, just notify
-          toast.info("🛡️ El rival ha activat un escut!", { duration: 4000 });
+          // Shield activates on the SENDER, not the receiver — no effect here
         } else if (item.item_type === "message" && item.message_text) {
           setReceivedMessage(item.message_text);
         }
