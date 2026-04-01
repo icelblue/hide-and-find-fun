@@ -434,17 +434,36 @@ export async function ensureTokensReset(player: any) {
   const today = new Date().toISOString().split("T")[0];
   if (player.tokens_last_reset === today) return player.tokens_remaining;
 
-  // Bonus tokens are a permanent daily boost (accumulated from selling rewards)
-  // They apply to ALL active games equally — no race condition
-  const { data: profile } = await supabase
-    .from("profiles").select("bonus_tokens").eq("user_id", player.user_id).single();
-  const bonus = profile?.bonus_tokens ?? 0;
-
+  // Daily reset: base 5 tokens only. Bonus tokens are NOT auto-added.
+  // Players spend bonus tokens manually via redeemBonusTokens().
   await supabase.from("game_players").update({
-    tokens_remaining: 5.0 + bonus, tokens_last_reset: today, social_item_used_today: false,
+    tokens_remaining: 5.0, tokens_last_reset: today, social_item_used_today: false,
   }).eq("id", player.id);
 
-  return 5.0 + bonus;
+  return 5.0;
+}
+
+/** Spend bonus tokens from profile into a specific game. One-time use. */
+export async function redeemBonusTokens(gameId: string, userId: string) {
+  const { data: profile } = await supabase
+    .from("profiles").select("bonus_tokens").eq("user_id", userId).single();
+  const bonus = profile?.bonus_tokens ?? 0;
+  if (bonus <= 0) throw new Error("No tens bonus tokens disponibles!");
+
+  // Add to this game's tokens
+  const { data: player } = await supabase
+    .from("game_players").select("id, tokens_remaining")
+    .eq("game_id", gameId).eq("user_id", userId).single();
+  if (!player) throw new Error("No ets a aquesta partida!");
+
+  await supabase.from("game_players").update({
+    tokens_remaining: player.tokens_remaining + bonus,
+  }).eq("id", player.id);
+
+  // Zero out profile bonus — consumed
+  await supabase.from("profiles").update({ bonus_tokens: 0 }).eq("user_id", userId);
+
+  return bonus;
 }
 
 export async function performMove(
