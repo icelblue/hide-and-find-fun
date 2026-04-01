@@ -25,13 +25,28 @@ Deno.serve(async () => {
     const gameIds = oldGames.map((g) => g.id);
 
     // Delete related data (but NOT player_inventory or player_rewards)
+    // Delete transient inventory items (bonuses) from old games, keep special_trophy
+    await supabase.from("player_inventory").delete()
+      .in("game_id", gameIds)
+      .neq("item_type", "special_trophy");
+
     await supabase.from("game_moves").delete().in("game_id", gameIds);
     await supabase.from("game_social_items").delete().in("game_id", gameIds);
     await supabase.from("game_players").delete().in("game_id", gameIds);
     await supabase.from("games").delete().in("id", gameIds);
 
+    // Clean up expired wall messages (older than 22 hours)
+    const wallCutoff = new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString();
+    const { data: deletedWall } = await supabase
+      .from("wall_messages").delete()
+      .lt("created_at", wallCutoff)
+      .select("id");
+
     return new Response(
-      JSON.stringify({ deleted: gameIds.length, ids: gameIds }),
+      JSON.stringify({
+        deleted_games: gameIds.length,
+        deleted_wall_messages: deletedWall?.length ?? 0,
+      }),
       { headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
