@@ -393,6 +393,17 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  const handleRedeemBonus = async () => {
+    if (!gameId || !user) return;
+    setActionLoading(true);
+    try {
+      const amount = await redeemBonusTokens(gameId, user.id);
+      toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setActionLoading(false); }
+  };
+
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
 
