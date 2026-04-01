@@ -10,7 +10,7 @@ import {
   hideObject, checkBothPlayersHidden, startGame, performMove,
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
-  getObjectSpecial, autoFixMissingScenario,
+  getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
