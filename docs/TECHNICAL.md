@@ -1,845 +1,1257 @@
-# 📘 Documentació Tècnica — Deduction Duel
+<div align="center">
 
-> Guia completa per entendre, modificar, depurar i escalar el projecte.
+# 📘 DEDUCTION DUEL — Documentació Tècnica
+
+### _Tot el que necessites per entendre, modificar, depurar i escalar el projecte._
+
+<br/>
+
+<img src="https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white&style=flat-square" />
+<img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white&style=flat-square" />
+<img src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white&style=flat-square" />
+<img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square" />
+<img src="https://img.shields.io/badge/Supabase-Realtime-3FCF8E?logo=supabase&logoColor=white&style=flat-square" />
+<img src="https://img.shields.io/badge/PostgreSQL-15+-336791?logo=postgresql&logoColor=white&style=flat-square" />
+
+</div>
+
+<br/>
 
 ---
+
+<br/>
 
 ## 📑 Índex
 
-1. [Stack tecnològic](#1-stack-tecnològic)
-2. [Arquitectura general](#2-arquitectura-general)
-3. [Estructura de fitxers](#3-estructura-de-fitxers)
-4. [Base de dades](#4-base-de-dades)
-5. [Mecàniques de joc (detallat)](#5-mecàniques-de-joc-detallat)
-6. [Sistema de matchmaking](#6-sistema-de-matchmaking)
-7. [Flux de dades i Realtime](#7-flux-de-dades-i-realtime)
-8. [Sistema de recompenses](#8-sistema-de-recompenses)
-9. [Edge Functions](#9-edge-functions)
-10. [Seguretat (RLS)](#10-seguretat-rls)
-11. [Instal·lació local](#11-installació-local)
-12. [Guia de modificació](#12-guia-de-modificació)
-13. [Debugging](#13-debugging)
-14. [Opcions d'escalabilitat](#14-opcions-descalabilitat)
+| # | Secció | Descripció |
+|:-:|:-------|:-----------|
+| 1 | [Stack tecnològic](#-1-stack-tecnològic) | Llenguatges, frameworks i serveis |
+| 2 | [Arquitectura general](#-2-arquitectura-general) | Diagrama complet client↔backend |
+| 3 | [Estructura de fitxers](#-3-estructura-de-fitxers) | Mapa del projecte amb anotacions |
+| 4 | [Base de dades](#-4-base-de-dades) | ER, taules, enums, funcions SQL |
+| 5 | [Mecàniques de joc](#-5-mecàniques-de-joc) | Cicle de vida, validacions, accions |
+| 6 | [Matchmaking](#-6-sistema-de-matchmaking) | Públic, repte directe, aleatori |
+| 7 | [Realtime i dades](#-7-flux-de-dades-i-realtime) | WebSocket, tokens, subscripcions |
+| 8 | [Recompenses](#-8-sistema-de-recompenses) | Loot, venda, col·locació, trofeus |
+| 9 | [Edge Functions](#-9-edge-functions) | Cleanup automàtic |
+| 10 | [Seguretat (RLS)](#-10-seguretat-rls) | Matriu completa de polítiques |
+| 11 | [Instal·lació local](#-11-installació-local) | Entorn compartit + entorn aïllat |
+| 12 | [Guia de modificació](#-12-guia-de-modificació) | Escenaris, objectes, ítems, Elo |
+| 13 | [Debugging](#-13-debugging) | Eines, problemes comuns, consultes |
+| 14 | [Escalabilitat](#-14-opcions-descalabilitat) | De desenes a centenars de milers |
+
+<br/>
 
 ---
 
-## 1. Stack tecnològic
+<br/>
 
-| Capa | Tecnologia | Versió | Rol |
-|------|-----------|--------|-----|
-| **Frontend** | React + TypeScript | 18.3 / 5.8 | SPA amb hooks i components funcionals |
-| **Build** | Vite (SWC) | 5.4 | HMR sub-segon, tree-shaking |
-| **Estil** | Tailwind CSS | 3.4 | Utility-first amb design tokens HSL |
-| **Components UI** | shadcn/ui (Radix) | — | 40+ components accessibles |
-| **Routing** | React Router DOM | 6.30 | Rutes protegides amb AuthProvider |
-| **State server** | TanStack Query | 5.83 | Cache i invalidació automàtica |
-| **Backend** | Supabase (Lovable Cloud) | — | Auth, DB, Realtime, RPC, Edge Fn |
-| **Auth** | Supabase Auth | — | Email/password amb verificació |
-| **DB** | PostgreSQL | 15+ | Via Supabase amb RLS complet |
-| **Realtime** | Supabase Realtime | — | WebSocket amb postgres_changes |
-| **Edge Functions** | Deno | — | Serverless per tasques periòdiques |
-| **Notifications** | Sonner | 1.7 | Toast notifications |
-| **Validació** | Zod | 3.25 | Validació de schemas |
+## 🔧 1. Stack tecnològic
 
-### Fonts
+<br/>
 
-- **Orbitron**: Títol neon del joc
-- **Space Grotesk**: Headings
-- **Inter**: Cos del text
+### Infraestructura principal
 
-### Paleta (HSL, definida a `index.css`)
+| Capa | Tecnologia | Versió | Per a què serveix |
+|:-----|:-----------|:------:|:------------------|
+| 🖥️ **Frontend** | React + TypeScript | 18.3 / 5.8 | SPA amb hooks i components funcionals |
+| ⚡ **Build** | Vite (SWC) | 5.4 | Compilació sub-segon, tree-shaking |
+| 🎨 **Estil** | Tailwind CSS | 3.4 | Utility-first amb design tokens HSL |
+| 🧩 **Components** | shadcn/ui (Radix) | — | 40+ components accessibles |
+| 🧭 **Routing** | React Router DOM | 6.30 | Rutes protegides amb `AuthProvider` |
+| 📦 **State** | TanStack Query | 5.83 | Cache del servidor + invalidació |
+| 🔐 **Auth** | Supabase Auth | — | Email/password amb verificació |
+| 🗄️ **DB** | PostgreSQL | 15+ | Via Supabase amb RLS complet |
+| 📡 **Realtime** | Supabase Realtime | — | WebSocket amb `postgres_changes` |
+| ☁️ **Serverless** | Deno (Edge Fn) | — | Tasques periòdiques |
+| 🔔 **Notificacions** | Sonner | 1.7 | Toast notifications |
+| ✅ **Validació** | Zod | 3.25 | Schemas de dades |
 
-| Token | HSL | Ús |
-|-------|-----|-----|
-| `--primary` | 265 90% 65% | Violeta neon — accions principals |
-| `--secondary` | 175 70% 42% | Verd-blau — accions secundàries |
-| `--accent` | 30 100% 58% | Taronja — destacats i alertes |
-| `--background` | 230 15% 10% | Fons fosc |
-| `--card` | 230 12% 14% | Cards amb glassmorphism |
-| `--destructive` | 0 80% 58% | Errors i accions perilloses |
-| `--success` | 155 72% 40% | Encerts i confirmacions |
-| `--warning` | 42 100% 55% | Avisos |
+<br/>
+
+### 🎨 Disseny visual
+
+| Aspecte | Detall |
+|:--------|:-------|
+| **Tema** | Dark-first amb glassmorphism (`backdrop-blur-xl`) |
+| **Paleta** | Violeta neon `#8B5CF6` · Verd-blau `#2DD4BF` · Taronja `#F59E0B` |
+| **Títol** | Orbitron (neon glow) |
+| **Headings** | Space Grotesk |
+| **Cos** | Inter |
+| **Target** | Mobile-first 390px · `max-width: 448px` · responsive fins 1920px |
+
+<br/>
+
+### 📱 Compatibilitat cross-platform
+
+| Plataforma | Status | Notes |
+|:-----------|:------:|:------|
+| iOS Safari | ✅ | `safe-area-inset`, `-webkit-tap-highlight` |
+| Android Chrome | ✅ | Samsung Internet inclòs |
+| Firefox / Edge / Chrome | ✅ | Desktop i mòbil |
+| Font-size inputs | ✅ | 16px mínim (evita zoom iOS) |
+| Text consistency | ✅ | `-webkit-text-size-adjust` |
+
+<br/>
 
 ---
 
-## 2. Arquitectura general
+<br/>
+
+## 🏗️ 2. Arquitectura general
+
+<br/>
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     CLIENT (SPA)                     │
-│                                                      │
-│  App.tsx ── Routes protegides amb AuthProvider        │
-│     │                                                │
-│     ├── /auth ─────────── AuthPage.tsx                │
-│     ├── / ─────────────── LobbyPage.tsx               │
-│     ├── /game/:id ─────── GamePage.tsx                │
-│     ├── /profile ──────── ProfilePage.tsx             │
-│     ├── /player/:id ───── PlayerProfilePage.tsx       │
-│     └── /reset-password ─ ResetPasswordPage.tsx       │
-│                                                      │
-│  Lògica de negoci:                                   │
-│     ├── supabase-helpers.ts (577 línies)              │
-│     └── reward-helpers.ts (55 línies)                │
-│                                                      │
-│  Comunicació amb backend:                            │
-│     └── @supabase/supabase-js (client auto-generat)  │
-└──────────────────────┬──────────────────────────────┘
-                       │ HTTPS + WebSocket
+┌──────────────────────────────────────────────────────────────┐
+│                        CLIENT (SPA)                           │
+│                                                               │
+│   App.tsx ── React Router amb AuthProvider                     │
+│      │                                                        │
+│      ├── /auth ──────────── AuthPage.tsx                       │
+│      ├── / ──────────────── LobbyPage.tsx                     │
+│      ├── /game/:id ──────── GamePage.tsx         ⭐ 940 línies│
+│      ├── /profile ────────── ProfilePage.tsx                  │
+│      ├── /player/:id ────── PlayerProfilePage.tsx             │
+│      └── /reset-password ── ResetPasswordPage.tsx             │
+│                                                               │
+│   Lògica de negoci:                                           │
+│      ├── lib/supabase-helpers.ts    ⭐ 577 línies             │
+│      └── lib/reward-helpers.ts         55 línies              │
+│                                                               │
+│   Comunicació:                                                │
+│      └── @supabase/supabase-js (client auto-generat)          │
+└──────────────────────┬───────────────────────────────────────┘
+                       │
+                       │  HTTPS + WebSocket (wss://)
                        ▼
-┌─────────────────────────────────────────────────────┐
-│              SUPABASE (LOVABLE CLOUD)                │
-│                                                      │
-│  ┌──────────────┐  ┌─────────────────┐              │
-│  │  PostgreSQL   │  │   Auth Service   │              │
-│  │  15 taules    │  │  email/password  │              │
-│  │  6 funcions   │  │  handle_new_user │              │
-│  │  RLS complet  │  └─────────────────┘              │
-│  └──────────────┘                                    │
-│                                                      │
-│  ┌──────────────┐  ┌─────────────────┐              │
-│  │   Realtime    │  │  Edge Functions  │              │
-│  │  3 canals per │  │  cleanup-old-    │              │
-│  │  partida      │  │  games (cron)    │              │
-│  └──────────────┘  └─────────────────┘              │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                 SUPABASE (LOVABLE CLOUD)                       │
+│                                                               │
+│   ┌───────────────┐   ┌──────────────────┐                   │
+│   │  PostgreSQL    │   │   Auth Service    │                   │
+│   │  15 taules     │   │  email + password │                   │
+│   │  6 funcions    │   │  handle_new_user  │                   │
+│   │  RLS complet   │   └──────────────────┘                   │
+│   └───────────────┘                                           │
+│                                                               │
+│   ┌───────────────┐   ┌──────────────────┐                   │
+│   │   Realtime     │   │  Edge Functions   │                   │
+│   │  3 canals per  │   │  cleanup-old-     │                   │
+│   │  partida       │   │  games (cron)     │                   │
+│   └───────────────┘   └──────────────────┘                   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Principis d'arquitectura
+<br/>
 
-1. **Client-side first**: Tota la lògica de joc viu al client (`supabase-helpers.ts`). No hi ha API custom; tot passa via Supabase SDK.
-2. **Seguretat per RLS**: Les polítiques de fila garanteixen que cada jugador només veu i modifica les seves dades.
-3. **Realtime reactiu**: El `GamePage` es re-renderitza automàticament quan qualsevol taula rellevant canvia.
-4. **Triggers DB per integritat**: Elo, lligues, recompenses i perfils s'actualitzen automàticament via triggers PostgreSQL.
+### 💡 Principis d'arquitectura
+
+| Principi | Descripció |
+|:---------|:-----------|
+| **Client-side first** | Tota la lògica de joc viu al client (`supabase-helpers.ts`). No hi ha API custom — tot via Supabase SDK. |
+| **Seguretat per RLS** | Polítiques de fila garanteixen que cada jugador només veu i modifica les seves dades. |
+| **Realtime reactiu** | `GamePage` es re-renderitza automàticament quan qualsevol taula rellevant canvia. |
+| **Triggers per integritat** | Elo, lligues, recompenses i perfils s'actualitzen via triggers PostgreSQL. |
+
+<br/>
 
 ---
 
-## 3. Estructura de fitxers
+<br/>
+
+## 📂 3. Estructura de fitxers
+
+<br/>
 
 ```
 📦 deduction-duel/
-├── 📄 index.html                    # Entry HTML (SPA)
-├── 📄 vite.config.ts                # Vite config: port 8080, alias @
-├── 📄 tailwind.config.ts            # Tailwind amb tokens personalitzats
-├── 📄 tsconfig.app.json             # TypeScript paths (@/ → src/)
-├── 📄 vitest.config.ts              # Config de tests
+│
+├── 📄 index.html                    ← Entry HTML (SPA)
+├── 📄 vite.config.ts                ← Port 8080, alias @, env vars
+├── 📄 tailwind.config.ts            ← Tokens personalitzats HSL
+├── 📄 tsconfig.app.json             ← Paths: @/ → src/
+├── 📄 vitest.config.ts              ← Tests unitaris
 │
 ├── 📁 src/
-│   ├── 📄 App.tsx                   # ⭐ Router + providers globals
-│   ├── 📄 main.tsx                  # ReactDOM.createRoot
-│   ├── 📄 index.css                 # 🎨 Design tokens, fonts, animacions
-│   ├── 📄 App.css                   # Animacions addicionals
+│   │
+│   ├── 📄 App.tsx                   ← ⭐ Router + QueryClient + AuthProvider
+│   ├── 📄 main.tsx                  ← ReactDOM.createRoot
+│   ├── 📄 index.css                 ← 🎨 Design tokens, fonts, animacions
+│   ├── 📄 App.css                   ← Animacions extra (neon glow, etc.)
 │   │
 │   ├── 📁 pages/
-│   │   ├── 📄 AuthPage.tsx          # Login / Signup (email + password)
-│   │   ├── 📄 ResetPasswordPage.tsx # Recuperació de contrasenya
-│   │   ├── 📄 LobbyPage.tsx         # 🎯 Matchmaking complet (336 línies)
-│   │   │     Inclou: crear partida, rival aleatori, buscar jugador,
-│   │   │     unir-se per codi, les meves partides (amb reptes pendents),
-│   │   │     partides obertes
-│   │   ├── 📄 GamePage.tsx          # 🎮 Motor de joc (940 línies)
-│   │   │     Inclou: fase d'amagar (4 passos), fase de cerca,
-│   │   │     ítems socials, pistes progressives, confirmació,
-│   │   │     resultats, trofeus especials, realtime
-│   │   ├── 📄 ProfilePage.tsx       # 👤 Perfil propi (474 línies)
-│   │   │     Inclou: stats, Elo, lliga, recompenses (vendre/col·locar),
-│   │   │     mur de missatges, partides actives, rival favorit, trofeus
-│   │   ├── 📄 PlayerProfilePage.tsx # 👥 Perfil d'altri
-│   │   │     Inclou: stats públiques, mur interactiu, repte directe,
-│   │   │     trofeus visibles
-│   │   └── 📄 NotFound.tsx          # 404
+│   │   ├── 📄 AuthPage.tsx          ← Login / Signup (email + password)
+│   │   ├── 📄 ResetPasswordPage.tsx ← Recuperació de contrasenya
+│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (336 línies)
+│   │   │     · Crear partida / rival aleatori / buscar jugador
+│   │   │     · Unir-se per codi / partides obertes
+│   │   │     · Les meves partides (reptes pendents)
+│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (940 línies)
+│   │   │     · Fase amagar (4 passos) + Fase cerca
+│   │   │     · Ítems socials + pistes progressives
+│   │   │     · Confirmació + resultats + trofeus
+│   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (474 línies)
+│   │   │     · Stats, Elo, lliga, recompenses
+│   │   │     · Vendre/col·locar mobles, mur, rival favorit
+│   │   ├── 📄 PlayerProfilePage.tsx ← 👥 Perfil d'altri
+│   │   │     · Stats públiques, mur interactiu, repte directe
+│   │   └── 📄 NotFound.tsx          ← 404 en català
 │   │
 │   ├── 📁 hooks/
-│   │   ├── 📄 useAuth.tsx           # AuthContext: user, signUp/In/Out
-│   │   └── 📄 use-mobile.tsx        # Hook per detectar mòbil
+│   │   ├── 📄 useAuth.tsx           ← AuthContext: user, signUp/In/Out
+│   │   └── 📄 use-mobile.tsx        ← Hook per detectar mòbil
 │   │
 │   ├── 📁 lib/
-│   │   ├── 📄 supabase-helpers.ts   # ⭐ TOTA la lògica de negoci
-│   │   │     Seccions:
-│   │   │     • DATA FETCHING: scenarios, items, objects, connections
-│   │   │     • GAME LIFECYCLE: create, join, delete, available, myGames
-│   │   │     • MATCHMAKING: findRandom, search, challenge, getMyInvites
-│   │   │     • HIDING: hideObject, checkBothHidden, startGame
-│   │   │     • OBJECT SPECIALS: getSpecial, autoFixMissingScenario
-│   │   │     • SEARCH: performMove, ensureTokensReset, TOKEN_COSTS
-│   │   │     • SOCIAL: sendSocialItem, getUnprocessed, markProcessed
-│   │   │     • INVENTORY: getPlayerInventory, giftInventoryItem
-│   │   ├── 📄 reward-helpers.ts     # Recompenses via Supabase RPC
-│   │   └── 📄 utils.ts             # cn() per Tailwind class merge
+│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica de negoci
+│   │   │     · DATA: scenarios, items, objects, connections
+│   │   │     · LIFECYCLE: create, join, delete, available, myGames
+│   │   │     · MATCHMAKING: findRandom, search, challenge
+│   │   │     · HIDING: hideObject, checkBothHidden, startGame
+│   │   │     · SPECIALS: getSpecial, autoFixMissingScenario
+│   │   │     · SEARCH: performMove, ensureTokensReset, TOKEN_COSTS
+│   │   │     · SOCIAL: sendSocialItem, getUnprocessed, markProcessed
+│   │   │     · INVENTORY: getPlayerInventory, giftInventoryItem
+│   │   ├── 📄 reward-helpers.ts     ← Recompenses via Supabase RPC
+│   │   └── 📄 utils.ts             ← cn() per Tailwind merge
 │   │
 │   ├── 📁 components/
-│   │   ├── 📄 ErrorBoundary.tsx     # Error boundary + log automàtic a DB
-│   │   ├── 📄 HelpButton.tsx        # Modal regles + component Tip
-│   │   └── 📁 ui/                   # 40+ shadcn/ui components
+│   │   ├── 📄 ErrorBoundary.tsx     ← Error boundary + log a DB
+│   │   ├── 📄 HelpButton.tsx        ← Modal regles + component Tip
+│   │   └── 📁 ui/                   ← 40+ shadcn/ui components
 │   │
 │   └── 📁 integrations/supabase/
-│       ├── 📄 client.ts            # ⚠️ AUTO-GENERAT. NO TOCAR.
-│       └── 📄 types.ts             # ⚠️ AUTO-GENERAT. NO TOCAR.
+│       ├── 📄 client.ts             ← ⚠️ AUTO-GENERAT — NO TOCAR
+│       └── 📄 types.ts              ← ⚠️ AUTO-GENERAT — NO TOCAR
 │
 ├── 📁 supabase/
-│   ├── 📄 config.toml              # Config Supabase (auto-gestionat)
+│   ├── 📄 config.toml               ← Config Supabase (auto-gestionat)
 │   ├── 📁 functions/
 │   │   └── 📁 cleanup-old-games/
-│   │       └── 📄 index.ts         # Edge fn: neteja partides velles
-│   └── 📁 migrations/              # ⚠️ NO TOCAR. Gestionat per Lovable.
+│   │       └── 📄 index.ts          ← Edge fn: neteja automàtica
+│   └── 📁 migrations/               ← ⚠️ NO TOCAR — gestionat per Lovable
+│       └── 19 fitxers .sql           ← Esquema complet de la DB
 │
-├── 📁 docs/
-│   └── 📄 TECHNICAL.md             # 📘 Aquest document
-│
-└── 📁 .lovable/memory/             # Memòria persistent del projecte
+└── 📁 docs/
+    └── 📄 TECHNICAL.md              ← 📘 Aquest document
 ```
+
+<br/>
 
 ---
 
-## 4. Base de dades
+<br/>
 
-### 4.1 Diagrama ER complet
+## 🗄️ 4. Base de dades
+
+<br/>
+
+### 4.1 Diagrama Entitat-Relació
 
 ```
-┌────────────────┐      ┌──────────────────┐      ┌────────────────┐
-│   scenarios     │◄────►│scenario_connections│◄────►│   scenarios    │
-│ id, name, icon  │      │ scenario_a/b      │      │  (mateixa)     │
-│ display_order   │      └──────────────────┘      └────────────────┘
-└───────┬────────┘
-        │ 1:N
-        ▼
-┌────────────────┐      ┌──────────────────┐
-│     items       │─────►│ scenario_bonuses  │
-│ (mobles)        │      │ bonus_type, value │
-│ name, icon      │      │ position          │
-│ environment     │      └──────────────────┘
-│ inner_capacity  │
-└────────────────┘
+  ┌─────────────────┐        ┌────────────────────────┐        ┌─────────────────┐
+  │    scenarios     │◄──────►│  scenario_connections   │◄──────►│    scenarios     │
+  │─────────────────│        │────────────────────────│        │   (mateixa)      │
+  │ id    (uuid PK) │        │ scenario_a  (uuid FK)  │        └─────────────────┘
+  │ name  (text)    │        │ scenario_b  (uuid FK)  │
+  │ icon  (text)    │        └────────────────────────┘
+  │ display_order   │
+  └────────┬────────┘
+           │ 1:N
+           ▼
+  ┌─────────────────┐        ┌────────────────────────┐
+  │     items        │───────►│   scenario_bonuses      │
+  │─────────────────│        │────────────────────────│
+  │ id    (uuid PK) │        │ item_id    (uuid FK)   │
+  │ name  (text)    │        │ position   (enum)      │
+  │ icon  (text)    │        │ bonus_type (enum)      │
+  │ environment     │        │ value      (text)      │
+  │ inner_capacity  │        └────────────────────────┘
+  │ scenario_id FK  │
+  └─────────────────┘
 
-┌────────────────┐      ┌──────────────────┐      ┌──────────────────┐
-│    objects      │─────►│  object_traits    │      │ object_specials   │
-│ (amagables)     │      │ trait_number 1-2  │      │ special_type      │
-│ name, icon      │      │ trait_text        │      │ prompt_on         │
-│ size, material  │      └──────────────────┘      │ prompt_text       │
-└────────────────┘                                  │ variants (JSON)   │
-                                                    └──────────────────┘
+  ┌─────────────────┐        ┌────────────────────────┐        ┌─────────────────┐
+  │    objects       │───────►│    object_traits        │        │ object_specials  │
+  │─────────────────│        │────────────────────────│        │─────────────────│
+  │ id    (uuid PK) │        │ object_id  (uuid FK)   │        │ object_id (FK)  │
+  │ name  (text)    │        │ trait_number (1 o 2)   │        │ special_type    │
+  │ icon  (text)    │        │ trait_text  (text)     │        │ prompt_on       │
+  │ size  (smallint)│        └────────────────────────┘        │ prompt_text     │
+  │ material (enum) │                                          │ variants (JSON) │
+  └─────────────────┘                                          └─────────────────┘
 
-┌────────────────────────────────────────────────────────────────────┐
-│                         auth.users                                 │
-│  (gestionat per Supabase Auth — NO tocar directament)              │
-└────────┬──────────────────┬──────────────────┬────────────────────┘
-         │                  │                  │
-    trigger:          1:N (created_by)    1:N (user_id)
-  handle_new_user()         │                  │
-         │                  ▼                  │
-         ▼           ┌──────────────┐          │
-  ┌──────────────┐   │    games      │          │
-  │   profiles   │   │ code (6 char) │          │
-  │ display_name │   │ status (enum) │          │
-  │ elo, league  │   │ invited_user  │          │
-  │ games_played │   │ scenario_id   │          │
-  │ games_won    │   │ winner_id     │          │
-  │ streaks      │   └──────┬───────┘          │
-  │ bonus_tokens │          │                  │
-  └──────────────┘     ┌────┼────┐             │
-                       │    │    │             │
-                       ▼    ▼    ▼             │
-          ┌──────────┐ ┌──────┐ ┌──────────┐  │
-          │game_     │ │game_ │ │game_     │  │
-          │players   │ │moves │ │social_   │  │
-          │(2/partida│ │      │ │items     │  │
-          │has_hidden│ │action│ │item_type │  │
-          │tokens_   │ │target│ │blocked   │  │
-          │remaining │ │found │ │processed │  │
-          └──────────┘ └──────┘ └──────────┘  │
-                                               │
-          ┌──────────┐ ┌──────────────┐        │
-          │player_   │ │player_       │        │
-          │rewards   │ │inventory     │◄───────┘
-          │status:   │ │item_type     │
-          │owned/    │ │item_value    │
-          │sold/     │ │special_data  │
-          │placed    │ │gifted_to     │
-          └────┬─────┘ └──────────────┘
-               │
-               ▼
-          ┌──────────────┐
-          │ reward_items  │
-          │ (catàleg)     │
-          │ rarity, icon  │
-          │ sell_value    │
-          │ placed_in_    │
-          │ scenario_id   │
-          └──────────────┘
 
-          ┌──────────────┐
-          │wall_messages  │
-          │author_user_id │
-          │target_user_id │
-          │message        │
-          │created_at     │
-          │(TTL 22 hores) │
-          └──────────────┘
+                          ┌──── auth.users ────┐
+                          │  (Supabase Auth)    │
+                          │  NO tocar mai       │
+                          └───┬─────────────┬──┘
+                              │             │
+                    trigger:  │             │
+                 handle_new_user()          │
+                              │             │
+                              ▼             │
+                    ┌─────────────────┐     │
+                    │    profiles      │     │
+                    │─────────────────│     │
+                    │ user_id (uuid)  │     │
+                    │ display_name    │     │
+                    │ elo, league     │     │
+                    │ games_played/won│     │
+                    │ streaks         │     │
+                    │ bonus_tokens    │     │
+                    └─────────────────┘     │
+                                            │
+                    ┌─────────────────┐     │
+                    │     games       │◄────┘ created_by / invited_user_id
+                    │─────────────────│
+                    │ code (6 chars)  │
+                    │ status (enum)   │──── waiting → hiding → playing → finished
+                    │ winner_id       │
+                    │ scenario_id FK  │
+                    └───┬──────┬────┬┘
+                        │      │    │
+           ┌────────────┘      │    └──────────────┐
+           ▼                   ▼                   ▼
+  ┌─────────────────┐ ┌──────────────┐ ┌──────────────────┐
+  │  game_players    │ │  game_moves   │ │ game_social_items │
+  │─────────────────│ │──────────────│ │──────────────────│
+  │ game_id FK      │ │ action (enum)│ │ item_type (enum) │
+  │ user_id         │ │ token_cost   │ │ from/to_player   │
+  │ hidden_obj/item │ │ target_*     │ │ blocked_by_shield│
+  │ hidden_position │ │ found_object │ │ processed        │
+  │ tokens_remaining│ │ found_bonus  │ │ message_text     │
+  │ shield_active   │ │ turn_number  │ └──────────────────┘
+  │ smoke_bomb_used │ └──────────────┘
+  └─────────────────┘
 
-          ┌──────────────┐
-          │ error_logs    │
-          │ (debugging)   │
-          │ error_message │
-          │ error_stack   │
-          │ component     │
-          │ url, ua       │
-          └──────────────┘
+
+  ┌─────────────────┐         ┌─────────────────┐
+  │  player_rewards  │────────►│  reward_items    │
+  │─────────────────│         │─────────────────│
+  │ user_id         │         │ name, icon      │
+  │ reward_item_id  │         │ rarity (enum)   │
+  │ game_id FK      │         │ sell_value      │
+  │ status          │         │ placed_in_*     │
+  │ (owned/sold/    │         └─────────────────┘
+  │  placed)        │
+  └─────────────────┘
+
+  ┌─────────────────┐         ┌─────────────────┐
+  │ player_inventory │         │  wall_messages   │
+  │─────────────────│         │─────────────────│
+  │ user_id         │         │ author_user_id  │
+  │ game_id FK      │         │ target_user_id  │
+  │ item_type       │         │ message (text)  │
+  │ item_value      │         │ TTL: 22 hores   │
+  │ special_data    │         └─────────────────┘
+  │ gifted_to/at    │
+  └─────────────────┘         ┌─────────────────┐
+                              │   error_logs     │
+                              │ error_message    │
+                              │ error_stack      │
+                              │ component, url   │
+                              └─────────────────┘
 ```
 
-### 4.2 Taules detallades
+<br/>
 
-#### `games`
-| Columna | Tipus | Descripció |
-|---------|-------|------------|
-| `id` | uuid (PK) | Identificador únic |
-| `code` | text | Codi de 6 caràcters (A-Z, 2-9) |
-| `status` | game_status | waiting → hiding → playing → finished |
-| `created_by` | uuid | Jugador que ha creat la partida |
-| `invited_user_id` | uuid? | Si és NULL = pública. Si té valor = repte privat |
-| `scenario_id` | uuid? | Escenari seleccionat (no sempre usat) |
-| `winner_id` | uuid? | Jugador guanyador |
-| `created_at` | timestamptz | Data de creació |
-| `updated_at` | timestamptz | Últim canvi (per cleanup) |
+### 4.2 Detall de taules principals
 
-#### `game_players`
+<br/>
+
+<details>
+<summary>📋 <strong>games</strong> — Partides</summary>
+
 | Columna | Tipus | Descripció |
-|---------|-------|------------|
-| `id` | uuid (PK) | |
-| `game_id` | uuid (FK→games) | |
-| `user_id` | uuid | |
-| `hidden_object_id` | uuid? (FK→objects) | Objecte amagat |
-| `hidden_item_id` | uuid? (FK→items) | Moble on l'ha amagat |
-| `hidden_position` | position_type? | sobre/sota/dins |
-| `has_hidden` | boolean | Ha completat la fase d'amagar? |
-| `current_scenario_id` | uuid? (FK→scenarios) | Habitació actual (fase de cerca) |
-| `tokens_remaining` | numeric | Tokens disponibles avui |
-| `tokens_last_reset` | date | Última data de reinici |
-| `social_item_used_today` | boolean | Ja ha usat un ítem social? |
-| `shield_active` | boolean | Té l'escut actiu? |
-| `smoke_bomb_used` | boolean | Ja ha usat bomba de fum? (1/partida) |
+|:--------|:------|:-----------|
+| `id` | uuid PK | Identificador únic |
+| `code` | text | Codi 6 caràcters (A-Z, 2-9) per compartir |
+| `status` | `game_status` | `waiting` → `hiding` → `playing` → `finished` |
+| `created_by` | uuid | Jugador creador |
+| `invited_user_id` | uuid? | `NULL` = pública · Valor = repte privat |
+| `scenario_id` | uuid? FK→scenarios | Escenari seleccionat |
+| `winner_id` | uuid? | Guanyador (quan `finished`) |
+| `created_at` | timestamptz | Data creació |
+| `updated_at` | timestamptz | Últim canvi |
+
+</details>
+
+<details>
+<summary>👥 <strong>game_players</strong> — Jugadors d'una partida (2 per partida)</summary>
+
+| Columna | Tipus | Descripció |
+|:--------|:------|:-----------|
+| `game_id` | uuid FK→games | Partida |
+| `user_id` | uuid | Jugador |
+| `hidden_object_id` | uuid? FK→objects | Objecte amagat |
+| `hidden_item_id` | uuid? FK→items | Moble on l'ha amagat |
+| `hidden_position` | `position_type`? | `sobre` / `sota` / `dins` |
+| `has_hidden` | boolean | Ha completat la fase? |
+| `current_scenario_id` | uuid? FK→scenarios | Habitació actual |
+| `tokens_remaining` | numeric | Tokens disponibles (inici: 5) |
+| `tokens_last_reset` | date | Últim reinici diari |
+| `social_item_used_today` | boolean | Ja ha usat ítem social avui? |
+| `shield_active` | boolean | Té l'escut activat? |
+| `smoke_bomb_used` | boolean | Ja ha usat bomba fum? (1/partida) |
 | `special_data` | jsonb? | Dades extra d'objectes especials |
 
-#### `game_moves`
+</details>
+
+<details>
+<summary>🎯 <strong>game_moves</strong> — Historial de moviments</summary>
+
 | Columna | Tipus | Descripció |
-|---------|-------|------------|
-| `action` | action_type | move / look / confirm |
+|:--------|:------|:-----------|
+| `action` | `action_type` | `move` / `look` / `confirm` |
 | `token_cost` | numeric | Cost de l'acció |
-| `target_scenario_id` | uuid? | Destí (per move) |
-| `target_item_id` | uuid? | Moble investigat (per look/confirm) |
-| `target_position` | position_type? | Posició investigada |
-| `found_object` | boolean? | Ha trobat l'objecte? (per confirm) |
-| `found_bonus` | bonus_type? | Bonus trobat (extra_token, hint_yes/no) |
-| `turn_number` | integer | Número de torn (per pistes progressives) |
+| `target_scenario_id` | uuid? | Destí (per `move`) |
+| `target_item_id` | uuid? | Moble investigat (per `look`/`confirm`) |
+| `target_position` | `position_type`? | Posició investigada |
+| `found_object` | boolean? | Ha trobat l'objecte? |
+| `found_bonus` | `bonus_type`? | Bonus descobert |
+| `turn_number` | integer | Número de torn (pistes progressives) |
+
+</details>
+
+<details>
+<summary>📊 <strong>profiles</strong> — Perfils de jugador</summary>
+
+| Columna | Tipus | Descripció |
+|:--------|:------|:-----------|
+| `user_id` | uuid | Referència a auth.users |
+| `display_name` | text? | Nom visible |
+| `elo` | integer | Puntuació (inici: 1000) |
+| `league` | `league_tier` | Bronze → Diamond |
+| `games_played` / `games_won` | integer | Estadístiques |
+| `current_streak` / `best_streak` | integer | Ratxes |
+| `bonus_tokens` | numeric | Tokens extres (de vendes) |
+
+</details>
+
+<br/>
 
 ### 4.3 Enums
 
 ```sql
--- Estats de partida
-CREATE TYPE game_status AS ENUM ('waiting', 'hiding', 'playing', 'finished');
-
--- Accions del jugador
-CREATE TYPE action_type AS ENUM ('move', 'look', 'confirm');
-
--- Posicions d'amagatall
-CREATE TYPE position_type AS ENUM ('sobre', 'sota', 'dins');
-
--- Tipus de bonus
-CREATE TYPE bonus_type AS ENUM ('extra_token', 'hint_yes', 'hint_no');
-
--- Ítems socials
+CREATE TYPE game_status     AS ENUM ('waiting', 'hiding', 'playing', 'finished');
+CREATE TYPE action_type     AS ENUM ('move', 'look', 'confirm');
+CREATE TYPE position_type   AS ENUM ('sobre', 'sota', 'dins');
+CREATE TYPE bonus_type      AS ENUM ('extra_token', 'hint_yes', 'hint_no');
 CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message');
-
--- Lligues
-CREATE TYPE league_tier AS ENUM ('bronze', 'silver', 'gold', 'platinum', 'diamond');
-
--- Raresa de recompenses
-CREATE TYPE item_rarity AS ENUM ('common', 'uncommon', 'rare', 'epic', 'legendary');
-
--- Material dels objectes
+CREATE TYPE league_tier     AS ENUM ('bronze', 'silver', 'gold', 'platinum', 'diamond');
+CREATE TYPE item_rarity     AS ENUM ('common', 'uncommon', 'rare', 'epic', 'legendary');
 CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric');
-
--- Ambient dels mobles
 CREATE TYPE item_environment AS ENUM ('generic', 'wet', 'hot');
 ```
 
+<br/>
+
 ### 4.4 Funcions de base de dades
 
-#### `handle_new_user()` — Trigger on INSERT auth.users
+<br/>
+
+<details>
+<summary>🔑 <strong>handle_new_user()</strong> — Trigger on INSERT auth.users</summary>
+
+Crea automàticament un perfil a `public.profiles`:
 ```
-Crea automàticament un perfil a public.profiles amb:
-- user_id = NEW.id
-- display_name = raw_user_meta_data->>'display_name' o email
-```
-
-#### `handle_game_finished()` — Trigger on UPDATE games
-```
-Quan status canvia de 'playing' a 'finished' i winner_id no és NULL:
-
-GUANYADOR:
-  games_played += 1
-  games_won += 1
-  current_streak += 1
-  best_streak = MAX(best_streak, current_streak + 1)
-  elo += 25
-
-PERDEDOR:
-  games_played += 1
-  current_streak = 0
-  elo = MAX(elo - 20, 100)
-
-AMBDÓS → recalcular lliga:
-  elo ≥ 1800 → diamond
-  elo ≥ 1600 → platinum
-  elo ≥ 1400 → gold
-  elo ≥ 1200 → silver
-  else → bronze
-
-RECOMPENSA (guanyador):
-  random() → rarity:
-    < 0.02 → legendary
-    < 0.07 → epic
-    < 0.20 → rare
-    < 0.50 → uncommon
-    else → common
-  INSERT player_rewards amb reward_item aleatori d'aquesta rarity
+user_id      ← NEW.id
+display_name ← raw_user_meta_data->>'display_name' o email
 ```
 
-#### `sell_reward_item(_player_reward_id)` — RPC SECURITY DEFINER
+</details>
+
+<details>
+<summary>🏆 <strong>handle_game_finished()</strong> — Trigger on UPDATE games</summary>
+
+Quan `status` canvia de `playing` → `finished` i `winner_id ≠ NULL`:
+
+**Guanyador:**
 ```
-1. Verifica que el player_reward pertany a auth.uid() i status='owned'
-2. Obté sell_value del reward_item
-3. UPDATE player_rewards SET status='sold'
+games_played   += 1
+games_won      += 1
+current_streak += 1
+best_streak     = MAX(best_streak, current_streak + 1)
+elo            += 25
+```
+
+**Perdedor:**
+```
+games_played   += 1
+current_streak  = 0
+elo             = MAX(elo - 20, 100)
+```
+
+**Ambdós jugadors → recalcular lliga:**
+```
+elo ≥ 1800 → diamond
+elo ≥ 1600 → platinum
+elo ≥ 1400 → gold
+elo ≥ 1200 → silver
+else       → bronze
+```
+
+**Recompensa (guanyador):**
+```
+random() → rarity:
+  < 0.02 → legendary    (2%)
+  < 0.07 → epic         (5%)
+  < 0.20 → rare        (13%)
+  < 0.50 → uncommon    (30%)
+  else   → common      (50%)
+
+INSERT player_rewards amb reward_item aleatori d'aquesta rarity
+```
+
+</details>
+
+<details>
+<summary>💰 <strong>sell_reward_item()</strong> — RPC SECURITY DEFINER</summary>
+
+```
+1. Verifica que player_reward pertany a auth.uid() amb status='owned'
+2. Obté sell_value del reward_item vinculat
+3. UPDATE player_rewards SET status = 'sold'
 4. UPDATE profiles SET bonus_tokens += sell_value
 5. RETURN sell_value
 ```
 
-#### `place_reward_item(_player_reward_id, _scenario_id)` — RPC SECURITY DEFINER
+</details>
+
+<details>
+<summary>📍 <strong>place_reward_item()</strong> — RPC SECURITY DEFINER</summary>
+
 ```
-1. Verifica ownership i status='owned'
+1. Verifica ownership i status = 'owned'
 2. Verifica que el reward_item no està ja col·locat
-3. INSERT nou item al escenari (amb display_order automàtic)
+3. INSERT nou item a l'escenari (display_order automàtic)
 4. UPDATE reward_items SET placed_in_scenario_id, placed_by, placed_at
-5. UPDATE player_rewards SET status='placed'
+5. UPDATE player_rewards SET status = 'placed'
 ```
 
-#### `is_player_in_game(_user_id, _game_id)` — SECURITY DEFINER
+</details>
+
+<details>
+<summary>🔒 <strong>is_player_in_game()</strong> — SECURITY DEFINER</summary>
+
 ```
-Retorna TRUE si existeix un game_players amb user_id i game_id.
-Usat a les polítiques RLS per restringir accés a dades de partida.
+Retorna TRUE si existeix un game_players amb user_id + game_id.
+Usat dins polítiques RLS per restringir accés a dades de partida.
 ```
+
+</details>
+
+<br/>
 
 ---
 
-## 5. Mecàniques de joc (detallat)
+<br/>
+
+## 🎮 5. Mecàniques de joc
+
+<br/>
 
 ### 5.1 Cicle de vida d'una partida
 
 ```
-                    ┌─────────┐
-                    │ WAITING  │ ← createGame()
-                    └────┬────┘
-                         │ joinGame() (2n jugador)
-                         ▼
-                    ┌─────────┐
-                    │ HIDING   │ ← status='hiding' automàtic
-                    └────┬────┘
-                         │ hideObject() × 2 jugadors
-                         │ checkBothPlayersHidden() → true
-                         │ startGame()
-                         ▼
-                    ┌─────────┐
-                    │ PLAYING  │ ← performMove() repetidament
-                    └────┬────┘
-                         │ performMove('confirm') → foundObject=true
-                         ▼
-                    ┌─────────┐
-                    │FINISHED  │ ← trigger handle_game_finished()
-                    └─────────┘
+                    ┌───────────┐
+                    │  WAITING   │ ← createGame()
+                    └─────┬─────┘
+                          │  joinGame() (2n jugador)
+                          ▼
+                    ┌───────────┐
+                    │  HIDING    │ ← status = 'hiding' automàtic
+                    └─────┬─────┘
+                          │  hideObject() × 2 jugadors
+                          │  checkBothPlayersHidden() → true
+                          │  startGame()
+                          ▼
+                    ┌───────────┐
+                    │  PLAYING   │ ← performMove() repetidament
+                    └─────┬─────┘
+                          │  performMove('confirm') → found = true
+                          ▼
+                    ┌───────────┐
+                    │ FINISHED   │ ← trigger handle_game_finished()
+                    └───────────┘
 ```
 
-### 5.2 Fase d'amagar — Validacions
+<br/>
+
+### 5.2 Fase d'amagar — Validacions pas a pas
+
+| Pas | Acció | Funció | Detall |
+|:---:|:------|:-------|:-------|
+| 1️⃣ | Escollir escenari | `getScenarios()` | Tots els escenaris disponibles |
+| 2️⃣ | Escollir objecte | `getObjects()` + `getObjectSpecial()` | Comprova si té comportament especial |
+| 3️⃣ | Escollir moble | `getItemsByScenario(scenarioId)` | Mobles de l'escenari triat |
+| 4️⃣ | Escollir posició | — | `sobre` / `sota` / `dins` |
+| 5️⃣ | Input especial (opcional) | Si `objectSpecial.prompt_on === 'hide'` | Es desa a `special_data` |
+
+**Validacions de posició "dins":**
+
+| Condició | Resultat |
+|:---------|:---------|
+| `object.size > item.inner_capacity` | ❌ "Massa gran per cabre dins" |
+| `paper` + `wet` | ❌ "Es mullaria" |
+| `paper` + `hot` | ❌ "Es cremaria" |
+| `glass` + `hot` | ❌ "Es trencaria" |
+
+<br/>
+
+### 5.3 Fase de cerca — Accions detallades
+
+<br/>
+
+#### 🚶 MOVE — 0.5 tokens
 
 ```
-Pas 1: Escollir escenari
-  → getScenarios() → tots disponibles
-
-Pas 2: Escollir objecte
-  → getObjects() → tots disponibles
-  → getObjectSpecial(objectId) → comprova si té comportament especial
-
-Pas 3: Escollir moble
-  → getItemsByScenario(scenarioId) → mobles de l'escenari triat
-
-Pas 4: Escollir posició (sobre/sota/dins)
-  Validació "dins":
-    object.size ≤ item.inner_capacity
-    Si no → error "massa gran"
-  
-  Validació material/ambient:
-    paper + wet → error "es mullaria"
-    paper + hot → error "es cremaria"
-    glass + hot → error "es trencaria"
-
-Pas 5 (opcional): Input especial
-  Si objectSpecial.prompt_on === "hide" → mostra prompt extra
-  Ex: posar nom personalitzat a l'objecte
-  Es desa a game_players.special_data
-```
-
-### 5.3 Fase de cerca — Accions
-
-#### MOVE (0.5 tokens)
-```
-1. Validar connexió: scenario_connections(current ↔ target)
+1. Validar connexió bidireccional: scenario_connections(current ↔ target)
 2. UPDATE game_players.current_scenario_id = target
-3. Deduir cost
-```
-
-#### LOOK (0.3 tokens)
-```
-1. Obtenir hidden_item_id i hidden_position del rival
-2. Obtenir scenario_id del moble investigat i del moble del rival
-3. Calcular hintLevel:
-   - rivalScenario ≠ targetScenario → 0 (fred ❄️)
-   - same scenario, diferent moble → 1 (calent 🌡️)
-   - same moble, diferent posició → 2 (molt calent 🔥)
-   - same moble, same posició → 2 (però cal confirmar!)
-4. Comprovar scenario_bonuses(item_id, position):
-   - extra_token → +N tokens
-   - hint_yes/hint_no → desar a inventari
-5. INSERT game_moves
-```
-
-#### CONFIRM (1.5 tokens)
-```
-1. Comparar targetItemId + targetPosition amb rival
-2. Si coincideix:
-   - foundObject = true
-   - UPDATE games SET status='finished', winner_id=playerId
-   - (trigger handle_game_finished s'executa automàticament)
-3. Si no coincideix:
-   - foundObject = false
-   - Es perden 1.5 tokens sense resultat
+3. Deduir 0.5 tokens
 4. INSERT game_moves
 ```
 
-### 5.4 Pistes progressives d'objecte rival
+#### 👀 LOOK — 0.3 tokens
 
 ```
-totalMoves < 2  → cap pista
-totalMoves ≥ 2  → object_traits.trait_number = 1 (ex: "És metàl·lic")
-totalMoves ≥ 5  → object_traits.trait_number = 2 (ex: "Cap a una mà")
+1. Obtenir hidden_item_id i hidden_position del rival
+2. Obtenir scenario_id del moble investigat vs moble del rival
+3. Calcular hintLevel:
+   ├── rivalScenario ≠ targetScenario → 0 (fred ❄️)
+   ├── same scenario, diferent moble  → 1 (calent 🌡️)
+   ├── same moble, diferent posició   → 2 (molt calent 🔥)
+   └── same moble, same posició       → 2 (cal confirmar!)
+4. Comprovar scenario_bonuses(item_id, position):
+   ├── extra_token → +N tokens al jugador
+   └── hint_yes / hint_no → desar a inventari
+5. INSERT game_moves
 ```
+
+#### 🔍 CONFIRM — 1.5 tokens
+
+```
+1. Comparar targetItemId + targetPosition amb l'amagatall del rival
+2. Si coincideix:
+   ├── foundObject = true
+   ├── UPDATE games SET status = 'finished', winner_id = playerId
+   └── (trigger handle_game_finished s'executa automàticament)
+3. Si NO coincideix:
+   ├── foundObject = false
+   └── Es perden 1.5 tokens sense resultat
+4. INSERT game_moves
+```
+
+<br/>
+
+### 5.4 Pistes progressives de l'objecte rival
+
+| Condició | Pista |
+|:---------|:------|
+| `totalMoves < 2` | Cap pista |
+| `totalMoves ≥ 2` | `object_traits.trait_number = 1` (ex: "És metàl·lic") |
+| `totalMoves ≥ 5` | `object_traits.trait_number = 2` (ex: "Cap a una mà") |
+
+<br/>
 
 ### 5.5 Ítems socials
 
-Cada jugador pot usar **1 ítem per dia** (controlat per `social_item_used_today`).
+> Cada jugador pot usar **1 ítem per dia** (controlat per `social_item_used_today`).
 
-```
-BANANA:
-  → Bloqueja un spot aleatori al tauler del rival
-  → UI: bananaEffect + bananaBlockedSpot
-
-SMOKE BOMB:
-  → Canvia hidden_position del propi objecte aleatòriament
-  → Només 1 cop per partida (smoke_bomb_used)
-
-FALSE CLUE:
-  → Activa indicador fals a la UI del rival durant 10s
-
-SHIELD:
-  → Activa shield_active al propi game_players
-  → Bloqueja el PRÒXIM ítem social rebut
-  → Es consumeix en bloquejar (shield_active → false)
-
-MESSAGE:
-  → Envia text lliure al rival (message_text)
-  → Pot ser pista real o farol
-```
+| Ítem | Mecànica | Límit |
+|:-----|:---------|:------|
+| 🍌 **Banana** | Bloqueja un spot aleatori al tauler del rival | 1/dia |
+| 💣 **Bomba de fum** | Canvia `hidden_position` del propi objecte aleatòriament | 1/partida |
+| 🔮 **Pista falsa** | Activa indicador fals a la UI del rival (10s) | 1/dia |
+| 🛡️ **Escut** | Bloqueja el pròxim ítem social rebut (es consumeix) | 1/dia |
+| 💬 **Missatge** | Envia text lliure al rival (bluff, provocació) | 1/dia |
 
 ### 5.6 Detecció de proximitat
+
 ```
-Si el rival està a l'habitació on tu has amagat l'objecte:
+Si el rival està a l'habitació on TU has amagat l'objecte:
   → rivalNearby = true
-  → Es mostra un avís visual ⚠️
+  → Avís visual ⚠️ al teu tauler
 ```
+
+<br/>
 
 ---
 
-## 6. Sistema de matchmaking
+<br/>
 
-### 6.1 Tres tipus de creació
+## 🎲 6. Sistema de matchmaking
 
-#### Partida pública (botó ➕)
+<br/>
+
+### 6.1 Tres modalitats
+
+<br/>
+
+#### ➕ Partida pública
+
 ```typescript
 createGame(userId)
-// → invited_user_id = NULL
-// → Apareix a "Partides obertes" per TOTS els altres jugadors
-// → Qualsevol pot unir-s'hi
+// invited_user_id = NULL
+// Apareix a "Partides obertes" per TOTS els altres jugadors
+// Qualsevol pot unir-s'hi amb joinGame()
 ```
 
-#### Repte directe (botó ⚔️ Repte)
+#### ⚔️ Repte directe
+
 ```typescript
 challengePlayer(userId, rivalUserId)
-// → createGame(userId, rivalUserId)
-// → invited_user_id = rivalUserId
-// → NOMÉS el rival la veu a "Les meves partides" com a repte pendent
-// → NO apareix a "Partides obertes"
-// → El rival pot Acceptar (joinGame) o Rebutjar (deleteGame)
+// invited_user_id = rivalUserId
+// NOMÉS el rival la veu a "Les meves partides"
+// NO apareix a "Partides obertes"
+// El rival pot Acceptar (joinGame) o Rebutjar (deleteGame)
 ```
 
-#### Rival aleatori (botó 🎲)
+#### 🎲 Rival aleatori
+
 ```typescript
 findRandomMatch(userId)
-// 1. Busca partida pública existent → joinGame
+// 1. Busca partida pública existent → joinGame()
 // 2. Si no n'hi ha → selecciona 1 dels 20 jugadors més actius
-//    → createGame(userId, randomRivalId) [repte privat]
-// 3. Si no hi ha cap jugador → createGame(userId) [pública]
+//    → crea repte privat (invited_user_id = randomRival)
+// 3. Si no hi ha cap jugador → crea partida pública
 ```
 
-### 6.2 Validació de joinGame
+<br/>
 
-```typescript
-async function joinGame(gameId, userId) {
-  // 1. No ja unit a la partida
-  // 2. Partida en status "waiting"
-  // 3. Si invited_user_id existeix → NOMÉS ell pot unir-s'hi
-  // 4. Menys de 2 jugadors
-  // → INSERT game_players
-  // → UPDATE games SET status = 'hiding'
-}
-```
-
-### 6.3 Lobby — Consultes
+### 6.2 Validació de `joinGame`
 
 ```
-getAvailableGames(userId):
-  SELECT * FROM games
-  WHERE status='waiting'
-    AND invited_user_id IS NULL     ← només públiques!
-    AND created_by ≠ userId         ← no les pròpies
-  ORDER BY created_at DESC
-
-getMyGames(userId):
-  1. game_players WHERE user_id = userId (partides on participo)
-  2. games WHERE invited_user_id = userId AND status='waiting' (reptes pendents)
-  3. Combina, marca _pending=true els que falten per acceptar
-  4. Filtra: finished només si < 24h
-  5. Ordena: playing > hiding > waiting > finished
+1. ❌ No ja unit a la partida
+2. ❌ Partida NO en status "waiting" → rebutjat
+3. ❌ Si invited_user_id existeix i NO és el jugador → rebutjat
+4. ❌ Ja hi ha 2 jugadors → rebutjat
+5. ✅ INSERT game_players
+6. ✅ UPDATE games SET status = 'hiding'
 ```
+
+<br/>
+
+### 6.3 Consultes del lobby
+
+| Consulta | Filtre | Resultat |
+|:---------|:-------|:---------|
+| **Partides obertes** | `status='waiting'` AND `invited_user_id IS NULL` AND `created_by ≠ userId` | Partides públiques d'altres |
+| **Les meves partides** | `game_players.user_id = userId` UNION `invited_user_id = userId` | Totes les meves + reptes pendents |
+
+> Les partides `finished` només es mostren si tenen menys de 24h. Ordre: `playing` > `hiding` > `waiting` > `finished`.
+
+<br/>
 
 ---
 
-## 7. Flux de dades i Realtime
+<br/>
 
-### 7.1 Subscripcions (GamePage)
+## 📡 7. Flux de dades i Realtime
+
+<br/>
+
+### 7.1 Subscripcions WebSocket (GamePage)
 
 ```typescript
 const channel = supabase
   .channel(`game-${gameId}`)
   .on("postgres_changes", {
-    event: "*",
-    schema: "public",
-    table: "games",
+    event: "*", schema: "public", table: "games",
     filter: `id=eq.${gameId}`
   }, () => loadGame())
   .on("postgres_changes", {
-    event: "*",
-    schema: "public",
-    table: "game_players",
+    event: "*", schema: "public", table: "game_players",
     filter: `game_id=eq.${gameId}`
   }, () => loadGame())
   .on("postgres_changes", {
-    event: "INSERT",
-    schema: "public",
-    table: "game_social_items",
+    event: "INSERT", schema: "public", table: "game_social_items",
     filter: `game_id=eq.${gameId}`
   }, () => loadGame())
   .subscribe();
 ```
 
-**Efecte**: Qualsevol canvi del rival (amagar objecte, moure, enviar ítem social) provoca una recàrrega completa de l'estat de la partida al client de l'altre jugador.
+> **Efecte**: Qualsevol canvi del rival (amagar objecte, moure, enviar ítem social) provoca una recàrrega completa de l'estat de la partida a l'altre client.
+
+<br/>
 
 ### 7.2 Flux de tokens
 
 ```
-Dia 1: tokens_remaining = 5
-       Usa 3 tokens → resta 2
-
-Dia 2: ensureTokensReset() detecta nova data
-       → tokens = 5 + bonus_tokens (del perfil)
-       → bonus_tokens es posa a 0 al perfil
-       → social_item_used_today = false
+┌──────────────────────────────────────────────────┐
+│ DIA 1                                            │
+│   tokens_remaining = 5.0                         │
+│   Juga: move(0.5) + look(0.3) + look(0.3)       │
+│   → tokens_remaining = 3.9                       │
+└──────────────────────────────────────────────────┘
+                        │
+                        ▼ canvi de dia
+┌──────────────────────────────────────────────────┐
+│ DIA 2                                            │
+│   ensureTokensReset() detecta nova data          │
+│   → tokens = 5.0 + bonus_tokens (del perfil)     │
+│   → profiles.bonus_tokens = 0                    │
+│   → social_item_used_today = false               │
+└──────────────────────────────────────────────────┘
 ```
+
+<br/>
 
 ---
 
-## 8. Sistema de recompenses
+<br/>
 
-### 8.1 Obtenció
+## 🎁 8. Sistema de recompenses
+
+<br/>
+
+### 8.1 Obtenció (automàtica via trigger)
 
 ```
 Guanyar partida
-  → handle_game_finished() (trigger automàtic)
+  → handle_game_finished() s'executa
   → random() determina rarity:
-     50% common, 30% uncommon, 13% rare, 5% epic, 2% legendary
+     ├── 50% common
+     ├── 30% uncommon
+     ├── 13% rare
+     ├──  5% epic
+     └──  2% legendary
   → SELECT aleatori un reward_item d'aquesta rarity
-  → INSERT player_rewards (user_id, reward_item_id, game_id, status='owned')
+  → INSERT player_rewards (status = 'owned')
 ```
 
-### 8.2 Accions amb recompenses
+<br/>
 
-#### Vendre
-```typescript
-sellRewardItem(playerRewardId)
-// → RPC: sell_reward_item
-// → player_rewards.status = 'sold'
-// → profiles.bonus_tokens += reward_items.sell_value
-// → Retorna sell_value
-// → Els bonus_tokens s'afegeixen al reset diari de tokens
-```
+### 8.2 Accions disponibles
 
-#### Col·locar en un escenari
-```typescript
-placeRewardItem(playerRewardId, scenarioId)
-// → RPC: place_reward_item
-// → INSERT items (nou moble a l'escenari)
-// → reward_items.placed_in_scenario_id = scenarioId
-// → player_rewards.status = 'placed'
-// → TOTS els jugadors veuen el nou moble!
-```
+| Acció | Funció | Efecte |
+|:------|:-------|:-------|
+| 💰 **Vendre** | `sellRewardItem()` → RPC `sell_reward_item` | `status='sold'` · `bonus_tokens += sell_value` |
+| 📍 **Col·locar** | `placeRewardItem()` → RPC `place_reward_item` | `status='placed'` · Nou moble visible per a TOTS |
+
+<br/>
 
 ### 8.3 Trofeus especials
+
 ```
-Quan trobes un objecte amb object_specials (prompt_on='find'):
-  → Popup per interactuar (ex: posar nom a joguina)
-  → INSERT player_inventory (item_type='special_trophy')
+Quan trobes un objecte amb object_specials (prompt_on = 'find'):
+  → Popup interactiu (ex: "Dona un nom a aquesta joguina!")
+  → INSERT player_inventory (item_type = 'special_trophy')
   → Visible al perfil propi i d'altres jugadors
 ```
 
+<br/>
+
 ---
 
-## 9. Edge Functions
+<br/>
+
+## ☁️ 9. Edge Functions
+
+<br/>
 
 ### `cleanup-old-games`
 
-**Ubicació**: `supabase/functions/cleanup-old-games/index.ts`
+| Aspecte | Detall |
+|:--------|:-------|
+| **Ubicació** | `supabase/functions/cleanup-old-games/index.ts` |
+| **Invocació** | `POST /functions/v1/cleanup-old-games` |
+| **Recomanació** | Cron job diari a les 03:00 UTC |
 
-**Funció**: Neteja automàtica de dades caducades.
+**Lògica de neteja:**
 
-**Lògica**:
 ```
 1. Partides finished amb updated_at > 7 dies:
-   - DELETE player_inventory WHERE game_id IN (...) AND item_type ≠ 'special_trophy'
-   - DELETE game_moves WHERE game_id IN (...)
-   - DELETE game_social_items WHERE game_id IN (...)
-   - DELETE game_players WHERE game_id IN (...)
-   - DELETE games WHERE id IN (...)
+   ├── DELETE player_inventory (excepte special_trophy)
+   ├── DELETE game_moves
+   ├── DELETE game_social_items
+   ├── DELETE game_players
+   └── DELETE games
 
 2. Wall messages amb created_at > 22 hores:
-   - DELETE wall_messages WHERE created_at < cutoff
+   └── DELETE wall_messages
 
-Preserva SEMPRE:
-  - player_rewards (trofeus i recompenses)
-  - player_inventory WHERE item_type = 'special_trophy'
+⚠️ Preserva SEMPRE:
+   ├── player_rewards (trofeus i recompenses)
+   └── player_inventory WHERE item_type = 'special_trophy'
 ```
 
-**Invocació**: `POST /functions/v1/cleanup-old-games`
-
-**Recomanació**: Configurar cron job diari (ex: 03:00 UTC) via `pg_cron` + `pg_net`.
+<br/>
 
 ---
 
-## 10. Seguretat (RLS)
+<br/>
 
-### Matriu de polítiques
+## 🔒 10. Seguretat (RLS)
+
+<br/>
+
+### Matriu completa de polítiques
 
 | Taula | SELECT | INSERT | UPDATE | DELETE |
-|-------|--------|--------|--------|--------|
-| `profiles` | Tots auth | Propi (uid=user_id) | Propi | ❌ |
-| `games` | Tots auth | Propi (uid=created_by) | Creador OR jugador | waiting AND (creador OR convidat) |
-| `game_players` | Via is_player_in_game() | Propi (uid=user_id) | Propi | Propi OR creador amb status=waiting |
-| `game_moves` | Via is_player_in_game() | Propi (uid=player_id) | ❌ | ❌ |
-| `game_social_items` | Emissor OR receptor | Propi (uid=from_player_id) | Receptor | ❌ |
-| `player_inventory` | Propi OR regalat OR trophy | Propi | Propi | ❌ |
-| `player_rewards` | Propi | ❌ (via trigger) | Propi | ❌ |
-| `wall_messages` | Tots auth | Propi (no auto-msg) | ❌ | Autor |
-| `scenarios` | Tots auth | ❌ | ❌ | ❌ |
-| `items` | Tots auth | ❌ | ❌ | ❌ |
-| `objects` | Tots auth | ❌ | ❌ | ❌ |
-| `object_traits` | Tots auth | ❌ | ❌ | ❌ |
-| `object_specials` | Tots auth | ❌ | ❌ | ❌ |
-| `scenario_bonuses` | Tots auth | ❌ | ❌ | ❌ |
-| `scenario_connections` | Tots auth | ❌ | ❌ | ❌ |
-| `reward_items` | Tots auth | ❌ | ❌ | ❌ |
-| `error_logs` | Propi | Propi o anon | ❌ | ❌ |
+|:------|:-------|:-------|:-------|:-------|
+| `profiles` | ✅ Tots auth | ✅ Propi | ✅ Propi | ❌ |
+| `games` | ✅ Tots auth | ✅ Propi (`created_by`) | ✅ Creador OR jugador | ✅ `waiting` AND creador/convidat |
+| `game_players` | 🔐 `is_player_in_game()` | ✅ Propi | ✅ Propi | ✅ Propi OR creador (`waiting`) |
+| `game_moves` | 🔐 `is_player_in_game()` | ✅ Propi | ❌ | ❌ |
+| `game_social_items` | ✅ Emissor OR receptor | ✅ Propi (`from`) | ✅ Receptor | ❌ |
+| `player_inventory` | ✅ Propi/regalat/trophy | ✅ Propi | ✅ Propi | ❌ |
+| `player_rewards` | ✅ Propi | ❌ (via trigger) | ✅ Propi | ❌ |
+| `wall_messages` | ✅ Tots auth | ✅ Propi (no auto-msg) | ❌ | ✅ Autor |
+| `scenarios` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `items` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `objects` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `object_traits` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `object_specials` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `scenario_bonuses` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `scenario_connections` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `reward_items` | ✅ Tots auth | ❌ | ❌ | ❌ |
+| `error_logs` | ✅ Propi | ✅ Propi/anon | ❌ | ❌ |
 
-### Notes de seguretat
+<br/>
 
-- **is_player_in_game()** és `SECURITY DEFINER` per evitar recursió RLS
-- **handle_game_finished()** és `SECURITY DEFINER` per poder modificar altres perfils
-- Les taules de contingut del joc (scenarios, items, objects...) són **read-only** per usuaris
-- `invited_user_id` controla la privacitat de les partides a nivell de consulta
+### 🔑 Notes de seguretat
+
+- **`is_player_in_game()`** → `SECURITY DEFINER` per evitar recursió RLS
+- **`handle_game_finished()`** → `SECURITY DEFINER` per modificar perfils d'altres
+- Taules de contingut (`scenarios`, `items`, `objects`...) → **read-only** per usuaris
+- `invited_user_id` controla la privacitat de partides a nivell de consulta
+
+<br/>
 
 ---
 
-## 11. Instal·lació local
+<br/>
 
-### Prerequisits
+## 💻 11. Instal·lació local
 
-| Software | Versió mínima | Nota |
-|----------|--------------|------|
-| Node.js | 18+ | Recomanat 20+ |
-| npm / bun | qualsevol | bun recomanat (lock file present) |
-| Git | 2.30+ | Per clonar |
+<br/>
 
-### Passos
+### 🅰️ Opció ràpida — Entorn connectat a producció
+
+> ⚠️ Aquesta opció usa la **mateixa base de dades de producció**. Les teves accions afectaran les dades reals.
+
+<br/>
+
+#### Prerequisits
+
+| Software | Versió mínima | Instal·lació |
+|:---------|:------------:|:-------------|
+| **Node.js** | 18+ (recom. 20+) | [nodejs.org](https://nodejs.org) |
+| **npm** o **bun** | qualsevol | bun: `curl -fsSL https://bun.sh/install \| bash` |
+| **Git** | 2.30+ | [git-scm.com](https://git-scm.com) |
+
+<br/>
+
+#### Pas a pas
 
 ```bash
-# 1. Clonar
-git clone <repo-url>
+# 1. Clonar el repositori
+git clone <url-del-teu-repositori>
 cd deduction-duel
 
 # 2. Instal·lar dependències
-bun install     # o: npm install
+bun install          # o: npm install
 
-# 3. Variables d'entorn
-# Crear .env a l'arrel (ja existeix si és Lovable Cloud):
+# 3. Crear fitxer .env a l'arrel
+# (les claus de producció estan al vite.config.ts com a fallback,
+#  però és bona pràctica tenir un .env explícit)
 cat > .env << 'EOF'
 VITE_SUPABASE_URL=https://wqbjvceezgokqhrqckcg.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxYmp2Y2Vlemdva3FocnFja2NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjMzMjgsImV4cCI6MjA5MDI5OTMyOH0.Dk1OiEj5sX9CXnSsgDf9UTlbM9dI4xaWSPdlYTQ_aQc
 VITE_SUPABASE_PROJECT_ID=wqbjvceezgokqhrqckcg
 EOF
 
-# 4. Executar en mode dev
-npm run dev     # → http://localhost:8080
+# 4. Executar en mode desenvolupament
+npm run dev          # → http://localhost:8080
 
-# 5. Build de producció
-npm run build   # → dist/
+# 5. Build de producció (opcional)
+npm run build        # → genera dist/
 
-# 6. Executar tests
-npm test        # vitest
+# 6. Executar tests (opcional)
+npm test             # vitest
 ```
 
-### ⚠️ Advertiments importants
+<br/>
 
-1. **NO modificar mai**:
-   - `src/integrations/supabase/client.ts`
-   - `src/integrations/supabase/types.ts`
-   - `.env` (si treballes amb Lovable Cloud)
-   - `supabase/migrations/`
+#### ⚠️ Fitxers que NO has de tocar MAI
 
-2. **Base de dades compartida**: La instal·lació local usa la mateixa DB de producció (Lovable Cloud). Per un entorn completament aïllat, caldria:
-   - Crear un projecte Supabase propi
-   - Aplicar totes les migracions
-   - Canviar les variables d'entorn
+| Fitxer | Per què |
+|:-------|:--------|
+| `src/integrations/supabase/client.ts` | Auto-generat pel sistema |
+| `src/integrations/supabase/types.ts` | Auto-generat des de la DB |
+| `.env` (si treballes amb Lovable Cloud) | Gestionat automàticament |
+| `supabase/migrations/*` | Esquema DB gestionat per Lovable |
 
-3. **Port**: El servidor dev escolta al port **8080** (configurat a `vite.config.ts`)
-
-4. **Alias**: `@` resol a `./src` (configurat a vite i tsconfig)
+<br/>
 
 ---
 
-## 12. Guia de modificació
+<br/>
+
+### 🅱️ Opció completa — Entorn aïllat amb Supabase propi
+
+> ✅ Recomanada per desenvolupament real. Base de dades pròpia, sense afectar producció.
+
+<br/>
+
+#### Prerequisits addicionals
+
+| Software | Versió mínima | Instal·lació |
+|:---------|:------------:|:-------------|
+| Tot de l'Opció A | — | Veure més amunt |
+| **Docker Desktop** | 20+ | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop) |
+| **Supabase CLI** | 1.100+ | `npm install -g supabase` |
+
+<br/>
+
+#### Pas 1 — Crear compte i projecte a Supabase
+
+1. Ves a **[supabase.com](https://supabase.com)** i crea un compte gratuït (GitHub o email)
+2. Un cop dins el dashboard, clica **"New Project"**
+3. Omple els camps:
+   - **Name**: `deduction-duel-dev` (o el que vulguis)
+   - **Database Password**: genera'n una segura i **guarda-la** (la necessitaràs)
+   - **Region**: tria la més propera a tu (ex: `eu-west-1` per Europa)
+4. Espera ~2 minuts fins que el projecte estigui llest (barra de progrés)
+
+<br/>
+
+#### Pas 2 — Obtenir les claus del projecte
+
+Un cop creat el projecte, ves a **Settings → API** al dashboard de Supabase:
+
+| Dada | On la trobes | Per a què serveix |
+|:-----|:-------------|:------------------|
+| **Project URL** | `Settings → API → Project URL` | Ex: `https://abcdefghij.supabase.co` |
+| **anon key** | `Settings → API → Project API keys → anon public` | Clau pública per al client |
+| **service_role key** | `Settings → API → Project API keys → service_role secret` | ⚠️ Clau admin (només edge functions) |
+| **Project Ref** | L'últim segment de la URL: `abcdefghij` | Identificador del projecte |
+
+> 💡 La **anon key** és pública i segura d'incloure al codi client. La **service_role key** és **secreta** i mai ha d'estar al frontend.
+
+<br/>
+
+#### Pas 3 — Configurar Supabase CLI i vincular el projecte
+
+```bash
+# Iniciar sessió a la CLI de Supabase
+npx supabase login
+# → S'obrirà el navegador per autoritzar
+
+# Vincular el teu projecte local amb el remot
+npx supabase link --project-ref <el-teu-project-ref>
+# Ex: npx supabase link --project-ref abcdefghij
+# → Et demanarà la Database Password que vas guardar al Pas 1
+```
+
+<br/>
+
+#### Pas 4 — Aplicar totes les migracions
+
+Les migracions estan a `supabase/migrations/` i contenen tot l'esquema:
+
+```bash
+# Aplicar totes les migracions a la base de dades remota
+npx supabase db push
+```
+
+Això executarà els 19 fitxers de migració en ordre cronològic, creant:
+- ✅ Totes les taules (15)
+- ✅ Tots els enums (9 tipus)
+- ✅ Totes les funcions (6)
+- ✅ Tots els triggers
+- ✅ Totes les polítiques RLS
+- ✅ Dades inicials (escenaris, mobles, objectes, connexions, bonuses)
+
+> 💡 Si vols verificar que tot s'ha aplicat correctament, ves al **Supabase Dashboard → Table Editor** i comprova que les taules existeixin.
+
+<br/>
+
+#### Pas 5 — Configurar l'autenticació
+
+Al dashboard de Supabase, ves a **Authentication → Providers**:
+
+1. **Email**: ha d'estar activat (ja ho està per defecte)
+2. **Confirm email**: decideix si vols que els usuaris confirmin el correu
+   - Per desenvolupament, pots desactivar-ho a `Authentication → Settings → Enable email confirmations`
+   - Per producció, deixa-ho activat
+
+<br/>
+
+#### Pas 6 — Configurar els secrets per a Edge Functions
+
+Les Edge Functions necessiten secrets per funcionar. Configura'ls des del dashboard:
+
+Ves a **Settings → Edge Functions → Secrets** i afegeix:
+
+| Nom del secret | Valor | D'on l'obtens |
+|:---------------|:------|:--------------|
+| `SUPABASE_URL` | `https://abcdefghij.supabase.co` | Pas 2 → Project URL |
+| `SUPABASE_ANON_KEY` | La teva anon key | Pas 2 → anon public |
+| `SUPABASE_SERVICE_ROLE_KEY` | La teva service_role key | Pas 2 → service_role secret |
+
+<br/>
+
+#### Pas 7 — Desplegar Edge Functions
+
+```bash
+# Desplegar la funció de cleanup
+npx supabase functions deploy cleanup-old-games --project-ref <el-teu-project-ref>
+```
+
+<br/>
+
+#### Pas 8 — Apuntar l'aplicació al teu Supabase
+
+Modifica **`vite.config.ts`** — canvia les constants del principi del fitxer:
+
+```typescript
+// CANVIA AQUESTES LÍNIES amb les dades del teu projecte:
+const PUBLIC_SUPABASE_URL = "https://abcdefghij.supabase.co";           // ← La teva URL
+const PUBLIC_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJ...la-teva-key";    // ← La teva anon key
+const PUBLIC_SUPABASE_PROJECT_ID = "abcdefghij";                         // ← El teu project ref
+```
+
+I crea el teu `.env`:
+
+```bash
+cat > .env << 'EOF'
+VITE_SUPABASE_URL=https://abcdefghij.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJ...la-teva-key
+VITE_SUPABASE_PROJECT_ID=abcdefghij
+EOF
+```
+
+<br/>
+
+#### Pas 9 — Poblar dades inicials (si cal)
+
+Si les migracions **no** inclouen dades inicials (seed), hauràs de crear-les manualment. Comprova al dashboard si les taules `scenarios`, `items`, `objects`, etc. tenen dades.
+
+Si estan buides, pots inserir dades d'exemple:
+
+```sql
+-- Escenaris inicials
+INSERT INTO scenarios (name, icon, display_order) VALUES
+  ('Cuina', '🍳', 1),
+  ('Biblioteca', '📚', 2),
+  ('Garatge', '🔧', 3);
+
+-- Mobles per escenari (exemple per Cuina)
+INSERT INTO items (name, icon, scenario_id, display_order, inner_capacity, environment) VALUES
+  ('Nevera', '🧊', '<cuina_id>', 1, 3, 'wet'),
+  ('Forn', '♨️', '<cuina_id>', 2, 2, 'hot'),
+  ('Armari', '🗄️', '<cuina_id>', 3, 3, 'generic');
+
+-- Connexions entre escenaris
+INSERT INTO scenario_connections (scenario_a, scenario_b) VALUES
+  ('<cuina_id>', '<biblioteca_id>'),
+  ('<biblioteca_id>', '<garatge_id>'),
+  ('<garatge_id>', '<cuina_id>');
+
+-- Objectes amagables
+INSERT INTO objects (name, icon, display_order, size, material) VALUES
+  ('Clau', '🔑', 1, 1, 'metal'),
+  ('Llibre', '📕', 2, 2, 'paper'),
+  ('Got', '🥛', 3, 2, 'glass');
+
+-- Recompenses (mobles-premi)
+INSERT INTO reward_items (name, icon, rarity, sell_value) VALUES
+  ('Tamburet', '🪑', 'common', 1),
+  ('Prestatgeria', '📚', 'uncommon', 2),
+  ('Vitrina', '🪟', 'rare', 3),
+  ('Piano', '🎹', 'epic', 5),
+  ('Tron daurat', '👑', 'legendary', 8);
+```
+
+> ⚠️ Substitueix `<cuina_id>`, `<biblioteca_id>`, etc. pels UUIDs reals generats a la inserció dels escenaris. Pots obtenir-los amb `SELECT id, name FROM scenarios;`
+
+<br/>
+
+#### Pas 10 — Arrancar i verificar
+
+```bash
+# Instal·lar dependències (si no ho has fet)
+bun install
+
+# Arrancar el servidor de desenvolupament
+npm run dev
+
+# Verificar:
+# 1. Obre http://localhost:8080
+# 2. Crea un compte nou (registra't)
+# 3. Comprova que pots crear una partida
+# 4. Comprova que els escenaris i mobles es carreguen
+```
+
+<br/>
+
+#### 🎯 Resum ràpid de l'Opció B
+
+```
+1. Crear projecte a supabase.com           ← ~2 min
+2. Obtenir URL + claus (Settings → API)     ← ~1 min
+3. npx supabase login                       ← ~1 min
+4. npx supabase link --project-ref <ref>    ← ~1 min
+5. npx supabase db push                     ← ~2 min (aplica 19 migracions)
+6. Configurar secrets a Edge Functions      ← ~2 min
+7. npx supabase functions deploy            ← ~1 min
+8. Editar vite.config.ts + .env             ← ~2 min
+9. Verificar dades inicials / seed          ← ~5 min
+10. npm run dev → http://localhost:8080     ← ✅ Llest!
+                                     Total: ~15-20 min
+```
+
+<br/>
+
+#### 🔄 Opció alternativa: Supabase local amb Docker
+
+Si prefereixes **no usar cap servei remot** i treballar 100% local:
+
+```bash
+# 1. Iniciar Supabase local (Docker ha d'estar corrent)
+npx supabase start
+# → Arrencarà PostgreSQL, Auth, Realtime, Storage i Studio localment
+# → Et mostrarà les claus locals per pantalla
+
+# 2. Copia les claus que et dóna la CLI:
+#    API URL:    http://localhost:54321
+#    anon key:   eyJhbG...
+#    service_role key: eyJhbG...
+#    Studio URL: http://localhost:54323  ← Dashboard local
+
+# 3. Aplica migracions a la DB local
+npx supabase db reset
+# → Aplica totes les migracions + seed des de zero
+
+# 4. Configura .env amb les claus locals
+cat > .env << 'EOF'
+VITE_SUPABASE_URL=http://localhost:54321
+VITE_SUPABASE_PUBLISHABLE_KEY=<anon-key-local>
+VITE_SUPABASE_PROJECT_ID=local
+EOF
+
+# 5. Actualitza vite.config.ts amb les mateixes dades
+
+# 6. Arranca l'app
+npm run dev
+
+# Per aturar Supabase local:
+npx supabase stop
+```
+
+> 💡 Amb `supabase start`, tens un **Supabase Studio local** a `http://localhost:54323` que funciona exactament igual que el dashboard web.
+
+<br/>
+
+---
+
+<br/>
+
+## 🛠️ 12. Guia de modificació
+
+<br/>
 
 ### 12.1 Afegir un nou escenari
 
@@ -848,23 +1260,25 @@ npm test        # vitest
 INSERT INTO scenarios (name, icon, display_order)
 VALUES ('Jardí', '🌿', 4);
 
--- 2. Inserir mobles
+-- 2. Inserir mobles (substitueix <scenario_id> pel UUID generat)
 INSERT INTO items (name, icon, scenario_id, display_order, inner_capacity, environment)
 VALUES
   ('Caseta', '🏠', '<scenario_id>', 1, 3, 'generic'),
   ('Bassa', '💧', '<scenario_id>', 2, 1, 'wet'),
   ('Barbacoa', '🔥', '<scenario_id>', 3, 2, 'hot');
 
--- 3. Connectar amb escenaris existents
+-- 3. Connectar amb escenaris existents (bidireccional automàtic)
 INSERT INTO scenario_connections (scenario_a, scenario_b)
 VALUES
   ('<jardi_id>', '<cuina_id>'),
   ('<jardi_id>', '<garatge_id>');
 
--- 4. Opcionalment, afegir bonuses
+-- 4. Afegir bonuses (opcional)
 INSERT INTO scenario_bonuses (item_id, position, bonus_type, value)
 VALUES ('<caseta_id>', 'dins', 'extra_token', '0.5');
 ```
+
+<br/>
 
 ### 12.2 Afegir un nou objecte
 
@@ -879,108 +1293,115 @@ VALUES
   ('<diamant_id>', 1, 'Brilla intensament'),
   ('<diamant_id>', 2, 'És molt dur i petit');
 
--- 3. Opcionalment, afegir comportament especial
+-- 3. Afegir comportament especial (opcional)
 INSERT INTO object_specials (object_id, special_type, prompt_on, prompt_text)
 VALUES ('<diamant_id>', 'custom_name', 'find', 'Dona un nom a aquest diamant!');
 ```
 
+<br/>
+
 ### 12.3 Afegir un nou ítem social
 
-1. **Migració SQL**: Afegir valor al enum
-```sql
-ALTER TYPE social_item_type ADD VALUE 'trap';
-```
+| Pas | Acció | Fitxer |
+|:---:|:------|:-------|
+| 1 | Migració SQL: `ALTER TYPE social_item_type ADD VALUE 'trap';` | Nova migració |
+| 2 | Afegir a `SOCIAL_ITEMS` array | `supabase-helpers.ts` |
+| 3 | Implementar lògica a `sendSocialItem()` | `supabase-helpers.ts` |
+| 4 | Implementar recepció UI | `GamePage.tsx` |
 
-2. **supabase-helpers.ts**: Afegir a `SOCIAL_ITEMS`
-```typescript
-{ type: "trap" as const, icon: "🪤", name: "Trampa", desc: "Efecte de la trampa" },
-```
-
-3. **supabase-helpers.ts**: Implementar lògica a `sendSocialItem()`
-```typescript
-} else if (itemType === "trap") {
-  // Implementar efecte
-}
-```
-
-4. **GamePage.tsx**: Implementar recepció a la secció de `getUnprocessedSocialItems`
+<br/>
 
 ### 12.4 Modificar costos de tokens
 
-Editar una sola constant a `supabase-helpers.ts`:
+Editar **una sola línia** a `supabase-helpers.ts`:
+
 ```typescript
 export const TOKEN_COSTS = { move: 0.5, look: 0.3, confirm: 1.5 } as const;
 ```
 
-### 12.5 Modificar sistema Elo/Lligues
+<br/>
 
-Editar la funció SQL `handle_game_finished()` (via migració):
+### 12.5 Modificar sistema Elo / Lligues
+
+Editar la funció SQL `handle_game_finished()` via migració:
+
 ```sql
--- Canviar punts: guanyador +30 (era +25)
-elo = elo + 30
--- Canviar perdedor: -15 (era -20)
-elo = GREATEST(elo - 15, 100)
--- Canviar llindars de lliga
+-- Exemple: canviar punts
+elo = elo + 30          -- era +25
+elo = GREATEST(elo - 15, 100)  -- era -20
+
+-- Exemple: canviar llindars de lliga
 WHEN elo >= 2000 THEN 'diamond'  -- era 1800
 ```
+
+<br/>
 
 ### 12.6 Afegir nous mobles-premi
 
 ```sql
-INSERT INTO reward_items (name, icon, rarity, sell_value)
-VALUES
+INSERT INTO reward_items (name, icon, rarity, sell_value) VALUES
   ('Cadira elegant', '🪑', 'rare', 3),
   ('Tron daurat', '👑', 'legendary', 8);
 ```
 
+<br/>
+
 ---
 
-## 13. Debugging
+<br/>
 
-### 13.1 Eines
+## 🐛 13. Debugging
+
+<br/>
+
+### 13.1 Eines disponibles
 
 | Eina | Com accedir | Què mostra |
-|------|-------------|------------|
-| `error_logs` (DB) | Consulta directa | Errors amb stack, component, URL, UA |
-| Console del navegador | DevTools | Errors JS en temps real |
-| Network tab | DevTools | Peticions Supabase (REST + Realtime) |
-| Edge Function logs | Lovable Cloud | Logs de cleanup i errors |
-| `window.onerror` | Automàtic | Errors no capturats → error_logs |
+|:-----|:-----------|:-----------|
+| `error_logs` (DB) | Consulta directa | Errors amb stack, component, URL |
+| Console del navegador | DevTools → Console | Errors JS en temps real |
+| Network tab | DevTools → Network | Peticions Supabase (REST + WS) |
+| Edge Function logs | Dashboard | Logs de cleanup i errors |
+| `ErrorBoundary` | Automàtic | Captura errors React → `error_logs` |
 
-### 13.2 Problemes comuns i solucions
+<br/>
 
-| Símptoma | Causa probable | On mirar | Solució |
-|----------|---------------|----------|---------|
-| "No tens prou tokens" | Tokens no reiniciats | `ensureTokensReset()` | Verificar comparació de dates |
-| Partida bloquejada a "hiding" | Un jugador no ha amagat | `game_players.has_hidden` | `checkBothPlayersHidden()` |
-| Repte no visible al rival | RLS o query incorrecta | Network tab → `getMyGames` | Verificar `invited_user_id` query |
-| Rival no pot unir-se | Validació de `joinGame` | Console errors | `invited_user_id !== userId` |
-| Partida no a "Partides obertes" | `invited_user_id` no NULL | DB → games | Hauria de ser NULL per públiques |
-| Tokens bonus no s'apliquen | `bonus_tokens` no consumits | `profiles.bonus_tokens` | Verificar `ensureTokensReset()` |
-| Ítem social bloquejat | Escut actiu | `game_players.shield_active` | Normal si rival tenia shield |
-| "Ja has usat l'ítem social" | `social_item_used_today=true` | `game_players` | S'ha de esperar al reset diari |
-| Error "massa gran per dins" | `object.size > item.inner_capacity` | Comparar valors | Normal, validació correcta |
+### 13.2 Problemes comuns
 
-### 13.3 Consultes útils de debug
+| Símptoma | Causa probable | Solució |
+|:---------|:--------------|:--------|
+| "No tens prou tokens" | Tokens no reiniciats | Verificar `ensureTokensReset()` i comparació de dates |
+| Partida bloquejada a "hiding" | Un jugador no ha amagat | Comprovar `game_players.has_hidden` |
+| Repte no visible al rival | Query incorrecta | Verificar `invited_user_id` a la query de `getMyGames` |
+| Rival no pot unir-se | Validació de `joinGame` | `invited_user_id !== userId` si és repte privat |
+| Partida no a "Partides obertes" | `invited_user_id` no és NULL | Hauria de ser NULL per a partides públiques |
+| Tokens bonus no s'apliquen | `bonus_tokens` no consumits | Verificar flux a `ensureTokensReset()` |
+| Ítem social bloquejat | Escut actiu del rival | Comportament esperat |
+| "Massa gran per dins" | `object.size > item.inner_capacity` | Validació correcta |
+
+<br/>
+
+### 13.3 Consultes SQL útils
 
 ```sql
--- Veure estat d'una partida
+-- 🔍 Estat d'una partida per codi
 SELECT g.code, g.status, g.winner_id, g.invited_user_id,
-       p.display_name as created_by_name
+       p.display_name AS created_by_name
 FROM games g
 JOIN profiles p ON p.user_id = g.created_by
-WHERE g.code = 'YKA5RX';
+WHERE g.code = 'ABC123';
 
--- Veure jugadors d'una partida
-SELECT gp.*, p.display_name
+-- 👥 Jugadors d'una partida
+SELECT gp.has_hidden, gp.tokens_remaining, gp.current_scenario_id,
+       p.display_name
 FROM game_players gp
 JOIN profiles p ON p.user_id = gp.user_id
 WHERE gp.game_id = '<game_id>';
 
--- Veure moviments d'una partida
+-- 🎯 Historial de moviments
 SELECT gm.turn_number, gm.action, gm.token_cost,
        gm.found_object, gm.found_bonus,
-       s.name as scenario, i.name as item,
+       s.name AS scenario, i.name AS item,
        gm.target_position
 FROM game_moves gm
 LEFT JOIN scenarios s ON s.id = gm.target_scenario_id
@@ -988,65 +1409,100 @@ LEFT JOIN items i ON i.id = gm.target_item_id
 WHERE gm.game_id = '<game_id>'
 ORDER BY gm.turn_number;
 
--- Errors recents
+-- 🐛 Errors recents
 SELECT created_at, error_message, component, url
 FROM error_logs
-ORDER BY created_at DESC LIMIT 20;
+ORDER BY created_at DESC
+LIMIT 20;
+
+-- 📊 Top jugadors per Elo
+SELECT display_name, elo, league, games_won, best_streak
+FROM profiles
+ORDER BY elo DESC
+LIMIT 10;
 ```
 
----
-
-## 14. Opcions d'escalabilitat
-
-### Nivell actual (desenes d'usuaris)
-✅ Tot funciona correctament amb la configuració actual.
-
-### Centenars d'usuaris
-| Acció | Benefici |
-|-------|---------|
-| Configurar **cron job** diari per cleanup | Manté la DB neta automàticament |
-| Afegir **índex** a `games(status, invited_user_id)` | Accelera consultes del lobby |
-| Afegir **índex** a `game_players(user_id, game_id)` | Accelera getMyGames |
-| **Cache TanStack Query** amb staleTime | Redueix peticions repetides |
-
-### Milers d'usuaris
-| Acció | Benefici |
-|-------|---------|
-| **Instància Supabase major** | Més memòria i CPU per PostgreSQL |
-| Moure `performMove()` a **Edge Function** | Redueix round-trips client→DB |
-| **Particionament** de `game_moves` per dates | Consultes més ràpides |
-| **CDN** per la SPA (Cloudflare/Vercel) | Latència mínima global |
-
-### Desenes de milers
-| Acció | Benefici |
-|-------|---------|
-| **Read replicas** (Supabase Pro) | Distribueix càrrega de lectura |
-| Separar **matchmaking** en servei propi | Desacoblar del flow principal |
-| **Connection pooling** (PgBouncer) | Més connexions simultànies |
-| **Rate limiting** a Edge Functions | Protecció contra abús |
-
-### Centenars de milers
-| Acció | Benefici |
-|-------|---------|
-| **Sharding** per regió | Reduir latència geogràfica |
-| **WebSocket dedicat** (Socket.io/Ably) | Si Supabase Realtime no escala |
-| **Microserveis** per cada domini | Escalabilitat independent |
-| **Redis** per cache de partides actives | Menys pressió a PostgreSQL |
+<br/>
 
 ---
 
-## Apèndix: Variables d'entorn
+<br/>
+
+## 📈 14. Opcions d'escalabilitat
+
+<br/>
+
+### 📊 Nivell actual — Desenes d'usuaris
+
+> ✅ Tot funciona correctament amb la configuració actual. Cap canvi necessari.
+
+<br/>
+
+### 🔵 Centenars d'usuaris
+
+| Acció | Benefici | Esforç |
+|:------|:---------|:------:|
+| Configurar **cron job** diari per cleanup | DB neta automàticament | 🟢 Baix |
+| Índex a `games(status, invited_user_id)` | Lobby més ràpid | 🟢 Baix |
+| Índex a `game_players(user_id, game_id)` | `getMyGames` més ràpid | 🟢 Baix |
+| Cache TanStack Query amb `staleTime` | Menys peticions | 🟢 Baix |
+
+<br/>
+
+### 🟣 Milers d'usuaris
+
+| Acció | Benefici | Esforç |
+|:------|:---------|:------:|
+| **Instància Supabase major** | Més memòria i CPU | 🟡 Mig |
+| Moure `performMove()` a **Edge Function** | Menys round-trips | 🟡 Mig |
+| Particionament `game_moves` per dates | Consultes ràpides | 🟡 Mig |
+| CDN per la SPA (Cloudflare/Vercel) | Latència global mínima | 🟢 Baix |
+
+<br/>
+
+### 🟠 Desenes de milers
+
+| Acció | Benefici | Esforç |
+|:------|:---------|:------:|
+| **Read replicas** (Supabase Pro) | Distribuir lectura | 🟡 Mig |
+| Matchmaking com a **servei propi** | Desacoblar flux | 🔴 Alt |
+| **Connection pooling** (PgBouncer) | Més connexions | 🟡 Mig |
+| **Rate limiting** a Edge Functions | Protecció abús | 🟡 Mig |
+
+<br/>
+
+### 🔴 Centenars de milers
+
+| Acció | Benefici | Esforç |
+|:------|:---------|:------:|
+| **Sharding** per regió | Latència geogràfica | 🔴 Alt |
+| **WebSocket dedicat** (Socket.io/Ably) | Escalar Realtime | 🔴 Alt |
+| **Microserveis** per domini | Escalat independent | 🔴 Alt |
+| **Redis** per cache de partides actives | Menys pressió a DB | 🟡 Mig |
+
+<br/>
+
+---
+
+<br/>
+
+## 📎 Apèndix: Variables d'entorn
 
 | Variable | Ús | On es defineix |
-|----------|-----|---------------|
-| `VITE_SUPABASE_URL` | URL del projecte Supabase | `.env` (auto) |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Clau pública (anon) | `.env` (auto) |
-| `VITE_SUPABASE_PROJECT_ID` | ID del projecte | `.env` (auto) |
+|:---------|:---|:---------------|
+| `VITE_SUPABASE_URL` | URL del projecte Supabase | `.env` + `vite.config.ts` (fallback) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Clau pública (anon) | `.env` + `vite.config.ts` (fallback) |
+| `VITE_SUPABASE_PROJECT_ID` | ID del projecte | `.env` + `vite.config.ts` (fallback) |
 | `SUPABASE_URL` | URL (edge functions) | Secret automàtic |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clau admin (edge fn) | Secret automàtic |
 | `SUPABASE_ANON_KEY` | Clau anon (edge fn) | Secret automàtic |
 
+<br/>
+
 ---
 
-*Última actualització: 2026-04-01*
-*Generat per Lovable AI*
+<br/>
+
+<div align="center">
+<sub>📘 Última actualització: 2026-04-01 · Generat amb 💜 per <a href="https://lovable.dev">Lovable</a></sub>
+</div>
