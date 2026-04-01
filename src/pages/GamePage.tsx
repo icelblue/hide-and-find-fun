@@ -61,6 +61,8 @@ export default function GamePage() {
   const [specialFoundInput, setSpecialFoundInput] = useState("");
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
   const [bonusAvailable, setBonusAvailable] = useState(0);
+  const [bonusAmount, setBonusAmount] = useState(1);
+  const [showBonusPicker, setShowBonusPicker] = useState(false);
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
@@ -397,8 +399,10 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      const amount = await redeemBonusTokens(gameId, user.id);
+      const amount = await redeemBonusTokens(gameId, user.id, bonusAmount);
       toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
+      setShowBonusPicker(false);
+      setBonusAmount(1);
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
@@ -512,14 +516,22 @@ export default function GamePage() {
                 <span className="text-xs">🪙</span>
                 <span className="font-bold text-xs text-primary-foreground">{player.tokens_remaining}</span>
               </div>
-              {bonusAvailable > 0 && (
+              {bonusAvailable > 0 && !showBonusPicker && (
                 <button
-                  onClick={handleRedeemBonus}
-                  disabled={actionLoading}
+                  onClick={() => { setBonusAmount(1); setShowBonusPicker(true); }}
                   className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[10px] font-bold animate-pulse"
                 >
                   +{bonusAvailable}🪙
                 </button>
+              )}
+              {showBonusPicker && (
+                <div className="flex items-center gap-1 bg-card border border-border rounded-full px-2 py-1 shadow-lg">
+                  <button onClick={() => setBonusAmount(Math.max(1, bonusAmount - 1))} className="text-xs font-bold px-1 text-muted-foreground hover:text-foreground">−</button>
+                  <span className="text-xs font-bold min-w-[20px] text-center">{bonusAmount}</span>
+                  <button onClick={() => setBonusAmount(Math.min(bonusAvailable, bonusAmount + 1))} className="text-xs font-bold px-1 text-muted-foreground hover:text-foreground">+</button>
+                  <button onClick={handleRedeemBonus} disabled={actionLoading} className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">✓</button>
+                  <button onClick={() => setShowBonusPicker(false)} className="text-[10px] text-muted-foreground px-1">✕</button>
+                </div>
               )}
             </div>
           )}

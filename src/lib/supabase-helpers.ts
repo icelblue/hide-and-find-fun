@@ -443,27 +443,31 @@ export async function ensureTokensReset(player: any) {
   return 5.0;
 }
 
-/** Spend bonus tokens from profile into a specific game. One-time use. */
-export async function redeemBonusTokens(gameId: string, userId: string) {
+/** Spend a chosen amount of bonus tokens from profile into a specific game. */
+export async function redeemBonusTokens(gameId: string, userId: string, amount: number) {
+  if (amount <= 0) throw new Error("Has de triar almenys 1 token!");
+
   const { data: profile } = await supabase
     .from("profiles").select("bonus_tokens").eq("user_id", userId).single();
-  const bonus = profile?.bonus_tokens ?? 0;
-  if (bonus <= 0) throw new Error("No tens bonus tokens disponibles!");
+  const available = profile?.bonus_tokens ?? 0;
+  if (available <= 0) throw new Error("No tens bonus tokens disponibles!");
+  if (amount > available) throw new Error(`Només tens ${available} bonus tokens!`);
 
-  // Add to this game's tokens
+  // Add to this game's tokens and track how many bonus were added
   const { data: player } = await supabase
-    .from("game_players").select("id, tokens_remaining")
+    .from("game_players").select("id, tokens_remaining, bonus_tokens_added")
     .eq("game_id", gameId).eq("user_id", userId).single();
   if (!player) throw new Error("No ets a aquesta partida!");
 
   await supabase.from("game_players").update({
-    tokens_remaining: player.tokens_remaining + bonus,
+    tokens_remaining: player.tokens_remaining + amount,
+    bonus_tokens_added: (player as any).bonus_tokens_added + amount,
   }).eq("id", player.id);
 
-  // Zero out profile bonus — consumed
-  await supabase.from("profiles").update({ bonus_tokens: 0 }).eq("user_id", userId);
+  // Subtract from profile
+  await supabase.from("profiles").update({ bonus_tokens: available - amount }).eq("user_id", userId);
 
-  return bonus;
+  return amount;
 }
 
 export async function performMove(
