@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import {
   createGame, getAvailableGames, joinGame, getMyGames, deleteGame,
-  findRandomMatch, searchPlayers, challengePlayer, getMyInvites,
+  findRandomMatch, searchPlayers, challengePlayer,
 } from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -21,29 +21,24 @@ export default function LobbyPage() {
   const navigate = useNavigate();
   const [games, setGames] = useState<any[]>([]);
   const [myGames, setMyGames] = useState<any[]>([]);
-  const [invites, setInvites] = useState<any[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
 
-  // Search rival
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
-  
 
   const loadAll = useCallback(async () => {
     if (!user) return;
-    const [available, mine, prof, inv] = await Promise.all([
+    const [available, mine, prof] = await Promise.all([
       getAvailableGames(user.id).catch(() => []),
       getMyGames(user.id).catch(() => []),
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
-      getMyInvites(user.id).catch(() => []),
     ]);
     setGames(available);
     setMyGames(mine);
     setProfile(prof);
-    setInvites(inv);
   }, [user]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -67,7 +62,7 @@ export default function LobbyPage() {
       if (result.type === "joined") {
         toast.success("Rival trobat! 🎯");
       } else {
-        toast.success("Cercant rival... Espera que algú s'uneixi!");
+        toast.success("Repte enviat a un rival aleatori! Espera que accepti.");
       }
       navigate(`/game/${result.gameId}`);
     } catch (err: any) { toast.error(err.message); }
@@ -97,6 +92,17 @@ export default function LobbyPage() {
       await joinGame(gameId, user.id);
       toast.success("T'has unit a la partida!");
       navigate(`/game/${gameId}`);
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleDeclineGame = async (gameId: string) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      await deleteGame(gameId);
+      toast.success("Repte rebutjat");
+      loadAll();
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
   };
@@ -203,7 +209,6 @@ export default function LobbyPage() {
               ))}
             </div>
           )}
-
         </CardContent>
       </Card>
 
@@ -226,34 +231,7 @@ export default function LobbyPage() {
         </CardContent>
       </Card>
 
-      {/* Invites */}
-      {invites.length > 0 && (
-        <div className="mb-5">
-          <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-            ⚔️ Reptes rebuts
-          </h2>
-          <div className="space-y-2">
-            {invites.map((game: any) => (
-              <Card key={game.id} className="glass border-accent/30 glow-accent">
-                <CardContent className="py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">⚔️</span>
-                    <div>
-                      <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
-                      <p className="text-[11px] text-accent">Repte directe!</p>
-                    </div>
-                  </div>
-                  <Button size="sm" onClick={() => handleJoinGame(game.id)} disabled={loading}>
-                    Acceptar
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* My games */}
+      {/* My games (includes invites/challenges) */}
       {myGames.length > 0 && (
         <div className="mb-5">
           <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
@@ -262,17 +240,21 @@ export default function LobbyPage() {
           <div className="space-y-2">
             {myGames.map((gp: any) => {
               const game = gp.games;
+              const isPending = gp._pending; // Invited but not yet joined
               const statusMap: Record<string, { icon: string; label: string; color: string }> = {
                 waiting: { icon: "⏳", label: "Esperant rival", color: "text-warning" },
                 hiding: { icon: "🫣", label: "Amaga l'objecte", color: "text-accent" },
                 playing: { icon: "🎮", label: "En joc", color: "text-primary" },
                 finished: { icon: "🏁", label: "Acabada", color: "text-muted-foreground" },
               };
-              const s = statusMap[game.status] ?? statusMap.waiting;
+              const s = isPending
+                ? { icon: "⚔️", label: "Repte pendent!", color: "text-accent" }
+                : (statusMap[game.status] ?? statusMap.waiting);
+
               return (
                 <Card key={gp.game_id}
-                  className="cursor-pointer glass hover:border-primary/40 transition-all hover:glow-primary"
-                  onClick={() => navigate(`/game/${game.id}`)}>
+                  className={`glass transition-all ${isPending ? "border-accent/40 glow-accent" : "cursor-pointer hover:border-primary/40 hover:glow-primary"}`}
+                  onClick={() => !isPending && navigate(`/game/${game.id}`)}>
                   <CardContent className="py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{s.icon}</span>
@@ -282,7 +264,20 @@ export default function LobbyPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {game.status === "waiting" && game.created_by === user?.id && (
+                      {isPending && (
+                        <>
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); handleJoinGame(game.id); }} disabled={loading}>
+                            Acceptar
+                          </Button>
+                          <Button size="sm" variant="ghost"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={(e) => { e.stopPropagation(); handleDeclineGame(game.id); }}
+                            disabled={loading}>
+                            ✕
+                          </Button>
+                        </>
+                      )}
+                      {!isPending && game.status === "waiting" && game.created_by === user?.id && (
                         <Button variant="ghost" size="icon"
                           className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-xl"
                           onClick={async (e) => {
@@ -294,7 +289,7 @@ export default function LobbyPage() {
                             } catch (err: any) { toast.error(err.message); }
                           }}>🗑️</Button>
                       )}
-                      <span className="text-muted-foreground text-xs">→</span>
+                      {!isPending && <span className="text-muted-foreground text-xs">→</span>}
                     </div>
                   </CardContent>
                 </Card>
@@ -304,7 +299,7 @@ export default function LobbyPage() {
         </div>
       )}
 
-      {/* Available games */}
+      {/* Available public games */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
