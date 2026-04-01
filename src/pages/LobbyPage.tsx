@@ -117,7 +117,7 @@ export default function LobbyPage() {
     try {
       await deleteGame(gameId);
       toast.success("Repte rebutjat");
-      loadAll();
+      invalidateLobby();
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
   };
