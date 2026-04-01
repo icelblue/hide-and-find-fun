@@ -727,7 +727,7 @@ export type Database = {
       action_type: "move" | "look" | "confirm"
       bonus_type: "extra_token" | "hint_yes" | "hint_no"
       game_status: "waiting" | "hiding" | "playing" | "finished"
-      item_environment: "generic" | "wet" | "hot"
+      item_environment: "generic" | "wet" | "hot" | "dirty" | "outdoor"
       item_rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"
       league_tier: "bronze" | "silver" | "gold" | "platinum" | "diamond"
       object_material:
@@ -874,7 +874,7 @@ export const Constants = {
       action_type: ["move", "look", "confirm"],
       bonus_type: ["extra_token", "hint_yes", "hint_no"],
       game_status: ["waiting", "hiding", "playing", "finished"],
-      item_environment: ["generic", "wet", "hot"],
+      item_environment: ["generic", "wet", "hot", "dirty", "outdoor"],
       item_rarity: ["common", "uncommon", "rare", "epic", "legendary"],
       league_tier: ["bronze", "silver", "gold", "platinum", "diamond"],
       object_material: [

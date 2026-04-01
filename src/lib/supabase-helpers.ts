@@ -1,6 +1,35 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // ============================================
+// MATERIAL vs ENVIRONMENT VALIDATION
+// ============================================
+
+/** Returns a user-facing block reason if material can't go in environment, or null if OK */
+export function getMaterialBlockReason(material: string, environment: string): string | null {
+  if (environment === "generic") return null; // interior — tot hi cap
+
+  const rules: Record<string, Record<string, string>> = {
+    paper: {
+      wet: "es mullaria 💧",
+      hot: "es cremaria 🔥",
+      dirty: "es faria malbé 🗑️",
+      outdoor: "volaria amb el vent 🌬️",
+    },
+    glass: {
+      hot: "es trencaria amb la calor 🔥",
+      outdoor: "es trencaria amb el vent 🌬️",
+    },
+    fabric: {
+      wet: "es pudriria 💧",
+      hot: "es cremaria 🔥",
+      dirty: "s'embrutiria 🗑️",
+    },
+  };
+
+  return rules[material]?.[environment] ?? null;
+}
+
+// ============================================
 // DATA FETCHING
 // ============================================
 
@@ -251,12 +280,9 @@ export async function hideObject(
   // Validate material vs environment
   const material = (obj as any)?.material ?? "generic";
   const environment = (itm as any)?.environment ?? "generic";
-  if (material === "paper" && (environment === "wet" || environment === "hot")) {
-    const reason = environment === "wet" ? "es mullaria" : "es cremaria";
-    throw new Error(`No pots amagar paper aquí, ${reason}! 📄🚫`);
-  }
-  if (material === "glass" && environment === "hot") {
-    throw new Error("No pots amagar vidre aquí, es podria trencar amb la calor! 🔥🚫");
+  const blockReason = getMaterialBlockReason(material, environment);
+  if (blockReason) {
+    throw new Error(blockReason);
   }
 
   const updateData: any = {

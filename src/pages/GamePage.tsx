@@ -10,7 +10,7 @@ import {
   hideObject, checkBothPlayersHidden, startGame, performMove,
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
-  getObjectSpecial, autoFixMissingScenario,
+  getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -228,13 +228,9 @@ export default function GamePage() {
     // Check material vs environment in UI
     const material = (obj as any)?.material ?? "generic";
     const environment = (itm as any)?.environment ?? "generic";
-    if (material === "paper" && (environment === "wet" || environment === "hot")) {
-      const reason = environment === "wet" ? "es mullaria" : "es cremaria";
-      toast.error(`📄🚫 ${obj?.icon} ${obj?.name} no pot anar aquí, ${reason}!`);
-      return;
-    }
-    if (material === "glass" && environment === "hot") {
-      toast.error(`🔥🚫 ${obj?.icon} ${obj?.name} no pot anar aquí, es trencaria amb la calor!`);
+    const blockReason = getMaterialBlockReason(material, environment);
+    if (blockReason) {
+      toast.error(`🚫 ${obj?.icon} ${obj?.name}: ${blockReason}`);
       return;
     }
     setSelectedPosition(pos);
@@ -575,15 +571,15 @@ export default function GamePage() {
                   const obj = objects.find((o: any) => o.id === selectedObject);
                   const mat = (obj as any)?.material ?? "generic";
                   const env = (item as any)?.environment ?? "generic";
-                  const matBlocked = (mat === "paper" && (env === "wet" || env === "hot")) || (mat === "glass" && env === "hot");
+                  const blockReason = getMaterialBlockReason(mat, env);
                   return (
                     <Card key={item.id}
-                      className={`glass transition-all active:scale-[0.97] ${matBlocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-accent/40"}`}
-                      onClick={() => !matBlocked && (() => { setSelectedItem(item.id); setHideStep(3); })()}>
+                      className={`glass transition-all active:scale-[0.97] ${blockReason ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-accent/40"}`}
+                      onClick={() => !blockReason && (() => { setSelectedItem(item.id); setHideStep(3); })()}>
                       <CardContent className="py-4 text-center">
                         <div className="text-3xl mb-1">{item.icon}</div>
                         <div className="text-sm font-medium">{item.name}</div>
-                        {matBlocked && <div className="text-[9px] text-destructive mt-1">🚫 {env === "wet" ? "Es mulla" : "Es crema"}</div>}
+                        {blockReason && <div className="text-[9px] text-destructive mt-1">🚫 {blockReason}</div>}
                       </CardContent>
                     </Card>
                   );
