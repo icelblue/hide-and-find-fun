@@ -97,24 +97,22 @@ export async function joinGame(gameId: string, userId: string) {
 }
 
 export async function getAvailableGames(currentUserId: string) {
+  // Only show PUBLIC games (no invited_user_id) — challenges are private
   const { data, error } = await supabase
-    .from("games").select("*").eq("status", "waiting").order("created_at", { ascending: false });
+    .from("games").select("*")
+    .eq("status", "waiting")
+    .is("invited_user_id", null)
+    .neq("created_by", currentUserId)
+    .order("created_at", { ascending: false });
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
-  // Filter: not own games, and either no invite or invited to me
-  const otherGames = data.filter(g =>
-    g.created_by !== currentUserId &&
-    (!g.invited_user_id || g.invited_user_id === currentUserId)
-  );
-  if (otherGames.length === 0) return [];
-
-  const creatorIds = [...new Set(otherGames.map(g => g.created_by))];
+  const creatorIds = [...new Set(data.map(g => g.created_by))];
   const { data: profiles } = await supabase
     .from("profiles").select("user_id, display_name").in("user_id", creatorIds);
   const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
 
-  return otherGames.map(game => ({
+  return data.map(game => ({
     ...game,
     creator_name: profileMap.get(game.created_by) ?? "Anònim",
   }));
