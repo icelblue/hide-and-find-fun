@@ -122,6 +122,7 @@ export type Database = {
       }
       game_players: {
         Row: {
+          bonus_tokens_added: number
           created_at: string
           current_scenario_id: string | null
           game_id: string
@@ -139,6 +140,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bonus_tokens_added?: number
           created_at?: string
           current_scenario_id?: string | null
           game_id: string
@@ -156,6 +158,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bonus_tokens_added?: number
           created_at?: string
           current_scenario_id?: string | null
           game_id?: string
