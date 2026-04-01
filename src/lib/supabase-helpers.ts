@@ -251,12 +251,9 @@ export async function hideObject(
   // Validate material vs environment
   const material = (obj as any)?.material ?? "generic";
   const environment = (itm as any)?.environment ?? "generic";
-  if (material === "paper" && (environment === "wet" || environment === "hot")) {
-    const reason = environment === "wet" ? "es mullaria" : "es cremaria";
-    throw new Error(`No pots amagar paper aquí, ${reason}! 📄🚫`);
-  }
-  if (material === "glass" && environment === "hot") {
-    throw new Error("No pots amagar vidre aquí, es podria trencar amb la calor! 🔥🚫");
+  const blockReason = getMaterialBlockReason(material, environment);
+  if (blockReason) {
+    throw new Error(blockReason);
   }
 
   const updateData: any = {

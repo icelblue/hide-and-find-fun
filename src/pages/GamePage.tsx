@@ -228,13 +228,9 @@ export default function GamePage() {
     // Check material vs environment in UI
     const material = (obj as any)?.material ?? "generic";
     const environment = (itm as any)?.environment ?? "generic";
-    if (material === "paper" && (environment === "wet" || environment === "hot")) {
-      const reason = environment === "wet" ? "es mullaria" : "es cremaria";
-      toast.error(`📄🚫 ${obj?.icon} ${obj?.name} no pot anar aquí, ${reason}!`);
-      return;
-    }
-    if (material === "glass" && environment === "hot") {
-      toast.error(`🔥🚫 ${obj?.icon} ${obj?.name} no pot anar aquí, es trencaria amb la calor!`);
+    const blockReason = getMaterialBlockReason(material, environment);
+    if (blockReason) {
+      toast.error(`🚫 ${obj?.icon} ${obj?.name}: ${blockReason}`);
       return;
     }
     setSelectedPosition(pos);
