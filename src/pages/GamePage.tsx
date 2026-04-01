@@ -11,6 +11,7 @@ import {
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
+  redeemBonusTokens,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +60,7 @@ export default function GamePage() {
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
+  const [bonusAvailable, setBonusAvailable] = useState(0);
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
@@ -92,6 +94,12 @@ export default function GamePage() {
       }
     }
     setPlayer(playerData);
+
+    // Load available bonus tokens from profile
+    if (gameData?.status === "playing") {
+      const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
+      setBonusAvailable(prof?.bonus_tokens ?? 0);
+    }
 
     if (playerData?.has_hidden) setHideStep(4);
 
@@ -385,6 +393,17 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  const handleRedeemBonus = async () => {
+    if (!gameId || !user) return;
+    setActionLoading(true);
+    try {
+      const amount = await redeemBonusTokens(gameId, user.id);
+      toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setActionLoading(false); }
+  };
+
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
 
@@ -488,9 +507,20 @@ export default function GamePage() {
         </div>
         <div className="flex items-center gap-1">
           {phase === "playing" && (
-            <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
-              <span className="text-xs">🪙</span>
-              <span className="font-bold text-xs text-primary-foreground">{player.tokens_remaining}</span>
+            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
+                <span className="text-xs">🪙</span>
+                <span className="font-bold text-xs text-primary-foreground">{player.tokens_remaining}</span>
+              </div>
+              {bonusAvailable > 0 && (
+                <button
+                  onClick={handleRedeemBonus}
+                  disabled={actionLoading}
+                  className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[10px] font-bold animate-pulse"
+                >
+                  +{bonusAvailable}🪙
+                </button>
+              )}
             </div>
           )}
           <HelpButton />
