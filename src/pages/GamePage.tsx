@@ -319,12 +319,22 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "confirm", undefined, itemId, position);
       if (result.foundObject) {
         toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
-        // Check if rival's object has a "find" special (joguina/anell)
+        // Check if rival's object has a "find" special
         if (rival?.hidden_object_id) {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
           if (rivalSpecial && rivalSpecial.prompt_on === "find") {
-            // Also check if carta had a message from hider
-            setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+            if (rivalSpecial.special_type === "troll_effect") {
+              // Show troll popup with animation
+              const variants = rivalSpecial.variants as any;
+              setTrollEffect({
+                message: rivalSpecial.prompt_text,
+                emoji: variants?.emoji ?? "😈",
+                animation: variants?.animation ?? "shake",
+              });
+              setTimeout(() => setTrollEffect(null), 6000);
+            } else {
+              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+            }
           }
           // Check carta message from hider's special_data
           if (rival.special_data && (rival.special_data as any)?.type === "custom_message") {
