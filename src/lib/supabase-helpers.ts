@@ -434,18 +434,16 @@ export async function ensureTokensReset(player: any) {
   const today = new Date().toISOString().split("T")[0];
   if (player.tokens_last_reset === today) return player.tokens_remaining;
 
-  // Check for bonus tokens from sold rewards
+  // Bonus tokens are a permanent daily boost (accumulated from selling rewards)
+  // They apply to ALL active games equally — no race condition
   const { data: profile } = await supabase
-    .from("profiles").select("*").eq("user_id", player.user_id).single();
+    .from("profiles").select("bonus_tokens").eq("user_id", player.user_id).single();
   const bonus = profile?.bonus_tokens ?? 0;
 
   await supabase.from("game_players").update({
     tokens_remaining: 5.0 + bonus, tokens_last_reset: today, social_item_used_today: false,
   }).eq("id", player.id);
 
-  if (bonus > 0) {
-    await supabase.from("profiles").update({ bonus_tokens: 0 }).eq("user_id", player.user_id);
-  }
   return 5.0 + bonus;
 }
 
