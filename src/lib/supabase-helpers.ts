@@ -190,14 +190,30 @@ export async function getMyInvites(userId: string) {
 }
 
 export async function getMyGames(userId: string) {
-  const { data } = await supabase
+  // 1. Games I'm already a player in
+  const { data: joined } = await supabase
     .from("game_players")
-    .select("game_id, games!inner(id, code, status, created_by, created_at)")
+    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id)")
     .eq("user_id", userId);
-  // Filter out old finished games (keep last 24h), sort active first
+
+  // 2. Games where I'm invited but haven't joined yet
+  const { data: pendingInvites } = await supabase
+    .from("games")
+    .select("id, code, status, created_by, created_at, invited_user_id")
+    .eq("status", "waiting")
+    .eq("invited_user_id", userId);
+
+  // Combine: convert pending invites to same shape, mark as pending
+  const joinedIds = new Set((joined ?? []).map((gp: any) => gp.game_id));
+  const pendingFormatted = (pendingInvites ?? [])
+    .filter(g => !joinedIds.has(g.id))
+    .map(g => ({ game_id: g.id, games: g, _pending: true }));
+
+  const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
+
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
-  return (data ?? [])
+  return all
     .filter((gp: any) => gp.games.status !== "finished" || gp.games.created_at > cutoff)
     .sort((a: any, b: any) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
 }
