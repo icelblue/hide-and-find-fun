@@ -399,8 +399,10 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      const amount = await redeemBonusTokens(gameId, user.id);
+      const amount = await redeemBonusTokens(gameId, user.id, bonusAmount);
       toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
+      setShowBonusPicker(false);
+      setBonusAmount(1);
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
