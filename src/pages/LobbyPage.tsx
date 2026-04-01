@@ -300,7 +300,7 @@ export default function LobbyPage() {
                             try {
                               await deleteGame(game.id);
                               toast.success("Partida eliminada");
-                              loadAll();
+                              invalidateLobby();
                             } catch (err: any) { toast.error(err.message); }
                           }}>🗑️</Button>
                       )}
