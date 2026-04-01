@@ -512,8 +512,13 @@ export async function sendSocialItem(
   await supabase.from("game_players")
     .update({ social_item_used_today: true }).eq("id", fromPlayer.id);
 
-  if (!blocked) {
+  if (blocked) {
+    // Shield blocked this item — deactivate shield after use
+    await supabase.from("game_players")
+      .update({ shield_active: false }).eq("id", toPlayer!.id);
+  } else {
     if (itemType === "shield") {
+      // Shield activates on the SENDER (protects yourself)
       await supabase.from("game_players")
         .update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
@@ -531,10 +536,6 @@ export async function sendSocialItem(
         await supabase.from("game_players")
           .update({ hidden_position: newPos, smoke_bomb_used: true }).eq("id", self.id);
       }
-    }
-    if (toPlayer?.shield_active) {
-      await supabase.from("game_players")
-        .update({ shield_active: false }).eq("id", toPlayer.id);
     }
   }
 
