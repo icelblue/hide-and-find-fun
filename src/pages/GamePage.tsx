@@ -61,6 +61,8 @@ export default function GamePage() {
   const [specialFoundInput, setSpecialFoundInput] = useState("");
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
   const [bonusAvailable, setBonusAvailable] = useState(0);
+  const [bonusAmount, setBonusAmount] = useState(1);
+  const [showBonusPicker, setShowBonusPicker] = useState(false);
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
