@@ -132,6 +132,8 @@ Cada jugador pot usar **1 ítem per dia**. Afegeixen caos estratègic:
 
 ## 📈 Sistema competitiu
 
+<br/>
+
 ### Lligues i Elo
 
 | Lliga | Elo | Icona | Sensació |
@@ -141,6 +143,8 @@ Cada jugador pot usar **1 ítem per dia**. Afegeixen caos estratègic:
 | **Gold** | 1400+ | 🥇 | Domines el tempo de tokens |
 | **Platinum** | 1600+ | 💎 | Llegeixes els patrons del rival |
 | **Diamond** | 1800+ | 👑 | Mestre de la deducció |
+
+<br/>
 
 ### Perfil del jugador
 
@@ -158,6 +162,8 @@ Cada jugador té un **perfil públic** amb:
 <br/>
 
 ## 🎁 Recompenses i economia
+
+<br/>
 
 ### Loot de mobles
 
@@ -186,6 +192,8 @@ Cada victòria atorga un moble aleatori:
 
 ## 🏗️ Arquitectura tècnica
 
+<br/>
+
 ### Stack
 
 | Capa | Tecnologia | Rol |
@@ -198,82 +206,27 @@ Cada victòria atorga un moble aleatori:
 | **Routing** | React Router v6 | Rutes protegides amb `AuthProvider` |
 | **State** | TanStack Query + `useState` | Cache del servidor + estat UI local |
 
+<br/>
+
 ### Disseny visual
 
-```
-Tema:        Dark-first amb glassmorphism (backdrop-blur-xl)
-Paleta:      Violeta neon (#8B5CF6) · Verd-blau (#2DD4BF) · Taronja (#F59E0B)
-Tipografia:  Orbitron (títol neon) · Space Grotesk (headings) · Inter (cos)
-Target:      Mobile-first 390px · max-width 448px · responsive fins a 1920px
-```
-
-### Cross-platform
-
-- ✅ iOS Safari (safe-area-inset, -webkit-tap-highlight)
-- ✅ Android Chrome / Samsung Internet
-- ✅ Firefox, Edge, Chrome desktop
-- ✅ Font-size 16px als inputs (evita zoom iOS)
-- ✅ `-webkit-text-size-adjust` per consistència tipogràfica
+| Aspecte | Detall |
+|:--------|:-------|
+| **Tema** | Dark-first amb glassmorphism (`backdrop-blur-xl`) |
+| **Paleta** | Violeta neon `#8B5CF6` · Verd-blau `#2DD4BF` · Taronja `#F59E0B` |
+| **Tipografia** | Orbitron (títol neon) · Space Grotesk (headings) · Inter (cos) |
+| **Target** | Mobile-first 390px · max-width 448px · responsive fins a 1920px |
 
 <br/>
 
----
+### 📱 Cross-platform
 
-<br/>
-
-## 🗃️ Model de dades
-
-### Diagrama ER
-
-```
-                    ┌────────────────────┐
-                    │ scenario_connections │
-                    │   (bidirectional)    │
-                    └────────┬───────────┘
-                             │
-┌──────────────┐    ┌────────┴────────┐    ┌───────────────┐
-│   objects     │    │    scenarios     │    │   items        │
-│  (hideable)   │    │   (7 rooms)     │◄──►│  (furniture)   │
-└──────────────┘    └────────┬────────┘    └───────┬───────┘
-                             │                     │
-                             │              ┌──────┴────────┐
-                             │              │scenario_bonuses│
-                             │              │(hidden rewards)│
-                             │              └───────────────┘
-                    ┌────────┴────────┐
-                    │     games       │
-                    │   (matches)     │
-                    └───┬─────┬───┬──┘
-                        │     │   │
-           ┌────────────┘     │   └────────────────┐
-           ▼                  ▼                    ▼
-   ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
-   │ game_players  │  │  game_moves   │  │game_social_items  │
-   │ (2 per game)  │  │  (history)    │  │(banana, shield…)  │
-   └──────────────┘  └──────────────┘  └──────────────────┘
-
-   ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
-   │   profiles    │  │player_rewards │  │ player_inventory  │
-   │ (stats, elo)  │  │  → reward_    │  │(collected bonuses)│
-   └──────────────┘  │    items      │  └──────────────────┘
-                     └──────────────┘
-   ┌──────────────┐
-   │wall_messages  │
-   │(ephemeral 22h)│
-   └──────────────┘
-```
-
-### Seguretat
-
-| Mecanisme | Implementació |
-|:----------|:-------------|
-| **RLS** | Habilitada a **totes** les taules — cap accés no autoritzat |
-| `is_player_in_game()` | `SECURITY DEFINER` — valida accés a dades de partida |
-| `handle_game_finished()` | Trigger — actualitza Elo, lligues, ratxes i genera recompensa |
-| `sell_reward_item()` | RPC atòmic — ven moble i afegeix tokens en una transacció |
-| `place_reward_item()` | RPC atòmic — col·loca moble i actualitza inventari |
-| `handle_new_user()` | Trigger — crea perfil automàticament al registrar-se |
-| **Realtime** | Filtres per `game_id` — cada jugador només rep els seus events |
+| Plataforma | Status |
+|:-----------|:------:|
+| iOS Safari | ✅ `safe-area-inset`, `-webkit-tap-highlight` |
+| Android Chrome / Samsung | ✅ |
+| Firefox, Edge, Chrome | ✅ |
+| Font-size inputs 16px | ✅ Evita zoom iOS |
 
 <br/>
 
@@ -286,45 +239,52 @@ Target:      Mobile-first 390px · max-width 448px · responsive fins a 1920px
 ```
 src/
 ├── pages/
-│   ├── AuthPage.tsx              # Login / registre amb email
-│   ├── LobbyPage.tsx             # Matchmaking: aleatori, codi, reptes, cerca
-│   ├── GamePage.tsx              # Motor de joc complet (940 línies)
-│   │                               Amagar → Jugar → Resultat + Social items
-│   ├── ProfilePage.tsx           # Perfil: stats, Elo, inventari, mur, rival favorit
-│   ├── PlayerProfilePage.tsx     # Perfil públic amb mur interactiu
-│   └── NotFound.tsx              # 404 en català
+│   ├── AuthPage.tsx              ← Login / registre amb email
+│   ├── LobbyPage.tsx             ← Matchmaking: aleatori, codi, reptes, cerca
+│   ├── GamePage.tsx              ← Motor de joc complet (940 línies)
+│   ├── ProfilePage.tsx           ← Perfil: stats, Elo, inventari, mur
+│   ├── PlayerProfilePage.tsx     ← Perfil públic amb mur interactiu
+│   └── NotFound.tsx              ← 404 en català
 │
 ├── components/
-│   ├── ErrorBoundary.tsx         # Error boundary + log automàtic a DB
-│   ├── HelpButton.tsx            # Panel flotant amb regles + component Tip
-│   └── ui/                       # 40+ components shadcn/ui personalitzats
+│   ├── ErrorBoundary.tsx         ← Error boundary + log a DB
+│   ├── HelpButton.tsx            ← Panel flotant amb regles
+│   └── ui/                       ← 40+ components shadcn/ui
 │
 ├── hooks/
-│   └── useAuth.tsx               # AuthProvider amb Context API
+│   └── useAuth.tsx               ← AuthProvider amb Context API
 │
 ├── lib/
-│   ├── supabase-helpers.ts       # Lògica core: matchmaking, tokens, moviments,
-│   │                               connexions, ítems socials, inventari
-│   └── reward-helpers.ts         # Recompenses: obtenció, venda, col·locació (RPC)
+│   ├── supabase-helpers.ts       ← ⭐ Lògica core del joc
+│   └── reward-helpers.ts         ← Recompenses via RPC
 │
-└── integrations/
-    └── supabase/                 # Client auto-configurat + tipus TypeScript generats
+└── integrations/supabase/        ← Client + tipus auto-generats
 
 supabase/
-├── functions/
-│   └── cleanup-old-games/        # Edge fn: neteja partides >7d i missatges >22h
-└── migrations/                   # Esquema DB (gestionat per Lovable)
+├── functions/cleanup-old-games/  ← Edge fn: neteja partides >7d
+└── migrations/                   ← 19 migracions SQL
 ```
+
+<br/>
+
+---
 
 <br/>
 
 ## 📘 Documentació tècnica completa
 
-Per a una guia detallada d'arquitectura, base de dades, debugging, modificació i escalabilitat:
+Per a una guia detallada d'arquitectura, base de dades, debugging, instal·lació local (compartida i aïllada), modificació i escalabilitat:
 
-**→ [docs/TECHNICAL.md](docs/TECHNICAL.md)**
+### **→ [docs/TECHNICAL.md](docs/TECHNICAL.md)**
 
-Inclou: diagrama ER complet, matriu RLS, mecàniques detallades, guia d'instal·lació local, consultes de debug, i opcions d'escalabilitat fins a centenars de milers d'usuaris.
+Inclou:
+- 📊 Diagrama ER complet amb 15 taules
+- 🔒 Matriu RLS de 16 taules
+- 🎮 Mecàniques detallades (amagar, buscar, ítems socials)
+- 💻 Guia d'instal·lació local pas a pas (amb entorn aïllat)
+- 🛠️ Com afegir escenaris, objectes, ítems socials
+- 🐛 Consultes SQL de debug
+- 📈 Roadmap d'escalabilitat (desenes → centenars de milers)
 
 <br/>
 
