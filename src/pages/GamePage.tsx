@@ -95,6 +95,12 @@ export default function GamePage() {
     }
     setPlayer(playerData);
 
+    // Load available bonus tokens from profile
+    if (gameData?.status === "playing") {
+      const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
+      setBonusAvailable(prof?.bonus_tokens ?? 0);
+    }
+
     if (playerData?.has_hidden) setHideStep(4);
 
     // Proximity alert: check if rival is at the scenario where we hid our object
