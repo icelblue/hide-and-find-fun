@@ -130,7 +130,7 @@ export async function getAvailableGames(currentUserId: string) {
 }
 
 export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
-  // Try to join an existing public waiting game
+  // Try to join an existing public waiting game first
   const { data: available } = await supabase
     .from("games").select("id")
     .eq("status", "waiting")
@@ -144,7 +144,22 @@ export async function findRandomMatch(userId: string): Promise<{ type: "joined" 
     return { type: "joined", gameId: available[0].id };
   }
 
-  // No games available — create one and wait
+  // No public games — find a random active player and challenge them
+  const { data: candidates } = await supabase
+    .from("profiles")
+    .select("user_id")
+    .neq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(20);
+
+  if (candidates && candidates.length > 0) {
+    const randomIdx = Math.floor(Math.random() * candidates.length);
+    const rivalId = candidates[randomIdx].user_id;
+    const game = await createGame(userId, rivalId);
+    return { type: "created", gameId: game.id };
+  }
+
+  // No other players at all — create public game
   const game = await createGame(userId);
   return { type: "created", gameId: game.id };
 }
