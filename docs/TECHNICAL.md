@@ -1434,18 +1434,22 @@ LIMIT 10;
 
 ### 📊 Nivell actual — Desenes d'usuaris
 
-> ✅ Tot funciona correctament amb la configuració actual. Cap canvi necessari.
+> ✅ Tot funciona correctament amb la configuració actual.
 
 <br/>
 
-### 🔵 Centenars d'usuaris
+### ✅ Centenars d'usuaris — JA IMPLEMENTAT
 
-| Acció | Benefici | Esforç |
-|:------|:---------|:------:|
-| Configurar **cron job** diari per cleanup | DB neta automàticament | 🟢 Baix |
-| Índex a `games(status, invited_user_id)` | Lobby més ràpid | 🟢 Baix |
-| Índex a `game_players(user_id, game_id)` | `getMyGames` més ràpid | 🟢 Baix |
-| Cache TanStack Query amb `staleTime` | Menys peticions | 🟢 Baix |
+| Acció | Estat | Detalls |
+|:------|:-----:|:--------|
+| **Cron job** diari per cleanup | ✅ | `pg_cron` programa `cleanup-old-games` cada dia a les 3:00 UTC |
+| Índex a `games(status, invited_user_id)` | ✅ | `idx_games_status_invited` |
+| Índex a `game_players(user_id, game_id)` | ✅ | `idx_game_players_user_game` |
+| Índex a `game_moves(game_id, player_id)` | ✅ | `idx_game_moves_game_player` |
+| Índex a `game_social_items(game_id, to_player_id)` | ✅ | `idx_game_social_items_game_to` |
+| Índex a `player_inventory(user_id, game_id)` | ✅ | `idx_player_inventory_user` |
+| Índex a `profiles(user_id)` | ✅ | `idx_profiles_user_id` |
+| **TanStack Query** amb `staleTime` + `refetchInterval` | ✅ | Cache intel·ligent al Lobby (15-60s staleTime) |
 
 <br/>
 

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,29 +20,43 @@ const leagueBadge: Record<string, string> = {
 export default function LobbyPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [games, setGames] = useState<any[]>([]);
-  const [myGames, setMyGames] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
 
-  const loadAll = useCallback(async () => {
-    if (!user) return;
-    const [available, mine, prof] = await Promise.all([
-      getAvailableGames(user.id).catch(() => []),
-      getMyGames(user.id).catch(() => []),
-      supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
-    ]);
-    setGames(available);
-    setMyGames(mine);
-    setProfile(prof);
-  }, [user]);
+  const { data: games = [] } = useQuery({
+    queryKey: ["lobby", "available", user?.id],
+    queryFn: () => getAvailableGames(user!.id),
+    enabled: !!user,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  const { data: myGames = [] } = useQuery({
+    queryKey: ["lobby", "myGames", user?.id],
+    queryFn: () => getMyGames(user!.id),
+    enabled: !!user,
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+  });
+
+  const { data: profile = null } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const invalidateLobby = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["lobby"] });
+  }, [queryClient]);
 
   const handleCreate = async () => {
     if (!user) return;
@@ -102,7 +117,7 @@ export default function LobbyPage() {
     try {
       await deleteGame(gameId);
       toast.success("Repte rebutjat");
-      loadAll();
+      invalidateLobby();
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
   };
@@ -285,7 +300,7 @@ export default function LobbyPage() {
                             try {
                               await deleteGame(game.id);
                               toast.success("Partida eliminada");
-                              loadAll();
+                              invalidateLobby();
                             } catch (err: any) { toast.error(err.message); }
                           }}>🗑️</Button>
                       )}
@@ -305,7 +320,7 @@ export default function LobbyPage() {
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Partides obertes
           </h2>
-          <Button variant="ghost" size="sm" onClick={loadAll} className="text-xs">🔄</Button>
+          <Button variant="ghost" size="sm" onClick={invalidateLobby} className="text-xs">🔄</Button>
         </div>
         {games.length === 0 ? (
           <div className="text-center py-8">
