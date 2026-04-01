@@ -507,9 +507,20 @@ export default function GamePage() {
         </div>
         <div className="flex items-center gap-1">
           {phase === "playing" && (
-            <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
-              <span className="text-xs">🪙</span>
-              <span className="font-bold text-xs text-primary-foreground">{player.tokens_remaining}</span>
+            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
+                <span className="text-xs">🪙</span>
+                <span className="font-bold text-xs text-primary-foreground">{player.tokens_remaining}</span>
+              </div>
+              {bonusAvailable > 0 && (
+                <button
+                  onClick={handleRedeemBonus}
+                  disabled={actionLoading}
+                  className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[10px] font-bold animate-pulse"
+                >
+                  +{bonusAvailable}🪙
+                </button>
+              )}
             </div>
           )}
           <HelpButton />
