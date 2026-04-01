@@ -84,6 +84,17 @@ export async function joinGame(gameId: string, userId: string) {
     .from("game_players").select("id").eq("game_id", gameId).eq("user_id", userId).maybeSingle();
   if (existing) throw new Error("Ja ets a aquesta partida!");
 
+  // Check game is waiting
+  const { data: game } = await supabase
+    .from("games").select("id, status, invited_user_id").eq("id", gameId).single();
+  if (!game) throw new Error("Partida no trobada");
+  if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
+
+  // If it's a private challenge, only the invited user can join
+  if (game.invited_user_id && game.invited_user_id !== userId) {
+    throw new Error("Aquesta partida és un repte privat!");
+  }
+
   // Check game has room
   const { count } = await supabase
     .from("game_players").select("*", { count: "exact", head: true }).eq("game_id", gameId);
@@ -97,31 +108,29 @@ export async function joinGame(gameId: string, userId: string) {
 }
 
 export async function getAvailableGames(currentUserId: string) {
+  // Only show PUBLIC games (no invited_user_id) — challenges are private
   const { data, error } = await supabase
-    .from("games").select("*").eq("status", "waiting").order("created_at", { ascending: false });
+    .from("games").select("*")
+    .eq("status", "waiting")
+    .is("invited_user_id", null)
+    .neq("created_by", currentUserId)
+    .order("created_at", { ascending: false });
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
-  // Filter: not own games, and either no invite or invited to me
-  const otherGames = data.filter(g =>
-    g.created_by !== currentUserId &&
-    (!g.invited_user_id || g.invited_user_id === currentUserId)
-  );
-  if (otherGames.length === 0) return [];
-
-  const creatorIds = [...new Set(otherGames.map(g => g.created_by))];
+  const creatorIds = [...new Set(data.map(g => g.created_by))];
   const { data: profiles } = await supabase
     .from("profiles").select("user_id, display_name").in("user_id", creatorIds);
   const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
 
-  return otherGames.map(game => ({
+  return data.map(game => ({
     ...game,
     creator_name: profileMap.get(game.created_by) ?? "Anònim",
   }));
 }
 
 export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
-  // Try to join an existing public waiting game
+  // Try to join an existing public waiting game first
   const { data: available } = await supabase
     .from("games").select("id")
     .eq("status", "waiting")
@@ -135,7 +144,22 @@ export async function findRandomMatch(userId: string): Promise<{ type: "joined" 
     return { type: "joined", gameId: available[0].id };
   }
 
-  // No games available — create one and wait
+  // No public games — find a random active player and challenge them
+  const { data: candidates } = await supabase
+    .from("profiles")
+    .select("user_id")
+    .neq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(20);
+
+  if (candidates && candidates.length > 0) {
+    const randomIdx = Math.floor(Math.random() * candidates.length);
+    const rivalId = candidates[randomIdx].user_id;
+    const game = await createGame(userId, rivalId);
+    return { type: "created", gameId: game.id };
+  }
+
+  // No other players at all — create public game
   const game = await createGame(userId);
   return { type: "created", gameId: game.id };
 }
@@ -166,14 +190,30 @@ export async function getMyInvites(userId: string) {
 }
 
 export async function getMyGames(userId: string) {
-  const { data } = await supabase
+  // 1. Games I'm already a player in
+  const { data: joined } = await supabase
     .from("game_players")
-    .select("game_id, games!inner(id, code, status, created_by, created_at)")
+    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id)")
     .eq("user_id", userId);
-  // Filter out old finished games (keep last 24h), sort active first
+
+  // 2. Games where I'm invited but haven't joined yet
+  const { data: pendingInvites } = await supabase
+    .from("games")
+    .select("id, code, status, created_by, created_at, invited_user_id")
+    .eq("status", "waiting")
+    .eq("invited_user_id", userId);
+
+  // Combine: convert pending invites to same shape, mark as pending
+  const joinedIds = new Set((joined ?? []).map((gp: any) => gp.game_id));
+  const pendingFormatted = (pendingInvites ?? [])
+    .filter(g => !joinedIds.has(g.id))
+    .map(g => ({ game_id: g.id, games: g, _pending: true }));
+
+  const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
+
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
-  return (data ?? [])
+  return all
     .filter((gp: any) => gp.games.status !== "finished" || gp.games.created_at > cutoff)
     .sort((a: any, b: any) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
 }
