@@ -58,6 +58,7 @@ export default function GamePage() {
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
+  const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
 
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
@@ -318,12 +319,22 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "confirm", undefined, itemId, position);
       if (result.foundObject) {
         toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
-        // Check if rival's object has a "find" special (joguina/anell)
+        // Check if rival's object has a "find" special
         if (rival?.hidden_object_id) {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
           if (rivalSpecial && rivalSpecial.prompt_on === "find") {
-            // Also check if carta had a message from hider
-            setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+            if (rivalSpecial.special_type === "troll_effect") {
+              // Show troll popup with animation
+              const variants = rivalSpecial.variants as any;
+              setTrollEffect({
+                message: rivalSpecial.prompt_text,
+                emoji: variants?.emoji ?? "😈",
+                animation: variants?.animation ?? "shake",
+              });
+              setTimeout(() => setTrollEffect(null), 6000);
+            } else {
+              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+            }
           }
           // Check carta message from hider's special_data
           if (rival.special_data && (rival.special_data as any)?.type === "custom_message") {
@@ -882,6 +893,23 @@ export default function GamePage() {
           <div className="flex gap-2 justify-center">
             <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
             <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Troll effect popup overlay */}
+      {trollEffect && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className={`text-center space-y-4 p-8 rounded-2xl glass max-w-sm mx-4 ${
+            trollEffect.animation === "shake" ? "animate-troll-shake" :
+            trollEffect.animation === "flash" ? "animate-troll-flash" :
+            "animate-troll-bounce"
+          }`}>
+            <div className="text-8xl">{trollEffect.emoji}</div>
+            <p className="text-lg font-bold text-foreground leading-relaxed">{trollEffect.message}</p>
+            <Button onClick={() => setTrollEffect(null)} variant="outline" size="sm">
+              😂 Bona broma!
+            </Button>
           </div>
         </div>
       )}
