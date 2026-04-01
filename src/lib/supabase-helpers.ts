@@ -8,25 +8,95 @@ import { supabase } from "@/integrations/supabase/client";
 export function getMaterialBlockReason(material: string, environment: string): string | null {
   if (environment === "generic") return null; // interior — tot hi cap
 
+  // Full compatibility matrix: environment → material → reason (null = OK)
   const rules: Record<string, Record<string, string>> = {
     paper: {
       wet: "es mullaria 💧",
       hot: "es cremaria 🔥",
       dirty: "es faria malbé 🗑️",
       outdoor: "volaria amb el vent 🌬️",
+      sorrenc: "s'enterraria 🏜️",
+      ventós: "volaria 💨",
+      submergit: "es desfaria 🌊",
+      químic: "es disoldria ☣️",
     },
     glass: {
       hot: "es trencaria amb la calor 🔥",
-      outdoor: "es trencaria amb el vent 🌬️",
+      frozen: "es trencaria amb el gel 🧊",
+      ventós: "es cauria 💨",
+      submergit: "✅", // OK actually — glass is fine underwater
+      químic: "✅",    // glass resists chemicals
     },
     fabric: {
       wet: "es pudriria 💧",
       hot: "es cremaria 🔥",
       dirty: "s'embrutiria 🗑️",
+      frozen: "s'enrigiria 🧊",
+      sorrenc: "s'ompliria de sorra 🏜️",
+      ventós: "s'enredaria 💨",
+      submergit: "flotaria 🌊",
+      químic: "es corroeria ☣️",
+    },
+    metal: {
+      wet: "s'oxidaria 💧",
+      submergit: "s'oxidaria 🌊",
+      químic: "es corroeria ☣️",
+    },
+    plastic: {
+      hot: "es fondria 🔥",
+      frozen: "es trencaria 🧊",
+    },
+    wood: {
+      wet: "es podriria 💧",
+      hot: "es cremaria 🔥",
+      frozen: "es contrauria 🧊",
+      submergit: "flotaria 🌊",
+      químic: "es corroeria ☣️",
+    },
+    cardboard: {
+      wet: "es desfaria 💧",
+      hot: "es cremaria 🔥",
+      dirty: "es faria malbé 🗑️",
+      outdoor: "volaria amb el vent 🌬️",
+      sorrenc: "s'enterraria 🏜️",
+      ventós: "volaria 💨",
+      submergit: "es desfaria 🌊",
+      químic: "es disoldria ☣️",
+    },
+    rubber: {
+      hot: "es fondria 🔥",
+      frozen: "s'enduria 🧊",
+    },
+    ceramic: {
+      frozen: "es trencaria 🧊",
+      ventós: "es cauria 💨",
+    },
+    electronic: {
+      wet: "es faria malbé 💧",
+      dirty: "es taparien els ports 🗑️",
+      outdoor: "es mullaria 🌬️",
+      frozen: "bateria morta 🧊",
+      sorrenc: "s'ompliria de sorra 🏜️",
+      submergit: "es faria malbé 🌊",
+      químic: "es corroia ☣️",
+    },
+    leather: {
+      wet: "taques d'humitat 💧",
+      hot: "es ressecaria 🔥",
+      dirty: "s'embrutiria 🗑️",
+      frozen: "es trencaria 🧊",
+      submergit: "es podriria 🌊",
+      químic: "es corroeria ☣️",
+    },
+    stone: {
+      // Stone is resistant to almost everything
     },
   };
 
-  return rules[material]?.[environment] ?? null;
+  // Remove false positives (marked ✅ in the matrix for clarity)
+  const reason = rules[material]?.[environment];
+  if (!reason || reason === "✅") return null;
+  return reason;
 }
 
 // ============================================
