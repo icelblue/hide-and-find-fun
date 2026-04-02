@@ -22,13 +22,11 @@ Deno.serve(async () => {
     };
 
     // ─────────────────────────────────────────────
-    // 1. Finished games > 7 days — full cascade delete
+    // 1. ALL finished games — immediate full cascade delete
     // ─────────────────────────────────────────────
-    const finishedCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: oldFinished } = await supabase
+    const { data: allFinished } = await supabase
       .from("games").select("id")
-      .eq("status", "finished")
-      .lt("updated_at", finishedCutoff);
+      .eq("status", "finished");
 
     // ─────────────────────────────────────────────
     // 2. Stale "waiting" games > 3 days (never joined)
@@ -42,24 +40,24 @@ Deno.serve(async () => {
     // ─────────────────────────────────────────────
     // 3. Stale "hiding" games > 7 days (started but never played)
     // ─────────────────────────────────────────────
+    const hidingCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: staleHiding } = await supabase
       .from("games").select("id")
       .eq("status", "hiding")
-      .lt("updated_at", finishedCutoff);
+      .lt("updated_at", hidingCutoff);
 
     // Collect all game IDs to purge
     const allGameIds = [
-      ...(oldFinished ?? []).map(g => g.id),
+      ...(allFinished ?? []).map(g => g.id),
       ...(staleWaiting ?? []).map(g => g.id),
       ...(staleHiding ?? []).map(g => g.id),
     ];
 
-    stats.deleted_finished_games = oldFinished?.length ?? 0;
+    stats.deleted_finished_games = allFinished?.length ?? 0;
     stats.deleted_stale_waiting = staleWaiting?.length ?? 0;
     stats.deleted_stale_hiding = staleHiding?.length ?? 0;
 
     if (allGameIds.length > 0) {
-      // Process in batches of 100 to avoid query limits
       for (let i = 0; i < allGameIds.length; i += 100) {
         const batch = allGameIds.slice(i, i + 100);
 
@@ -75,7 +73,7 @@ Deno.serve(async () => {
           .in("game_id", batch).select("id");
         stats.deleted_game_moves += moves?.length ?? 0;
 
-        // Delete ALL social items for these games (including blocked ones)
+        // Delete ALL social items for these games
         const { data: social } = await supabase.from("game_social_items").delete()
           .in("game_id", batch).select("id");
         stats.deleted_game_social_items += social?.length ?? 0;
@@ -91,7 +89,7 @@ Deno.serve(async () => {
     }
 
     // ─────────────────────────────────────────────
-    // 4. Sold rewards > 30 days (no longer useful data)
+    // 4. Sold rewards > 30 days
     // ─────────────────────────────────────────────
     const soldCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const { data: soldRewards } = await supabase.from("player_rewards").delete()
@@ -101,7 +99,7 @@ Deno.serve(async () => {
     stats.deleted_player_rewards_sold = soldRewards?.length ?? 0;
 
     // ─────────────────────────────────────────────
-    // 5. Wall messages > 22 hours (ephemeral by design)
+    // 5. Wall messages > 22 hours
     // ─────────────────────────────────────────────
     const wallCutoff = new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString();
     const { data: deletedWall } = await supabase
@@ -121,8 +119,7 @@ Deno.serve(async () => {
     stats.deleted_error_logs = deletedErrors?.length ?? 0;
 
     // ─────────────────────────────────────────────
-    // 7. Fix orphan social items: mark blocked items as processed
-    //    (they'll never be fetched by the client but stay dirty)
+    // 7. Fix orphan social items
     // ─────────────────────────────────────────────
     const { data: fixedBlocked } = await supabase
       .from("game_social_items")
