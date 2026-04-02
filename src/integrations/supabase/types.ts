@@ -426,7 +426,7 @@ export type Database = {
       player_inventory: {
         Row: {
           collected_at: string
-          game_id: string
+          game_id: string | null
           gifted_at: string | null
           gifted_to: string | null
           id: string
@@ -437,7 +437,7 @@ export type Database = {
         }
         Insert: {
           collected_at?: string
-          game_id: string
+          game_id?: string | null
           gifted_at?: string | null
           gifted_to?: string | null
           id?: string
@@ -448,7 +448,7 @@ export type Database = {
         }
         Update: {
           collected_at?: string
-          game_id?: string
+          game_id?: string | null
           gifted_at?: string | null
           gifted_to?: string | null
           id?: string
