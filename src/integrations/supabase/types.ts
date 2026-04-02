@@ -469,7 +469,7 @@ export type Database = {
       }
       player_rewards: {
         Row: {
-          game_id: string
+          game_id: string | null
           id: string
           obtained_at: string
           reward_item_id: string
@@ -477,7 +477,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          game_id: string
+          game_id?: string | null
           id?: string
           obtained_at?: string
           reward_item_id: string
@@ -485,7 +485,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          game_id?: string
+          game_id?: string | null
           id?: string
           obtained_at?: string
           reward_item_id?: string
