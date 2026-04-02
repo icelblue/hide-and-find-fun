@@ -8,13 +8,14 @@ const supabase = createClient(
 Deno.serve(async () => {
   try {
     const stats = {
-      deleted_finished_games: 0,
+      cleaned_finished_moves: 0,
+      cleaned_finished_social: 0,
       deleted_stale_waiting: 0,
       deleted_stale_hiding: 0,
-      deleted_game_moves: 0,
-      deleted_game_social_items: 0,
-      deleted_game_players: 0,
-      deleted_player_inventory: 0,
+      deleted_stale_moves: 0,
+      deleted_stale_social: 0,
+      deleted_stale_players: 0,
+      deleted_stale_inventory: 0,
       deleted_player_rewards_sold: 0,
       deleted_wall_messages: 0,
       deleted_error_logs: 0,
@@ -22,14 +23,34 @@ Deno.serve(async () => {
     };
 
     // ─────────────────────────────────────────────
-    // 1. ALL finished games — immediate full cascade delete
+    // 1. FINISHED games — only clean moves & social items
+    //    KEEP: games, game_players (rival favorit stats),
+    //          player_inventory (trophies/bonuses), player_rewards
     // ─────────────────────────────────────────────
-    const { data: allFinished } = await supabase
+    const { data: finishedGames } = await supabase
       .from("games").select("id")
       .eq("status", "finished");
 
+    const finishedIds = (finishedGames ?? []).map(g => g.id);
+
+    if (finishedIds.length > 0) {
+      for (let i = 0; i < finishedIds.length; i += 100) {
+        const batch = finishedIds.slice(i, i + 100);
+
+        // Delete game moves (play-by-play history, no longer needed)
+        const { data: moves } = await supabase.from("game_moves").delete()
+          .in("game_id", batch).select("id");
+        stats.cleaned_finished_moves += moves?.length ?? 0;
+
+        // Delete social items (bananas, smoke bombs etc — already processed)
+        const { data: social } = await supabase.from("game_social_items").delete()
+          .in("game_id", batch).select("id");
+        stats.cleaned_finished_social += social?.length ?? 0;
+      }
+    }
+
     // ─────────────────────────────────────────────
-    // 2. Stale "waiting" games > 3 days (never joined)
+    // 2. Stale "waiting" games > 3 days — full delete (never played)
     // ─────────────────────────────────────────────
     const waitingCutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const { data: staleWaiting } = await supabase
@@ -38,7 +59,7 @@ Deno.serve(async () => {
       .lt("created_at", waitingCutoff);
 
     // ─────────────────────────────────────────────
-    // 3. Stale "hiding" games > 7 days (started but never played)
+    // 3. Stale "hiding" games > 7 days — full delete (started but never played)
     // ─────────────────────────────────────────────
     const hidingCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: staleHiding } = await supabase
@@ -46,44 +67,35 @@ Deno.serve(async () => {
       .eq("status", "hiding")
       .lt("updated_at", hidingCutoff);
 
-    // Collect all game IDs to purge
-    const allGameIds = [
-      ...(allFinished ?? []).map(g => g.id),
+    // These stale games had no real play — safe to fully delete
+    const staleIds = [
       ...(staleWaiting ?? []).map(g => g.id),
       ...(staleHiding ?? []).map(g => g.id),
     ];
 
-    stats.deleted_finished_games = allFinished?.length ?? 0;
     stats.deleted_stale_waiting = staleWaiting?.length ?? 0;
     stats.deleted_stale_hiding = staleHiding?.length ?? 0;
 
-    if (allGameIds.length > 0) {
-      for (let i = 0; i < allGameIds.length; i += 100) {
-        const batch = allGameIds.slice(i, i + 100);
+    if (staleIds.length > 0) {
+      for (let i = 0; i < staleIds.length; i += 100) {
+        const batch = staleIds.slice(i, i + 100);
 
-        // Delete transient inventory (keep special_trophy — permanent collectible)
         const { data: inv } = await supabase.from("player_inventory").delete()
-          .in("game_id", batch)
-          .neq("item_type", "special_trophy")
-          .select("id");
-        stats.deleted_player_inventory += inv?.length ?? 0;
+          .in("game_id", batch).select("id");
+        stats.deleted_stale_inventory += inv?.length ?? 0;
 
-        // Delete game moves
         const { data: moves } = await supabase.from("game_moves").delete()
           .in("game_id", batch).select("id");
-        stats.deleted_game_moves += moves?.length ?? 0;
+        stats.deleted_stale_moves += moves?.length ?? 0;
 
-        // Delete ALL social items for these games
         const { data: social } = await supabase.from("game_social_items").delete()
           .in("game_id", batch).select("id");
-        stats.deleted_game_social_items += social?.length ?? 0;
+        stats.deleted_stale_social += social?.length ?? 0;
 
-        // Delete game players
         const { data: players } = await supabase.from("game_players").delete()
           .in("game_id", batch).select("id");
-        stats.deleted_game_players += players?.length ?? 0;
+        stats.deleted_stale_players += players?.length ?? 0;
 
-        // Finally delete the games themselves
         await supabase.from("games").delete().in("id", batch);
       }
     }
