@@ -28,6 +28,20 @@ type: feature
 - Shown to finder via toast when they win
 - Saved in trophy special_data.custom_message
 
+## Foto Trophy
+- Foto (🖼️) is a special object with prompt_on="find"
+- When rival finds it, popup asks to name it and save as trophy
+- Hide message from the hider is saved in the trophy's custom_message
+
+## Furniture Positions
+- Some furniture has inner_capacity=0 (can't hide "dins"): Cadira, Llum, Catifa, Quadre, Taula, Tovalloler
+- UI blocks "dins" position when object size > inner_capacity
+
 ## Bonuses
-- hint_yes / hint_no bonuses from scenario_bonuses are IGNORED (replaced by progressive hints)
-- extra_token bonuses still work
+- hint_yes / hint_no bonuses DELETED from DB (replaced by progressive hints)
+- extra_token bonuses still work and are fixed per item/position
+
+## Pending Ideas
+- 🔄 **Intercanvi** (proposed new social item): Swap your scenario position with the rival's. Strategic disruption.
+- Random bonus placement per game (currently fixed)
+- Database dump export for local development (idempotent migrations + pg_dump)
