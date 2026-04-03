@@ -310,6 +310,17 @@ export async function getMyGames(userId: string) {
 
   const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
 
+  // Fetch creator profiles for all games
+  const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];
+  if (creatorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles").select("user_id, display_name").in("user_id", creatorIds);
+    const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
+    for (const gp of all) {
+      (gp as any)._creator_name = profileMap.get((gp as any).games.created_by) ?? "Anònim";
+    }
+  }
+
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
   return all
@@ -531,18 +542,16 @@ export async function performMove(
     }
   }
 
-  // Both look and confirm check for bonus
+  // Both look and confirm check for bonus (skip hint_yes/hint_no — only keep extra_token)
   if ((action === "look" || action === "confirm") && targetItemId && targetPosition) {
     const { data: bonus } = await supabase
       .from("scenario_bonuses").select("*")
       .eq("item_id", targetItemId).eq("position", targetPosition).maybeSingle();
 
-    if (bonus) {
+    if (bonus && bonus.bonus_type === "extra_token") {
       foundBonus = bonus.bonus_type;
       bonusValue = bonus.value;
-      if (bonus.bonus_type === "extra_token") {
-        bonusTokens = parseFloat(bonus.value ?? "1");
-      }
+      bonusTokens = parseFloat(bonus.value ?? "1");
 
       // Save to inventory
       await supabase.from("player_inventory").insert({
@@ -550,6 +559,7 @@ export async function performMove(
         item_type: bonus.bonus_type, item_value: bonus.value,
       });
     }
+    // hint_yes / hint_no bonuses are ignored — progressive hints replace them
   }
 
   if (action === "move" && targetScenarioId) {
@@ -576,7 +586,8 @@ export async function performMove(
     action, token_cost: cost, target_scenario_id: targetScenarioId,
     target_item_id: targetItemId, target_position: targetPosition,
     found_object: foundObject, found_bonus: foundBonus as any, bonus_value: bonusValue,
-  }).select().single();
+    hint_level: hintLevel,
+  } as any).select().single();
   if (moveError) throw moveError;
 
   if (foundObject) {
@@ -591,13 +602,13 @@ export async function performMove(
 // SOCIAL ITEMS
 // ============================================
 
-export type SocialItemType = "banana" | "smoke_bomb" | "false_clue" | "shield" | "message";
+export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia";
 
 export const SOCIAL_ITEMS = [
-  { type: "banana" as const, icon: "🍌", name: "Plàtan", desc: "Pantalla borrosa del rival 3s" },
+  { type: "banana" as const, icon: "🍌", name: "Plàtan", desc: "Bloqueja 1 posició del rival" },
   { type: "smoke_bomb" as const, icon: "💣", name: "Bomba de fum", desc: "Mou el teu objecte a altra posició" },
-  { type: "false_clue" as const, icon: "🔮", name: "Pista falsa", desc: "Indicador fals al rival" },
-  { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim ítem social" },
+  { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim plàtan (1 ús)" },
+  { type: "espia" as const, icon: "🕵️", name: "Espia", desc: "Descobreix on és el rival ara" },
   { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
 ] as const;
 
@@ -616,21 +627,27 @@ export async function sendSocialItem(
   }
 
   const { data: toPlayer } = await supabase
-    .from("game_players").select("shield_active, id")
+    .from("game_players").select("shield_active, id, current_scenario_id")
     .eq("game_id", gameId).eq("user_id", toPlayerId).single();
 
-  const blocked = !!(toPlayer?.shield_active && itemType !== "shield");
+  // Shield blocks banana and message only (NOT smoke_bomb, shield, or espia)
+  const blocked = !!(toPlayer?.shield_active && itemType === "banana");
+
+  // For espia, we target ourselves (no notification to rival)
+  const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
 
   await supabase.from("game_social_items").insert({
-    game_id: gameId, from_player_id: fromPlayerId, to_player_id: toPlayerId,
+    game_id: gameId, from_player_id: fromPlayerId, to_player_id: actualToPlayer,
     item_type: itemType, message_text: messageText, blocked_by_shield: blocked,
   });
 
   await supabase.from("game_players")
     .update({ social_item_used_today: true }).eq("id", fromPlayer.id);
 
+  let espiaResult: string | null = null;
+
   if (blocked) {
-    // Shield blocked this item — deactivate shield after use
+    // Shield blocked this banana — deactivate shield after use
     await supabase.from("game_players")
       .update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
@@ -643,6 +660,7 @@ export async function sendSocialItem(
       if (fromPlayer.smoke_bomb_used) {
         throw new Error("Ja has usat la bomba de fum en aquesta partida!");
       }
+      // Move YOUR hidden object to a different position
       const { data: self } = await supabase
         .from("game_players").select("hidden_position, id")
         .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
@@ -653,10 +671,18 @@ export async function sendSocialItem(
         await supabase.from("game_players")
           .update({ hidden_position: newPos, smoke_bomb_used: true }).eq("id", self.id);
       }
+    } else if (itemType === "espia") {
+      // Reveal rival's current scenario to the sender
+      if (toPlayer?.current_scenario_id) {
+        const { data: scenario } = await supabase
+          .from("scenarios").select("name, icon")
+          .eq("id", toPlayer.current_scenario_id).single();
+        if (scenario) espiaResult = `${scenario.icon} ${scenario.name}`;
+      }
     }
   }
 
-  return { blocked };
+  return { blocked, espiaResult };
 }
 
 export async function getUnprocessedSocialItems(gameId: string, playerId: string) {

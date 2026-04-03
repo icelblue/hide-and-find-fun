@@ -49,7 +49,7 @@ export default function GamePage() {
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
-  const [falseClueItem, setFalseClueItem] = useState(false);
+  const [hideMessage, setHideMessage] = useState("");
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState<{ itemId: string; position: "sobre" | "sota" | "dins"; itemName: string } | null>(null);
@@ -179,9 +179,6 @@ export default function GamePage() {
             setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
             setBananaEffect(true);
           }
-        } else if (item.item_type === "false_clue") {
-          setFalseClueItem(true);
-          setTimeout(() => setFalseClueItem(false), 10000);
         } else if (item.item_type === "smoke_bomb") {
           toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
         } else if (item.item_type === "shield") {
@@ -261,7 +258,11 @@ export default function GamePage() {
     if (!gameId || !user || !finalPos) return;
     setActionLoading(true);
     try {
-      const specialData = extraSpecialData || undefined;
+      // Merge hide message into special data if present
+      let specialData = extraSpecialData || undefined;
+      if (hideMessage.trim()) {
+        specialData = { ...(specialData || {}), hide_message: hideMessage.trim() };
+      }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
       setHideStep(4);
       toast.success("Objecte amagat! 🫣");
@@ -334,7 +335,6 @@ export default function GamePage() {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
           if (rivalSpecial && rivalSpecial.prompt_on === "find") {
             if (rivalSpecial.special_type === "troll_effect") {
-              // Show troll popup with animation
               const variants = rivalSpecial.variants as any;
               setTrollEffect({
                 message: rivalSpecial.prompt_text,
@@ -346,9 +346,13 @@ export default function GamePage() {
               setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
             }
           }
-          // Check carta message from hider's special_data
-          if (rival.special_data && (rival.special_data as any)?.type === "custom_message") {
-            toast.info(`✉️ Missatge del rival: "${(rival.special_data as any).message}"`, { duration: 8000 });
+        }
+        // Show hide message from rival (any object, not just specials)
+        if (rival?.special_data) {
+          const sd = rival.special_data as any;
+          const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+          if (hideMsg) {
+            toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
           }
         }
       }
@@ -363,15 +367,19 @@ export default function GamePage() {
     if (!gameId || !user || !showSpecialFoundPopup) return;
     const { special } = showSpecialFoundPopup;
     // Save as trophy to player_inventory
+    const rivalObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
+    const rivalSd = rival?.special_data as any;
+    const hideMsg = rivalSd?.hide_message || (rivalSd?.type === "custom_message" ? rivalSd.message : null);
     await supabase.from("player_inventory").insert({
       user_id: user.id, game_id: gameId,
       item_type: "special_trophy",
       item_value: special.special_type === "custom_name" ? specialFoundInput.trim() : null,
       special_data: {
-        object_name: objects.find((o: any) => o.id === rival?.hidden_object_id)?.name,
-        object_icon: objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon,
+        object_name: rivalObj?.name,
+        object_icon: rivalObj?.icon,
         custom_name: specialFoundInput.trim() || null,
         special_type: special.special_type,
+        custom_message: hideMsg,
       },
     });
     toast.success(`🏆 Trofeu desat!`);
@@ -387,6 +395,7 @@ export default function GamePage() {
       const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
       if (result.blocked) toast.error(`🛡️ Bloquejat per l'escut del rival!`);
+      else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
       else toast.success(`${info?.icon} ${info?.name} enviat!`);
       setShowSocialPanel(false);
       setMessageInput("");
@@ -647,6 +656,19 @@ export default function GamePage() {
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
+
+              {/* Optional hide message */}
+              <div className="mb-3">
+                <p className="text-[11px] text-muted-foreground mb-1">💌 Missatge opcional (es veurà quan trobin l'objecte):</p>
+                <Input
+                  value={hideMessage}
+                  onChange={e => setHideMessage(e.target.value)}
+                  placeholder="Ex: T'ha costat eh! 😏"
+                  maxLength={100}
+                  className="text-sm bg-muted/50 border-border/50"
+                />
+              </div>
+
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => {
                   const obj = objects.find((o: any) => o.id === selectedObject);
@@ -766,9 +788,6 @@ export default function GamePage() {
             {player.shield_active && (
               <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
             )}
-            {falseClueItem && (
-              <span className="bg-destructive/10 text-destructive text-[11px] font-semibold px-3 py-1 rounded-full animate-pulse border border-destructive/20">🔮 Sospitós!</span>
-            )}
             {noTokens && (
               <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
@@ -880,20 +899,35 @@ export default function GamePage() {
           {moveHistory.length > 0 && (
             <div>
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">📋 Historial</h3>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {moveHistory.map(m => (
-                  <div key={m.id} className="text-[11px] bg-muted/30 rounded-lg px-3 py-1.5 flex justify-between border border-border/20">
-                    <span>
-                      <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
-                      {m.action === "move" && `🚶 → ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
-                      {m.action === "look" && `👀 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
-                      {m.action === "confirm" && `🔍 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
-                      {m.found_object && " 🏆"}
-                      {m.found_bonus === "extra_token" && " 🎁"}
-                    </span>
-                    <span className="text-muted-foreground">-{m.token_cost}🪙</span>
-                  </div>
-                ))}
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {moveHistory.map(m => {
+                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
+                  const hintLabels: Record<number, string> = { 0: "fred", 1: "calent", 2: "molt calent!" };
+                  const hl = (m as any).hint_level;
+                  return (
+                    <div key={m.id} className={`text-[11px] rounded-lg px-3 py-1.5 flex justify-between border border-border/20 ${
+                      hl === 2 ? "bg-orange-500/10 border-orange-500/30" :
+                      hl === 1 ? "bg-yellow-500/10 border-yellow-500/20" :
+                      hl === 0 ? "bg-blue-500/10 border-blue-500/20" :
+                      "bg-muted/30"
+                    }`}>
+                      <span>
+                        <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
+                        {m.action === "move" && `🚶 → ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
+                        {m.action === "look" && (
+                          <>
+                            👀 {m.target_position} {(m.items as any)?.icon} {(m.items as any)?.name}
+                            {hl != null && <span className="ml-1 font-semibold">{hintIcons[hl]} {hintLabels[hl]}</span>}
+                          </>
+                        )}
+                        {m.action === "confirm" && `🔍 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
+                        {m.found_object && " 🏆"}
+                        {m.found_bonus === "extra_token" && " 🎁"}
+                      </span>
+                      <span className="text-muted-foreground">-{m.token_cost}🪙</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
