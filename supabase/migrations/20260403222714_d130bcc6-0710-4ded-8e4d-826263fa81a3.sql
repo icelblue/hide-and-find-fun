@@ -1,0 +1,1 @@
+ALTER TABLE public.game_players DROP CONSTRAINT game_players_user_id_fkey;
