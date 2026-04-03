@@ -11,7 +11,8 @@ import {
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
-  redeemBonusTokens, getItemInteractions,
+  redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
+  type ToolType,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +49,8 @@ export default function GamePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
+  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 0 });
+  const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
@@ -98,7 +101,7 @@ export default function GamePage() {
       }
     }
     setPlayer(playerData);
-
+    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0 });
     // Load available bonus tokens from profile
     if (gameData?.status === "playing") {
       const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
@@ -155,7 +158,30 @@ export default function GamePage() {
       .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
       .eq("game_id", gameId).eq("player_id", user.id)
       .order("turn_number", { ascending: false });
-    setMoveHistory(moves ?? []);
+    const allMoves = moves ?? [];
+    setMoveHistory(allMoves);
+
+    // Compute game breaks and cleans from ALL players' tag actions
+    const { data: allGameMoves } = await supabase
+      .from("game_moves").select("bonus_value")
+      .eq("game_id", gameId)
+      .like("bonus_value", "tag:%");
+    const breaks = new Set<string>();
+    for (const m of allGameMoves ?? []) {
+      const val = (m.bonus_value as string) ?? "";
+      if (val.startsWith("tag:break:")) {
+        const brokenId = val.replace("tag:break:", "");
+        breaks.add(brokenId);
+      }
+      if (val.startsWith("tag:fix:")) {
+        const fixedId = val.replace("tag:fix:", "");
+        breaks.delete(fixedId); // fixed!
+      }
+      if (val.startsWith("tag:clean:")) {
+        breaks.add(`clean:${val.replace("tag:clean:", "")}`);
+      }
+    }
+    setGameBreaks(breaks);
 
     // Compute revealed items from interactions + move history
     const revealed = new Set<string>();
@@ -355,6 +381,36 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  const handleTagAction = async (itemId: string, actionKey: string) => {
+    if (!gameId || !user) return;
+    setActionLoading(true);
+    try {
+      const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
+      const [actionType] = actionKey.split(":");
+      const item = currentScenarioItems.find(i => i.id === itemId);
+
+      if (actionType === "clean") {
+        toast.success(`🧹 Has netejat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      } else if (actionType === "break") {
+        toast.success(`💥 Has trencat ${item?.icon} ${item?.name}! El rival ho sabrà... 🔧+1`, { duration: 5000 });
+      } else if (actionType === "fix") {
+        toast.success(`🔧 Has arreglat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      }
+
+      if (result.bonusResult) {
+        toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
+      }
+      if (result.toolFound) {
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+      }
+
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
   const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
     if (!gameId || !user) return;
     setActionLoading(true);
@@ -362,7 +418,10 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos);
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
-      if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
+      if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
+        const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+      } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
       else {
         // Progressive hints
@@ -851,6 +910,11 @@ export default function GamePage() {
             {noTokens && (
               <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
+            {(playerTools.drap > 0 || playerTools.tornavis > 0) && (
+              <span className="bg-secondary/10 text-secondary text-[11px] font-semibold px-3 py-1 rounded-full border border-secondary/20">
+                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.drap > 0 && playerTools.tornavis > 0 ? " " : ""}{playerTools.tornavis > 0 ? `🔧${playerTools.tornavis}` : ""}
+              </span>
+            )}
           </div>
 
           {/* Rival's object traits */}
@@ -912,7 +976,10 @@ export default function GamePage() {
                   bananaBlockedSpot={bananaBlockedSpot}
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
                   onInteraction={handleInteraction}
-                  moveHistory={moveHistory} />
+                  moveHistory={moveHistory}
+                  playerTools={playerTools}
+                  gameBreaks={gameBreaks}
+                  onTagAction={handleTagAction} />
               ))}
             </div>
           </div>
@@ -1056,7 +1123,7 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
@@ -1069,23 +1136,55 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   interactions?: any[];
   onInteraction?: (interaction: any) => void;
   moveHistory?: any[];
+  playerTools?: Record<string, number>;
+  gameBreaks?: Set<string>;
+  onTagAction?: (itemId: string, actionKey: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasInteractions = interactions && interactions.length > 0;
+  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set());
+  const hasAnySpecial = hasInteractions || tagActions.length > 0;
+  const isBroken = gameBreaks?.has(item.id);
 
   return (
-    <div className="glass rounded-xl overflow-hidden">
+    <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : ""}`}>
       <button onClick={() => setExpanded(!expanded)}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
         <span className="font-semibold text-sm">
           {item.icon} {item.name}
-          {hasInteractions && <span className="ml-1 text-xs">⚡</span>}
+          {isBroken && <span className="ml-1 text-xs text-destructive">💥</span>}
+          {hasAnySpecial && !isBroken && <span className="ml-1 text-xs">⚡</span>}
         </span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>
       {expanded && (
         <div className="border-t border-border/30 p-2.5">
-          {/* Interaction buttons */}
+          {/* Tag-based actions */}
+          {tagActions.length > 0 && onTagAction && (
+            <div className="mb-2 space-y-1">
+              {tagActions.map((ta) => (
+                <button key={ta.actionKey}
+                  onClick={() => onTagAction(item.id, ta.actionKey)}
+                  disabled={disabled || tokensRemaining < ta.cost || !ta.hasTool}
+                  className={`w-full rounded-lg p-2.5 text-xs font-medium transition-all active:scale-[0.97] flex items-center gap-2 ${
+                    !ta.hasTool ? "bg-muted/20 opacity-50 border border-muted/30" :
+                    "bg-primary/10 hover:bg-primary/20 border border-primary/20"
+                  }`}>
+                  <span className="text-lg">{ta.icon}</span>
+                  <span className="flex-1 text-left">
+                    {ta.label}
+                    {ta.requiresTool && !ta.hasTool && (
+                      <span className="text-[9px] text-muted-foreground ml-1">
+                        (cal {ta.requiresTool === "drap" ? "🧹" : "🔧"})
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">{ta.cost}🪙</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Special interaction buttons (encendre, etc.) */}
           {hasInteractions && onInteraction && (
             <div className="mb-2 space-y-1">
               {interactions!.map((ia: any) => {

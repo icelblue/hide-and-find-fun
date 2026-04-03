@@ -7,6 +7,30 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.1.0] — 2026-04-03 — Mobles interactius amb tags 🧹💥🔧 (MINOR)
+
+### ⚡ Noves accions de mobles
+- 🧹 **Netejar** — mobles amb tag `dirty` (Catifa, Cistella, Paperera, Rentadora, Armari mirall)
+  - Requereix eina 🧹 Drap, costa 0.2🪙, 50% de trobar mini bonus
+- 💥 **Trencar** — mobles amb tag `breakable` (Vitrina, Llum, Quadre, Armari mirall)
+  - Notifica el rival on ets, costa 0.3🪙, 30% de trobar mini bonus
+  - Genera 🔧 Tornavís per AMBDÓS jugadors (fàcil d'arreglar)
+- 🔧 **Arreglar** — mobles trencats per un altre jugador
+  - Requereix 🔧 Tornavís, costa 0.2🪙, 40% de trobar mini bonus
+
+### 🎒 Sistema d'eines
+- Eines guardades a `game_players.tools` (només duren la partida)
+- 10% de trobar 🧹 Drap o 🔧 Tornavís en accions look/confirm
+- Màxim 3 de cada eina
+- Indicador d'eines a la barra d'estat
+
+### 🔄 Canvis
+- ❌ Eliminada acció "Obrir l'armari" (conflicte amb Confirmar)
+- ❌ Eliminat moble ocult "Capsa de sabates"
+- ✅ Mantinguda 💡 "Encendre el llum" (Menjador)
+
+---
+
 ## [1.0.0] — 2026-04-03 — Primera versió estable 🎉
 
 ### 🎮 Mecàniques de joc
