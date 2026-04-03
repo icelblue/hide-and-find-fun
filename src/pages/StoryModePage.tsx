@@ -135,6 +135,7 @@ export default function StoryModePage() {
     setXpEarned(0);
     setWonConsumable(null);
     setPetDied(false);
+    setExploredSpots(new Set());
 
     const positions = ["sobre", "sota", "dins"] as const;
 
