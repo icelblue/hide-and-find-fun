@@ -360,7 +360,10 @@ export default function ProfilePage() {
                 <Card key={g.id} className="glass cursor-pointer hover:border-primary/40 transition-all" onClick={() => navigate(`/game/${g.id}`)}>
                   <CardContent className="py-3 px-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-xs font-bold tracking-wider">{g.code}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold tracking-wider">{g.code}</span>
+                        {g.rivalName && <span className="text-[10px] text-primary font-medium">vs {g.rivalName}</span>}
+                      </div>
                       <span className="text-[10px] text-muted-foreground">{statusLabels[g.status] ?? g.status}</span>
                     </div>
                     {g.hasHidden && g.hiddenObj ? (
