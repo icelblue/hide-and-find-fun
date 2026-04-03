@@ -190,8 +190,9 @@
 │   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1550 línies)
 │   │   │     · Fase amagar (4 passos) + missatge opcional
 │   │   │     · Ítems socials + pistes progressives
-│   │   │     · Confirmació + resultats + trofeus
-│   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (474 línies)
+│   │   │     · Eines, llum, llanterna, mobles bruts
+│   │   │     · Pistes progressives + bonus picker
+│   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (~491 línies)
 │   │   │     · Stats, Elo, lliga, recompenses
 │   │   │     · Vendre/col·locar mobles, mur, rival favorit
 │   │   ├── 📄 PlayerProfilePage.tsx ← 👥 Perfil d'altri
