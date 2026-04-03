@@ -316,6 +316,9 @@ export default function LobbyPage() {
                           <p className="text-sm font-bold text-accent">{creatorName} et reta!</p>
                         )}
                         <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
+                        {!isPending && gp._rival_name && (
+                          <span className="ml-2 text-[11px] text-muted-foreground">vs <span className="text-foreground/70 font-medium">{gp._rival_name}</span></span>
+                        )}
                         <p className={`text-[11px] ${s.color}`}>{s.label}</p>
                       </div>
                     </div>
