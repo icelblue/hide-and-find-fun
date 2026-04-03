@@ -23,7 +23,6 @@ import {
 } from "@/lib/story-helpers";
 import { getScenarios, getItemsByScenario, getObjects } from "@/lib/supabase-helpers";
 import { supabase } from "@/integrations/supabase/client";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type StoryPhase = "loading" | "intro" | "gift" | "hub" | "playing" | "dead";
