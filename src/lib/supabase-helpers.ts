@@ -170,8 +170,44 @@ export type ToolType = "drap" | "tornavis" | "martell" | "llanterna";
 // Outdoor scenarios (no light switch, need llanterna)
 export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó"];
 
+/**
+ * Deterministic hash from gameId to decide which items are dirty per game.
+ * Uses a simple string hash so the same game always has the same dirty items.
+ */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Given all items with 'dirty' tag and a gameId, returns a Set of item IDs
+ * that are dirty THIS game (~60% of eligible items, randomized per game).
+ */
+export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<string> {
+  const eligible = allItems.filter((i: any) => (i.tags ?? []).includes("dirty"));
+  const dirtySet = new Set<string>();
+  const seed = hashString(gameId);
+  for (let i = 0; i < eligible.length; i++) {
+    // Use item index + seed to decide
+    const itemSeed = hashString(eligible[i].id + gameId);
+    if (itemSeed % 100 < 60) dirtySet.add(eligible[i].id); // ~60% chance
+  }
+  // Ensure at least 1 dirty item if there are eligible ones
+  if (dirtySet.size === 0 && eligible.length > 0) {
+    dirtySet.add(eligible[seed % eligible.length].id);
+  }
+  return dirtySet;
+}
+
 /** Get tag-based actions available for an item given player's tools and game state */
-export function getTagActions(item: any, playerTools: Record<string, number>, gameBreaks: Set<string>) {
+export function getTagActions(
+  item: any, playerTools: Record<string, number>,
+  gameBreaks: Set<string>, dirtyItems?: Set<string>
+) {
   const tags: string[] = item.tags ?? [];
   const actions: Array<{
     tag: string; icon: string; label: string; cost: number;
@@ -188,8 +224,9 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
     });
   }
 
-  // Dirty → Netejar (only if not already cleaned by this player)
-  if (tags.includes("dirty") && !gameBreaks.has(`clean:${item.id}`)) {
+  // Dirty → Netejar (only if this item is dirty THIS game and not already cleaned)
+  const isDirtyThisGame = dirtyItems ? dirtyItems.has(item.id) : tags.includes("dirty");
+  if (isDirtyThisGame && !gameBreaks.has(`clean:${item.id}`)) {
     const cfg = TAG_ACTIONS.dirty;
     actions.push({
       tag: "dirty", ...cfg,
@@ -198,7 +235,7 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
     });
   }
 
-  // Breakable → Trencar (only if not already broken AND has martell)
+  // Breakable → Trencar (only if not already broken)
   if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
