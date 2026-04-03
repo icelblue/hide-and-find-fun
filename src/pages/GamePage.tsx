@@ -1122,7 +1122,6 @@ export default function GamePage() {
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
-                  onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
                   lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
                   bananaBlockedSpot={bananaBlockedSpot}
