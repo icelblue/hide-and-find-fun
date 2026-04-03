@@ -1037,17 +1037,15 @@ export async function performMove(
       });
     }
 
-    // ~20% chance of finding a tool
-    const toolRoll = rollForTool();
+    // ~20% chance of finding a tool (shared pool)
+    const toolRoll = await rollForTool(gameId);
     if (toolRoll) {
       const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
-      if ((currentTools[toolRoll] ?? 0) < 3) {
-        currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
-        await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
-        if (!foundBonus) {
-          foundBonus = "extra_token"; // reuse field
-          bonusValue = `tool:${toolRoll}`;
-        }
+      currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
+      await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
+      if (!foundBonus) {
+        foundBonus = "extra_token"; // reuse field
+        bonusValue = `tool:${toolRoll}`;
       }
     }
   }
