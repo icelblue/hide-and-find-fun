@@ -103,7 +103,7 @@ export default function GamePage() {
       }
     }
     setPlayer(playerData);
-    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0, martell: 0 });
+    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 });
     // Load available bonus tokens from profile
     if (gameData?.status === "playing") {
       const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
