@@ -1298,7 +1298,7 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
@@ -1314,10 +1314,11 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   playerTools?: Record<string, number>;
   gameBreaks?: Set<string>;
   onTagAction?: (itemId: string, actionKey: string) => void;
+  dirtyItems?: Set<string>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasInteractions = interactions && interactions.length > 0;
-  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set());
+  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
   const hasAnySpecial = hasInteractions || tagActions.length > 0;
   const isBroken = gameBreaks?.has(item.id);
 
