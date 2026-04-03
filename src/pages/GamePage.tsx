@@ -255,8 +255,12 @@ export default function GamePage() {
     setRevealedItemIds(revealed);
 
     // Flashlight-revealed hidden items (per player, outdoor only)
-    const scenarioName = scenarios.find((s: any) => s.id === playerData?.current_scenario_id)?.name;
-    const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName ?? "");
+    // Fetch scenario name directly to avoid stale closure on `scenarios` state
+    let isOutdoor = false;
+    if (playerData?.current_scenario_id) {
+      const { data: curScen } = await supabase.from("scenarios").select("name").eq("id", playerData.current_scenario_id).single();
+      isOutdoor = OUTDOOR_SCENARIOS.includes(curScen?.name ?? "");
+    }
     const flashlightUsedHere = flashRevealed.has(playerData?.current_scenario_id ?? "");
 
     // Filter: show non-hidden items + revealed hidden items + flashlight-revealed
