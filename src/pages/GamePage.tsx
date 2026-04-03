@@ -571,47 +571,7 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const handleConfirm = async () => {
-    if (!gameId || !user || !showConfirmDialog) return;
-    const { itemId, position } = showConfirmDialog;
-    setShowConfirmDialog(null);
-    setActionLoading(true);
-    try {
-      const result = await performMove(gameId, user.id, "confirm", undefined, itemId, position);
-      if (result.foundObject) {
-        toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
-        // Check if rival's object has a "find" special
-        if (rival?.hidden_object_id) {
-          const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
-          if (rivalSpecial && rivalSpecial.prompt_on === "find") {
-            if (rivalSpecial.special_type === "troll_effect") {
-              const variants = rivalSpecial.variants as any;
-              setTrollEffect({
-                message: rivalSpecial.prompt_text,
-                emoji: variants?.emoji ?? "😈",
-                animation: variants?.animation ?? "shake",
-              });
-              setTimeout(() => setTrollEffect(null), 6000);
-            } else {
-              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
-            }
-          }
-        }
-        // Show hide message from rival (any object, not just specials)
-        if (rival?.special_data) {
-          const sd = rival.special_data as any;
-          const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
-          if (hideMsg) {
-            toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
-          }
-        }
-      }
-      else toast.error(`❌ No era aquí... (-${TOKEN_COSTS.confirm}🪙)`);
-      clearBanana();
-      await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
-  };
+  // handleConfirm removed — look now finds the object directly
 
   const handleSpecialFoundSubmit = async () => {
     if (!gameId || !user || !showSpecialFoundPopup) return;
