@@ -25,7 +25,7 @@ import { getScenarios, getItemsByScenario, getObjects } from "@/lib/supabase-hel
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type StoryPhase = "loading" | "intro" | "gift" | "naming" | "hub" | "playing" | "dead";
+type StoryPhase = "loading" | "intro" | "gift" | "hub" | "playing" | "dead";
 
 export default function StoryModePage() {
   const { user } = useAuth();
