@@ -292,7 +292,7 @@ export default function GamePage() {
       setReward(r);
     }
 
-    if (gameData?.status === "playing") {
+    if (gameData?.status === "playing" && !isStoryGame) {
       // Check items blocked by YOUR shield (notify you that it worked)
       const { data: blockedItems } = await supabase
         .from("game_social_items").select("*")
