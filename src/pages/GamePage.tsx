@@ -1175,7 +1175,7 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
                     {ta.label}
                     {ta.requiresTool && !ta.hasTool && (
                       <span className="text-[9px] text-muted-foreground ml-1">
-                        (cal {ta.requiresTool === "drap" ? "🧹" : "🔧"})
+                        (cal {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : "🔧"})
                       </span>
                     )}
                   </span>
