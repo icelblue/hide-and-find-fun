@@ -47,6 +47,7 @@ export default function GamePage() {
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
+  const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
@@ -136,17 +137,17 @@ export default function GamePage() {
     }
 
     let loadedItems: any[] = [];
+    let loadedInteractions: any[] = [];
     if (gameData?.status === "playing" && playerData?.current_scenario_id) {
       const [itemsData, connected] = await Promise.all([
         getItemsByScenario(playerData.current_scenario_id),
         getConnectedScenarios(playerData.current_scenario_id),
       ]);
       loadedItems = itemsData;
-      setCurrentScenarioItems(itemsData);
       setConnectedScenarios(connected);
       // Load interactions for current scenario items
-      const interactions = await getItemInteractions(itemsData.map((i: any) => i.id));
-      setItemInteractions(interactions);
+      loadedInteractions = await getItemInteractions(itemsData.map((i: any) => i.id));
+      setItemInteractions(loadedInteractions);
     }
 
     const { data: moves } = await supabase
@@ -155,6 +156,23 @@ export default function GamePage() {
       .eq("game_id", gameId).eq("player_id", user.id)
       .order("turn_number", { ascending: false });
     setMoveHistory(moves ?? []);
+
+    // Compute revealed items from interactions + move history
+    const revealed = new Set<string>();
+    for (const ia of loadedInteractions) {
+      if (ia.effect_type === "reveal_items") {
+        // Check if this interaction was used (item_id appears in moves for this item)
+        const wasUsed = (moves ?? []).some((m: any) => m.target_item_id === ia.item_id);
+        if (wasUsed) {
+          const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
+          ids.forEach((id: string) => revealed.add(id));
+        }
+      }
+    }
+    setRevealedItemIds(revealed);
+    // Filter: show non-hidden items + revealed hidden items
+    const visibleItems = loadedItems.filter((i: any) => !i.hidden || revealed.has(i.id));
+    setCurrentScenarioItems(visibleItems);
 
     if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
       const r = await getGameReward(gameId, user.id);
@@ -318,19 +336,17 @@ export default function GamePage() {
     }
     setActionLoading(true);
     try {
-      // Record as a look move with special bonus_value to track interaction
+      // Record as a look move to track the interaction
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre");
-      // Apply effect locally
-      if (interaction.effect_type === "reveal_content") {
-        const data = interaction.effect_data as any;
+      // Apply effect
+      const data = interaction.effect_data as any;
+      if (interaction.effect_type === "reveal_items") {
+        toast.success(`${interaction.action_icon} ${data.message || "Nous mobles revelats!"}`, { duration: 6000 });
+      } else if (interaction.effect_type === "reveal_content") {
         toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
-      } else if (interaction.effect_type === "reveal_items") {
-        toast.success(`${interaction.action_icon} Nous mobles revelats!`, { duration: 4000 });
       } else if (interaction.effect_type === "give_hint") {
-        const data = interaction.effect_data as any;
         toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
       } else if (interaction.effect_type === "enable_position") {
-        const data = interaction.effect_data as any;
         toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
       }
       clearBanana();
