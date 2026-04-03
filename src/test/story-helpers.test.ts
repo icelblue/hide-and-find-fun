@@ -131,6 +131,9 @@ describe("Story Mode helpers", () => {
       expect(cpuChooseHidingSpot([], [])).toBeNull();
       expect(cpuChooseHidingSpot([{ id: "1" }], [])).toBeNull();
     });
+    it("returns null when items empty but objects provided", () => {
+      expect(cpuChooseHidingSpot([], [{ id: "o1", name: "Clau" }])).toBeNull();
+    });
     it("returns valid spot with items and objects", () => {
       const items = [{ id: "i1", name: "Taula" }, { id: "i2", name: "Cadira" }];
       const objects = [{ id: "o1", name: "Clau" }];
@@ -138,6 +141,77 @@ describe("Story Mode helpers", () => {
       expect(spot).not.toBeNull();
       expect(["sobre", "sota", "dins"]).toContain(spot!.position);
       expect(items.some(i => i.id === spot!.itemId)).toBe(true);
+    });
+    it("includes itemName and objectName in result", () => {
+      const items = [{ id: "i1", name: "Taula" }];
+      const objects = [{ id: "o1", name: "Clau" }];
+      const spot = cpuChooseHidingSpot(items, objects);
+      expect(spot!.itemName).toBe("Taula");
+      expect(spot!.objectName).toBe("Clau");
+    });
+    it("with single item/object always returns that pair", () => {
+      const items = [{ id: "i1", name: "Sofà" }];
+      const objects = [{ id: "o1", name: "Anell" }];
+      for (let i = 0; i < 10; i++) {
+        const spot = cpuChooseHidingSpot(items, objects);
+        expect(spot!.itemId).toBe("i1");
+        expect(spot!.objectId).toBe("o1");
+      }
+    });
+  });
+
+  describe("calculateXP edge cases", () => {
+    it("0 moves gives max efficiency bonus", () => {
+      const xp = calculateXP(1, 0);
+      // base 100 + max(1, 10-0)*10 = 100 + 100 = 200
+      expect(xp).toBe(200);
+    });
+    it("very high moves still gives minimum 10 bonus", () => {
+      const xp = calculateXP(1, 100);
+      // base 100 + max(1, 10-100)*10 = 100 + 10 = 110
+      expect(xp).toBe(110);
+    });
+    it("negative moves treated as very efficient", () => {
+      const xp = calculateXP(1, -5);
+      // base 100 + max(1, 15)*10 = 100 + 150 = 250
+      expect(xp).toBe(250);
+    });
+    it("chapter 99 uses default base 150", () => {
+      expect(calculateXP(99, 5)).toBeGreaterThanOrEqual(150);
+    });
+  });
+
+  describe("getPetEvolution edge cases", () => {
+    it("exactly at tier boundaries", () => {
+      expect(getPetEvolution(499).label).toBe("Bebè");
+      expect(getPetEvolution(500).label).toBe("Jove");
+      expect(getPetEvolution(1499).label).toBe("Jove");
+      expect(getPetEvolution(1500).label).toBe("Adult");
+      expect(getPetEvolution(2999).label).toBe("Adult");
+      expect(getPetEvolution(3000).label).toBe("Veterà");
+      expect(getPetEvolution(4499).label).toBe("Veterà");
+      expect(getPetEvolution(4500).label).toBe("Llegendari");
+    });
+    it("returns maxXp property", () => {
+      expect(getPetEvolution(0).maxXp).toBe(5000);
+    });
+    it("xp beyond MAX is still dead", () => {
+      expect(getPetEvolution(9999).isDead).toBe(true);
+    });
+  });
+
+  describe("hasAllAccessories edge cases", () => {
+    it("duplicates don't count extra", () => {
+      const dupes = [{ accessory_name: "Collar" }, { accessory_name: "Collar" }];
+      expect(hasAllAccessories(dupes)).toBe(false);
+    });
+    it("5 of 6 is not enough", () => {
+      const five = PET_ACCESSORIES.slice(0, 5).map(a => ({ accessory_name: a.name }));
+      expect(hasAllAccessories(five)).toBe(false);
+    });
+    it("extra accessories beyond 6 still returns true", () => {
+      const all = [...PET_ACCESSORIES.map(a => ({ accessory_name: a.name })), { accessory_name: "Extra" }];
+      expect(hasAllAccessories(all)).toBe(true);
     });
   });
 });
