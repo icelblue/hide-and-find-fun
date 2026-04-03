@@ -204,15 +204,17 @@
 │   │   └── 📄 use-mobile.tsx        ← Hook per detectar mòbil
 │   │
 │   ├── 📁 lib/
-│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica de negoci
+│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica de negoci (~1250 línies)
 │   │   │     · DATA: scenarios, items, objects, connections
 │   │   │     · LIFECYCLE: create, join, delete, available, myGames
 │   │   │     · MATCHMAKING: findRandom, search, challenge
 │   │   │     · HIDING: hideObject, checkBothHidden, startGame
-│   │   │     · SPECIALS: getSpecial, autoFixMissingScenario
+│   │   │     · TAGS: getTagActions, performTagAction, rollForTool
+│   │   │     · LIGHT: toggleLight, isLightOff, useLlanterna
 │   │   │     · SEARCH: performMove, ensureTokensReset, TOKEN_COSTS
 │   │   │     · SOCIAL: sendSocialItem, getUnprocessed, markProcessed
 │   │   │     · INVENTORY: getPlayerInventory, giftInventoryItem
+│   │   │     · BONUS: redeemBonusTokens
 │   │   ├── 📄 reward-helpers.ts     ← Recompenses via Supabase RPC
 │   │   └── 📄 utils.ts             ← cn() per Tailwind merge
 │   │
