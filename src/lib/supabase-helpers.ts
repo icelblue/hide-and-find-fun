@@ -586,7 +586,8 @@ export async function performMove(
     action, token_cost: cost, target_scenario_id: targetScenarioId,
     target_item_id: targetItemId, target_position: targetPosition,
     found_object: foundObject, found_bonus: foundBonus as any, bonus_value: bonusValue,
-  }).select().single();
+    hint_level: hintLevel,
+  } as any).select().single();
   if (moveError) throw moveError;
 
   if (foundObject) {
