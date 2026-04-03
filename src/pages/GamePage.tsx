@@ -163,27 +163,40 @@ export default function GamePage() {
     const allMoves = moves ?? [];
     setMoveHistory(allMoves);
 
-    // Compute game breaks and cleans from ALL players' tag actions
+    // Compute game breaks, cleans, light states, and flashlight reveals from ALL players' tag actions
     const { data: allGameMoves } = await supabase
-      .from("game_moves").select("bonus_value")
+      .from("game_moves").select("bonus_value, player_id")
       .eq("game_id", gameId)
-      .like("bonus_value", "tag:%");
+      .like("bonus_value", "tag:%")
+      .order("created_at", { ascending: true });
     const breaks = new Set<string>();
+    const lightsOff = new Set<string>();
+    const flashRevealed = new Set<string>();
     for (const m of allGameMoves ?? []) {
       const val = (m.bonus_value as string) ?? "";
       if (val.startsWith("tag:break:")) {
-        const brokenId = val.replace("tag:break:", "");
-        breaks.add(brokenId);
+        breaks.add(val.replace("tag:break:", ""));
       }
       if (val.startsWith("tag:fix:")) {
-        const fixedId = val.replace("tag:fix:", "");
-        breaks.delete(fixedId); // fixed!
+        breaks.delete(val.replace("tag:fix:", ""));
       }
       if (val.startsWith("tag:clean:")) {
         breaks.add(`clean:${val.replace("tag:clean:", "")}`);
       }
+      if (val.startsWith("tag:light_off:")) {
+        lightsOff.add(val.replace("tag:light_off:", ""));
+      }
+      if (val.startsWith("tag:light_on:")) {
+        lightsOff.delete(val.replace("tag:light_on:", ""));
+      }
+      // Flashlight reveals are per-player
+      if (val.startsWith("tag:flashlight:") && (m as any).player_id === user.id) {
+        flashRevealed.add(val.replace("tag:flashlight:", ""));
+      }
     }
     setGameBreaks(breaks);
+    setLightOffScenarios(lightsOff);
+    setFlashlightRevealed(flashRevealed);
 
     // Compute revealed items from interactions + move history
     const revealed = new Set<string>();
