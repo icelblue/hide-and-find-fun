@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
+import { APP_VERSION } from "@/lib/constants";
 
 const leagueBadge: Record<string, string> = {
   bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎", diamond: "👑",
