@@ -180,7 +180,7 @@ export default function GamePage() {
       // Compute which items are dirty THIS game (random per game)
       const gameDirty = getDirtyItemsForGame(itemsData, gameId);
       setDirtyItems(gameDirty);
-      // Auto-give drap if there are dirty items in this scenario
+      // Auto-give drap if there are dirty items in this scenario and player has none
       const hasDirtyHere = itemsData.some((i: any) => gameDirty.has(i.id));
       if (hasDirtyHere && playerData) {
         const tools = (playerData as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
@@ -189,6 +189,7 @@ export default function GamePage() {
           await supabase.from("game_players").update({ tools }).eq("id", playerData.id);
           playerData.tools = tools;
           setPlayerTools({ ...tools });
+          toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
         }
       }
       // Load interactions for current scenario items
@@ -1323,15 +1324,17 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
   const hasAnySpecial = hasInteractions || tagActions.length > 0;
   const isBroken = gameBreaks?.has(item.id);
+  const isDirty = dirtyItems?.has(item.id) && !gameBreaks?.has(`clean:${item.id}`);
 
   return (
-    <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : ""}`}>
+    <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : isDirty ? "border-accent/20" : ""}`}>
       <button onClick={() => setExpanded(!expanded)}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
         <span className="font-semibold text-sm">
           {item.icon} {item.name}
           {isBroken && <span className="ml-1 text-xs text-destructive">💥</span>}
-          {hasAnySpecial && !isBroken && <span className="ml-1 text-xs">⚡</span>}
+          {isDirty && !isBroken && <span className="ml-1 text-xs">🧹</span>}
+          {hasAnySpecial && !isBroken && !isDirty && <span className="ml-1 text-xs">⚡</span>}
         </span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>

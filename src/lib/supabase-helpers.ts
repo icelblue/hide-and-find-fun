@@ -1022,11 +1022,15 @@ export async function sendSocialItem(
       }
     } else if (itemType === "espia") {
       // Reveal rival's current scenario to the sender
-      if (toPlayer?.current_scenario_id) {
+      const rivalScenarioId = toPlayer?.current_scenario_id;
+      if (rivalScenarioId) {
         const { data: scenario } = await supabase
           .from("scenarios").select("name, icon")
-          .eq("id", toPlayer.current_scenario_id).single();
+          .eq("id", rivalScenarioId).single();
         if (scenario) espiaResult = `${scenario.icon} ${scenario.name}`;
+        else espiaResult = "📍 Ubicació desconeguda";
+      } else {
+        espiaResult = "🤷 El rival encara no s'ha mogut!";
       }
     }
   }
