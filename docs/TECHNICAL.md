@@ -854,9 +854,12 @@ const channel = supabase
 ┌──────────────────────────────────────────────────┐
 │ DIA 2                                            │
 │   ensureTokensReset() detecta nova data          │
-│   → tokens = 5.0 + bonus_tokens (del perfil)     │
-│   → profiles.bonus_tokens = 0                    │
+│   → tokens = 5.0 (reset fix, NO s'afegeixen bonus│
+│     automàticament)                               │
 │   → social_item_used_today = false               │
+│                                                   │
+│   Bonus tokens: el jugador pot afegir-los         │
+│   manualment via redeemBonusTokens() (picker UI)  │
 └──────────────────────────────────────────────────┘
 ```
 
