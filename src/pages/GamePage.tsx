@@ -1120,7 +1120,7 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
@@ -1133,23 +1133,55 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   interactions?: any[];
   onInteraction?: (interaction: any) => void;
   moveHistory?: any[];
+  playerTools?: Record<string, number>;
+  gameBreaks?: Set<string>;
+  onTagAction?: (itemId: string, actionKey: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasInteractions = interactions && interactions.length > 0;
+  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set());
+  const hasAnySpecial = hasInteractions || tagActions.length > 0;
+  const isBroken = gameBreaks?.has(item.id);
 
   return (
-    <div className="glass rounded-xl overflow-hidden">
+    <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : ""}`}>
       <button onClick={() => setExpanded(!expanded)}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
         <span className="font-semibold text-sm">
           {item.icon} {item.name}
-          {hasInteractions && <span className="ml-1 text-xs">⚡</span>}
+          {isBroken && <span className="ml-1 text-xs text-destructive">💥</span>}
+          {hasAnySpecial && !isBroken && <span className="ml-1 text-xs">⚡</span>}
         </span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>
       {expanded && (
         <div className="border-t border-border/30 p-2.5">
-          {/* Interaction buttons */}
+          {/* Tag-based actions */}
+          {tagActions.length > 0 && onTagAction && (
+            <div className="mb-2 space-y-1">
+              {tagActions.map((ta) => (
+                <button key={ta.actionKey}
+                  onClick={() => onTagAction(item.id, ta.actionKey)}
+                  disabled={disabled || tokensRemaining < ta.cost || !ta.hasTool}
+                  className={`w-full rounded-lg p-2.5 text-xs font-medium transition-all active:scale-[0.97] flex items-center gap-2 ${
+                    !ta.hasTool ? "bg-muted/20 opacity-50 border border-muted/30" :
+                    "bg-primary/10 hover:bg-primary/20 border border-primary/20"
+                  }`}>
+                  <span className="text-lg">{ta.icon}</span>
+                  <span className="flex-1 text-left">
+                    {ta.label}
+                    {ta.requiresTool && !ta.hasTool && (
+                      <span className="text-[9px] text-muted-foreground ml-1">
+                        (cal {ta.requiresTool === "drap" ? "🧹" : "🔧"})
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">{ta.cost}🪙</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Special interaction buttons (encendre, etc.) */}
           {hasInteractions && onInteraction && (
             <div className="mb-2 space-y-1">
               {interactions!.map((ia: any) => {
