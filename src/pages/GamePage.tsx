@@ -1253,41 +1253,16 @@ export default function GamePage() {
 
       {/* FINISHED */}
       {phase === "finished" && (
-        <div className="text-center py-16">
-          {game.winner_id === user?.id ? (
-            <div className="w-24 h-24 mx-auto mb-4 rounded-3xl gradient-primary flex items-center justify-center text-5xl shadow-xl glow-primary">🏆</div>
-          ) : (
-            <div className="text-7xl mb-4 opacity-60">😢</div>
-          )}
-          <h2 className="text-2xl font-bold mb-2">
-            {game.winner_id === user?.id ? <span className="text-gradient">Victòria!</span> : "Derrota..."}
-          </h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            {game.winner_id === user?.id ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
-          </p>
-
-          {reward?.reward_items && (
-            <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
-              <CardContent className="py-5 text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🎁 Recompensa</p>
-                <div className="text-5xl mb-2">{reward.reward_items.icon}</div>
-                <p className="font-bold text-lg">{reward.reward_items.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {RARITY_CONFIG[reward.reward_items.rarity]?.emoji}{" "}
-                  {RARITY_CONFIG[reward.reward_items.rarity]?.label}
-                </p>
-                <p className="text-[10px] text-muted-foreground/60 mt-2">
-                  Ves al perfil per col·locar-lo o vendre'l
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="flex gap-2 justify-center">
-            <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
-            <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
-          </div>
-        </div>
+        <FinishedPhase
+          game={game}
+          user={user}
+          rival={rival}
+          reward={reward}
+          navigate={navigate}
+          objects={objects}
+          scenarios={scenarios}
+          gameId={gameId!}
+        />
       )}
 
       {/* Troll effect popup overlay */}
