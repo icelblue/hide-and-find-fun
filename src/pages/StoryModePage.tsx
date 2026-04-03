@@ -59,16 +59,18 @@ export default function StoryModePage() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [petData, prog, accs, scen] = await Promise.all([
+    const [petData, prog, accs, scen, profileRes] = await Promise.all([
       getMyPet(user.id),
       getStoryProgress(user.id),
       getMyAccessories(user.id),
       getScenarios(),
+      supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
     ]);
     setPet(petData);
     setProgress(prog);
     setAccessories(accs);
     setScenarios(scen);
+    if (profileRes.data?.display_name) setPlayerName(profileRes.data.display_name);
 
     if (!petData) {
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
