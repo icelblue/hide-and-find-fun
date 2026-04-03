@@ -42,6 +42,11 @@ export function getMaterialBlockReason(material: string, environment: string): s
       submergit: "es desfaria 🌊",
       químic: "es disoldria ☣️",
     },
+    Food: {  
+  dirty: "no és higiènic 🗑️",
+  químic: "seria tòxic ☣️",
+  outdoor: "s'ho menjarien els animals 🐾",
+}
     glass: {
       hot: "es trencaria amb la calor 🔥",
       frozen: "es trencaria amb el gel 🧊",
@@ -50,7 +55,6 @@ export function getMaterialBlockReason(material: string, environment: string): s
       químic: "✅",    // glass resists chemicals
     },
     fabric: {
-      wet: "es pudriria 💧",
       hot: "es cremaria 🔥",
       dirty: "s'embrutiria 🗑️",
       frozen: "s'enrigiria 🧊",
