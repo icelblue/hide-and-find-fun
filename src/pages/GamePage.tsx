@@ -430,7 +430,7 @@ export default function GamePage() {
         toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
       }
       if (result.toolFound) {
-        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : "🔧 Tornavís";
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       }
 
