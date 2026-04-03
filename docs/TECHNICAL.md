@@ -688,11 +688,47 @@ Si el rival està a l'habitació on TU has amagat l'objecte:
   → Avís visual ⚠️ al teu tauler
 ```
 
-### 5.9 Mobles interactius
+### 5.9 Mobles interactius (v1.3+)
 
-> Alguns mobles tenen accions especials (💡 encendre, 🚪 obrir, 🧹 netejar). Definits a `item_interactions`.
+> El sistema de mobles interactius usa **tags** per definir accions disponibles. A més, existeix `item_interactions` per accions especials.
 
-| Efecte | Descripció |
+#### Sistema de tags
+
+| Tag | Acció | Eina | Cost | Efecte |
+|:-----|:-------|:------|:------|:--------|
+| `dirty` | 🧹 Netejar | 🧹 Drap | 0.2🪙 | 50% mini bonus |
+| `breakable` | 💥 Trencar | 🔨 Martell | 0.3🪙 | Notifica rival, 30% bonus |
+| `broken` | 🔧 Arreglar | 🔧 Tornavís | 0.2🪙 | 40% mini bonus |
+
+#### Eines (il·limitades dins la partida)
+
+| Eina | Obtenció |
+|:-----|:---------|
+| 🔧 Tornavís | Tothom comença amb 1 (DB default) |
+| 🧹 Drap | Auto-obtingut en entrar a escenari amb mobles bruts |
+| 🔨 Martell | 5% trobable en observar |
+| 🔦 Llanterna | 5% trobable en observar |
+
+#### Mobles bruts aleatoris per partida
+
+- Items amb tag `dirty` al DB = candidats elegibles
+- `getDirtyItemsForGame(items, gameId)` selecciona ~60% via hash determinístic
+- Mateixa partida = mateixos bruts; diferent partida = diferent combinació
+
+### 5.10 Sistema de llum (v1.2+)
+
+#### Interiors
+- Cuina, Habitació, Menjador, Lavabo, Despatx comencen amb llum **ENCÈS**
+- Qualsevol jugador pot **apagar** (0.2🪙) → cap jugador veu els mobles
+- Qualsevol jugador pot **encendre** (0.2🪙) → tots veuen els mobles
+- Afecta **AMBDÓS** jugadors (estratègic)
+
+#### Exteriors (Jardí, Balcó)
+- Necessiten 🔦 **Llanterna** per revelar mobles ocults
+- Reutilitzable (no es consumeix), costa 0.2🪙
+- Jardí → revela 📦 Baúl | Balcó → revela 🏺 Gerro
+
+| Efecte (item_interactions) | Descripció |
 |:-------|:-----------|
 | `reveal_items` | Mostra mobles ocults de l'escenari |
 | `enable_position` | Desbloqueja una posició d'un moble |
