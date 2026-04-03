@@ -186,11 +186,14 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
   return actions;
 }
 
-/** Roll for tool finding (10% chance on look/confirm) */
+/** Roll for tool finding (~15% chance on look/confirm) */
 export function rollForTool(): ToolType | null {
   const roll = Math.random();
-  if (roll < 0.10) {
-    return roll < 0.05 ? "tornavis" : "drap";
+  if (roll < 0.15) {
+    // 5% martell, 5% tornavis, 5% drap
+    if (roll < 0.05) return "martell";
+    if (roll < 0.10) return "tornavis";
+    return "drap";
   }
   return null;
 }
