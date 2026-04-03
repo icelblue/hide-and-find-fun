@@ -310,6 +310,17 @@ export async function getMyGames(userId: string) {
 
   const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
 
+  // Fetch creator profiles for all games
+  const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];
+  if (creatorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles").select("user_id, display_name").in("user_id", creatorIds);
+    const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
+    for (const gp of all) {
+      (gp as any)._creator_name = profileMap.get((gp as any).games.created_by) ?? "Anònim";
+    }
+  }
+
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
   return all
