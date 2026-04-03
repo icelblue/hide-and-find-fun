@@ -122,6 +122,17 @@ export async function getItemsByScenario(scenarioId: string) {
   return data;
 }
 
+export async function getItemInteractions(itemIds: string[]) {
+  if (itemIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("item_interactions")
+    .select("*")
+    .in("item_id", itemIds)
+    .order("display_order");
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getObjects() {
   const { data, error } = await supabase.from("objects").select("*").order("display_order");
   if (error) throw error;
