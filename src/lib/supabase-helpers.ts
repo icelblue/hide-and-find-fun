@@ -627,21 +627,27 @@ export async function sendSocialItem(
   }
 
   const { data: toPlayer } = await supabase
-    .from("game_players").select("shield_active, id")
+    .from("game_players").select("shield_active, id, current_scenario_id")
     .eq("game_id", gameId).eq("user_id", toPlayerId).single();
 
-  const blocked = !!(toPlayer?.shield_active && itemType !== "shield");
+  // Shield blocks banana and message only (NOT smoke_bomb, shield, or espia)
+  const blocked = !!(toPlayer?.shield_active && itemType === "banana");
+
+  // For espia, we target ourselves (no notification to rival)
+  const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
 
   await supabase.from("game_social_items").insert({
-    game_id: gameId, from_player_id: fromPlayerId, to_player_id: toPlayerId,
+    game_id: gameId, from_player_id: fromPlayerId, to_player_id: actualToPlayer,
     item_type: itemType, message_text: messageText, blocked_by_shield: blocked,
   });
 
   await supabase.from("game_players")
     .update({ social_item_used_today: true }).eq("id", fromPlayer.id);
 
+  let espiaResult: string | null = null;
+
   if (blocked) {
-    // Shield blocked this item — deactivate shield after use
+    // Shield blocked this banana — deactivate shield after use
     await supabase.from("game_players")
       .update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
@@ -654,6 +660,7 @@ export async function sendSocialItem(
       if (fromPlayer.smoke_bomb_used) {
         throw new Error("Ja has usat la bomba de fum en aquesta partida!");
       }
+      // Move YOUR hidden object to a different position
       const { data: self } = await supabase
         .from("game_players").select("hidden_position, id")
         .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
@@ -664,10 +671,18 @@ export async function sendSocialItem(
         await supabase.from("game_players")
           .update({ hidden_position: newPos, smoke_bomb_used: true }).eq("id", self.id);
       }
+    } else if (itemType === "espia") {
+      // Reveal rival's current scenario to the sender
+      if (toPlayer?.current_scenario_id) {
+        const { data: scenario } = await supabase
+          .from("scenarios").select("name, icon")
+          .eq("id", toPlayer.current_scenario_id).single();
+        if (scenario) espiaResult = `${scenario.icon} ${scenario.name}`;
+      }
     }
   }
 
-  return { blocked };
+  return { blocked, espiaResult };
 }
 
 export async function getUnprocessedSocialItems(gameId: string, playerId: string) {
