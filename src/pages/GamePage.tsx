@@ -258,7 +258,11 @@ export default function GamePage() {
     if (!gameId || !user || !finalPos) return;
     setActionLoading(true);
     try {
-      const specialData = extraSpecialData || undefined;
+      // Merge hide message into special data if present
+      let specialData = extraSpecialData || undefined;
+      if (hideMessage.trim()) {
+        specialData = { ...(specialData || {}), hide_message: hideMessage.trim() };
+      }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
       setHideStep(4);
       toast.success("Objecte amagat! 🫣");
