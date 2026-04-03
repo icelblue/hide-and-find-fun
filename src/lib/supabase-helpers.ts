@@ -350,16 +350,14 @@ export async function toggleLight(gameId: string, playerId: string, scenarioId: 
     bonus_value: `tag:light_${turnOff ? "off" : "on"}:${scenarioId}`,
   } as any);
 
-  // Bonus roll on light toggle
+  // Bonus roll on light toggle (shared pool)
   let toolFound: ToolType | null = null;
-  const tool = rollForTool();
+  const tool = await rollForTool(gameId);
   if (tool) {
     const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
-    if ((tools[tool] ?? 0) < 3) {
-      tools[tool] = (tools[tool] ?? 0) + 1;
-      await supabase.from("game_players").update({ tools }).eq("id", player.id);
-      toolFound = tool;
-    }
+    tools[tool] = (tools[tool] ?? 0) + 1;
+    await supabase.from("game_players").update({ tools }).eq("id", player.id);
+    toolFound = tool;
   }
 
   return { toolFound };
