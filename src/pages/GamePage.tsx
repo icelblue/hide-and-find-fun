@@ -1152,7 +1152,8 @@ export default function GamePage() {
                   moveHistory={moveHistory}
                   playerTools={playerTools}
                   gameBreaks={gameBreaks}
-                  onTagAction={handleTagAction} />
+                  onTagAction={handleTagAction}
+                  dirtyItems={dirtyItems} />
               ))}
             </div>
           </div>
