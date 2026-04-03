@@ -301,6 +301,44 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  const handleInteraction = async (interaction: any) => {
+    if (!gameId || !user || !player) return;
+    // Check if already used (one_time) by looking at move history
+    const alreadyUsed = moveHistory.some((m: any) =>
+      m.action === "look" && m.target_item_id === interaction.item_id &&
+      (m as any).bonus_value === `interact:${interaction.action_name}`
+    );
+    if (interaction.one_time && alreadyUsed) {
+      toast.error("Ja has fet aquesta acció!");
+      return;
+    }
+    if (player.tokens_remaining < interaction.cost) {
+      toast.error("No tens prou tokens!");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      // Record as a look move with special bonus_value to track interaction
+      await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre");
+      // Apply effect locally
+      if (interaction.effect_type === "reveal_content") {
+        const data = interaction.effect_data as any;
+        toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
+      } else if (interaction.effect_type === "reveal_items") {
+        toast.success(`${interaction.action_icon} Nous mobles revelats!`, { duration: 4000 });
+      } else if (interaction.effect_type === "give_hint") {
+        const data = interaction.effect_data as any;
+        toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
+      } else if (interaction.effect_type === "enable_position") {
+        const data = interaction.effect_data as any;
+        toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
+      }
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
   const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
     if (!gameId || !user) return;
     setActionLoading(true);
