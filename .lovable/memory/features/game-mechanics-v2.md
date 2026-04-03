@@ -1,6 +1,6 @@
 ---
 name: Game Mechanics v2
-description: Progressive hints, explored spots tracking, banana blocks 1 spot, smoke bomb 1x/game, espia reveals rival location, swap exchanges positions
+description: Progressive hints, explored spots tracking, banana blocks 1 spot, smoke bomb moves to DIFFERENT scenario, espia reveals rival location, swap exchanges positions
 type: feature
 ---
 
@@ -15,11 +15,12 @@ type: feature
 
 ## Social Items (1/day)
 - 🍌 **Plàtan**: Blocks 1 random position button. Unblocks on any other action.
-- 💣 **Bomba de fum**: Moves YOUR hidden object to different position (1x/game). NOT blocked by shield.
-- 🛡️ **Escut**: Protects from next banana OR swap. Deactivates after blocking. Does NOT block smoke bomb or espia.
+- 💣 **Bomba de fum**: Moves YOUR hidden object to a DIFFERENT scenario (random item + position). 1x/game. Sends self-notification with new location. NOT blocked by shield.
+- 🛡️ **Escut**: Protects from next banana, swap, OR robar_tornavis. Deactivates after blocking. Does NOT block smoke bomb or espia.
 - 🕵️ **Espia**: Reveals which scenario the rival is currently in. Self-targeted (no notification to rival).
 - 🔄 **Intercanvi**: Swaps your current scenario with the rival's. Blocked by shield. Side effects applied BEFORE realtime notification.
 - 💡 **Pista personalitzada**: Send a message/bluff to the rival.
+- 🔧 **Robar tornavís**: Steals 1 screwdriver from rival. Blocked by shield.
 - ~~🔮 Pista falsa~~: REMOVED from game.
 
 ## Hide Message
@@ -61,6 +62,21 @@ type: feature
 ## Defeat Reveal
 - When losing, player can see: rival's object, scenario, furniture, position, material (using MATERIAL_LABELS), traits, special type, and hide message
 
-## Bug Fixes (v1.6.1)
-- Llanterna: Fixed stale closure bug — now fetches scenario name directly from DB instead of relying on stale `scenarios` state
-- Swap/SmokeBomb: Fixed race condition — side effects now applied BEFORE inserting social item (which triggers realtime)
+## Object Traits (Hints)
+- ALL objects have exactly 2 traits in object_traits table
+- Trait 1 shown after 2 moves, Trait 2 shown after 5 moves
+- Traits help deduce WHAT object the rival hid
+
+## Profile Collection
+- Shows all reward_items catalog with owned/total count
+- Greyed out items not yet collected
+- Grouped by rarity with emoji indicators
+
+## Help Button Reward Catalog
+- Lists all reward items grouped by rarity
+- Shows drop percentages: Common 50%, Uncommon 30%, Rare 13%, Epic 5%, Legendary 2%
+- Shows sell values per rarity
+
+## Bug Fixes (v1.8.1)
+- Smoke bomb: now moves to different scenario (not just position), notifies owner of new location
+- Added traits for Gel, Cor de vidre, Ratolí de PC (were missing)
