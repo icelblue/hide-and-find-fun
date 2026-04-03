@@ -245,6 +245,24 @@ export default function LobbyPage() {
         </Button>
       </div>
 
+      {/* New player recommendation */}
+      {profile && profile.games_played === 0 && (
+        <Card className="mb-4 glass border-accent/40 animate-fade-in">
+          <CardContent className="py-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🐾</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold">Primera vegada?</p>
+                <p className="text-[11px] text-muted-foreground">Aprèn a jugar amb el Mode Història — un tutorial interactiu pas a pas!</p>
+              </div>
+              <Button size="sm" onClick={() => navigate("/story")} className="shrink-0">
+                Anar-hi
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Search rival */}
       <Card className="mb-4 glass">
         <CardContent className="pt-3 pb-3">
