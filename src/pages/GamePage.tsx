@@ -768,9 +768,6 @@ export default function GamePage() {
             {player.shield_active && (
               <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
             )}
-            {falseClueItem && (
-              <span className="bg-destructive/10 text-destructive text-[11px] font-semibold px-3 py-1 rounded-full animate-pulse border border-destructive/20">🔮 Sospitós!</span>
-            )}
             {noTokens && (
               <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
