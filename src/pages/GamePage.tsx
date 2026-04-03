@@ -367,15 +367,19 @@ export default function GamePage() {
     if (!gameId || !user || !showSpecialFoundPopup) return;
     const { special } = showSpecialFoundPopup;
     // Save as trophy to player_inventory
+    const rivalObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
+    const rivalSd = rival?.special_data as any;
+    const hideMsg = rivalSd?.hide_message || (rivalSd?.type === "custom_message" ? rivalSd.message : null);
     await supabase.from("player_inventory").insert({
       user_id: user.id, game_id: gameId,
       item_type: "special_trophy",
       item_value: special.special_type === "custom_name" ? specialFoundInput.trim() : null,
       special_data: {
-        object_name: objects.find((o: any) => o.id === rival?.hidden_object_id)?.name,
-        object_icon: objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon,
+        object_name: rivalObj?.name,
+        object_icon: rivalObj?.icon,
         custom_name: specialFoundInput.trim() || null,
         special_type: special.special_type,
+        custom_message: hideMsg,
       },
     });
     toast.success(`🏆 Trofeu desat!`);
