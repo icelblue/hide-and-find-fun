@@ -38,6 +38,8 @@ export default function StoryModePage() {
   const [randomPet, setRandomPet] = useState<{ type: string; icon: string; name: string }>(PET_OPTIONS[0]);
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
+  const [petNameInput, setPetNameInput] = useState("");
+  const [namingPet, setNamingPet] = useState(false);
   const [startingChapter, setStartingChapter] = useState(false);
 
   const allAccsCollected = useMemo(() => hasAllAccessories(accessories), [accessories]);
