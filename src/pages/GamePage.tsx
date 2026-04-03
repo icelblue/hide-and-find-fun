@@ -1264,7 +1264,7 @@ export default function GamePage() {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
 
           {/* History — collapsible, compact on mobile */}
           {moveHistory.length > 0 && (
