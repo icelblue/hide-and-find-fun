@@ -144,6 +144,9 @@ export default function GamePage() {
       loadedItems = itemsData;
       setCurrentScenarioItems(itemsData);
       setConnectedScenarios(connected);
+      // Load interactions for current scenario items
+      const interactions = await getItemInteractions(itemsData.map((i: any) => i.id));
+      setItemInteractions(interactions);
     }
 
     const { data: moves } = await supabase
