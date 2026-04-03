@@ -262,8 +262,9 @@ export default function LobbyPage() {
                 playing: { icon: "🎮", label: "En joc", color: "text-primary" },
                 finished: { icon: "🏁", label: "Acabada", color: "text-muted-foreground" },
               };
+              const creatorName = gp._creator_name ?? "Anònim";
               const s = isPending
-                ? { icon: "⚔️", label: `Repte de ${gp._creator_name ?? "Anònim"}!`, color: "text-accent" }
+                ? { icon: "⚔️", label: `Repte pendent`, color: "text-accent" }
                 : (statusMap[game.status] ?? statusMap.waiting);
 
               return (
