@@ -35,6 +35,7 @@ export default function StoryModePage() {
   const [pet, setPet] = useState<any>(null);
   const [progress, setProgress] = useState<any[]>([]);
   const [accessories, setAccessories] = useState<any[]>([]);
+  const [playerName, setPlayerName] = useState("aventurer");
 
   // Intro animation states
   const [randomPet, setRandomPet] = useState<{ type: string; icon: string; name: string }>(PET_OPTIONS[0]);
@@ -58,16 +59,18 @@ export default function StoryModePage() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [petData, prog, accs, scen] = await Promise.all([
+    const [petData, prog, accs, scen, profileRes] = await Promise.all([
       getMyPet(user.id),
       getStoryProgress(user.id),
       getMyAccessories(user.id),
       getScenarios(),
+      supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
     ]);
     setPet(petData);
     setProgress(prog);
     setAccessories(accs);
     setScenarios(scen);
+    if (profileRes.data?.display_name) setPlayerName(profileRes.data.display_name);
 
     if (!petData) {
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
@@ -265,7 +268,7 @@ export default function StoryModePage() {
       {introStep === 0 && (
         <div className="text-center relative z-10">
           <TypewriterText
-            text={`Hola ${user?.email?.split("@")[0] ?? "aventurer"}! Aquest regal 🎁 és per tu...`}
+            text={`Hola ${playerName}! Aquest regal 🎁 és per tu...`}
             speed={75}
             onComplete={() => setTimeout(() => setIntroStep(1), 1200)}
             className="text-lg font-medium mb-6"
