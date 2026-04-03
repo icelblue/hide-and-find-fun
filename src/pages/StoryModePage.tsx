@@ -54,6 +54,7 @@ export default function StoryModePage() {
   const [xpEarned, setXpEarned] = useState(0);
   const [wonConsumable, setWonConsumable] = useState<any>(null);
   const [petDied, setPetDied] = useState(false);
+  const [exploredSpots, setExploredSpots] = useState<Set<string>>(new Set());
 
   const allAccsCollected = useMemo(() => hasAllAccessories(accessories), [accessories]);
 
