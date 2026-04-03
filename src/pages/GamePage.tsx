@@ -49,7 +49,7 @@ export default function GamePage() {
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
-  const [falseClueItem, setFalseClueItem] = useState(false);
+  const [hideMessage, setHideMessage] = useState("");
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState<{ itemId: string; position: "sobre" | "sota" | "dins"; itemName: string } | null>(null);
