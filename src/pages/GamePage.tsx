@@ -1,3 +1,28 @@
+// ============================================================
+// GamePage.tsx — Motor principal del joc (1384 línies)
+// ============================================================
+// Gestiona el cicle complet d'una partida:
+//
+// FASE 1 — WAITING: Mostra codi de partida, permet amagar objecte
+// FASE 2 — HIDING:  Ambdós jugadors amaguen simultàniament
+// FASE 3 — PLAYING: Cerca activa amb moviments, observació, confirmació
+// FASE 4 — FINISHED: Resultats, Elo, recompenses
+//
+// Seccions principals del component:
+//   - State (línies ~29-72): Tots els estats del joc
+//   - loadGame() (~80-271): Càrrega completa de l'estat de partida
+//   - Realtime subscription (~273-286): WebSocket per canvis en viu
+//   - Hiding handlers (~288-354): Selecció escenari→objecte→moble→posició
+//   - Action handlers (~364-599): move, look, confirm, social items
+//   - Render — Waiting/Hiding/Playing/Finished (~625-1257)
+//   - ItemActions component (~1259-1384): Moble expandible amb accions
+//
+// Sistemes integrats:
+//   🪙 Tokens (5/dia + bonus) | 🌡️ Pistes progressives
+//   ⚡ Ítems socials (1/dia)  | 🔦 Llum/Llanterna
+//   🧹🔨🔧 Eines interactives  | 🏆 Trofeus especials
+// ============================================================
+
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { logError } from "@/components/ErrorBoundary";
