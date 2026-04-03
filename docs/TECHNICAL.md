@@ -680,13 +680,26 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 
 ### 5.8 Detecció de proximitat
 
-### 5.6 Detecció de proximitat
-
 ```
 Si el rival està a l'habitació on TU has amagat l'objecte:
   → rivalNearby = true
   → Avís visual ⚠️ al teu tauler
 ```
+
+### 5.9 Mobles interactius
+
+> Alguns mobles tenen accions especials (💡 encendre, 🚪 obrir, 🧹 netejar). Definits a `item_interactions`.
+
+| Efecte | Descripció |
+|:-------|:-----------|
+| `reveal_items` | Mostra mobles ocults de l'escenari |
+| `enable_position` | Desbloqueja una posició d'un moble |
+| `give_hint` | Dona una pista addicional |
+| `reveal_content` | Mostra contingut descriptiu |
+
+### 5.10 Límit de mobles per escenari
+
+> Cada escenari té un `max_items` que limita quants mobles hi pot haver. La funció `place_reward_item` ho valida.
 
 <br/>
 
