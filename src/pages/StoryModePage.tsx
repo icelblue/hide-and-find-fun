@@ -84,21 +84,26 @@ export default function StoryModePage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   // ====== INTRO FLOW ======
-  const handleOpenGift = () => {
+  const handleOpenGift = async () => {
     setGiftOpened(true);
-    setTimeout(() => setPhase("naming"), 1500);
-  };
-
-  const handleCreatePet = async () => {
-    if (!user || !petName.trim()) return;
+    if (!user) return;
     try {
-      const p = await createPet(user.id, randomPet.type, petName.trim(), randomPet.icon);
+      // Fetch display_name from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const name = profile?.display_name || user.email?.split("@")[0] || "Jugador";
+      const p = await createPet(user.id, randomPet.type, name, randomPet.icon);
       setPet(p);
       await initChapter(user.id, 1);
       const prog = await getStoryProgress(user.id);
       setProgress(prog);
-      setPhase("hub");
-      toast.success(`${randomPet.icon} ${petName.trim()} és el teu company!`);
+      setTimeout(() => {
+        setPhase("hub");
+        toast.success(`${randomPet.icon} ${name} és el teu company!`);
+      }, 1500);
     } catch (err: any) { toast.error(err.message); }
   };
 
