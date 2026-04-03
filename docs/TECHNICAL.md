@@ -216,6 +216,7 @@
 │   │   │     · INVENTORY: getPlayerInventory, giftInventoryItem
 │   │   │     · BONUS: redeemBonusTokens
 │   │   ├── 📄 reward-helpers.ts     ← Recompenses via Supabase RPC
+│   │   ├── 📄 constants.ts         ← APP_VERSION, constants globals
 │   │   └── 📄 utils.ts             ← cn() per Tailwind merge
 │   │
 │   ├── 📁 components/
