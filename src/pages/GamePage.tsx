@@ -179,9 +179,6 @@ export default function GamePage() {
             setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
             setBananaEffect(true);
           }
-        } else if (item.item_type === "false_clue") {
-          setFalseClueItem(true);
-          setTimeout(() => setFalseClueItem(false), 10000);
         } else if (item.item_type === "smoke_bomb") {
           toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
         } else if (item.item_type === "shield") {
