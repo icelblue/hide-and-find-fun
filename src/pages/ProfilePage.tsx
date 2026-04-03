@@ -559,7 +559,8 @@ function WonObjectsSection({ userId }: { userId: string }) {
         getRewardCatalog(),
         supabase.from("player_rewards")
           .select("reward_item_id")
-          .eq("user_id", userId),
+          .eq("user_id", userId)
+          .eq("status", "owned"),
       ]);
       setCatalog(items);
       setOwnedIds(new Set((owned ?? []).map((r: any) => r.reward_item_id)));
