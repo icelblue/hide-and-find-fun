@@ -541,9 +541,37 @@ export default function GamePage() {
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundObject) {
-        toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
-        // Check if rival's object has a "find" special
-        if (rival?.hidden_object_id) {
+        // Story mode: handle chapter completion with XP/accessories
+        if (isStory && storyChapter) {
+          const movesCount = (moveHistory?.length ?? 0) + 1;
+          const storyRes = await completeChapter(user.id, storyChapter, movesCount);
+          // Award accessory for chapters 3+
+          let wonAccessory: any = null;
+          let wonConsumable: any = null;
+          if (storyChapter >= 3) {
+            const accIdx = storyChapter - 3;
+            if (accIdx < PET_ACCESSORIES.length) {
+              const acc = PET_ACCESSORIES[accIdx];
+              const myAccs = await getMyAccessories(user.id);
+              const alreadyOwned = myAccs.some(a => a.accessory_name === acc.name);
+              if (!alreadyOwned) {
+                await awardAccessory(user.id, acc.name, acc.icon);
+                wonAccessory = acc;
+              }
+            }
+            // If all accessories collected, show consumable
+            const allAccs = await getMyAccessories(user.id);
+            if (hasAllAccessories(allAccs)) {
+              wonConsumable = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
+            }
+          }
+          setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
+          toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
+        } else {
+          toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
+        }
+        // Check if rival's object has a "find" special (PvP only)
+        if (!isStory && rival?.hidden_object_id) {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
           if (rivalSpecial && rivalSpecial.prompt_on === "find") {
             if (rivalSpecial.special_type === "troll_effect") {
@@ -559,8 +587,8 @@ export default function GamePage() {
             }
           }
         }
-        // Show hide message from rival
-        if (rival?.special_data) {
+        // Show hide message from rival (PvP only)
+        if (!isStory && rival?.special_data) {
           const sd = rival.special_data as any;
           const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
           if (hideMsg) {
