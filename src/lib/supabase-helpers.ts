@@ -133,6 +133,175 @@ export async function getItemInteractions(itemIds: string[]) {
   return data ?? [];
 }
 
+// ============================================
+// TAG-BASED INTERACTIONS (Netejar, Trencar, Arreglar)
+// ============================================
+
+export const TAG_ACTIONS = {
+  dirty: { icon: "🧹", label: "Netejar", cost: 0.2, requiresTool: "drap" as const },
+  breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: null },
+  broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
+} as const;
+
+export type ToolType = "drap" | "tornavis";
+
+/** Get tag-based actions available for an item given player's tools and game state */
+export function getTagActions(item: any, playerTools: Record<string, number>, gameBreaks: Set<string>) {
+  const tags: string[] = item.tags ?? [];
+  const actions: Array<{
+    tag: string; icon: string; label: string; cost: number;
+    requiresTool: ToolType | null; hasTool: boolean; actionKey: string;
+  }> = [];
+
+  // If broken (by someone in this game), show Arreglar
+  if (gameBreaks.has(item.id)) {
+    const cfg = TAG_ACTIONS.broken;
+    actions.push({
+      tag: "broken", ...cfg,
+      hasTool: (playerTools.tornavis ?? 0) > 0,
+      actionKey: `fix:${item.id}`,
+    });
+  }
+
+  // Dirty → Netejar (only if not already cleaned by this player)
+  if (tags.includes("dirty") && !gameBreaks.has(`clean:${item.id}`)) {
+    const cfg = TAG_ACTIONS.dirty;
+    actions.push({
+      tag: "dirty", ...cfg,
+      hasTool: (playerTools.drap ?? 0) > 0,
+      actionKey: `clean:${item.id}`,
+    });
+  }
+
+  // Breakable → Trencar (only if not already broken)
+  if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
+    const cfg = TAG_ACTIONS.breakable;
+    actions.push({
+      tag: "breakable", ...cfg,
+      hasTool: true, // no tool needed
+      actionKey: `break:${item.id}`,
+    });
+  }
+
+  return actions;
+}
+
+/** Roll for tool finding (10% chance on look/confirm) */
+export function rollForTool(): ToolType | null {
+  const roll = Math.random();
+  if (roll < 0.10) {
+    return roll < 0.05 ? "tornavis" : "drap";
+  }
+  return null;
+}
+
+/** Execute a tag-based action */
+export async function performTagAction(
+  gameId: string, playerId: string, itemId: string, actionKey: string,
+  playerTools: Record<string, number>
+) {
+  const { data: player } = await supabase
+    .from("game_players").select("*").eq("game_id", gameId).eq("user_id", playerId).single();
+  if (!player) throw new Error("Jugador no trobat");
+
+  const [actionType, _itemId] = actionKey.split(":");
+  const cfg = actionType === "clean" ? TAG_ACTIONS.dirty :
+              actionType === "break" ? TAG_ACTIONS.breakable :
+              TAG_ACTIONS.broken;
+
+  let tokensRemaining = await ensureTokensReset(player);
+  if (tokensRemaining < cfg.cost) throw new Error(`No tens prou tokens! Necessites ${cfg.cost}`);
+
+  // Check tool requirement
+  const toolNeeded = cfg.requiresTool;
+  if (toolNeeded && (playerTools[toolNeeded] ?? 0) <= 0) {
+    const toolName = toolNeeded === "drap" ? "🧹 Drap" : "🔧 Tornavís";
+    throw new Error(`Necessites un ${toolName} per fer això!`);
+  }
+
+  // Count turns
+  const { count } = await supabase
+    .from("game_moves").select("*", { count: "exact", head: true })
+    .eq("game_id", gameId).eq("player_id", playerId);
+  const turnNumber = (count ?? 0) + 1;
+
+  // Deduct tokens
+  const newTokens = tokensRemaining - cfg.cost;
+  const toolsUpdate = { ...playerTools };
+
+  // Consume tool if needed
+  if (toolNeeded) {
+    toolsUpdate[toolNeeded] = Math.max(0, (toolsUpdate[toolNeeded] ?? 0) - 1);
+  }
+
+  // If breaking: tornavís appears in same scenario for everyone
+  let tornavisSpawned = false;
+  if (actionType === "break") {
+    // Spawn tornavís for the breaker
+    toolsUpdate.tornavis = Math.min(3, (toolsUpdate.tornavis ?? 0) + 1);
+    tornavisSpawned = true;
+  }
+
+  await supabase.from("game_players")
+    .update({ tokens_remaining: newTokens, tools: toolsUpdate })
+    .eq("id", player.id);
+
+  // Record the move (use bonus_value to track the action type)
+  await supabase.from("game_moves").insert({
+    game_id: gameId, player_id: playerId, turn_number: turnNumber,
+    action: "look" as const, token_cost: cfg.cost,
+    target_item_id: itemId, target_position: "sobre" as const,
+    bonus_value: `tag:${actionKey}`,
+  } as any);
+
+  // Mini bonus roll
+  let bonusResult: { amount: number } | null = null;
+  const bonusChance = actionType === "clean" ? 0.5 : actionType === "break" ? 0.3 : 0.4;
+  if (Math.random() < bonusChance) {
+    const bonusAmount = Math.random() < 0.3 ? 0.5 : 0.3;
+    await supabase.from("game_players")
+      .update({ tokens_remaining: newTokens + bonusAmount }).eq("id", player.id);
+    bonusResult = { amount: bonusAmount };
+  }
+
+  // If breaking: notify rival via social items mechanism
+  if (actionType === "break") {
+    const { data: rival } = await supabase
+      .from("game_players").select("user_id, tools")
+      .eq("game_id", gameId).neq("user_id", playerId).single();
+    if (rival) {
+      // Also give rival a tornavís so they can fix it
+      const rivalTools = (rival.tools as any) ?? { drap: 0, tornavis: 0 };
+      rivalTools.tornavis = Math.min(3, (rivalTools.tornavis ?? 0) + 1);
+      await supabase.from("game_players")
+        .update({ tools: rivalTools })
+        .eq("game_id", gameId).eq("user_id", rival.user_id);
+
+      // Send notification
+      const { data: item } = await supabase.from("items").select("name, icon").eq("id", itemId).single();
+      await supabase.from("game_social_items").insert({
+        game_id: gameId, from_player_id: playerId, to_player_id: rival.user_id,
+        item_type: "message" as const,
+        message_text: `💥 El rival ha trencat ${item?.icon} ${item?.name}!`,
+      });
+    }
+  }
+
+  // Tool finding on clean/fix (extra tool chance)
+  let toolFound: ToolType | null = null;
+  if (actionType === "clean" || actionType === "fix") {
+    toolFound = rollForTool();
+    if (toolFound) {
+      const updatedTools = { ...toolsUpdate };
+      updatedTools[toolFound] = Math.min(3, (updatedTools[toolFound] ?? 0) + 1);
+      await supabase.from("game_players")
+        .update({ tools: updatedTools }).eq("id", player.id);
+    }
+  }
+
+  return { bonusResult, tornavisSpawned, toolFound, actionType };
+}
+
 export async function getObjects() {
   const { data, error } = await supabase.from("objects").select("*").order("display_order");
   if (error) throw error;
