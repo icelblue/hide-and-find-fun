@@ -437,11 +437,11 @@ CREATE TYPE game_status     AS ENUM ('waiting', 'hiding', 'playing', 'finished')
 CREATE TYPE action_type     AS ENUM ('move', 'look', 'confirm');
 CREATE TYPE position_type   AS ENUM ('sobre', 'sota', 'dins');
 CREATE TYPE bonus_type      AS ENUM ('extra_token', 'hint_yes', 'hint_no');
-CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message');
+CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message', 'espia', 'swap');
 CREATE TYPE league_tier     AS ENUM ('bronze', 'silver', 'gold', 'platinum', 'diamond');
 CREATE TYPE item_rarity     AS ENUM ('common', 'uncommon', 'rare', 'epic', 'legendary');
-CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric');
-CREATE TYPE item_environment AS ENUM ('generic', 'wet', 'hot');
+CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric', 'wood', 'cardboard', 'rubber', 'ceramic', 'electronic', 'leather', 'stone');
+CREATE TYPE item_environment AS ENUM ('generic', 'wet', 'hot', 'dirty', 'outdoor', 'frozen', 'sorrenc', 'ventós', 'submergit', 'químic');
 ```
 
 <br/>
