@@ -1222,8 +1222,8 @@ export default function GamePage() {
           </div>
           )}
 
-          {/* Social */}
-          <div>
+          {/* Social — hidden in story mode */}
+          {!isStory && <div>
             <Button variant="outline" className="w-full h-12 text-base" size="lg"
               onClick={() => setShowSocialPanel(!showSocialPanel)}
               disabled={player.social_item_used_today}>
