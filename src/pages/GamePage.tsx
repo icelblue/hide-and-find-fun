@@ -1083,8 +1083,8 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* Rival's object traits */}
-          {(rivalTraits.trait1 || rivalTraits.trait2) && (
+          {/* Rival's object traits (PvP only) */}
+          {!isStory && (rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes de l'objecte rival</p>
@@ -1100,7 +1100,7 @@ export default function GamePage() {
               </CardContent>
             </Card>
           )}
-          {!rivalTraits.trait1 && moveHistory.length < 2 && (
+          {!isStory && !rivalTraits.trait1 && moveHistory.length < 2 && (
             <p className="text-[10px] text-center text-muted-foreground">💡 Pista de l'objecte rival al torn 2</p>
           )}
 
