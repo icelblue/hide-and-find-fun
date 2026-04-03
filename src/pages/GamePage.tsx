@@ -1294,6 +1294,7 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
   const [rivalInfo, setRivalInfo] = useState<{
     obj: any; item: any; scenario: any; position: string;
     hideMessage: string | null; rivalName: string;
+    specialType: string | null; traits: string[];
   } | null>(null);
   const [showRivalInfo, setShowRivalInfo] = useState(false);
 
@@ -1303,10 +1304,10 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
     (async () => {
       const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
         rival.hidden_object_id
-          ? supabase.from("objects").select("name, icon").eq("id", rival.hidden_object_id).single()
+          ? supabase.from("objects").select("name, icon, material, size").eq("id", rival.hidden_object_id).single()
           : { data: null },
         rival.hidden_item_id
-          ? supabase.from("items").select("name, icon, scenario_id").eq("id", rival.hidden_item_id).single()
+          ? supabase.from("items").select("name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
           : { data: null },
         supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
       ]);
@@ -1316,11 +1317,26 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
       }
       const sd = rival.special_data as any;
       const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+
+      // Load traits & special for this object
+      let traits: string[] = [];
+      let specialType: string | null = null;
+      if (rival.hidden_object_id) {
+        const [{ data: traitData }, { data: specialData }] = await Promise.all([
+          supabase.from("object_traits").select("trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
+          supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
+        ]);
+        traits = (traitData ?? []).map((t: any) => t.trait_text);
+        specialType = specialData?.special_type ?? null;
+      }
+
       setRivalInfo({
         obj, item: itm, scenario: scn,
         position: rival.hidden_position ?? "?",
         hideMessage: hideMsg,
         rivalName: rivalProf?.display_name ?? "Rival",
+        specialType,
+        traits,
       });
     })();
   }, [game.winner_id, user?.id, rival, scenarios]);
