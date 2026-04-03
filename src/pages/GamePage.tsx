@@ -158,7 +158,30 @@ export default function GamePage() {
       .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
       .eq("game_id", gameId).eq("player_id", user.id)
       .order("turn_number", { ascending: false });
-    setMoveHistory(moves ?? []);
+    const allMoves = moves ?? [];
+    setMoveHistory(allMoves);
+
+    // Compute game breaks and cleans from ALL players' tag actions
+    const { data: allGameMoves } = await supabase
+      .from("game_moves").select("bonus_value")
+      .eq("game_id", gameId)
+      .like("bonus_value", "tag:%");
+    const breaks = new Set<string>();
+    for (const m of allGameMoves ?? []) {
+      const val = (m.bonus_value as string) ?? "";
+      if (val.startsWith("tag:break:")) {
+        const brokenId = val.replace("tag:break:", "");
+        breaks.add(brokenId);
+      }
+      if (val.startsWith("tag:fix:")) {
+        const fixedId = val.replace("tag:fix:", "");
+        breaks.delete(fixedId); // fixed!
+      }
+      if (val.startsWith("tag:clean:")) {
+        breaks.add(`clean:${val.replace("tag:clean:", "")}`);
+      }
+    }
+    setGameBreaks(breaks);
 
     // Compute revealed items from interactions + move history
     const revealed = new Set<string>();
