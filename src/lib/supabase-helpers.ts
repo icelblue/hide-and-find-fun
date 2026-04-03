@@ -1149,7 +1149,7 @@ export async function sendSocialItem(
     .single();
 
   // Shield blocks banana and swap only (NOT smoke_bomb, shield, espia, or message)
-  const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap"));
+  const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis"));
 
   // For espia, we target ourselves (no notification to rival)
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
