@@ -1070,7 +1070,7 @@ export default function GamePage() {
                 ⚠️ Rival a prop del teu objecte!
               </span>
             )}
-            {player.shield_active && (
+            {!isStory && player.shield_active && (
               <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
             )}
             {noTokens && (
