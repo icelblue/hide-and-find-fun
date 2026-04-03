@@ -157,6 +157,23 @@ export default function GamePage() {
       .order("turn_number", { ascending: false });
     setMoveHistory(moves ?? []);
 
+    // Compute revealed items from interactions + move history
+    const revealed = new Set<string>();
+    for (const ia of loadedInteractions) {
+      if (ia.effect_type === "reveal_items") {
+        // Check if this interaction was used (item_id appears in moves for this item)
+        const wasUsed = (moves ?? []).some((m: any) => m.target_item_id === ia.item_id);
+        if (wasUsed) {
+          const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
+          ids.forEach((id: string) => revealed.add(id));
+        }
+      }
+    }
+    setRevealedItemIds(revealed);
+    // Filter: show non-hidden items + revealed hidden items
+    const visibleItems = loadedItems.filter((i: any) => !i.hidden || revealed.has(i.id));
+    setCurrentScenarioItems(visibleItems);
+
     if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
       const r = await getGameReward(gameId, user.id);
       setReward(r);
