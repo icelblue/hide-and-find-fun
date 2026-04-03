@@ -183,6 +183,8 @@ export default function StoryModePage() {
   };
 
   const handleLook = (itemId: string, position: string) => {
+    const spotKey = `${currentScenarioId}:${itemId}:${position}`;
+    setExploredSpots(prev => new Set(prev).add(spotKey));
     setMovesUsed(m => m + 1);
     if (hiddenSpot && hiddenSpot.itemId === itemId && hiddenSpot.position === position && hiddenSpot.scenarioId === currentScenarioId) {
       handleFound();
