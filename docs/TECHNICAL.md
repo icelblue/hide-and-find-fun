@@ -183,12 +183,12 @@
 │   ├── 📁 pages/
 │   │   ├── 📄 AuthPage.tsx          ← Login / Signup (email + password)
 │   │   ├── 📄 ResetPasswordPage.tsx ← Recuperació de contrasenya
-│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (336 línies)
+│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (~421 línies)
 │   │   │     · Crear partida / rival aleatori / buscar jugador
 │   │   │     · Unir-se per codi / partides obertes
-│   │   │     · Les meves partides (reptes pendents)
-│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (940 línies)
-│   │   │     · Fase amagar (4 passos) + Fase cerca
+│   │   │     · Les meves partides (reptes pendents) / bug report
+│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1550 línies)
+│   │   │     · Fase amagar (4 passos) + missatge opcional
 │   │   │     · Ítems socials + pistes progressives
 │   │   │     · Confirmació + resultats + trofeus
 │   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (474 línies)
