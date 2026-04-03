@@ -1427,7 +1427,7 @@ VALUES ('<diamant_id>', 'troll_effect', 'find', '💎 Diamant trobat!',
 Editar **una sola línia** a `supabase-helpers.ts`:
 
 ```typescript
-export const TOKEN_COSTS = { move: 0.5, look: 0.3, confirm: 1.5 } as const;
+export const TOKEN_COSTS = { move: 0.5, look: 0.3 } as const;
 ```
 
 <br/>
