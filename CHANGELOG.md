@@ -7,6 +7,27 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.2.0] — 2026-04-03 — Llum i llanterna 💡🔦 (MINOR)
+
+### 💡 Sistema de llum
+- Escenaris interiors (Cuina, Habitació, Menjador, Lavabo, Despatx) comencen amb llum ENCÈS
+- Pots apagar el llum (0.2🪙) → cap jugador veu els mobles
+- Qualsevol jugador pot encendre'l de nou (0.2🪙)
+- Afecta AMBDÓS jugadors (estratègic)
+
+### 🔦 Llanterna
+- Nova eina (trobable 5% en look/confirm)
+- Usable en escenaris exteriors (Jardí, Balcó) per revelar mobles ocults
+- Reutilitzable (no es consumeix), costa 0.2🪙
+- Jardí → revela 📦 Baúl | Balcó → revela 🏺 Gerro
+
+### 🔄 Canvis
+- ❌ Eliminada interacció antiga "Encendre el llum" del Menjador
+- ❌ Eliminat moble ocult "Racó fosc" del Menjador
+- 📈 Probabilitat eines pujada a 20% (5% × 4 eines)
+
+---
+
 ## [1.1.0] — 2026-04-03 — Mobles interactius amb tags 🧹💥🔧 (MINOR)
 
 ### ⚡ Noves accions de mobles

@@ -12,7 +12,7 @@ import {
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
-  type ToolType,
+  type ToolType, OUTDOOR_SCENARIOS, isLightOff, toggleLight, useLlanterna,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,8 +49,10 @@ export default function GamePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
-  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 0, martell: 0 });
+  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 0, martell: 0, llanterna: 0 });
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
+  const [lightOffScenarios, setLightOffScenarios] = useState<Set<string>>(new Set());
+  const [flashlightRevealed, setFlashlightRevealed] = useState<Set<string>>(new Set());
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
@@ -101,7 +103,7 @@ export default function GamePage() {
       }
     }
     setPlayer(playerData);
-    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0, martell: 0 });
+    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 });
     // Load available bonus tokens from profile
     if (gameData?.status === "playing") {
       const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
@@ -161,27 +163,40 @@ export default function GamePage() {
     const allMoves = moves ?? [];
     setMoveHistory(allMoves);
 
-    // Compute game breaks and cleans from ALL players' tag actions
+    // Compute game breaks, cleans, light states, and flashlight reveals from ALL players' tag actions
     const { data: allGameMoves } = await supabase
-      .from("game_moves").select("bonus_value")
+      .from("game_moves").select("bonus_value, player_id")
       .eq("game_id", gameId)
-      .like("bonus_value", "tag:%");
+      .like("bonus_value", "tag:%")
+      .order("created_at", { ascending: true });
     const breaks = new Set<string>();
+    const lightsOff = new Set<string>();
+    const flashRevealed = new Set<string>();
     for (const m of allGameMoves ?? []) {
       const val = (m.bonus_value as string) ?? "";
       if (val.startsWith("tag:break:")) {
-        const brokenId = val.replace("tag:break:", "");
-        breaks.add(brokenId);
+        breaks.add(val.replace("tag:break:", ""));
       }
       if (val.startsWith("tag:fix:")) {
-        const fixedId = val.replace("tag:fix:", "");
-        breaks.delete(fixedId); // fixed!
+        breaks.delete(val.replace("tag:fix:", ""));
       }
       if (val.startsWith("tag:clean:")) {
         breaks.add(`clean:${val.replace("tag:clean:", "")}`);
       }
+      if (val.startsWith("tag:light_off:")) {
+        lightsOff.add(val.replace("tag:light_off:", ""));
+      }
+      if (val.startsWith("tag:light_on:")) {
+        lightsOff.delete(val.replace("tag:light_on:", ""));
+      }
+      // Flashlight reveals are per-player
+      if (val.startsWith("tag:flashlight:") && (m as any).player_id === user.id) {
+        flashRevealed.add(val.replace("tag:flashlight:", ""));
+      }
     }
     setGameBreaks(breaks);
+    setLightOffScenarios(lightsOff);
+    setFlashlightRevealed(flashRevealed);
 
     // Compute revealed items from interactions + move history
     const revealed = new Set<string>();
@@ -196,8 +211,22 @@ export default function GamePage() {
       }
     }
     setRevealedItemIds(revealed);
-    // Filter: show non-hidden items + revealed hidden items
-    const visibleItems = loadedItems.filter((i: any) => !i.hidden || revealed.has(i.id));
+
+    // Flashlight-revealed hidden items (per player, outdoor only)
+    const scenarioName = scenarios.find((s: any) => s.id === playerData?.current_scenario_id)?.name;
+    const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName ?? "");
+    const flashlightUsedHere = flashRevealed.has(playerData?.current_scenario_id ?? "");
+
+    // Filter: show non-hidden items + revealed hidden items + flashlight-revealed
+    // If light is OFF in indoor scenario, hide ALL items
+    const lightIsOff = !isOutdoor && lightsOff.has(playerData?.current_scenario_id ?? "");
+    const visibleItems = lightIsOff ? [] : loadedItems.filter((i: any) => {
+      if (!i.hidden) return true;
+      if (revealed.has(i.id)) return true;
+      // For outdoor hidden items, only show if flashlight was used here
+      if (isOutdoor && flashlightUsedHere) return true;
+      return false;
+    });
     setCurrentScenarioItems(visibleItems);
 
     if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
@@ -401,10 +430,43 @@ export default function GamePage() {
         toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
       }
       if (result.toolFound) {
-        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : "🔧 Tornavís";
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       }
 
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleToggleLight = async () => {
+    if (!gameId || !user || !player?.current_scenario_id) return;
+    const isOff = lightOffScenarios.has(player.current_scenario_id);
+    setActionLoading(true);
+    try {
+      const result = await toggleLight(gameId, user.id, player.current_scenario_id, !isOff);
+      if (!isOff) {
+        toast.success("🌑 Has apagat el llum! Ningú veu els mobles.", { duration: 4000 });
+      } else {
+        toast.success("💡 Has encès el llum! Tots els mobles visibles.", { duration: 4000 });
+      }
+      if (result.toolFound) {
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+      }
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleUseLlanterna = async () => {
+    if (!gameId || !user || !player?.current_scenario_id) return;
+    setActionLoading(true);
+    try {
+      await useLlanterna(gameId, user.id, player.current_scenario_id);
+      toast.success("🔦 La llanterna il·lumina la zona! Nous mobles revelats!", { duration: 5000 });
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -910,9 +972,9 @@ export default function GamePage() {
             {noTokens && (
               <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
-            {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0) && (
+            {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0 || playerTools.llanterna > 0) && (
               <span className="bg-secondary/10 text-secondary text-[11px] font-semibold px-3 py-1 rounded-full border border-secondary/20">
-                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.tornavis > 0 ? ` 🔧${playerTools.tornavis}` : ""}{playerTools.martell > 0 ? ` 🔨${playerTools.martell}` : ""}
+                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.tornavis > 0 ? ` 🔧${playerTools.tornavis}` : ""}{playerTools.martell > 0 ? ` 🔨${playerTools.martell}` : ""}{playerTools.llanterna > 0 ? ` 🔦${playerTools.llanterna}` : ""}
               </span>
             )}
           </div>
@@ -957,7 +1019,77 @@ export default function GamePage() {
             </div>
           </div>
 
+          {/* Light toggle (indoor) / Llanterna (outdoor) */}
+          {(() => {
+            const scenarioName = currentScenario?.name ?? "";
+            const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
+            const currentLightOff = lightOffScenarios.has(player.current_scenario_id);
+            const flashlightUsedHere = flashlightRevealed.has(player.current_scenario_id);
+
+            return (
+              <div>
+                {!isOutdoor && (
+                  <button
+                    onClick={handleToggleLight}
+                    disabled={actionLoading || player.tokens_remaining < 0.2}
+                    className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
+                      currentLightOff
+                        ? "border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20"
+                        : "hover:border-destructive/40"
+                    }`}
+                  >
+                    <span className="text-2xl">{currentLightOff ? "💡" : "🌑"}</span>
+                    <div className="flex-1 text-left">
+                      <div className="text-sm font-semibold">{currentLightOff ? "Encendre el llum" : "Apagar el llum"}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {currentLightOff ? "Encén per veure els mobles" : "Apaga perquè ningú vegi els mobles"}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">0.2🪙</span>
+                  </button>
+                )}
+                {isOutdoor && !flashlightUsedHere && (
+                  <button
+                    onClick={handleUseLlanterna}
+                    disabled={actionLoading || player.tokens_remaining < 0.2 || (playerTools.llanterna ?? 0) <= 0}
+                    className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
+                      (playerTools.llanterna ?? 0) > 0
+                        ? "border-yellow-500/30 hover:border-yellow-500/50"
+                        : "opacity-50"
+                    }`}
+                  >
+                    <span className="text-2xl">🔦</span>
+                    <div className="flex-1 text-left">
+                      <div className="text-sm font-semibold">Usar llanterna</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {(playerTools.llanterna ?? 0) > 0
+                          ? "Il·lumina la zona i revela mobles ocults"
+                          : "Necessites una 🔦 Llanterna (es troben explorant)"}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">0.2🪙</span>
+                  </button>
+                )}
+                {isOutdoor && flashlightUsedHere && (
+                  <p className="text-[10px] text-center text-muted-foreground">🔦 Zona il·luminada — mobles ocults revelats</p>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Light off warning */}
+          {!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "") && lightOffScenarios.has(player.current_scenario_id) && (
+            <Card className="glass border-yellow-500/30">
+              <CardContent className="py-3 text-center">
+                <div className="text-3xl mb-1">🌑</div>
+                <p className="text-sm font-semibold">El llum està apagat!</p>
+                <p className="text-[11px] text-muted-foreground">No pots veure cap moble. Encén el llum per investigar.</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Look / Confirm */}
+          {!((!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "")) && lightOffScenarios.has(player.current_scenario_id)) && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               👀 Investigar mobles
@@ -983,6 +1115,7 @@ export default function GamePage() {
               ))}
             </div>
           </div>
+          )}
 
           {/* Social */}
           <div>
