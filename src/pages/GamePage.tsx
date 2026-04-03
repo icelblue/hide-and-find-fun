@@ -718,18 +718,44 @@ export default function GamePage() {
               {bonusAvailable > 0 && !showBonusPicker && (
                 <button
                   onClick={() => { setBonusAmount(1); setShowBonusPicker(true); }}
-                  className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[10px] font-bold animate-pulse"
+                  className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2.5 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[11px] font-bold"
+                  title={`Tens ${bonusAvailable} bonus tokens disponibles`}
                 >
-                  +{bonusAvailable}🪙
+                  💰+{bonusAvailable}
                 </button>
               )}
               {showBonusPicker && (
-                <div className="flex items-center gap-1 bg-card border border-border rounded-full px-2 py-1 shadow-lg">
-                  <button onClick={() => setBonusAmount(Math.max(1, bonusAmount - 1))} className="text-xs font-bold px-1 text-muted-foreground hover:text-foreground">−</button>
-                  <span className="text-xs font-bold min-w-[20px] text-center">{bonusAmount}</span>
-                  <button onClick={() => setBonusAmount(Math.min(bonusAvailable, bonusAmount + 1))} className="text-xs font-bold px-1 text-muted-foreground hover:text-foreground">+</button>
-                  <button onClick={handleRedeemBonus} disabled={actionLoading} className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">✓</button>
-                  <button onClick={() => setShowBonusPicker(false)} className="text-[10px] text-muted-foreground px-1">✕</button>
+                <div className="fixed inset-0 z-40 flex items-end justify-center bg-background/60 backdrop-blur-sm" onClick={() => setShowBonusPicker(false)}>
+                  <Card className="mx-4 mb-8 max-w-xs w-full glass glow-accent shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <CardContent className="py-5">
+                      <p className="text-sm font-bold mb-1 text-center">💰 Afegir bonus tokens</p>
+                      <p className="text-[10px] text-muted-foreground text-center mb-4">Quants tokens vols gastar? (Tens {bonusAvailable} disponibles)</p>
+                      <div className="flex items-center justify-center gap-4 mb-4">
+                        <button onClick={() => setBonusAmount(Math.max(1, bonusAmount - 1))}
+                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors">−</button>
+                        <span className="text-3xl font-bold min-w-[60px] text-center text-gradient">{bonusAmount}🪙</span>
+                        <button onClick={() => setBonusAmount(Math.min(bonusAvailable, bonusAmount + 1))}
+                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors">+</button>
+                      </div>
+                      {/* Quick select buttons */}
+                      {bonusAvailable > 2 && (
+                        <div className="flex justify-center gap-2 mb-4">
+                          {[1, Math.ceil(bonusAvailable / 2), bonusAvailable].filter((v, i, a) => a.indexOf(v) === i).map(v => (
+                            <button key={v} onClick={() => setBonusAmount(v)}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${bonusAmount === v ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+                              {v}🪙
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => setShowBonusPicker(false)}>Cancel·lar</Button>
+                        <Button className="flex-1" disabled={actionLoading} onClick={handleRedeemBonus}>
+                          Afegir {bonusAmount}🪙 ✓
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </div>
