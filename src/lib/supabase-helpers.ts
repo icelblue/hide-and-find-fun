@@ -422,13 +422,6 @@ export async function performTagAction(
       .from("game_players").select("user_id, tools")
       .eq("game_id", gameId).neq("user_id", playerId).single();
     if (rival) {
-      // Also give rival a tornavís so they can fix it
-      const rivalTools = (rival.tools as any) ?? { drap: 0, tornavis: 0, martell: 0 };
-      rivalTools.tornavis = Math.min(3, (rivalTools.tornavis ?? 0) + 1);
-      await supabase.from("game_players")
-        .update({ tools: rivalTools })
-        .eq("game_id", gameId).eq("user_id", rival.user_id);
-
       // Send notification
       const { data: item } = await supabase.from("items").select("name, icon").eq("id", itemId).single();
       await supabase.from("game_social_items").insert({
@@ -444,10 +437,10 @@ export async function performTagAction(
   if (actionType === "clean" || actionType === "fix") {
     toolFound = rollForTool();
     if (toolFound) {
-      const updatedTools = { ...toolsUpdate };
-      updatedTools[toolFound] = Math.min(3, (updatedTools[toolFound] ?? 0) + 1);
+      const currentTools = (player as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+      currentTools[toolFound] = Math.min(3, (currentTools[toolFound] ?? 0) + 1);
       await supabase.from("game_players")
-        .update({ tools: updatedTools }).eq("id", player.id);
+        .update({ tools: currentTools }).eq("id", player.id);
     }
   }
 
