@@ -1285,6 +1285,122 @@ export default function GamePage() {
   );
 }
 
+/** FinishedPhase — shows results, rival object location on defeat */
+function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios, gameId }: {
+  game: any; user: any; rival: any; reward: any;
+  navigate: (path: string) => void; objects: any[]; scenarios: any[];
+  gameId: string;
+}) {
+  const [rivalInfo, setRivalInfo] = useState<{
+    obj: any; item: any; scenario: any; position: string;
+    hideMessage: string | null; rivalName: string;
+  } | null>(null);
+  const [showRivalInfo, setShowRivalInfo] = useState(false);
+
+  useEffect(() => {
+    if (game.winner_id === user?.id || !rival) return;
+    // Load rival's hidden object details for the loser
+    (async () => {
+      const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
+        rival.hidden_object_id
+          ? supabase.from("objects").select("name, icon").eq("id", rival.hidden_object_id).single()
+          : { data: null },
+        rival.hidden_item_id
+          ? supabase.from("items").select("name, icon, scenario_id").eq("id", rival.hidden_item_id).single()
+          : { data: null },
+        supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
+      ]);
+      let scn = null;
+      if (itm?.scenario_id) {
+        scn = scenarios.find((s: any) => s.id === itm.scenario_id) ?? null;
+      }
+      const sd = rival.special_data as any;
+      const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+      setRivalInfo({
+        obj, item: itm, scenario: scn,
+        position: rival.hidden_position ?? "?",
+        hideMessage: hideMsg,
+        rivalName: rivalProf?.display_name ?? "Rival",
+      });
+    })();
+  }, [game.winner_id, user?.id, rival, scenarios]);
+
+  const posLabels: Record<string, string> = { sobre: "⬆️ Sobre", sota: "⬇️ Sota", dins: "📦 Dins" };
+  const isWinner = game.winner_id === user?.id;
+
+  return (
+    <div className="text-center py-10">
+      {isWinner ? (
+        <div className="w-24 h-24 mx-auto mb-4 rounded-3xl gradient-primary flex items-center justify-center text-5xl shadow-xl glow-primary">🏆</div>
+      ) : (
+        <div className="text-7xl mb-4 opacity-60">😢</div>
+      )}
+      <h2 className="text-2xl font-bold mb-2">
+        {isWinner ? <span className="text-gradient">Victòria!</span> : "Derrota..."}
+      </h2>
+      <p className="text-sm text-muted-foreground mb-4">
+        {isWinner ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
+      </p>
+
+      {reward?.reward_items && (
+        <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
+          <CardContent className="py-5 text-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🎁 Recompensa</p>
+            <div className="text-5xl mb-2">{reward.reward_items.icon}</div>
+            <p className="font-bold text-lg">{reward.reward_items.name}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {RARITY_CONFIG[reward.reward_items.rarity]?.emoji}{" "}
+              {RARITY_CONFIG[reward.reward_items.rarity]?.label}
+            </p>
+            <p className="text-[10px] text-muted-foreground/60 mt-2">
+              Ves al perfil per col·locar-lo o vendre'l
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loser: show where the object was */}
+      {!isWinner && rivalInfo && (
+        <div className="mb-6">
+          {!showRivalInfo ? (
+            <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
+              👁️ Veure on era l'objecte
+            </Button>
+          ) : (
+            <Card className="mx-auto max-w-xs glass border-secondary/30">
+              <CardContent className="py-4">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
+                  📍 L'objecte de {rivalInfo.rivalName}
+                </p>
+                {rivalInfo.obj && (
+                  <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
+                )}
+                <p className="font-bold text-lg mb-2">{rivalInfo.obj?.name ?? "?"}</p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  {rivalInfo.scenario && (
+                    <p>{rivalInfo.scenario.icon} <strong>{rivalInfo.scenario.name}</strong></p>
+                  )}
+                  {rivalInfo.item && (
+                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {posLabels[rivalInfo.position] ?? rivalInfo.position}</p>
+                  )}
+                </div>
+                {rivalInfo.hideMessage && (
+                  <p className="text-xs italic text-accent mt-3">💌 "{rivalInfo.hideMessage}"</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-2 justify-center">
+        <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
+        <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
+      </div>
+    </div>
+  );
+}
+
 function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
