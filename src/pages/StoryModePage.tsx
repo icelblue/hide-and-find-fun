@@ -261,8 +261,8 @@ export default function StoryModePage() {
         <div className="text-center relative z-10">
           <TypewriterText
             text={`Hola ${user?.email?.split("@")[0] ?? "aventurer"}! Aquest regal 🎁 és per tu...`}
-            speed={45}
-            onComplete={() => setTimeout(() => setIntroStep(1), 800)}
+            speed={75}
+            onComplete={() => setTimeout(() => setIntroStep(1), 1200)}
             className="text-lg font-medium mb-6"
           />
         </div>
