@@ -10,7 +10,7 @@
 
 <br/>
 
-[![Play Now](https://img.shields.io/badge/▶%20JUGAR%20ARA-hide--and--find--fun.lovable.app-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://hide-and-find-fun.lovable.app)
+[![Play Now](https://img.shields.io/badge/▶%20JUGAR%20ARA-deductionduel.lovable.app-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://deductionduel.lovable.app)
 
 <br/>
 
@@ -43,7 +43,7 @@ No és un joc de sort. **És un puzle mental contra un rival humà.**
 
 <br/>
 
-> 🧠 _"Tinc 2.5 tokens. El rival ha estat 3 torns a la Biblioteca. Gasto 0.3 per observar sota el sofà... buit, però trobo un token extra! Ara puc confirmar demà si tinc raó."_
+> 🧠 _"Tinc 2.5 tokens. El rival ha estat 3 torns a la Cuina. Gasto 0.3 per observar sota la nevera... fred! No és aquí. Però trobo un token extra! Demà investigo el Menjador."_
 
 <br/>
 
@@ -52,8 +52,10 @@ No és un joc de sort. **És un puzle mental contra un rival humà.**
 | | |
 |:---|:---|
 | 🏠 **7 habitacions connectades** | Circuit de portes bidireccionals — planifica la teva ruta |
-| 🪙 **Economia de tokens** | 5/dia, costos de 0.3 a 1.5 — cada acció compta |
-| ⚡ **Ítems socials** | Plàtan (blur), bomba de fum, pistes falses, escuts, missatges |
+| 🪙 **Economia de tokens** | 5/dia, costos de 0.2 a 0.5 — cada acció compta |
+| 🧹 **Mobles interactius** | Netejar, trencar, arreglar — amb eines il·limitades |
+| 💡 **Sistema de llum** | Apaga la llum per cegar el rival, usa la llanterna a l'exterior |
+| ⚡ **Ítems socials** | Plàtan, bomba de fum, escuts, espia, intercanvi, missatges |
 | 🏆 **Sistema ranked** | Elo + 5 lligues visuals (Bronze → Diamond) |
 | 🎁 **Loot de mobles** | Guanya mobiliari rar que amplia el joc per a tothom |
 | 💬 **Murs efímers** | Deixa missatges al perfil del rival — desapareixen en 22h |
@@ -77,7 +79,7 @@ Cada jugador tria **simultàniament i en secret**:
 📍 Habitació  →  🎯 Objecte  →  🪑 Moble  →  📌 Posició (sobre / sota / dins)
 ```
 
-Ningú sap què ha triat l'altre. Quan els dos han amagat, la partida comença automàticament i cada jugador apareix en una habitació aleatòria (mai on ha amagat el seu objecte).
+Opcionalment, pot escriure un **missatge** (≤100 chars) que el rival veurà si guanya. Quan els dos han amagat, la partida comença automàticament i cada jugador apareix en una habitació aleatòria (mai on ha amagat el seu objecte).
 
 <br/>
 
@@ -88,21 +90,65 @@ Navega per les habitacions interconnectades buscant l'objecte del rival:
 | Acció | Cost | Què fa |
 |:------|:----:|:-------|
 | 🚶 **Moure's** | `0.5` 🪙 | Vés a una habitació adjacent per les portes del circuit |
-| 👀 **Observar** | `0.3` 🪙 | Inspecciona una posició d'un moble — pot revelar bonus ocults |
-| 🔍 **Confirmar** | `1.5` 🪙 | Aposta que l'objecte del rival és **exactament aquí** |
+| 👀 **Observar** | `0.3` 🪙 | Inspecciona una posició d'un moble — pistes progressives |
 
-> ✅ **Confirmar correcte** = Victòria instantània
-> ❌ **Confirmar incorrecte** = 1.5 tokens perduts i el rival sap que t'has equivocat
+> 💡 **Observar** dóna pistes progressives:
+> - ❄️ **Fred** — escenari equivocat
+> - 🌡️ **Calent** — escenari correcte, moble equivocat
+> - 🔥 **Molt calent** — moble correcte, posició equivocada
+> - ✅ **Trobat!** — moble + posició correctes = **Victòria!**
+
+<br/>
+
+### Accions addicionals
+
+| Acció | Cost | Requereix |
+|:------|:----:|:----------|
+| 🧹 **Netejar** moble brut | `0.2` 🪙 | 🧹 Drap |
+| 💥 **Trencar** moble trencable | `0.3` 🪙 | 🔨 Martell |
+| 🔧 **Arreglar** moble trencat | `0.2` 🪙 | 🔧 Tornavís |
+| 💡 **Apagar/Encendre llum** | `0.2` 🪙 | Interior |
+| 🔦 **Llanterna** | `0.2` 🪙 | 🔦 Llanterna (exterior) |
+
+> Les eines són **il·limitades** — un cop les tens, les pots usar sense límit dins la partida.
 
 <br/>
 
 ### Fase 3 — Victòria 🏆
 
-El primer jugador que executa un **Confirmar** encertat guanya i rep:
+El primer jugador que **observa** la posició exacta de l'objecte rival guanya i rep:
 
 - **+25 Elo** (el perdedor rep −20, mínim 100)
 - **Un moble aleatori** amb raresa ponderada (del 50% comú al 2% llegendari)
 - Actualització de **ratxa**, **lliga** i **estadístiques**
+
+<br/>
+
+---
+
+<br/>
+
+## 🛠️ Eines i mobles interactius
+
+### Eines (il·limitades dins la partida)
+
+| Eina | Com obtenir-la |
+|:-----|:---------------|
+| 🔧 **Tornavís** | Tothom comença amb 1 |
+| 🧹 **Drap** | Auto-obtingut en entrar a escenari amb mobles bruts |
+| 🔨 **Martell** | 5% trobable en observar |
+| 🔦 **Llanterna** | 5% trobable en observar |
+
+### Sistema de llum
+
+- **Interiors** (Cuina, Habitació, Menjador, Lavabo, Despatx): llum encès per defecte
+- Qualsevol jugador pot **apagar** o **encendre** el llum (0.2🪙) — afecta **ambdós**
+- **Exteriors** (Jardí, Balcó): llanterna necessària per revelar mobles ocults
+
+### Mobles bruts aleatoris
+
+- ~60% dels mobles elegibles estan bruts cada partida (determinístic per gameId)
+- Mateixa partida = mateixos mobles bruts; partida diferent = combinació diferent
 
 <br/>
 
@@ -181,7 +227,12 @@ Cada victòria atorga un moble aleatori:
 ### Què fer amb els mobles?
 
 - **📍 Col·locar** en un escenari → Afegeix un nou moble al joc per a **tots els jugadors**
-- **🪙 Vendre** → Obté tokens bonus que s'afegeixen al teu pròxim reset diari
+- **🪙 Vendre** → Obté tokens bonus que pots afegir manualment a qualsevol partida
+
+### Bonus tokens
+
+- Els tokens bonus **NO s'afegeixen automàticament**. Els jugadors trien quants afegir i a quina partida.
+- Picker amb controls ±0.1 i botons ràpids (0.1, 0.5, 1, Tot).
 
 > Els mobles col·locats fan el joc **progressivament més complex** — més amagatalls, més deducció necessària.
 
@@ -242,7 +293,7 @@ src/
 ├── pages/
 │   ├── AuthPage.tsx              ← Login / registre amb email
 │   ├── LobbyPage.tsx             ← Matchmaking: aleatori, codi, reptes, cerca
-│   ├── GamePage.tsx              ← Motor de joc complet (940 línies)
+│   ├── GamePage.tsx              ← Motor de joc complet (~1550 línies)
 │   ├── ProfilePage.tsx           ← Perfil: stats, Elo, inventari, mur
 │   ├── PlayerProfilePage.tsx     ← Perfil públic amb mur interactiu
 │   └── NotFound.tsx              ← 404 en català
@@ -256,14 +307,17 @@ src/
 │   └── useAuth.tsx               ← AuthProvider amb Context API
 │
 ├── lib/
-│   ├── supabase-helpers.ts       ← ⭐ Lògica core del joc
-│   └── reward-helpers.ts         ← Recompenses via RPC
+│   ├── supabase-helpers.ts       ← ⭐ Lògica core del joc (~1250 línies)
+│   ├── reward-helpers.ts         ← Recompenses via RPC (~93 línies)
+│   └── constants.ts              ← APP_VERSION i constants globals
 │
 └── integrations/supabase/        ← Client + tipus auto-generats
 
 supabase/
-├── functions/cleanup-old-games/  ← Edge fn: neteja partides >7d
-└── migrations/                   ← 19 migracions SQL
+├── functions/
+│   ├── cleanup-old-games/        ← Edge fn: neteja partides >7d
+│   └── backup-database/          ← Edge fn: backup automàtic
+└── migrations/                   ← 37 migracions SQL
 ```
 
 <br/>
@@ -279,9 +333,9 @@ Per a una guia detallada d'arquitectura, base de dades, debugging, instal·laci�
 ### **→ [docs/TECHNICAL.md](docs/TECHNICAL.md)**
 
 Inclou:
-- 📊 Diagrama ER complet amb 15 taules
-- 🔒 Matriu RLS de 16 taules
-- 🎮 Mecàniques detallades (amagar, buscar, ítems socials)
+- 📊 Diagrama ER complet amb 16 taules
+- 🔒 Matriu RLS de 17 taules
+- 🎮 Mecàniques detallades (amagar, buscar, eines, llum, ítems socials)
 - 💻 Guia d'instal·lació local pas a pas (amb entorn aïllat)
 - 🐳 Desplegament Docker (Dockerfile + docker-compose)
 - 🛠️ Com afegir escenaris, objectes, ítems socials
@@ -320,7 +374,7 @@ El joc està live i desplegat sobre **Lovable Cloud** (autenticació, base de da
 
 <br/>
 
-[![Jugar](https://img.shields.io/badge/🔍%20JUGAR%20ARA-hide--and--find--fun.lovable.app-blueviolet?style=for-the-badge)](https://hide-and-find-fun.lovable.app)
+[![Jugar](https://img.shields.io/badge/🔍%20JUGAR%20ARA-deductionduel.lovable.app-blueviolet?style=for-the-badge)](https://deductionduel.lovable.app)
 
 <br/>
 
