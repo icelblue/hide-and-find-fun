@@ -1415,6 +1415,91 @@ INSERT INTO reward_items (name, icon, rarity, sell_value) VALUES
   ('Tron daurat', '👑', 'legendary', 8);
 ```
 
+
+### 12.7 Afegir un nou material (ex: "menjar")
+
+El sistema de materials controla la compatibilitat entre objectes i entorns. Per afegir un nou material:
+
+**Pas 1 — Migració SQL**: Afegir el material a l'enum `object_material`:
+```sql
+ALTER TYPE object_material ADD VALUE 'menjar';
+```
+
+**Pas 2 — Definir compatibilitats**: Editar `getMaterialBlockReason()` a `supabase-helpers.ts`:
+```typescript
+menjar: {
+  hot: "es fondria amb la calor 🔥",
+  frozen: "es congelaria 🧊",
+  dirty: "no és higiènic 🗑️",
+  químic: "seria tòxic ☣️",
+  outdoor: "s'ho menjarien els animals 🐾",
+},
+```
+
+**Pas 3 — Crear objectes amb el material**:
+```sql
+INSERT INTO objects (name, icon, display_order, size, material)
+VALUES ('Pastís', '🎂', 15, 2, 'menjar');
+```
+
+> 💡 **Regenerar types**: Després de la migració, el fitxer `types.ts` s'actualitza automàticament.
+
+<br/>
+
+### 12.8 Editar entorns i compatibilitats
+
+Els **entorns** (`item_environment`) defineixen les propietats d'un moble. La matriu de compatibilitat està a `getMaterialBlockReason()` dins `supabase-helpers.ts`.
+
+#### Afegir un nou entorn
+```sql
+ALTER TYPE item_environment ADD VALUE 'radioactiu';
+UPDATE items SET environment = 'radioactiu' WHERE name = 'Reactor';
+```
+
+Després, editar `getMaterialBlockReason()` i afegir regles per al nou entorn:
+
+```typescript
+paper: { radioactiu: "es desintegraria ☢️" },
+metal: { radioactiu: "✅" },  // "✅" = explícitament permès
+```
+
+#### Editar compatibilitat d'un entorn existent (ex: "ventós")
+Busca `ventós` dins `rules` de `getMaterialBlockReason()`. Per canviar, afegeix/elimina entrades.
+
+<br/>
+
+### 12.9 Administració — Editar taules read-only
+
+Les taules de contingut tenen RLS **read-only** per a clients. Per editar-les:
+
+| Opció | Quan usar | Com |
+|:------|:----------|:----|
+| **Lovable** (recomanat) | Sempre que sigui possible | Demana a Lovable la migració SQL |
+| **service_role key** | Accés directe a DB | `psql "$SUPABASE_DB_URL" -c "INSERT INTO ..."` |
+| **Studio local** | Desenvolupament local | `npx supabase start` → `http://localhost:54323` |
+
+> ⚠️ La **service_role key** ignora RLS. Mai usar-la en codi client.
+
+<br/>
+
+### 12.10 Com detectar i diagnosticar problemes
+
+| Pas | Acció |
+|:---:|:------|
+| 1 | L'usuari reporta un bug (🐛 al Lobby) → es guarda a `error_logs` |
+| 2 | `SELECT * FROM error_logs ORDER BY created_at DESC LIMIT 20;` |
+| 3 | Filtrar: `WHERE component = 'GamePage' AND created_at > now() - interval '1 day'` |
+| 4 | Comprovar la partida: `SELECT * FROM games WHERE code = '<CODI>';` |
+
+#### Fitxers clau per àrea
+
+| Àrea | Fitxer |
+|:-----|:-------|
+| Lògica de joc | `src/lib/supabase-helpers.ts` |
+| UI del joc | `src/pages/GamePage.tsx` |
+| Compatibilitat materials | `supabase-helpers.ts` → `getMaterialBlockReason()` |
+| Cleanup | `supabase/functions/cleanup-old-games/index.ts` |
+
 <br/>
 
 ---
