@@ -12,7 +12,7 @@ import {
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
-  type ToolType,
+  type ToolType, OUTDOOR_SCENARIOS, isLightOff, toggleLight, useLlanterna,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
