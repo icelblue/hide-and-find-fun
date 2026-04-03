@@ -150,8 +150,9 @@ export default function GamePage() {
 
     if (playerData?.has_hidden) setHideStep(4);
 
-    // Proximity alert: check if rival is at the scenario where we hid our object
-    if (gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
+    // Proximity alert: check if rival is at the scenario where we hid our object (PvP only)
+    const isStoryGame = !!(gameData as any)?.is_story;
+    if (!isStoryGame && gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
       const { data: hiddenItem } = await supabase
         .from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
       setRivalNearby(hiddenItem?.scenario_id === rivalData.current_scenario_id);
