@@ -385,25 +385,17 @@ export async function performTagAction(
     .eq("game_id", gameId).eq("player_id", playerId);
   const turnNumber = (count ?? 0) + 1;
 
-  // Deduct tokens
+  // Deduct tokens (tools are NOT consumed — unlimited use within the game)
   const newTokens = tokensRemaining - cfg.cost;
-  const toolsUpdate = { ...playerTools };
 
-  // Consume tool if needed
-  if (toolNeeded) {
-    toolsUpdate[toolNeeded] = Math.max(0, (toolsUpdate[toolNeeded] ?? 0) - 1);
-  }
-
-  // If breaking: tornavís appears in same scenario for everyone
+  // If breaking: no extra tornavís needed since everyone starts with one
   let tornavisSpawned = false;
   if (actionType === "break") {
-    // Spawn tornavís for the breaker
-    toolsUpdate.tornavis = Math.min(3, (toolsUpdate.tornavis ?? 0) + 1);
     tornavisSpawned = true;
   }
 
   await supabase.from("game_players")
-    .update({ tokens_remaining: newTokens, tools: toolsUpdate })
+    .update({ tokens_remaining: newTokens })
     .eq("id", player.id);
 
   // Record the move (use bonus_value to track the action type)
