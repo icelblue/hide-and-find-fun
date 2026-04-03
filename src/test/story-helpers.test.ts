@@ -30,7 +30,7 @@ describe("Story Mode helpers", () => {
   describe("calculateXP", () => {
     it("chapter 1 base is 100", () => {
       const xp = calculateXP(1, 10);
-      expect(xp).toBe(100); // base 100 + max(1, 10-10)*10 = 100+10 = 110? let me check
+      expect(xp).toBe(110); // base 100 + max(1, 10-10)*10 = 100+10
     });
     it("fewer moves gives more XP", () => {
       const fast = calculateXP(1, 2);
