@@ -110,14 +110,14 @@
 │      │                                                        │
 │      ├── /auth ──────────── AuthPage.tsx                       │
 │      ├── / ──────────────── LobbyPage.tsx                     │
-│      ├── /game/:id ──────── GamePage.tsx         ⭐ 940 línies│
+│      ├── /game/:id ──────── GamePage.tsx        ⭐ ~1550 línies│
 │      ├── /profile ────────── ProfilePage.tsx                  │
 │      ├── /player/:id ────── PlayerProfilePage.tsx             │
 │      └── /reset-password ── ResetPasswordPage.tsx             │
 │                                                               │
 │   Lògica de negoci:                                           │
-│      ├── lib/supabase-helpers.ts    ⭐ 577 línies             │
-│      └── lib/reward-helpers.ts         55 línies              │
+│      ├── lib/supabase-helpers.ts    ⭐ ~1250 línies           │
+│      └── lib/reward-helpers.ts         93 línies              │
 │                                                               │
 │   Comunicació:                                                │
 │      └── @supabase/supabase-js (client auto-generat)          │
@@ -183,15 +183,16 @@
 │   ├── 📁 pages/
 │   │   ├── 📄 AuthPage.tsx          ← Login / Signup (email + password)
 │   │   ├── 📄 ResetPasswordPage.tsx ← Recuperació de contrasenya
-│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (336 línies)
+│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (~421 línies)
 │   │   │     · Crear partida / rival aleatori / buscar jugador
 │   │   │     · Unir-se per codi / partides obertes
-│   │   │     · Les meves partides (reptes pendents)
-│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (940 línies)
-│   │   │     · Fase amagar (4 passos) + Fase cerca
+│   │   │     · Les meves partides (reptes pendents) / bug report
+│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1550 línies)
+│   │   │     · Fase amagar (4 passos) + missatge opcional
 │   │   │     · Ítems socials + pistes progressives
-│   │   │     · Confirmació + resultats + trofeus
-│   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (474 línies)
+│   │   │     · Eines, llum, llanterna, mobles bruts
+│   │   │     · Pistes progressives + bonus picker
+│   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (~491 línies)
 │   │   │     · Stats, Elo, lliga, recompenses
 │   │   │     · Vendre/col·locar mobles, mur, rival favorit
 │   │   ├── 📄 PlayerProfilePage.tsx ← 👥 Perfil d'altri
@@ -203,16 +204,19 @@
 │   │   └── 📄 use-mobile.tsx        ← Hook per detectar mòbil
 │   │
 │   ├── 📁 lib/
-│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica de negoci
+│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica de negoci (~1250 línies)
 │   │   │     · DATA: scenarios, items, objects, connections
 │   │   │     · LIFECYCLE: create, join, delete, available, myGames
 │   │   │     · MATCHMAKING: findRandom, search, challenge
 │   │   │     · HIDING: hideObject, checkBothHidden, startGame
-│   │   │     · SPECIALS: getSpecial, autoFixMissingScenario
+│   │   │     · TAGS: getTagActions, performTagAction, rollForTool
+│   │   │     · LIGHT: toggleLight, isLightOff, useLlanterna
 │   │   │     · SEARCH: performMove, ensureTokensReset, TOKEN_COSTS
 │   │   │     · SOCIAL: sendSocialItem, getUnprocessed, markProcessed
 │   │   │     · INVENTORY: getPlayerInventory, giftInventoryItem
+│   │   │     · BONUS: redeemBonusTokens
 │   │   ├── 📄 reward-helpers.ts     ← Recompenses via Supabase RPC
+│   │   ├── 📄 constants.ts         ← APP_VERSION, constants globals
 │   │   └── 📄 utils.ts             ← cn() per Tailwind merge
 │   │
 │   ├── 📁 components/
@@ -230,7 +234,7 @@
 │   │   └── 📁 cleanup-old-games/
 │   │       └── 📄 index.ts          ← Edge fn: neteja automàtica
 │   └── 📁 migrations/               ← ⚠️ NO TOCAR — gestionat per Lovable
-│       └── 19 fitxers .sql           ← Esquema complet de la DB
+│       └── 37 fitxers .sql           ← Esquema complet de la DB
 │
 └── 📁 docs/
     └── 📄 TECHNICAL.md              ← 📘 Aquest document
@@ -394,7 +398,9 @@
 | `social_item_used_today` | boolean | Ja ha usat ítem social avui? |
 | `shield_active` | boolean | Té l'escut activat? |
 | `smoke_bomb_used` | boolean | Ja ha usat bomba fum? (1/partida) |
-| `special_data` | jsonb? | Dades extra d'objectes especials |
+| `tools` | jsonb | Eines del jugador: `{drap, tornavis, martell, llanterna}` |
+| `special_data` | jsonb? | Dades extra d'objectes especials (hide_message, etc.) |
+| `bonus_tokens_added` | numeric | Tokens bonus afegits manualment |
 
 </details>
 
@@ -410,6 +416,8 @@
 | `target_position` | `position_type`? | Posició investigada |
 | `found_object` | boolean? | Ha trobat l'objecte? |
 | `found_bonus` | `bonus_type`? | Bonus descobert |
+| `bonus_value` | text? | Valor del bonus o `tag:action` |
+| `hint_level` | integer? | 0=fred, 1=calent, 2=molt calent, 3=trobat |
 | `turn_number` | integer | Número de torn (pistes progressives) |
 
 </details>
@@ -568,11 +576,11 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
                           │  checkBothPlayersHidden() → true
                           │  startGame()
                           ▼
-                    ┌───────────┐
-                    │  PLAYING   │ ← performMove() repetidament
-                    └─────┬─────┘
-                          │  performMove('confirm') → found = true
-                          ▼
+                     ┌───────────┐
+                     │  PLAYING   │ ← performMove() repetidament
+                     └─────┬─────┘
+                           │  performMove('look') → found = true
+                           ▼
                     ┌───────────┐
                     │ FINISHED   │ ← trigger handle_game_finished()
                     └───────────┘
@@ -614,7 +622,7 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 4. INSERT game_moves
 ```
 
-#### 👀 LOOK — 0.3 tokens
+#### 👀 LOOK — 0.3 tokens (troba l'objecte si encerta!)
 
 ```
 1. Obtenir hidden_item_id i hidden_position del rival
@@ -623,26 +631,23 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
    ├── rivalScenario ≠ targetScenario → 0 (fred ❄️)
    ├── same scenario, diferent moble  → 1 (calent 🌡️)
    ├── same moble, diferent posició   → 2 (molt calent 🔥)
-   └── same moble, same posició       → 2 (cal confirmar!)
-4. Bonus aleatori (~15% probabilitat):
-   ├── 5% → +1 token extra
-   └── 10% → +0.5 token extra
-5. INSERT game_moves (amb hint_level)
-```
-
-#### 🔍 CONFIRM — 1.5 tokens
-
-```
-1. Comparar targetItemId + targetPosition amb l'amagatall del rival
-2. Si coincideix:
+   └── same moble, same posició       → 3 (TROBAT! ✅)
+4. Si hintLevel = 3:
    ├── foundObject = true
    ├── UPDATE games SET status = 'finished', winner_id = playerId
    └── (trigger handle_game_finished s'executa automàticament)
-3. Si NO coincideix:
-   ├── foundObject = false
-   └── Es perden 1.5 tokens sense resultat
-4. INSERT game_moves
+5. Bonus aleatori (~15% probabilitat):
+   ├── 5% → +1 token extra
+   └── 10% → +0.5 token extra
+6. Tool roll (~20% probabilitat):
+   ├── 5% → 🔨 Martell
+   ├── 5% → 🔧 Tornavís
+   ├── 5% → 🧹 Drap
+   └── 5% → 🔦 Llanterna
+7. INSERT game_moves (amb hint_level)
 ```
+
+> ⚠️ L'acció **Confirmar** (1.5🪙) va ser **ELIMINADA** a la v1.5.0. Observar ara troba l'objecte directament.
 
 <br/>
 
@@ -673,7 +678,7 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 
 ### 5.6 Bonus aleatoris
 
-> Els bonus ja NO estan fixos per posició. Cada cop que un jugador observa o confirma, hi ha un **15% de probabilitat** de trobar tokens extra (5% → 1 token, 10% → 0.5 tokens).
+> Els bonus ja NO estan fixos per posició. Cada cop que un jugador observa, hi ha un **15% de probabilitat** de trobar tokens extra (5% → 1 token, 10% → 0.5 tokens). A més, 20% de trobar eines (5% cadascuna: martell, tornavís, drap, llanterna).
 
 ### 5.7 Missatge al amagar
 
@@ -687,11 +692,47 @@ Si el rival està a l'habitació on TU has amagat l'objecte:
   → Avís visual ⚠️ al teu tauler
 ```
 
-### 5.9 Mobles interactius
+### 5.9 Mobles interactius (v1.3+)
 
-> Alguns mobles tenen accions especials (💡 encendre, 🚪 obrir, 🧹 netejar). Definits a `item_interactions`.
+> El sistema de mobles interactius usa **tags** per definir accions disponibles. A més, existeix `item_interactions` per accions especials.
 
-| Efecte | Descripció |
+#### Sistema de tags
+
+| Tag | Acció | Eina | Cost | Efecte |
+|:-----|:-------|:------|:------|:--------|
+| `dirty` | 🧹 Netejar | 🧹 Drap | 0.2🪙 | 50% mini bonus |
+| `breakable` | 💥 Trencar | 🔨 Martell | 0.3🪙 | Notifica rival, 30% bonus |
+| `broken` | 🔧 Arreglar | 🔧 Tornavís | 0.2🪙 | 40% mini bonus |
+
+#### Eines (il·limitades dins la partida)
+
+| Eina | Obtenció |
+|:-----|:---------|
+| 🔧 Tornavís | Tothom comença amb 1 (DB default) |
+| 🧹 Drap | Auto-obtingut en entrar a escenari amb mobles bruts |
+| 🔨 Martell | 5% trobable en observar |
+| 🔦 Llanterna | 5% trobable en observar |
+
+#### Mobles bruts aleatoris per partida
+
+- Items amb tag `dirty` al DB = candidats elegibles
+- `getDirtyItemsForGame(items, gameId)` selecciona ~60% via hash determinístic
+- Mateixa partida = mateixos bruts; diferent partida = diferent combinació
+
+### 5.10 Sistema de llum (v1.2+)
+
+#### Interiors
+- Cuina, Habitació, Menjador, Lavabo, Despatx comencen amb llum **ENCÈS**
+- Qualsevol jugador pot **apagar** (0.2🪙) → cap jugador veu els mobles
+- Qualsevol jugador pot **encendre** (0.2🪙) → tots veuen els mobles
+- Afecta **AMBDÓS** jugadors (estratègic)
+
+#### Exteriors (Jardí, Balcó)
+- Necessiten 🔦 **Llanterna** per revelar mobles ocults
+- Reutilitzable (no es consumeix), costa 0.2🪙
+- Jardí → revela 📦 Baúl | Balcó → revela 🏺 Gerro
+
+| Efecte (item_interactions) | Descripció |
 |:-------|:-----------|
 | `reveal_items` | Mostra mobles ocults de l'escenari |
 | `enable_position` | Desbloqueja una posició d'un moble |
@@ -817,9 +858,12 @@ const channel = supabase
 ┌──────────────────────────────────────────────────┐
 │ DIA 2                                            │
 │   ensureTokensReset() detecta nova data          │
-│   → tokens = 5.0 + bonus_tokens (del perfil)     │
-│   → profiles.bonus_tokens = 0                    │
+│   → tokens = 5.0 (reset fix, NO s'afegeixen bonus│
+│     automàticament)                               │
 │   → social_item_used_today = false               │
+│                                                   │
+│   Bonus tokens: el jugador pot afegir-los         │
+│   manualment via redeemBonusTokens() (picker UI)  │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -1084,7 +1128,7 @@ Les migracions estan a `supabase/migrations/` i contenen tot l'esquema:
 npx supabase db push
 ```
 
-Això executarà els 19 fitxers de migració en ordre cronològic, creant:
+Això executarà els 37 fitxers de migració en ordre cronològic, creant:
 - ✅ Totes les taules (15)
 - ✅ Tots els enums (9 tipus)
 - ✅ Totes les funcions (6)
@@ -1160,11 +1204,15 @@ Si les migracions **no** inclouen dades inicials (seed), hauràs de crear-les ma
 Si estan buides, pots inserir dades d'exemple:
 
 ```sql
--- Escenaris inicials
+-- Escenaris (7 en total)
 INSERT INTO scenarios (name, icon, display_order) VALUES
   ('Cuina', '🍳', 1),
-  ('Biblioteca', '📚', 2),
-  ('Garatge', '🔧', 3);
+  ('Jardí', '🌿', 2),
+  ('Balcó', '🌅', 3),
+  ('Habitació', '🛏️', 4),
+  ('Menjador', '🍽️', 5),
+  ('Lavabo', '🚿', 6),
+  ('Despatx', '💼', 7);
 
 -- Mobles per escenari (exemple per Cuina)
 INSERT INTO items (name, icon, scenario_id, display_order, inner_capacity, environment) VALUES
@@ -1222,7 +1270,7 @@ npm run dev
 2. Obtenir URL + claus (Settings → API)     ← ~1 min
 3. npx supabase login                       ← ~1 min
 4. npx supabase link --project-ref <ref>    ← ~1 min
-5. npx supabase db push                     ← ~2 min (aplica 19 migracions)
+5. npx supabase db push                     ← ~2 min (aplica 37 migracions)
 6. Configurar secrets a Edge Functions      ← ~2 min
 7. npx supabase functions deploy            ← ~1 min
 8. Editar vite.config.ts + .env             ← ~2 min
@@ -1387,7 +1435,7 @@ VALUES ('<diamant_id>', 'troll_effect', 'find', '💎 Diamant trobat!',
 Editar **una sola línia** a `supabase-helpers.ts`:
 
 ```typescript
-export const TOKEN_COSTS = { move: 0.5, look: 0.3, confirm: 1.5 } as const;
+export const TOKEN_COSTS = { move: 0.5, look: 0.3 } as const;
 ```
 
 <br/>
