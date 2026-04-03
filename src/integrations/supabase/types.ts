@@ -485,6 +485,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_accessories: {
+        Row: {
+          accessory_icon: string
+          accessory_name: string
+          id: string
+          obtained_at: string
+          user_id: string
+        }
+        Insert: {
+          accessory_icon: string
+          accessory_name: string
+          id?: string
+          obtained_at?: string
+          user_id: string
+        }
+        Update: {
+          accessory_icon?: string
+          accessory_name?: string
+          id?: string
+          obtained_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_inventory: {
         Row: {
           collected_at: string
@@ -528,6 +552,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_pets: {
+        Row: {
+          created_at: string
+          id: string
+          pet_icon: string
+          pet_name: string
+          pet_type: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pet_icon: string
+          pet_name: string
+          pet_type: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pet_icon?: string
+          pet_name?: string
+          pet_type?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
       }
       player_rewards: {
         Row: {
@@ -749,6 +803,39 @@ export type Database = {
           id?: string
           max_items?: number
           name?: string
+        }
+        Relationships: []
+      }
+      story_progress: {
+        Row: {
+          best_moves: number | null
+          chapter: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          moves_used: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          best_moves?: number | null
+          chapter: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          moves_used?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          best_moves?: number | null
+          chapter?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          moves_used?: number
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
