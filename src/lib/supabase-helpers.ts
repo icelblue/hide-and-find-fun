@@ -809,7 +809,7 @@ export async function startGame(gameId: string) {
 // SEARCH PHASE
 // ============================================
 
-export const TOKEN_COSTS = { move: 0.5, look: 0.3, confirm: 1.5 } as const;
+export const TOKEN_COSTS = { move: 0.5, look: 0.3, confirm: 0.3 } as const;
 
 export async function ensureTokensReset(player: any) {
   const today = new Date().toISOString().split("T")[0];
