@@ -41,9 +41,15 @@ import {
   getDirtyItemsForGame,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
+import {
+  completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
+  PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
+} from "@/lib/story-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
+
+const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
 type Phase = "waiting" | "hiding" | "playing" | "finished";
 
