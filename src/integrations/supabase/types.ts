@@ -263,8 +263,10 @@ export type Database = {
           created_by: string
           id: string
           invited_user_id: string | null
+          is_story: boolean
           scenario_id: string | null
           status: Database["public"]["Enums"]["game_status"]
+          story_chapter: number | null
           updated_at: string
           winner_id: string | null
         }
@@ -274,8 +276,10 @@ export type Database = {
           created_by: string
           id?: string
           invited_user_id?: string | null
+          is_story?: boolean
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
+          story_chapter?: number | null
           updated_at?: string
           winner_id?: string | null
         }
@@ -285,8 +289,10 @@ export type Database = {
           created_by?: string
           id?: string
           invited_user_id?: string | null
+          is_story?: boolean
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
+          story_chapter?: number | null
           updated_at?: string
           winner_id?: string | null
         }
@@ -868,6 +874,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_story_game: {
+        Args: { _chapter: number; _user_id: string }
+        Returns: string
+      }
+      finish_story_game: {
+        Args: { _game_id: string; _winner_id: string }
+        Returns: undefined
+      }
+      insert_cpu_move: {
+        Args: {
+          _action: Database["public"]["Enums"]["action_type"]
+          _found_object?: boolean
+          _game_id: string
+          _hint_level?: number
+          _target_item_id?: string
+          _target_position?: Database["public"]["Enums"]["position_type"]
+          _target_scenario_id?: string
+          _token_cost: number
+          _turn_number: number
+        }
+        Returns: undefined
+      }
       is_player_in_game: {
         Args: { _game_id: string; _user_id: string }
         Returns: boolean
