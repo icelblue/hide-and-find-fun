@@ -256,6 +256,7 @@
   │ name  (text)    │        │ scenario_b  (uuid FK)  │
   │ icon  (text)    │        └────────────────────────┘
   │ display_order   │
+  │ max_items       │
   └────────┬────────┘
            │ 1:N
            ▼
