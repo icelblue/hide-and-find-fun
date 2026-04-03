@@ -2,15 +2,18 @@
 // story-helpers.ts — Lògica del Mode Història (single-player)
 // ============================================================
 // Gestiona:
-//   - Mascotes: creació, XP
+//   - Mascotes: creació, XP, evolució, mort/renaixement
 //   - Progrés de capítols
-//   - Accesoris de mascota
+//   - Accesoris + consumibles post-accesoris
 //   - CPU rival (decisions aleatòries)
 // ============================================================
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Available pets
+// ============================================
+// CONSTANTS
+// ============================================
+
 export const PET_OPTIONS = [
   { type: "dog", icon: "🐕", name: "Gos" },
   { type: "cat", icon: "🐱", name: "Gat" },
@@ -19,7 +22,6 @@ export const PET_OPTIONS = [
   { type: "turtle", icon: "🐢", name: "Tortuga" },
 ] as const;
 
-// Accessories to collect in chapter 3+
 export const PET_ACCESSORIES = [
   { name: "Collar", icon: "📿" },
   { name: "Llaç", icon: "🎀" },
@@ -29,11 +31,44 @@ export const PET_ACCESSORIES = [
   { name: "Joguina", icon: "🧸" },
 ] as const;
 
+// Consumables unlocked after all accessories
+export const PET_CONSUMABLES = [
+  { name: "Menjar", icon: "🍖" },
+  { name: "Aigua", icon: "💧" },
+  { name: "Vacuna", icon: "💉" },
+] as const;
+
+// Max XP before pet dies
+export const MAX_PET_XP = 5000;
+
+// Evolution tiers
+export const PET_EVOLUTION_TIERS = [
+  { minXp: 0, label: "Bebè", badge: "🥚", glow: "from-gray-400/20 to-gray-300/10", ring: "ring-muted-foreground/30" },
+  { minXp: 500, label: "Jove", badge: "🌱", glow: "from-green-400/30 to-emerald-300/15", ring: "ring-green-500/40" },
+  { minXp: 1500, label: "Adult", badge: "⭐", glow: "from-blue-400/30 to-cyan-300/15", ring: "ring-blue-500/40" },
+  { minXp: 3000, label: "Veterà", badge: "🔥", glow: "from-orange-400/30 to-amber-300/15", ring: "ring-orange-500/50" },
+  { minXp: 4500, label: "Llegendari", badge: "👑", glow: "from-purple-400/40 to-pink-300/20", ring: "ring-purple-500/60" },
+] as const;
+
+export function getPetEvolution(xp: number) {
+  let tier = PET_EVOLUTION_TIERS[0];
+  for (const t of PET_EVOLUTION_TIERS) {
+    if (xp >= t.minXp) tier = t;
+  }
+  const nextTier = PET_EVOLUTION_TIERS.find(t => t.minXp > xp);
+  const isDead = xp >= MAX_PET_XP;
+  return { ...tier, nextTier, isDead, xp, maxXp: MAX_PET_XP };
+}
+
+export function hasAllAccessories(accessories: any[]): boolean {
+  const owned = new Set(accessories.map(a => a.accessory_name));
+  return PET_ACCESSORIES.every(a => owned.has(a.name));
+}
+
 // XP rewards per chapter
 export function calculateXP(chapter: number, movesUsed: number): number {
   const baseXP: Record<number, number> = { 1: 100, 2: 200 };
   const base = baseXP[chapter] ?? 150;
-  // Fewer moves = more bonus (max 2x)
   const efficiency = Math.max(1, 10 - movesUsed);
   return Math.round(base + efficiency * 10);
 }
@@ -63,12 +98,23 @@ export async function createPet(userId: string, petType: string, petName: string
 
 export async function addPetXP(userId: string, xp: number) {
   const pet = await getMyPet(userId);
-  if (!pet) return;
+  if (!pet) return null;
+  const newXp = Math.min((pet.xp ?? 0) + xp, MAX_PET_XP);
   const { error } = await supabase
     .from("player_pets")
-    .update({ xp: (pet.xp ?? 0) + xp })
+    .update({ xp: newXp })
     .eq("user_id", userId);
   if (error) throw error;
+  return { newXp, isDead: newXp >= MAX_PET_XP };
+}
+
+// Delete pet + progress + accessories for rebirth
+export async function resetPetAndProgress(userId: string) {
+  await Promise.all([
+    supabase.from("pet_accessories").delete().eq("user_id", userId),
+    supabase.from("story_progress").delete().eq("user_id", userId),
+    supabase.from("player_pets").delete().eq("user_id", userId),
+  ]);
 }
 
 // ============================================
@@ -126,9 +172,9 @@ export async function completeChapter(userId: string, chapter: number, movesUsed
     .eq("user_id", userId)
     .eq("chapter", chapter);
 
-  // Unlock next chapter
+  // Unlock next chapter (only if not already existing)
   const nextChapter = chapter + 1;
-  if (nextChapter <= 3 + PET_ACCESSORIES.length) {
+  if (nextChapter <= 2 + PET_ACCESSORIES.length) {
     const { data: next } = await supabase
       .from("story_progress")
       .select("id")
@@ -146,8 +192,8 @@ export async function completeChapter(userId: string, chapter: number, movesUsed
 
   // Award XP
   const xp = calculateXP(chapter, movesUsed);
-  await addPetXP(userId, xp);
-  return xp;
+  const result = await addPetXP(userId, xp);
+  return { xp, isDead: result?.isDead ?? false, newXp: result?.newXp ?? 0 };
 }
 
 // ============================================

@@ -4,10 +4,11 @@
 // Capítols progressius per aprendre a jugar:
 //   1. Adopta mascota + troba-la en 1 escenari
 //   2. Mascota s'escapa → 3 escenaris (aprèn a moure's)
-//   3+ Partides vs CPU per accesoris de mascota
+//   3+ Partides vs CPU per accesoris → consumibles → XP
+// Pet evolution: visual tiers. Max XP = pet dies → restart.
 // ============================================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,14 +16,15 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
 import {
-  PET_OPTIONS, PET_ACCESSORIES,
+  PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, MAX_PET_XP,
+  getPetEvolution, hasAllAccessories,
   getMyPet, createPet, getStoryProgress, initChapter, completeChapter,
-  getMyAccessories, awardAccessory, cpuChooseHidingSpot, calculateXP,
+  getMyAccessories, awardAccessory, resetPetAndProgress, calculateXP,
 } from "@/lib/story-helpers";
 import { getScenarios, getItemsByScenario, getObjects } from "@/lib/supabase-helpers";
 import { toast } from "sonner";
 
-type StoryPhase = "loading" | "intro" | "gift" | "naming" | "hub" | "playing";
+type StoryPhase = "loading" | "intro" | "gift" | "naming" | "hub" | "playing" | "dead";
 
 export default function StoryModePage() {
   const { user } = useAuth();
@@ -34,7 +36,7 @@ export default function StoryModePage() {
   const [accessories, setAccessories] = useState<any[]>([]);
 
   // Intro animation states
-  const [randomPet, setRandomPet] = useState<{ type: string; icon: string; name: string }>(PET_OPTIONS[0]);
+  const [randomPet, setRandomPet] = useState(PET_OPTIONS[0]);
   const [petName, setPetName] = useState("");
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
@@ -42,7 +44,6 @@ export default function StoryModePage() {
   // Chapter play states
   const [activeChapter, setActiveChapter] = useState(0);
   const [scenarios, setScenarios] = useState<any[]>([]);
-  const [allObjects, setAllObjects] = useState<any[]>([]);
   const [currentScenarioId, setCurrentScenarioId] = useState("");
   const [currentItems, setCurrentItems] = useState<any[]>([]);
   const [availableScenarios, setAvailableScenarios] = useState<any[]>([]);
@@ -50,27 +51,30 @@ export default function StoryModePage() {
   const [movesUsed, setMovesUsed] = useState(0);
   const [chapterDone, setChapterDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
+  const [wonConsumable, setWonConsumable] = useState<any>(null);
+  const [petDied, setPetDied] = useState(false);
+
+  const allAccsCollected = useMemo(() => hasAllAccessories(accessories), [accessories]);
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [petData, prog, accs, scen, objs] = await Promise.all([
+    const [petData, prog, accs, scen] = await Promise.all([
       getMyPet(user.id),
       getStoryProgress(user.id),
       getMyAccessories(user.id),
       getScenarios(),
-      getObjects(),
     ]);
     setPet(petData);
     setProgress(prog);
     setAccessories(accs);
     setScenarios(scen);
-    setAllObjects(objs);
 
     if (!petData) {
-      // New player — show intro
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
       setRandomPet(rp);
       setPhase("intro");
+    } else if (petData.xp >= MAX_PET_XP) {
+      setPhase("dead");
     } else {
       setPhase("hub");
     }
@@ -89,12 +93,26 @@ export default function StoryModePage() {
     try {
       const p = await createPet(user.id, randomPet.type, petName.trim(), randomPet.icon);
       setPet(p);
-      // Init chapter 1
       await initChapter(user.id, 1);
       const prog = await getStoryProgress(user.id);
       setProgress(prog);
       setPhase("hub");
       toast.success(`${randomPet.icon} ${petName.trim()} és el teu company!`);
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  // ====== PET DEATH → REBIRTH ======
+  const handleRebirth = async () => {
+    if (!user) return;
+    try {
+      await resetPetAndProgress(user.id);
+      const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
+      setRandomPet(rp);
+      setPetName("");
+      setIntroStep(0);
+      setGiftOpened(false);
+      setPhase("intro");
+      toast("La teva mascota ha viscut una vida plena 💫");
     } catch (err: any) { toast.error(err.message); }
   };
 
@@ -106,45 +124,40 @@ export default function StoryModePage() {
     setMovesUsed(0);
     setChapterDone(false);
     setXpEarned(0);
+    setWonConsumable(null);
+    setPetDied(false);
+
+    const positions = ["sobre", "sota", "dins"] as const;
 
     if (chapter === 1) {
-      // Single random scenario
       const scen = scenarios[Math.floor(Math.random() * scenarios.length)];
       const items = await getItemsByScenario(scen.id);
       setAvailableScenarios([scen]);
       setCurrentScenarioId(scen.id);
       setCurrentItems(items);
-      // CPU hides pet in this scenario
-      const positions = ["sobre", "sota", "dins"] as const;
       const item = items[Math.floor(Math.random() * items.length)];
       const pos = positions[Math.floor(Math.random() * positions.length)];
       setHiddenSpot({ itemId: item.id, position: pos, itemName: item.name, scenarioId: scen.id });
     } else if (chapter === 2) {
-      // 3 random scenarios
       const shuffled = [...scenarios].sort(() => Math.random() - 0.5).slice(0, 3);
       setAvailableScenarios(shuffled);
       const startScen = shuffled[0];
       const items = await getItemsByScenario(startScen.id);
       setCurrentScenarioId(startScen.id);
       setCurrentItems(items);
-      // Hide in random scenario (not the starting one)
       const hideScen = shuffled[Math.floor(Math.random() * (shuffled.length - 1)) + 1] || shuffled[0];
       const hideItems = await getItemsByScenario(hideScen.id);
-      const positions = ["sobre", "sota", "dins"] as const;
       const item = hideItems[Math.floor(Math.random() * hideItems.length)];
       const pos = positions[Math.floor(Math.random() * positions.length)];
       setHiddenSpot({ itemId: item.id, position: pos, itemName: item.name, scenarioId: hideScen.id });
     } else {
-      // Chapter 3+: full game vs CPU
       setAvailableScenarios(scenarios);
       const startScen = scenarios[Math.floor(Math.random() * scenarios.length)];
       const items = await getItemsByScenario(startScen.id);
       setCurrentScenarioId(startScen.id);
       setCurrentItems(items);
-      // CPU hides in random scenario
       const hideScen = scenarios[Math.floor(Math.random() * scenarios.length)];
       const hideItems = await getItemsByScenario(hideScen.id);
-      const positions = ["sobre", "sota", "dins"] as const;
       const item = hideItems[Math.floor(Math.random() * hideItems.length)];
       const pos = positions[Math.floor(Math.random() * positions.length)];
       setHiddenSpot({ itemId: item.id, position: pos, itemName: item.name, scenarioId: hideScen.id });
@@ -161,11 +174,9 @@ export default function StoryModePage() {
 
   const handleLook = (itemId: string, position: string) => {
     setMovesUsed(m => m + 1);
-    // Check if found
     if (hiddenSpot && hiddenSpot.itemId === itemId && hiddenSpot.position === position && hiddenSpot.scenarioId === currentScenarioId) {
       handleFound();
     } else {
-      // Hint: same scenario?
       if (hiddenSpot?.scenarioId === currentScenarioId) {
         if (hiddenSpot?.itemId === itemId) {
           toast.info("🔥 Molt calent! Prova una altra posició!");
@@ -180,26 +191,37 @@ export default function StoryModePage() {
 
   const handleFound = async () => {
     if (!user) return;
-    const xp = await completeChapter(user.id, activeChapter, movesUsed + 1);
-    setXpEarned(xp);
+    const result = await completeChapter(user.id, activeChapter, movesUsed + 1);
+    setXpEarned(result.xp);
+    setPetDied(result.isDead);
 
-    // Chapter 3+ gives accessory
+    // Chapter 3+: award accessory if not yet owned, otherwise consumable
     if (activeChapter >= 3) {
       const accIdx = activeChapter - 3;
       if (accIdx < PET_ACCESSORIES.length) {
         const acc = PET_ACCESSORIES[accIdx];
-        await awardAccessory(user.id, acc.name, acc.icon);
+        const alreadyOwned = accessories.some(a => a.accessory_name === acc.name);
+        if (!alreadyOwned) {
+          await awardAccessory(user.id, acc.name, acc.icon);
+        }
+      }
+      // If all accessories collected, show random consumable
+      if (allAccsCollected || accIdx >= PET_ACCESSORIES.length) {
+        const consumable = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
+        setWonConsumable(consumable);
       }
     }
 
     setChapterDone(true);
-    toast.success(`🎉 Trobat! +${xp} XP`);
+    toast.success(`🎉 Trobat! +${result.xp} XP`);
   };
 
   const backToHub = async () => {
     await loadData();
-    setPhase("hub");
   };
+
+  // ====== PET EVOLUTION DISPLAY ======
+  const evolution = pet ? getPetEvolution(pet.xp ?? 0) : null;
 
   // ====== RENDER ======
   if (phase === "loading") return (
@@ -208,7 +230,30 @@ export default function StoryModePage() {
     </div>
   );
 
-  // INTRO: typewriter welcome
+  // PET DEAD
+  if (phase === "dead") return (
+    <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-muted/10 blur-[100px] pointer-events-none" />
+      <div className="text-center relative z-10 animate-fade-in">
+        <div className="text-7xl mb-4 opacity-50">{pet?.pet_icon}</div>
+        <h2 className="text-2xl font-bold mb-2">{pet?.pet_name} ha viscut una vida plena</h2>
+        <p className="text-sm text-muted-foreground mb-2">
+          Ha arribat a {MAX_PET_XP} XP — el màxim possible.
+        </p>
+        <p className="text-xs text-muted-foreground mb-6">
+          Gràcies per cuidar-{pet?.pet_type === "cat" ? "lo" : "lo"}. Ara pots adoptar una nova mascota!
+        </p>
+        <Button onClick={handleRebirth} size="lg" className="w-full max-w-xs">
+          🥚 Nova mascota
+        </Button>
+        <Button variant="ghost" onClick={() => navigate("/")} className="w-full max-w-xs mt-2">
+          ← Lobby
+        </Button>
+      </div>
+    </div>
+  );
+
+  // INTRO
   if (phase === "intro") return (
     <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
@@ -266,10 +311,9 @@ export default function StoryModePage() {
     </div>
   );
 
-  // HUB: chapter selection
+  // HUB
   if (phase === "hub") {
-    const totalAccessories = PET_ACCESSORIES.length;
-    const totalChapters = 2 + totalAccessories;
+    const totalChapters = 2 + PET_ACCESSORIES.length;
     const completedCount = progress.filter(p => p.status === "completed").length;
 
     return (
@@ -280,18 +324,37 @@ export default function StoryModePage() {
           ← Lobby
         </button>
 
-        {/* Pet info */}
-        {pet && (
+        {/* Pet info with evolution */}
+        {pet && evolution && (
           <div className="text-center mb-6 relative z-10">
-            <div className="text-6xl mb-2">{pet.pet_icon}</div>
+            <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br ${evolution.glow} ring-2 ${evolution.ring} mb-2`}>
+              <span className="text-6xl">{pet.pet_icon}</span>
+            </div>
             <h1 className="text-xl font-bold">{pet.pet_name}</h1>
-            <p className="text-sm text-accent font-semibold">⭐ {pet.xp ?? 0} XP</p>
+            <p className="text-xs text-muted-foreground">
+              {evolution.badge} {evolution.label}
+              {evolution.nextTier && (
+                <span className="ml-1">→ {evolution.nextTier.badge} {evolution.nextTier.label} ({evolution.nextTier.minXp} XP)</span>
+              )}
+            </p>
+            <div className="w-48 mx-auto mt-2">
+              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-2 rounded-full bg-accent transition-all duration-500"
+                  style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-accent font-semibold mt-1">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
+            </div>
             {accessories.length > 0 && (
               <div className="flex justify-center gap-1.5 mt-2">
                 {accessories.map((a: any) => (
                   <span key={a.id} className="text-xl" title={a.accessory_name}>{a.accessory_icon}</span>
                 ))}
               </div>
+            )}
+            {allAccsCollected && (
+              <p className="text-[10px] text-green-500 mt-1">✅ Tots els accesoris! Ara guanyes consumibles + XP</p>
             )}
           </div>
         )}
@@ -301,22 +364,22 @@ export default function StoryModePage() {
         </h2>
 
         <div className="space-y-2 relative z-10">
-          {/* Chapter 1 */}
           {renderChapterCard(1, `Troba ${pet?.pet_name ?? "la mascota"}!`,
             "Aprèn a observar i confirmar en una sola habitació.",
             progress.find(p => p.chapter === 1))}
 
-          {/* Chapter 2 */}
           {renderChapterCard(2, `${pet?.pet_name ?? "La mascota"} s'ha escapat!`,
             "Aprèn a moure't entre 3 habitacions per trobar-la.",
             progress.find(p => p.chapter === 2))}
 
-          {/* Chapters 3+: accessories */}
           {PET_ACCESSORIES.map((acc, i) => {
             const ch = 3 + i;
-            return renderChapterCard(ch, `${acc.icon} Accessori: ${acc.name}`,
-              `Partida completa vs CPU. Guanya ${acc.icon} ${acc.name} per ${pet?.pet_name ?? "la mascota"}!`,
-              progress.find(p => p.chapter === ch));
+            const chProg = progress.find(p => p.chapter === ch);
+            const alreadyOwned = accessories.some(a => a.accessory_name === acc.name);
+            const desc = alreadyOwned
+              ? `${acc.icon} ${acc.name} ✅ — Repeteix per guanyar XP${allAccsCollected ? " + consumibles" : ""}!`
+              : `Partida vs CPU. Guanya ${acc.icon} ${acc.name} per ${pet?.pet_name ?? "la mascota"}!`;
+            return renderChapterCard(ch, `${acc.icon} Accessori: ${acc.name}`, desc, chProg);
           })}
         </div>
       </div>
@@ -325,9 +388,7 @@ export default function StoryModePage() {
 
   function renderChapterCard(chapter: number, title: string, desc: string, prog: any) {
     const isCompleted = prog?.status === "completed";
-    const isActive = prog?.status === "active";
     const isLocked = !prog || prog.status === "locked";
-    // Chapter 1 is always unlocked
     const canStart = chapter === 1 || !isLocked;
 
     return (
@@ -356,7 +417,7 @@ export default function StoryModePage() {
     );
   }
 
-  // PLAYING: simplified game
+  // PLAYING
   if (phase === "playing") {
     const currentScen = availableScenarios.find(s => s.id === currentScenarioId);
     const positions = [
@@ -367,22 +428,35 @@ export default function StoryModePage() {
 
     if (chapterDone) {
       const accIdx = activeChapter - 3;
-      const wonAcc = accIdx >= 0 && accIdx < PET_ACCESSORIES.length ? PET_ACCESSORIES[accIdx] : null;
+      const wonNewAcc = accIdx >= 0 && accIdx < PET_ACCESSORIES.length && !accessories.some(a => a.accessory_name === PET_ACCESSORIES[accIdx]?.name)
+        ? PET_ACCESSORIES[accIdx] : null;
       return (
         <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
           <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-green-500/10 blur-[100px] pointer-events-none" />
           <div className="text-center relative z-10 animate-scale-in">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold mb-2">Capítol {activeChapter} completat!</h2>
+            <div className="text-6xl mb-4">{petDied ? "💫" : "🎉"}</div>
+            <h2 className="text-2xl font-bold mb-2">
+              {petDied ? `${pet?.pet_name} ha arribat al màxim!` : `Capítol ${activeChapter} completat!`}
+            </h2>
             <p className="text-lg text-accent font-bold mb-1">+{xpEarned} XP ⭐</p>
             <p className="text-sm text-muted-foreground mb-2">Moviments: {movesUsed + 1}</p>
-            {wonAcc && (
-              <p className="text-lg font-bold text-primary mb-4">
-                Nou accessori: {wonAcc.icon} {wonAcc.name}!
+            {wonNewAcc && (
+              <p className="text-lg font-bold text-primary mb-2">
+                Nou accessori: {wonNewAcc.icon} {wonNewAcc.name}!
+              </p>
+            )}
+            {wonConsumable && (
+              <p className="text-sm font-medium text-green-500 mb-2">
+                {wonConsumable.icon} {wonConsumable.name} per {pet?.pet_name}!
+              </p>
+            )}
+            {petDied && (
+              <p className="text-sm text-muted-foreground mb-2">
+                Ha viscut una vida plena. Podràs adoptar una nova mascota.
               </p>
             )}
             <Button onClick={backToHub} size="lg" className="w-full max-w-xs">
-              Tornar al menú 📖
+              {petDied ? "🥚 Continuar" : "Tornar al menú 📖"}
             </Button>
           </div>
         </div>
@@ -393,7 +467,6 @@ export default function StoryModePage() {
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
 
-        {/* Header */}
         <div className="flex items-center justify-between mb-4 relative z-10">
           <button onClick={backToHub} className="text-sm text-muted-foreground hover:text-primary transition-colors">
             ← Sortir
@@ -404,12 +477,11 @@ export default function StoryModePage() {
           </div>
         </div>
 
-        {/* Story hint */}
         <Card className="mb-4 glass border-accent/30 relative z-10">
           <CardContent className="py-3 text-center">
             {activeChapter === 1 && (
               <p className="text-sm">
-                {pet?.pet_icon} <strong>{pet?.pet_name}</strong> s'amaga en aquesta habitació. Observa els mobles per trobar-{pet?.pet_type === "cat" ? "lo" : "lo"}!
+                {pet?.pet_icon} <strong>{pet?.pet_name}</strong> s'amaga en aquesta habitació. Observa els mobles per trobar-lo!
               </p>
             )}
             {activeChapter === 2 && (
@@ -419,20 +491,18 @@ export default function StoryModePage() {
             )}
             {activeChapter >= 3 && (
               <p className="text-sm">
-                🎯 Busca l'accessori {PET_ACCESSORIES[activeChapter - 3]?.icon} <strong>{PET_ACCESSORIES[activeChapter - 3]?.name}</strong> per {pet?.pet_name}!
+                🎯 Busca {allAccsCollected ? "provisions" : `l'accessori ${PET_ACCESSORIES[activeChapter - 3]?.icon ?? ""}`} per {pet?.pet_name}!
               </p>
             )}
           </CardContent>
         </Card>
 
-        {/* Current scenario */}
         <div className="mb-3 relative z-10">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             {currentScen?.icon} {currentScen?.name}
           </h2>
         </div>
 
-        {/* Move to other scenarios (chapters 2+) */}
         {activeChapter >= 2 && availableScenarios.length > 1 && (
           <div className="flex gap-2 mb-4 overflow-x-auto relative z-10">
             {availableScenarios.filter(s => s.id !== currentScenarioId).map(s => (
@@ -444,7 +514,6 @@ export default function StoryModePage() {
           </div>
         )}
 
-        {/* Items grid */}
         <div className="space-y-2 relative z-10">
           {currentItems.filter(i => !i.hidden).map((item: any) => (
             <Card key={item.id} className="glass">
