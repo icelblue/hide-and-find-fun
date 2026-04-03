@@ -208,11 +208,18 @@ export default function LobbyPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-1">
-          <HelpButton />
-          <Button variant="ghost" size="icon" onClick={() => setShowBugReport(true)} className="rounded-xl" aria-label="Reportar bug">🐛</Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} className="rounded-xl">👤</Button>
-          <Button variant="ghost" size="icon" onClick={signOut} className="rounded-xl">🚪</Button>
+        <div className="relative" ref={menuRef}>
+          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl" aria-label="Menú">☰</Button>
+          {menuOpen && (
+            <div className="absolute right-0 top-10 z-50 bg-card border border-border rounded-xl shadow-xl py-1 min-w-[180px] animate-scale-in">
+              <button onClick={() => { setMenuOpen(false); navigate("/story"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐾 Mode Història</button>
+              <button onClick={() => { setMenuOpen(false); navigate("/profile"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">👤 Perfil</button>
+              <button onClick={() => { setMenuOpen(false); setShowBugReport(true); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐛 Reportar bug</button>
+              <HelpButton />
+              <div className="border-t border-border/30 my-1" />
+              <button onClick={() => { setMenuOpen(false); signOut(); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2 text-destructive">🚪 Sortir</button>
+            </div>
+          )}
         </div>
       </div>
 
