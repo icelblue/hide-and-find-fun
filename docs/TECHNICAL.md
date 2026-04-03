@@ -398,7 +398,9 @@
 | `social_item_used_today` | boolean | Ja ha usat ítem social avui? |
 | `shield_active` | boolean | Té l'escut activat? |
 | `smoke_bomb_used` | boolean | Ja ha usat bomba fum? (1/partida) |
-| `special_data` | jsonb? | Dades extra d'objectes especials |
+| `tools` | jsonb | Eines del jugador: `{drap, tornavis, martell, llanterna}` |
+| `special_data` | jsonb? | Dades extra d'objectes especials (hide_message, etc.) |
+| `bonus_tokens_added` | numeric | Tokens bonus afegits manualment |
 
 </details>
 
