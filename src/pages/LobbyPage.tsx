@@ -61,6 +61,9 @@ export default function LobbyPage() {
     refetchInterval: 20_000,
   });
 
+  const [showBugReport, setShowBugReport] = useState(false);
+  const [bugMessage, setBugMessage] = useState("");
+
   const { data: profile = null } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
