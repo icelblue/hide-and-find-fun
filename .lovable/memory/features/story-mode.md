@@ -1,13 +1,23 @@
 ---
 name: Story Mode
-description: Single-player tutorial mode with pet companion, evolution, death/rebirth, progressive chapters, accessories + consumables
+description: Single-player tutorial using real game engine with CPU opponent, pet companion, evolution, death/rebirth, progressive chapters, accessories + consumables
 type: feature
 ---
 
-## Mode Història (v1.1)
+## Mode Història (v2.0 — Motor real)
 
-### Concepte
-Tutorial single-player progressiu per nous jugadors. No afecta PvP (Elo/Lligues).
+### Arquitectura
+- Les partides de història utilitzen el **motor real de GamePage** (mateixa lògica que PvP)
+- CPU virtual amb UUID fix: `00000000-0000-0000-0000-000000000001`
+- Funció DB `create_story_game(_user_id, _chapter)` crea partida real (games + game_players)
+- `is_story=true` a la taula `games` → `handle_game_finished` ignora Elo/Lligues/Recompenses
+- GamePage detecta `is_story` i:
+  - Desactiva realtime (CPU no actua)
+  - Amaga panell social / items socials
+  - Amaga info del rival (nearby, traits, shield)
+  - Mostra header "← Mode Història" + capítol
+  - Al guanyar: crida `completeChapter` per XP + accesoris
+  - Pantalla de fi personalitzada amb XP i accesoris
 
 ### Mascota
 - 5 animals: 🐕 Gos, 🐱 Gat, 🐰 Conill, 🐹 Hàmster, 🐢 Tortuga
@@ -24,41 +34,24 @@ Tutorial single-player progressiu per nous jugadors. No afecta PvP (Elo/Lligues)
 | 3000+ | Veterà | 🔥 |
 | 4500+ | Llegendari | 👑 |
 
-- Visual: glow ring al voltant de la icona, progressivament intens
 - MAX_PET_XP = 5000 → mascota "mor" → restart des de capítol 1
 
-### Mort i renaixement
-- Al arribar a 5000 XP: pantalla de comiat
-- S'esborren: player_pets, story_progress, pet_accessories
-- L'usuari adopta nova mascota (intro completa)
-
 ### Capítols
-1. **"Troba la mascota"** — 1 escenari, sense moure's. Base 100 XP.
-2. **"S'ha escapat!"** — 3 escenaris random. Base 200 XP.
-3-8. **Accesoris** — Partida vs CPU. 1 accessori per capítol (no repetit). Base 150 XP.
+1. **"Troba la mascota"** — partida real vs CPU. Base 100 XP.
+2. **"S'ha escapat!"** — partida real vs CPU. Base 200 XP.
+3-8. **Accesoris** — Partida vs CPU. 1 accessori per capítol. Base 150 XP.
 
-### Fase post-accesoris
-- Un cop es tenen tots 6 accesoris (📿🎀⚽🦴🧣🧸)
-- Capítols 3-8 es poden repetir infinitament
-- Cada victòria dóna XP + consumible random (🍖🥤💉)
-- Consumibles són cosmètics (no s'emmagatzemen, només XP)
-
-### XP System
-- Base per capítol + bonus per eficiència (menys moviments = més XP)
-- Fórmula: `base + max(1, 10 - moves) * 10`
-
-### UI
-- Lobby: botó 🐾 al grid principal + menú hamburguesa
-- Animació typewriter per intro
-- Obrir regal → animal random → posar nom
-- Hub amb llista de capítols (locked/active/completed)
-- Perfil: mostra mascota amb evolució visual (glow ring + badge + barra XP)
-- "Vitrina" al perfil (abans "Col·lecció")
+### Funcions DB
+- `create_story_game` — SECURITY DEFINER, crea partida + game_players per user i CPU
+- `insert_cpu_move` — per insertar moviments de la CPU (bypass RLS)
+- `finish_story_game` — per tancar partida de història
 
 ### Taules DB
 - `player_pets` — mascota (1 per user)
 - `story_progress` — progrés capítols (user_id, chapter, status, moves_used, best_moves)
 - `pet_accessories` — accesoris guanyats
+- `games.is_story` + `games.story_chapter` — identifiquen partides de història
 
 ### Ruta
-- `/story` — StoryModePage.tsx
+- `/story` — StoryModePage.tsx (hub + adopció)
+- `/game/{gameId}` — GamePage.tsx (partida real amb mode story)
