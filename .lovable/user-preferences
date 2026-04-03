@@ -2,5 +2,4 @@ Parla en català. Vol arquitectura sòlida i escalable abans de codi.
 Pensa en termes de "puzle" — peces encaixades amb lògica.
 Prefereix decisions tancades abans de construir.
 Vol sistema funcional amb mínim marge d'error.
-Sempre indicar si un canvi és MAJOR, MINOR o PATCH segons SemVer.
-Recordar actualitzar CHANGELOG.md i APP_VERSION quan es tanqui una versió.
+SEMPRE actualitzar documentació (md, memòria, changelog) quan es fan canvis al codi.
