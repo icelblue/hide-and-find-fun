@@ -893,7 +893,10 @@ export default function GamePage() {
                   onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
                   lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
-                  bananaBlockedSpot={bananaBlockedSpot} />
+                  bananaBlockedSpot={bananaBlockedSpot}
+                  interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
+                  onInteraction={handleInteraction}
+                  moveHistory={moveHistory} />
               ))}
             </div>
           </div>
