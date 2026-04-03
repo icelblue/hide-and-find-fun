@@ -351,6 +351,7 @@ export type Database = {
         Row: {
           display_order: number
           environment: Database["public"]["Enums"]["item_environment"]
+          hidden: boolean
           icon: string | null
           id: string
           inner_capacity: number
@@ -360,6 +361,7 @@ export type Database = {
         Insert: {
           display_order?: number
           environment?: Database["public"]["Enums"]["item_environment"]
+          hidden?: boolean
           icon?: string | null
           id?: string
           inner_capacity?: number
@@ -369,6 +371,7 @@ export type Database = {
         Update: {
           display_order?: number
           environment?: Database["public"]["Enums"]["item_environment"]
+          hidden?: boolean
           icon?: string | null
           id?: string
           inner_capacity?: number
