@@ -137,17 +137,17 @@ export default function GamePage() {
     }
 
     let loadedItems: any[] = [];
+    let loadedInteractions: any[] = [];
     if (gameData?.status === "playing" && playerData?.current_scenario_id) {
       const [itemsData, connected] = await Promise.all([
         getItemsByScenario(playerData.current_scenario_id),
         getConnectedScenarios(playerData.current_scenario_id),
       ]);
       loadedItems = itemsData;
-      setCurrentScenarioItems(itemsData);
       setConnectedScenarios(connected);
       // Load interactions for current scenario items
-      const interactions = await getItemInteractions(itemsData.map((i: any) => i.id));
-      setItemInteractions(interactions);
+      loadedInteractions = await getItemInteractions(itemsData.map((i: any) => i.id));
+      setItemInteractions(loadedInteractions);
     }
 
     const { data: moves } = await supabase
