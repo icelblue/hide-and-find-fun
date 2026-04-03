@@ -649,6 +649,19 @@ export default function GamePage() {
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
+
+              {/* Optional hide message */}
+              <div className="mb-3">
+                <p className="text-[11px] text-muted-foreground mb-1">💌 Missatge opcional (es veurà quan trobin l'objecte):</p>
+                <Input
+                  value={hideMessage}
+                  onChange={e => setHideMessage(e.target.value)}
+                  placeholder="Ex: T'ha costat eh! 😏"
+                  maxLength={100}
+                  className="text-sm bg-muted/50 border-border/50"
+                />
+              </div>
+
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => {
                   const obj = objects.find((o: any) => o.id === selectedObject);
