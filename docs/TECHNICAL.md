@@ -110,14 +110,14 @@
 │      │                                                        │
 │      ├── /auth ──────────── AuthPage.tsx                       │
 │      ├── / ──────────────── LobbyPage.tsx                     │
-│      ├── /game/:id ──────── GamePage.tsx         ⭐ 940 línies│
+│      ├── /game/:id ──────── GamePage.tsx        ⭐ ~1550 línies│
 │      ├── /profile ────────── ProfilePage.tsx                  │
 │      ├── /player/:id ────── PlayerProfilePage.tsx             │
 │      └── /reset-password ── ResetPasswordPage.tsx             │
 │                                                               │
 │   Lògica de negoci:                                           │
-│      ├── lib/supabase-helpers.ts    ⭐ 577 línies             │
-│      └── lib/reward-helpers.ts         55 línies              │
+│      ├── lib/supabase-helpers.ts    ⭐ ~1250 línies           │
+│      └── lib/reward-helpers.ts         93 línies              │
 │                                                               │
 │   Comunicació:                                                │
 │      └── @supabase/supabase-js (client auto-generat)          │
