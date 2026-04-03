@@ -36,12 +36,12 @@ const RULES = [
     text: "Un cop al dia pots usar un ítem:\n🍌 Plàtan — Bloqueja 1 posició del rival (es desbloqueja amb qualsevol acció).\n💣 Bomba de fum — Mou el TEU objecte a altra posició (1 ús/partida).\n🛡️ Escut — Protegeix del pròxim plàtan o intercanvi (1 ús, es desactiva després).\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix en quina habitació és el rival.\n💡 Pista — Envia un missatge o farol al rival.",
   },
   {
-    title: "🎁 Bonus aleatoris",
-    text: "Quan observes o confirmes, tens un 15% de probabilitat de trobar tokens extra!",
+    title: "🎁 Bonus i eines",
+    text: "Quan observes o confirmes, tens un 15% de trobar tokens extra o eines:\n🧹 Drap — per netejar mobles bruts.\n🔨 Martell — per trencar mobles fràgils.\n🔧 Tornavís — per arreglar mobles trencats.\nMàxim 3 de cada. Les eines només duren la partida.",
   },
   {
     title: "⚡ Mobles interactius",
-    text: "Alguns mobles tenen accions especials (💡 encendre, 🚪 obrir...). Busca el ⚡ al costat del nom! Costen tokens però t'ajuden a buscar.",
+    text: "Alguns mobles tenen accions basades en les seves propietats:\n🧹 Netejar (mobles bruts) — 0.2🪙, cal Drap, 50% bonus.\n💥 Trencar (mobles fràgils) — 0.3🪙, cal Martell, notifica el rival on ets!\n🔧 Arreglar (mobles trencats) — 0.2🪙, cal Tornavís, 40% bonus.\n💡 Encendre (especial) — revela mobles ocults.\nBusca el ⚡ al nom del moble!",
   },
   {
     title: "🏆 Recompenses",

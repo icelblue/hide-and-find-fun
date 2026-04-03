@@ -1,6 +1,6 @@
 ---
 name: Interactive Furniture System v1.1
-description: Tag-based actions (dirty→clean, breakable→break, broken→fix), tools (drap, tornavís), item_interactions for specials (encendre)
+description: Tag-based actions (dirty→clean, breakable→break+martell, broken→fix+tornavís), tools (drap, martell, tornavís), item_interactions for specials (encendre)
 type: feature
 ---
 
@@ -9,15 +9,15 @@ Items have `tags text[]` column. Actions derived from tags dynamically:
 
 | Tag | Action | Tool | Cost | Effect |
 |-----|--------|------|------|--------|
-| `dirty` | 🧹 Netejar | Drap ✓ | 0.2🪙 | 50% mini bonus, consumes drap |
-| `breakable` | 💥 Trencar | — | 0.3🪙 | Notifies rival, blocks item visually, spawns 🔧 for BOTH players |
-| `broken` | 🔧 Arreglar | Tornavís ✓ | 0.2🪙 | Fixes item, 40% mini bonus, consumes tornavís |
+| `dirty` | 🧹 Netejar | 🧹 Drap ✓ | 0.2🪙 | 50% mini bonus, consumes drap |
+| `breakable` | 💥 Trencar | 🔨 Martell ✓ | 0.3🪙 | Notifies rival, spawns 🔧 for BOTH, consumes martell |
+| `broken` | 🔧 Arreglar | 🔧 Tornavís ✓ | 0.2🪙 | Fixes item, 40% mini bonus, consumes tornavís |
 
 ## Tools
-- Stored in `game_players.tools` JSONB: `{"drap": 0, "tornavis": 0}`
+- Stored in `game_players.tools` JSONB: `{"drap": 0, "tornavis": 0, "martell": 0}`
 - Only last during the game (not persistent)
 - Max 3 of each
-- Found: 10% chance on look/confirm actions
+- Found: 15% chance on look/confirm (5% each: martell, tornavís, drap)
 - Breaking spawns tornavís for BOTH players (easy to fix)
 
 ## Tagged Items
@@ -38,6 +38,6 @@ Still used for unique effects like:
 ## Key Design Principles
 - All actions serve the core objective: finding the rival's hidden object
 - Netejar = facilitador (bonus tokens/tools)
-- Trencar = dificultador (reveals your position to rival)
+- Trencar = dificultador (reveals your position to rival), requires martell
 - Arreglar = easy (tornavís spawns automatically when something breaks)
 - "Obrir" action REMOVED — conflicts with confirm (1.5🪙)

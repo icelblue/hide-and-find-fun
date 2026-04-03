@@ -139,11 +139,11 @@ export async function getItemInteractions(itemIds: string[]) {
 
 export const TAG_ACTIONS = {
   dirty: { icon: "🧹", label: "Netejar", cost: 0.2, requiresTool: "drap" as const },
-  breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: null },
+  breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: "martell" as const },
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
 } as const;
 
-export type ToolType = "drap" | "tornavis";
+export type ToolType = "drap" | "tornavis" | "martell";
 
 /** Get tag-based actions available for an item given player's tools and game state */
 export function getTagActions(item: any, playerTools: Record<string, number>, gameBreaks: Set<string>) {
@@ -173,12 +173,12 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
     });
   }
 
-  // Breakable → Trencar (only if not already broken)
+  // Breakable → Trencar (only if not already broken AND has martell)
   if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
       tag: "breakable", ...cfg,
-      hasTool: true, // no tool needed
+      hasTool: (playerTools.martell ?? 0) > 0,
       actionKey: `break:${item.id}`,
     });
   }
@@ -186,11 +186,14 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
   return actions;
 }
 
-/** Roll for tool finding (10% chance on look/confirm) */
+/** Roll for tool finding (~15% chance on look/confirm) */
 export function rollForTool(): ToolType | null {
   const roll = Math.random();
-  if (roll < 0.10) {
-    return roll < 0.05 ? "tornavis" : "drap";
+  if (roll < 0.15) {
+    // 5% martell, 5% tornavis, 5% drap
+    if (roll < 0.05) return "martell";
+    if (roll < 0.10) return "tornavis";
+    return "drap";
   }
   return null;
 }
@@ -215,7 +218,7 @@ export async function performTagAction(
   // Check tool requirement
   const toolNeeded = cfg.requiresTool;
   if (toolNeeded && (playerTools[toolNeeded] ?? 0) <= 0) {
-    const toolName = toolNeeded === "drap" ? "🧹 Drap" : "🔧 Tornavís";
+    const toolName = toolNeeded === "drap" ? "🧹 Drap" : toolNeeded === "martell" ? "🔨 Martell" : "🔧 Tornavís";
     throw new Error(`Necessites un ${toolName} per fer això!`);
   }
 
@@ -271,7 +274,7 @@ export async function performTagAction(
       .eq("game_id", gameId).neq("user_id", playerId).single();
     if (rival) {
       // Also give rival a tornavís so they can fix it
-      const rivalTools = (rival.tools as any) ?? { drap: 0, tornavis: 0 };
+      const rivalTools = (rival.tools as any) ?? { drap: 0, tornavis: 0, martell: 0 };
       rivalTools.tornavis = Math.min(3, (rivalTools.tornavis ?? 0) + 1);
       await supabase.from("game_players")
         .update({ tools: rivalTools })

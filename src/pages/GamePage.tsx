@@ -49,7 +49,7 @@ export default function GamePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
-  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 0 });
+  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 0, martell: 0 });
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
@@ -101,7 +101,7 @@ export default function GamePage() {
       }
     }
     setPlayer(playerData);
-    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0 });
+    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0, martell: 0 });
     // Load available bonus tokens from profile
     if (gameData?.status === "playing") {
       const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
@@ -401,7 +401,7 @@ export default function GamePage() {
         toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
       }
       if (result.toolFound) {
-        const toolName = result.toolFound === "drap" ? "🧹 Drap" : "🔧 Tornavís";
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : "🔧 Tornavís";
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       }
 
@@ -419,7 +419,7 @@ export default function GamePage() {
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
-        const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : "🔧 Tornavís";
+        const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
@@ -910,9 +910,9 @@ export default function GamePage() {
             {noTokens && (
               <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
-            {(playerTools.drap > 0 || playerTools.tornavis > 0) && (
+            {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0) && (
               <span className="bg-secondary/10 text-secondary text-[11px] font-semibold px-3 py-1 rounded-full border border-secondary/20">
-                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.drap > 0 && playerTools.tornavis > 0 ? " " : ""}{playerTools.tornavis > 0 ? `🔧${playerTools.tornavis}` : ""}
+                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.tornavis > 0 ? ` 🔧${playerTools.tornavis}` : ""}{playerTools.martell > 0 ? ` 🔨${playerTools.martell}` : ""}
               </span>
             )}
           </div>
@@ -1175,7 +1175,7 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
                     {ta.label}
                     {ta.requiresTool && !ta.hasTool && (
                       <span className="text-[9px] text-muted-foreground ml-1">
-                        (cal {ta.requiresTool === "drap" ? "🧹" : "🔧"})
+                        (cal {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : "🔧"})
                       </span>
                     )}
                   </span>
