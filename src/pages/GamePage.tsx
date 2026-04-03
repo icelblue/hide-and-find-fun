@@ -973,7 +973,10 @@ export default function GamePage() {
                   bananaBlockedSpot={bananaBlockedSpot}
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
                   onInteraction={handleInteraction}
-                  moveHistory={moveHistory} />
+                  moveHistory={moveHistory}
+                  playerTools={playerTools}
+                  gameBreaks={gameBreaks}
+                  onTagAction={handleTagAction} />
               ))}
             </div>
           </div>
