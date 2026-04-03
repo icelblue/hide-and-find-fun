@@ -879,20 +879,35 @@ export default function GamePage() {
           {moveHistory.length > 0 && (
             <div>
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">📋 Historial</h3>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {moveHistory.map(m => (
-                  <div key={m.id} className="text-[11px] bg-muted/30 rounded-lg px-3 py-1.5 flex justify-between border border-border/20">
-                    <span>
-                      <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
-                      {m.action === "move" && `🚶 → ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
-                      {m.action === "look" && `👀 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
-                      {m.action === "confirm" && `🔍 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
-                      {m.found_object && " 🏆"}
-                      {m.found_bonus === "extra_token" && " 🎁"}
-                    </span>
-                    <span className="text-muted-foreground">-{m.token_cost}🪙</span>
-                  </div>
-                ))}
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {moveHistory.map(m => {
+                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
+                  const hintLabels: Record<number, string> = { 0: "fred", 1: "calent", 2: "molt calent!" };
+                  const hl = (m as any).hint_level;
+                  return (
+                    <div key={m.id} className={`text-[11px] rounded-lg px-3 py-1.5 flex justify-between border border-border/20 ${
+                      hl === 2 ? "bg-orange-500/10 border-orange-500/30" :
+                      hl === 1 ? "bg-yellow-500/10 border-yellow-500/20" :
+                      hl === 0 ? "bg-blue-500/10 border-blue-500/20" :
+                      "bg-muted/30"
+                    }`}>
+                      <span>
+                        <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
+                        {m.action === "move" && `🚶 → ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
+                        {m.action === "look" && (
+                          <>
+                            👀 {m.target_position} {(m.items as any)?.icon} {(m.items as any)?.name}
+                            {hl != null && <span className="ml-1 font-semibold">{hintIcons[hl]} {hintLabels[hl]}</span>}
+                          </>
+                        )}
+                        {m.action === "confirm" && `🔍 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
+                        {m.found_object && " 🏆"}
+                        {m.found_bonus === "extra_token" && " 🎁"}
+                      </span>
+                      <span className="text-muted-foreground">-{m.token_cost}🪙</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
