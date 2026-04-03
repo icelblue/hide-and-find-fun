@@ -50,6 +50,8 @@ export default function ProfilePage() {
   const [wallMessages, setWallMessages] = useState<any[]>([]);
   const [activeGames, setActiveGames] = useState<any[]>([]);
   const [trophies, setTrophies] = useState<any[]>([]);
+  const [pet, setPet] = useState<any>(null);
+  const [petAccessories, setPetAccessories] = useState<any[]>([]);
 
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
 
