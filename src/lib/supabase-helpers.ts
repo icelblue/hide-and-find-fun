@@ -542,18 +542,16 @@ export async function performMove(
     }
   }
 
-  // Both look and confirm check for bonus
+  // Both look and confirm check for bonus (skip hint_yes/hint_no — only keep extra_token)
   if ((action === "look" || action === "confirm") && targetItemId && targetPosition) {
     const { data: bonus } = await supabase
       .from("scenario_bonuses").select("*")
       .eq("item_id", targetItemId).eq("position", targetPosition).maybeSingle();
 
-    if (bonus) {
+    if (bonus && bonus.bonus_type === "extra_token") {
       foundBonus = bonus.bonus_type;
       bonusValue = bonus.value;
-      if (bonus.bonus_type === "extra_token") {
-        bonusTokens = parseFloat(bonus.value ?? "1");
-      }
+      bonusTokens = parseFloat(bonus.value ?? "1");
 
       // Save to inventory
       await supabase.from("player_inventory").insert({
@@ -561,6 +559,7 @@ export async function performMove(
         item_type: bonus.bonus_type, item_value: bonus.value,
       });
     }
+    // hint_yes / hint_no bonuses are ignored — progressive hints replace them
   }
 
   if (action === "move" && targetScenarioId) {
