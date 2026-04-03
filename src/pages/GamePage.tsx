@@ -35,7 +35,7 @@ import {
   hideObject, checkBothPlayersHidden, startGame, performMove,
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
-  getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
+  getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason, MATERIAL_LABELS,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
   type ToolType, OUTDOOR_SCENARIOS, isLightOff, toggleLight, useLlanterna,
   getDirtyItemsForGame,
@@ -255,8 +255,12 @@ export default function GamePage() {
     setRevealedItemIds(revealed);
 
     // Flashlight-revealed hidden items (per player, outdoor only)
-    const scenarioName = scenarios.find((s: any) => s.id === playerData?.current_scenario_id)?.name;
-    const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName ?? "");
+    // Fetch scenario name directly to avoid stale closure on `scenarios` state
+    let isOutdoor = false;
+    if (playerData?.current_scenario_id) {
+      const { data: curScen } = await supabase.from("scenarios").select("name").eq("id", playerData.current_scenario_id).single();
+      isOutdoor = OUTDOOR_SCENARIOS.includes(curScen?.name ?? "");
+    }
     const flashlightUsedHere = flashRevealed.has(playerData?.current_scenario_id ?? "");
 
     // Filter: show non-hidden items + revealed hidden items + flashlight-revealed
@@ -874,7 +878,8 @@ export default function GamePage() {
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
 
-              {/* Optional hide message — prominent card */}
+              {/* Optional hide message — only for special objects (Foto, Joguina, etc.) */}
+              {objectSpecial && (
               <Card className="mb-4 glass border-accent/30 glow-accent">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -894,6 +899,7 @@ export default function GamePage() {
                   <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{hideMessage.length}/100</p>
                 </CardContent>
               </Card>
+              )}
 
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => {
@@ -1391,7 +1397,7 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
                 <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
                 {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
                   <p className="text-[10px] text-muted-foreground mb-2">
-                    Material: <span className="font-medium text-foreground/70">{rivalInfo.obj.material}</span>
+                    Material: <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
                     {rivalInfo.obj.size && <span> · Mida {rivalInfo.obj.size}</span>}
                   </p>
                 )}

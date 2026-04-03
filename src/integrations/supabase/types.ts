@@ -822,6 +822,7 @@ export type Database = {
         | "electronic"
         | "leather"
         | "stone"
+        | "food"
       position_type: "sobre" | "sota" | "dins"
       social_item_type:
         | "banana"
@@ -989,6 +990,7 @@ export const Constants = {
         "electronic",
         "leather",
         "stone",
+        "food",
       ],
       position_type: ["sobre", "sota", "dins"],
       social_item_type: [

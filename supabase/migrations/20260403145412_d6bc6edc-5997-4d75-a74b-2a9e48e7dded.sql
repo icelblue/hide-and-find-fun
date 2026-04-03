@@ -1,0 +1,1 @@
+ALTER TYPE public.object_material ADD VALUE IF NOT EXISTS 'food';

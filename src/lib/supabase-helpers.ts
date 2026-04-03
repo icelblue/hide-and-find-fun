@@ -28,102 +28,87 @@ import { supabase } from "@/integrations/supabase/client";
 
 /** Returns a user-facing block reason if material can't go in environment, or null if OK */
 export function getMaterialBlockReason(material: string, environment: string): string | null {
-  if (environment === "generic") return null; // interior — tot hi cap
+  if (environment === "generic") return null;
 
-  // Full compatibility matrix: environment → material → reason (null = OK)
+  // Simplified, logical compatibility matrix
+  // Only truly incompatible combinations are blocked
   const rules: Record<string, Record<string, string>> = {
     paper: {
       wet: "es mullaria 💧",
-      hot: "es cremaria 🔥",
-      dirty: "es faria malbé 🗑️",
-      outdoor: "volaria amb el vent 🌬️",
-      sorrenc: "s'enterraria 🏜️",
-      ventós: "volaria 💨",
       submergit: "es desfaria 🌊",
-      químic: "es disoldria ☣️",
-    },
-    Food: {
-      dirty: "no és higiènic 🗑️",
-      químic: "seria tòxic ☣️",
-      outdoor: "s'ho menjarien els animals 🐾",
-    },
-    glass: {
-      hot: "es trencaria amb la calor 🔥",
-      frozen: "es trencaria amb el gel 🧊",
-      ventós: "es cauria 💨",
-      submergit: "✅", // OK actually — glass is fine underwater
-      químic: "✅", // glass resists chemicals
-    },
-    fabric: {
       hot: "es cremaria 🔥",
-      dirty: "s'embrutiria 🗑️",
-      frozen: "s'enrigiria 🧊",
-      sorrenc: "s'ompliria de sorra 🏜️",
-      ventós: "s'enredaria 💨",
-      submergit: "flotaria 🌊",
-      químic: "es corroeria ☣️",
-    },
-    metal: {
-      wet: "s'oxidaria 💧",
-      submergit: "s'oxidaria 🌊",
-      químic: "es corroeria ☣️",
-    },
-    plastic: {
-      hot: "es fondria 🔥",
-      frozen: "es trencaria 🧊",
-    },
-    wood: {
-      wet: "es podriria 💧",
-      hot: "es cremaria 🔥",
-      frozen: "es contrauria 🧊",
-      submergit: "flotaria 🌊",
-      químic: "es corroeria ☣️",
     },
     cardboard: {
       wet: "es desfaria 💧",
-      hot: "es cremaria 🔥",
-      dirty: "es faria malbé 🗑️",
-      outdoor: "volaria amb el vent 🌬️",
-      sorrenc: "s'enterraria 🏜️",
-      ventós: "volaria 💨",
       submergit: "es desfaria 🌊",
-      químic: "es disoldria ☣️",
+      hot: "es cremaria 🔥",
     },
-    rubber: {
-      hot: "es fondria 🔥",
-      frozen: "s'enduria 🧊",
-    },
-    ceramic: {
-      frozen: "es trencaria 🧊",
-      ventós: "es cauria 💨",
+    food: {
+      dirty: "no és higiènic 🗑️",
+      químic: "seria tòxic ☣️",
     },
     electronic: {
       wet: "es faria malbé 💧",
-      dirty: "es taparien els ports 🗑️",
-      outdoor: "es mullaria 🌬️",
-      frozen: "bateria morta 🧊",
-      sorrenc: "s'ompliria de sorra 🏜️",
       submergit: "es faria malbé 🌊",
-      químic: "es corroia ☣️",
+    },
+    wood: {
+      hot: "es cremaria 🔥",
+      submergit: "flotaria 🌊",
+    },
+    // fabric (Roba): pot anar a la rentadora, secadora, etc. Gairebé tot OK
+    fabric: {
+      hot: "es cremaria 🔥",
+    },
+    // metal (acer inox): resistent a quasi tot
+    metal: {
+      // No restrictions — stainless steel handles water fine
+    },
+    plastic: {
+      hot: "es fondria 🔥",
+    },
+    rubber: {
+      hot: "es fondria 🔥",
+    },
+    glass: {
+      // Glass is resistant to water, chemicals, etc.
+    },
+    ceramic: {
+      // Ceramic is mostly resistant
     },
     leather: {
-      wet: "taques d'humitat 💧",
-      hot: "es ressecaria 🔥",
-      dirty: "s'embrutiria 🗑️",
-      frozen: "es trencaria 🧊",
       submergit: "es podriria 🌊",
-      químic: "es corroeria ☣️",
+      hot: "es ressecaria 🔥",
     },
     stone: {
-      // Stone is resistant to almost everything
+      // Stone resists everything
+    },
+    generic: {
+      // No restrictions for generic material
     },
   };
 
-  // Remove false positives (marked ✅ in the matrix for clarity)
   const reason = rules[material]?.[environment];
-  if (!reason || reason === "✅") return null;
+  if (!reason) return null;
   return reason;
 }
+
+/** Display name for materials in UI */
+export const MATERIAL_LABELS: Record<string, string> = {
+  generic: "Genèric",
+  paper: "Paper",
+  glass: "Vidre",
+  metal: "Metall",
+  plastic: "Plàstic",
+  fabric: "Roba",
+  wood: "Fusta",
+  cardboard: "Cartró",
+  rubber: "Goma",
+  ceramic: "Ceràmica",
+  electronic: "Electrònic",
+  leather: "Cuir",
+  stone: "Pedra",
+  food: "Menjar",
+};
 
 // ============================================
 // DATA FETCHING
@@ -1133,32 +1118,23 @@ export async function sendSocialItem(
   // For espia, we target ourselves (no notification to rival)
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
 
-  await supabase.from("game_social_items").insert({
-    game_id: gameId,
-    from_player_id: fromPlayerId,
-    to_player_id: actualToPlayer,
-    item_type: itemType,
-    message_text: messageText,
-    blocked_by_shield: blocked,
-  });
+  let espiaResult: string | null = null;
+
+  // === APPLY SIDE EFFECTS BEFORE inserting the social item ===
+  // (The insert triggers realtime → loadGame, so DB must be updated first)
 
   await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
-
-  let espiaResult: string | null = null;
 
   if (blocked) {
     // Shield blocked this item — deactivate shield after use
     await supabase.from("game_players").update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
     if (itemType === "shield") {
-      // Shield activates on the SENDER (protects yourself)
       await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
-      // Check if already used this game
       if (fromPlayer.smoke_bomb_used) {
         throw new Error("Ja has usat la bomba de fum en aquesta partida!");
       }
-      // Move YOUR hidden object to a different position
       const { data: self } = await supabase
         .from("game_players")
         .select("hidden_position, id")
@@ -1175,7 +1151,6 @@ export async function sendSocialItem(
           .eq("id", self.id);
       }
     } else if (itemType === "swap") {
-      // Swap positions: sender and rival exchange current_scenario_id
       const { data: sender } = await supabase
         .from("game_players")
         .select("id, current_scenario_id")
@@ -1183,17 +1158,17 @@ export async function sendSocialItem(
         .eq("user_id", fromPlayerId)
         .single();
       if (sender && toPlayer) {
-        await supabase
-          .from("game_players")
-          .update({ current_scenario_id: toPlayer.current_scenario_id })
-          .eq("id", sender.id);
-        await supabase
-          .from("game_players")
-          .update({ current_scenario_id: sender.current_scenario_id })
-          .eq("id", toPlayer.id);
+        // Swap both positions atomically (parallel updates)
+        await Promise.all([
+          supabase.from("game_players")
+            .update({ current_scenario_id: toPlayer.current_scenario_id })
+            .eq("id", sender.id),
+          supabase.from("game_players")
+            .update({ current_scenario_id: sender.current_scenario_id })
+            .eq("id", toPlayer.id),
+        ]);
       }
     } else if (itemType === "espia") {
-      // Reveal rival's current scenario to the sender
       const rivalScenarioId = toPlayer?.current_scenario_id;
       if (rivalScenarioId) {
         const { data: scenario } = await supabase
@@ -1208,6 +1183,16 @@ export async function sendSocialItem(
       }
     }
   }
+
+  // === NOW insert the social item (triggers realtime for the rival) ===
+  await supabase.from("game_social_items").insert({
+    game_id: gameId,
+    from_player_id: fromPlayerId,
+    to_player_id: actualToPlayer,
+    item_type: itemType,
+    message_text: messageText,
+    blocked_by_shield: blocked,
+  });
 
   return { blocked, espiaResult };
 }
