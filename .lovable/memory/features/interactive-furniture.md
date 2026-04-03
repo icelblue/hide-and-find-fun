@@ -1,6 +1,6 @@
 ---
-name: Interactive Furniture System v1.7
-description: Tag-based actions, SHARED COMPETITIVE tool pool (first to find keeps it), breakable state shared, dirty random per game
+name: Interactive Furniture System v1.8
+description: Tag-based actions, SHARED COMPETITIVE tool pool (first to find keeps it), breakable state shared, dirty random per game, robar_tornavis social item
 type: feature
 ---
 
@@ -13,15 +13,22 @@ type: feature
 
 ## Tools — SHARED COMPETITIVE POOL
 - **Pool per partida** (compartit entre els 2 jugadors):
-  - 🔨 Martell: **1** total
+  - 🔨 Martell: **5** total
   - 🧹 Drap: **2** total
   - 🔦 Llanterna: **1** total
-  - 🔧 Tornavís: **1** extra (tothom ja comença amb 1)
+  - 🔧 Tornavís: **5** extra (tothom ja comença amb 1)
 - **Qui la troba se la queda!** El rival es queda sense.
 - **UNLIMITED USE**: Un cop trobada, no es gasta
 - **Found**: 20% chance on look/light/clean/fix (5% each type)
 - **Drap**: Auto-donat (1) quan entres a escenari amb mobles bruts
 - **Pool check**: Abans d'atorgar, consulta `game_players.tools` de TOTS dos jugadors
+
+## Social Item: Robar Tornavís
+- Type: `robar_tornavis` (enum social_item_type)
+- Icon: 🔧 | Name: "Robar tornavís"
+- Effect: Roba 1 tornavís del rival i l'afegeix al teu inventari
+- Blocked by shield: YES
+- Error if rival has 0 tornavís
 
 ## Breakable State — SHARED between players
 - Stored as `game_moves` with `bonus_value: "tag:break:{itemId}"`
