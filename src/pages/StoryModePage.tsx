@@ -293,7 +293,7 @@ export default function StoryModePage() {
         <div className="text-7xl mb-4">{randomPet.icon}</div>
         <TypewriterText
           text="Aquest és el teu company en aquesta aventura. Posa-li nom!"
-          speed={35}
+          speed={60}
           className="text-sm text-muted-foreground mb-6"
         />
         <Input
