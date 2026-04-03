@@ -218,7 +218,7 @@ export async function performTagAction(
   // Check tool requirement
   const toolNeeded = cfg.requiresTool;
   if (toolNeeded && (playerTools[toolNeeded] ?? 0) <= 0) {
-    const toolName = toolNeeded === "drap" ? "🧹 Drap" : "🔧 Tornavís";
+    const toolName = toolNeeded === "drap" ? "🧹 Drap" : toolNeeded === "martell" ? "🔨 Martell" : "🔧 Tornavís";
     throw new Error(`Necessites un ${toolName} per fer això!`);
   }
 
