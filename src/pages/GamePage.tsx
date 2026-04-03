@@ -1112,9 +1112,9 @@ export default function GamePage() {
           {!((!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "")) && lightOffScenarios.has(player.current_scenario_id)) && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              👀 Investigar mobles
+              👀 Investigar mobles · {TOKEN_COSTS.look}🪙
             </h3>
-            <Tip>👀 Observar ({TOKEN_COSTS.look}🪙) = pista (❄️/🌡️/🔥). 🔍 Confirmar ({TOKEN_COSTS.confirm}🪙) = trobar l'objecte!</Tip>
+            <Tip>Observa posicions per rebre pistes (❄️/🌡️/🔥). Si encertes moble + posició, trobes l'objecte i guanyes!</Tip>
             {bananaEffect && bananaBlockedSpot && (
               <p className="text-xs text-destructive mt-1 animate-pulse">🍌 Una posició està bloquejada! Fes una altra acció per desbloquejar-la.</p>
             )}
