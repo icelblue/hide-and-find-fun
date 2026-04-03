@@ -525,9 +525,10 @@ INSERT player_rewards amb reward_item aleatori d'aquesta rarity
 ```
 1. Verifica ownership i status = 'owned'
 2. Verifica que el reward_item no està ja col·locat
-3. INSERT nou item a l'escenari (display_order automàtic)
-4. UPDATE reward_items SET placed_in_scenario_id, placed_by, placed_at
-5. UPDATE player_rewards SET status = 'placed'
+3. Comprova que l'escenari no supera max_items
+4. INSERT nou item a l'escenari (display_order automàtic)
+5. UPDATE reward_items SET placed_in_scenario_id, placed_by, placed_at
+6. UPDATE player_rewards SET status = 'placed'
 ```
 
 </details>
