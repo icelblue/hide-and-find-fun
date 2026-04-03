@@ -1403,11 +1403,10 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
+function ItemActions({ item, positions, onLook, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
-  onConfirm: (id: string, pos: "sobre" | "sota" | "dins") => void;
   disabled: boolean;
   tokensRemaining: number;
   lookedSpots: Set<string>;
@@ -1467,7 +1466,7 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
               ))}
             </div>
           )}
-          {/* Special interaction buttons (encendre, etc.) */}
+          {/* Special interaction buttons */}
           {hasInteractions && onInteraction && (
             <div className="mb-2 space-y-1">
               {interactions!.map((ia: any) => {
@@ -1493,37 +1492,26 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
               })}
             </div>
           )}
-          {/* Position grid */}
+          {/* Position grid — look only (finds object if correct!) */}
           <div className="grid grid-cols-3 gap-2">
             {positions.map(pos => {
               const spotKey = `${item.id}:${pos.value}`;
               const alreadyLooked = lookedSpots.has(spotKey);
-              const alreadyConfirmed = confirmedSpots.has(spotKey);
               const isBananaBlocked = bananaBlockedSpot === spotKey;
               return (
-                <div key={pos.value} className="space-y-1">
-                  <button onClick={() => onLook(item.id, pos.value)}
-                    disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || alreadyConfirmed || isBananaBlocked}
-                    className={`w-full rounded-lg p-2 text-xs transition-colors active:scale-[0.97] font-medium ${
-                      isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
-                      alreadyLooked || alreadyConfirmed ? "bg-muted/20 opacity-40 line-through" :
-                      "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
-                    }`}>
-                    {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
-                    <span className="block text-[9px] text-muted-foreground mt-0.5">
-                      {isBananaBlocked ? "bloquejat" : alreadyLooked || alreadyConfirmed ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
-                    </span>
-                  </button>
-                  <button onClick={() => onConfirm(item.id, pos.value)}
-                    disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyConfirmed || isBananaBlocked}
-                    className={`w-full rounded-lg p-1.5 text-[10px] font-bold transition-all active:scale-[0.97] shadow-sm ${
-                      isBananaBlocked ? "bg-destructive/20 opacity-60" :
-                      alreadyConfirmed ? "bg-muted/20 opacity-40" :
-                      "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
-                    }`}>
-                    {isBananaBlocked ? "🍌" : alreadyConfirmed ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
-                  </button>
-                </div>
+                <button key={pos.value}
+                  onClick={() => onLook(item.id, pos.value)}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked}
+                  className={`w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${
+                    isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
+                    alreadyLooked ? "bg-muted/20 opacity-40 line-through" :
+                    "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
+                  }`}>
+                  {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
+                  <span className="block text-[9px] text-muted-foreground mt-0.5">
+                    {isBananaBlocked ? "bloquejat" : alreadyLooked ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                  </span>
+                </button>
               );
             })}
           </div>
