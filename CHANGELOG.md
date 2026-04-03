@@ -7,6 +7,43 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.6.0] — 2026-04-03 — UX mòbil i bonus picker 📱💰 (MINOR)
+
+### 📱 Panell social millorat
+- Icones més grans (3xl) amb grid 3 columnes
+- Tooltips descriptius al hover/focus
+- Millor usabilitat en pantalles petites
+
+### 📜 Historial compacte
+- Moviments dins `<details>` plegable
+- Text compacte (10px) per reduir densitat vertical en mòbil
+
+### 💰 Bonus Token Picker millorat
+- Modal dedicat amb controls ±0.1
+- Botons ràpids: 0.1🪙, 0.5🪙, 1🪙, Tot
+- Suport per saldos decimals (0.1, 0.2, 0.4...)
+- Precisió amb `Math.round(value * 10) / 10`
+
+### 🧹 Neteja de codi legacy
+- Eliminades totes les referències funcionals a `confirm`
+- Eliminat `confirmedSpots` i props associats
+
+---
+
+## [1.5.0] — 2026-04-03 — Observar troba objectes 🔍✨ (MINOR)
+
+### 🔍 Observar unificat
+- **Observar** ara troba l'objecte directament si la posició és correcta
+- Eliminada l'acció **Confirmar** (1.5🪙) — ja no existeix
+- Pistes progressives: ❄️ fred → 🌡️ calent → 🔥 molt calent → ✅ trobat!
+- `hint_level`: 0=fred, 1=calent, 2=molt calent, 3=trobat
+
+### 🪙 Costos simplificats
+- Només 2 accions: Moure (0.5🪙) i Observar (0.3🪙)
+- `TOKEN_COSTS` reduït a `{ move: 0.5, look: 0.3 }`
+
+---
+
 ## [1.4.0] — 2026-04-03 — UX i qualitat de vida 🐛👁️💌 (MINOR)
 
 ### 💌 Missatge amagat millorat
