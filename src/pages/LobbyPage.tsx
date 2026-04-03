@@ -164,6 +164,22 @@ export default function LobbyPage() {
     finally { setLoading(false); }
   };
 
+  const handleBugReport = async () => {
+    if (!user || !bugMessage.trim()) return;
+    try {
+      await supabase.from("error_logs").insert({
+        user_id: user.id,
+        error_message: `[BUG REPORT] ${bugMessage.trim()}`,
+        component: "UserBugReport",
+        url: window.location.href,
+        user_agent: navigator.userAgent.slice(0, 500),
+      });
+      toast.success("Gràcies pel report! 🐛");
+      setBugMessage("");
+      setShowBugReport(false);
+    } catch { toast.error("Error enviant el report"); }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
