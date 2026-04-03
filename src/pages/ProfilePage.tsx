@@ -16,6 +16,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
+import { getMyPet, getMyAccessories } from "@/lib/story-helpers";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
