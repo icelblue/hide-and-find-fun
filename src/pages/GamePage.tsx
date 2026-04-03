@@ -35,7 +35,7 @@ import {
   hideObject, checkBothPlayersHidden, startGame, performMove,
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
-  getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
+  getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason, MATERIAL_LABELS,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
   type ToolType, OUTDOOR_SCENARIOS, isLightOff, toggleLight, useLlanterna,
   getDirtyItemsForGame,
