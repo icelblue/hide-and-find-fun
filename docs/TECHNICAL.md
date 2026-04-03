@@ -234,7 +234,7 @@
 │   │   └── 📁 cleanup-old-games/
 │   │       └── 📄 index.ts          ← Edge fn: neteja automàtica
 │   └── 📁 migrations/               ← ⚠️ NO TOCAR — gestionat per Lovable
-│       └── 19 fitxers .sql           ← Esquema complet de la DB
+│       └── 37 fitxers .sql           ← Esquema complet de la DB
 │
 └── 📁 docs/
     └── 📄 TECHNICAL.md              ← 📘 Aquest document
