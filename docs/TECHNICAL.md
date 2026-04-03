@@ -1124,7 +1124,7 @@ Les migracions estan a `supabase/migrations/` i contenen tot l'esquema:
 npx supabase db push
 ```
 
-Això executarà els 19 fitxers de migració en ordre cronològic, creant:
+Això executarà els 37 fitxers de migració en ordre cronològic, creant:
 - ✅ Totes les taules (15)
 - ✅ Tots els enums (9 tipus)
 - ✅ Totes les funcions (6)
