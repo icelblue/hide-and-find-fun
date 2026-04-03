@@ -47,6 +47,7 @@ export default function GamePage() {
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
+  const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
