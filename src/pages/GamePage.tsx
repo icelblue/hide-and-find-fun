@@ -180,7 +180,7 @@ export default function GamePage() {
       // Compute which items are dirty THIS game (random per game)
       const gameDirty = getDirtyItemsForGame(itemsData, gameId);
       setDirtyItems(gameDirty);
-      // Auto-give drap if there are dirty items in this scenario
+      // Auto-give drap if there are dirty items in this scenario and player has none
       const hasDirtyHere = itemsData.some((i: any) => gameDirty.has(i.id));
       if (hasDirtyHere && playerData) {
         const tools = (playerData as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
@@ -189,6 +189,7 @@ export default function GamePage() {
           await supabase.from("game_players").update({ tools }).eq("id", playerData.id);
           playerData.tools = tools;
           setPlayerTools({ ...tools });
+          toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
         }
       }
       // Load interactions for current scenario items
