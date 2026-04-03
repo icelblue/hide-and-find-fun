@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getMyPet, getMyAccessories } from "@/lib/story-helpers";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
@@ -36,12 +37,14 @@ export default function PlayerProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [trophies, setTrophies] = useState<any[]>([]);
+  const [pet, setPet] = useState<any>(null);
+  const [petAccessories, setPetAccessories] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
-    const [{ data: prof }, { data: msgs }, { data: trophyData }] = await Promise.all([
+    const [{ data: prof }, { data: msgs }, { data: trophyData }, petData, accs] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
       supabase.from("wall_messages")
         .select("*")
@@ -54,9 +57,13 @@ export default function PlayerProfilePage() {
         .eq("item_type", "special_trophy")
         .is("gifted_to", null)
         .order("collected_at", { ascending: false }),
+      getMyPet(userId).catch(() => null),
+      getMyAccessories(userId).catch(() => []),
     ]);
     setProfile(prof);
     setTrophies(trophyData ?? []);
+    setPet(petData);
+    setPetAccessories(accs);
 
     // Fetch author names
     const wallMsgs: any[] = msgs ?? [];
@@ -153,6 +160,26 @@ export default function PlayerProfilePage() {
           </Card>
         ))}
       </div>
+
+      {/* Pet companion */}
+      {pet && (
+        <Card className="mb-4 glass border-accent/30 relative z-10">
+          <CardContent className="py-3 flex items-center gap-3">
+            <span className="text-3xl">{pet.pet_icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm">{pet.pet_name}</p>
+              <p className="text-[11px] text-accent font-semibold">⭐ {pet.xp ?? 0} XP</p>
+            </div>
+            {petAccessories.length > 0 && (
+              <div className="flex gap-1">
+                {petAccessories.map((a: any) => (
+                  <span key={a.id} className="text-lg" title={a.accessory_name}>{a.accessory_icon}</span>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Trophies */}
       <div className="mb-5 relative z-10">

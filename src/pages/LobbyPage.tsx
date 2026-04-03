@@ -14,7 +14,7 @@
 // Realtime: No — l'usuari refresca manualment o amb interval
 // ============================================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,17 @@ export default function LobbyPage() {
 
   const [showBugReport, setShowBugReport] = useState(false);
   const [bugMessage, setBugMessage] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    if (menuOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   const { data: profile = null } = useQuery({
     queryKey: ["profile", user?.id],
@@ -197,16 +208,23 @@ export default function LobbyPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-1">
-          <HelpButton />
-          <Button variant="ghost" size="icon" onClick={() => setShowBugReport(true)} className="rounded-xl" aria-label="Reportar bug">🐛</Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} className="rounded-xl">👤</Button>
-          <Button variant="ghost" size="icon" onClick={signOut} className="rounded-xl">🚪</Button>
+        <div className="relative" ref={menuRef}>
+          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl" aria-label="Menú">☰</Button>
+          {menuOpen && (
+            <div className="absolute right-0 top-10 z-50 bg-card border border-border rounded-xl shadow-xl py-1 min-w-[180px] animate-scale-in">
+              <button onClick={() => { setMenuOpen(false); navigate("/story"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐾 Mode Història</button>
+              <button onClick={() => { setMenuOpen(false); navigate("/profile"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">👤 Perfil</button>
+              <button onClick={() => { setMenuOpen(false); setShowBugReport(true); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐛 Reportar bug</button>
+              <HelpButton />
+              <div className="border-t border-border/30 my-1" />
+              <button onClick={() => { setMenuOpen(false); signOut(); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2 text-destructive">🚪 Sortir</button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main actions */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         <Button onClick={handleRandomMatch} size="lg" disabled={loading} className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">🎲</span>
@@ -217,6 +235,12 @@ export default function LobbyPage() {
           <span className="flex flex-col items-center">
             <span className="text-lg">➕</span>
             <span className="text-xs mt-0.5">Crear partida</span>
+          </span>
+        </Button>
+        <Button onClick={() => navigate("/story")} size="lg" variant="outline" className="h-14 border-accent/40">
+          <span className="flex flex-col items-center">
+            <span className="text-lg">🐾</span>
+            <span className="text-xs mt-0.5">Història</span>
           </span>
         </Button>
       </div>
