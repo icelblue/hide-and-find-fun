@@ -878,7 +878,8 @@ export default function GamePage() {
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
 
-              {/* Optional hide message — prominent card */}
+              {/* Optional hide message — only for special objects (Foto, Joguina, etc.) */}
+              {objectSpecial && (
               <Card className="mb-4 glass border-accent/30 glow-accent">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -898,6 +899,7 @@ export default function GamePage() {
                   <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{hideMessage.length}/100</p>
                 </CardContent>
               </Card>
+              )}
 
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => {
