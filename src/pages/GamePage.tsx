@@ -880,17 +880,26 @@ export default function GamePage() {
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
 
-              {/* Optional hide message */}
-              <div className="mb-3">
-                <p className="text-[11px] text-muted-foreground mb-1">💌 Missatge opcional (es veurà quan trobin l'objecte):</p>
-                <Input
-                  value={hideMessage}
-                  onChange={e => setHideMessage(e.target.value)}
-                  placeholder="Ex: T'ha costat eh! 😏"
-                  maxLength={100}
-                  className="text-sm bg-muted/50 border-border/50"
-                />
-              </div>
+              {/* Optional hide message — prominent card */}
+              <Card className="mb-4 glass border-accent/30 glow-accent">
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">💌</span>
+                    <div>
+                      <p className="text-sm font-semibold">Missatge secret</p>
+                      <p className="text-[10px] text-muted-foreground">El rival el veurà quan trobi l'objecte!</p>
+                    </div>
+                  </div>
+                  <Input
+                    value={hideMessage}
+                    onChange={e => setHideMessage(e.target.value)}
+                    placeholder="Ex: T'ha costat eh! 😏"
+                    maxLength={100}
+                    className="text-sm bg-accent/10 border-accent/30 placeholder:text-muted-foreground/50"
+                  />
+                  <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{hideMessage.length}/100</p>
+                </CardContent>
+              </Card>
 
               <div className="grid grid-cols-3 gap-3">
                 {positions.map(pos => {
