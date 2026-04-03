@@ -14,7 +14,7 @@
 // Realtime: No — l'usuari refresca manualment o amb interval
 // ============================================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
