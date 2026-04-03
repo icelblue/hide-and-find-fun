@@ -602,12 +602,13 @@ export async function performMove(
 // SOCIAL ITEMS
 // ============================================
 
-export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia";
+export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap";
 
 export const SOCIAL_ITEMS = [
   { type: "banana" as const, icon: "🍌", name: "Plàtan", desc: "Bloqueja 1 posició del rival" },
   { type: "smoke_bomb" as const, icon: "💣", name: "Bomba de fum", desc: "Mou el teu objecte a altra posició" },
-  { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim plàtan (1 ús)" },
+  { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim plàtan o intercanvi (1 ús)" },
+  { type: "swap" as const, icon: "🔄", name: "Intercanvi", desc: "Intercanvia la teva posició amb la del rival" },
   { type: "espia" as const, icon: "🕵️", name: "Espia", desc: "Descobreix on és el rival ara" },
   { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
 ] as const;
