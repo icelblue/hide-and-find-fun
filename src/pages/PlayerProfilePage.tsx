@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getMyPet, getMyAccessories } from "@/lib/story-helpers";
+import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP } from "@/lib/story-helpers";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
