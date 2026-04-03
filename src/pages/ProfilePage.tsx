@@ -57,7 +57,7 @@ export default function ProfilePage() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [prof, rew, scen, { data: msgs }] = await Promise.all([
+    const [prof, rew, scen, { data: msgs }, petData, accs] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
       getMyRewards(user.id).catch(() => []),
       getScenarios().catch(() => []),
@@ -66,10 +66,14 @@ export default function ProfilePage() {
         .eq("target_user_id", user.id)
         .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false }),
+      getMyPet(user.id).catch(() => null),
+      getMyAccessories(user.id).catch(() => []),
     ]);
     setProfile(prof);
     setRewards(rew);
     setScenarios(scen);
+    setPet(petData);
+    setPetAccessories(accs);
 
     // Find top rival
     const { data: myGames } = await supabase
