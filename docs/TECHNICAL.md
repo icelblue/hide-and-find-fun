@@ -622,10 +622,10 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
    ├── same scenario, diferent moble  → 1 (calent 🌡️)
    ├── same moble, diferent posició   → 2 (molt calent 🔥)
    └── same moble, same posició       → 2 (cal confirmar!)
-4. Comprovar scenario_bonuses(item_id, position):
-   ├── extra_token → +N tokens al jugador
-   └── hint_yes / hint_no → desar a inventari
-5. INSERT game_moves
+4. Bonus aleatori (~15% probabilitat):
+   ├── 5% → +1 token extra
+   └── 10% → +0.5 token extra
+5. INSERT game_moves (amb hint_level)
 ```
 
 #### 🔍 CONFIRM — 1.5 tokens
