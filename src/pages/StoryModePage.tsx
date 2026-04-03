@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
 import {
@@ -37,6 +38,8 @@ export default function StoryModePage() {
   const [randomPet, setRandomPet] = useState<{ type: string; icon: string; name: string }>(PET_OPTIONS[0]);
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
+  const [petNameInput, setPetNameInput] = useState("");
+  const [namingPet, setNamingPet] = useState(false);
   const [startingChapter, setStartingChapter] = useState(false);
 
   const allAccsCollected = useMemo(() => hasAllAccessories(accessories), [accessories]);
@@ -68,26 +71,28 @@ export default function StoryModePage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   // ====== INTRO FLOW ======
-  const handleOpenGift = async () => {
+  const handleOpenGift = () => {
     setGiftOpened(true);
+  };
+
+  const handleConfirmPetName = async () => {
     if (!user) return;
+    const trimmed = petNameInput.trim();
+    if (!trimmed || trimmed.length > 20) {
+      toast.error("El nom ha de tenir entre 1 i 20 caràcters");
+      return;
+    }
+    setNamingPet(true);
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const name = profile?.display_name || user.email?.split("@")[0] || "Jugador";
-      const p = await createPet(user.id, randomPet.type, name, randomPet.icon);
+      const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
       setPet(p);
       await initChapter(user.id, 1);
       const prog = await getStoryProgress(user.id);
       setProgress(prog);
-      setTimeout(() => {
-        setPhase("hub");
-        toast.success(`${randomPet.icon} ${name} és el teu company!`);
-      }, 1500);
+      setPhase("hub");
+      toast.success(`${randomPet.icon} ${trimmed} és el teu company!`);
     } catch (err: any) { toast.error(err.message); }
+    finally { setNamingPet(false); }
   };
 
   // ====== PET DEATH → REBIRTH ======
@@ -181,9 +186,22 @@ export default function StoryModePage() {
         </div>
       )}
       {giftOpened && (
-        <div className="text-center relative z-10 animate-scale-in">
-          <div className="text-8xl mb-4">{randomPet.icon}</div>
-          <p className="text-lg font-bold">Un {randomPet.name}!</p>
+        <div className="text-center relative z-10 animate-scale-in w-full max-w-xs">
+          <div className="text-8xl mb-3">{randomPet.icon}</div>
+          <p className="text-lg font-bold mb-4">Un {randomPet.name}!</p>
+          <p className="text-sm text-muted-foreground mb-2">Com el vols dir?</p>
+          <Input
+            value={petNameInput}
+            onChange={(e) => setPetNameInput(e.target.value)}
+            placeholder="Nom de la mascota"
+            maxLength={20}
+            className="text-center mb-3"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && handleConfirmPetName()}
+          />
+          <Button onClick={handleConfirmPetName} disabled={namingPet || !petNameInput.trim()} className="w-full">
+            {namingPet ? "..." : `Adoptar ${randomPet.icon}`}
+          </Button>
         </div>
       )}
     </div>
