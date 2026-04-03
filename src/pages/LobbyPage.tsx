@@ -199,6 +199,7 @@ export default function LobbyPage() {
         </div>
         <div className="flex gap-1">
           <HelpButton />
+          <Button variant="ghost" size="icon" onClick={() => setShowBugReport(true)} className="rounded-xl" aria-label="Reportar bug">🐛</Button>
           <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} className="rounded-xl">👤</Button>
           <Button variant="ghost" size="icon" onClick={signOut} className="rounded-xl">🚪</Button>
         </div>
