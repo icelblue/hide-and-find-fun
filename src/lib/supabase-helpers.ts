@@ -635,14 +635,34 @@ export async function getMyGames(userId: string) {
 
   const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
 
-  // Fetch creator profiles for all games
+  // Fetch creator profiles AND rival profiles for all games
+  const allGameIds = all.map((gp: any) => gp.game_id);
   const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];
+
+  // Fetch all players in these games to find rivals
+  let rivalMap = new Map<string, string>();
+  if (allGameIds.length > 0) {
+    const { data: allPlayers } = await supabase
+      .from("game_players").select("game_id, user_id")
+      .in("game_id", allGameIds).neq("user_id", userId);
+    const rivalUserIds = [...new Set((allPlayers ?? []).map(p => p.user_id))];
+    if (rivalUserIds.length > 0) {
+      const { data: rivalProfiles } = await supabase
+        .from("profiles").select("user_id, display_name").in("user_id", rivalUserIds);
+      const rpMap = new Map(rivalProfiles?.map(p => [p.user_id, p.display_name]) ?? []);
+      for (const p of (allPlayers ?? [])) {
+        rivalMap.set(p.game_id, rpMap.get(p.user_id) ?? "Anònim");
+      }
+    }
+  }
+
   if (creatorIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles").select("user_id, display_name").in("user_id", creatorIds);
     const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
     for (const gp of all) {
       (gp as any)._creator_name = profileMap.get((gp as any).games.created_by) ?? "Anònim";
+      (gp as any)._rival_name = rivalMap.get((gp as any).game_id) ?? null;
     }
   }
 
