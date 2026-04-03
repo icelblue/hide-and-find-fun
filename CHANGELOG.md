@@ -7,6 +7,27 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.4.0] — 2026-04-03 — UX i qualitat de vida 🐛👁️💌 (MINOR)
+
+### 💌 Missatge amagat millorat
+- Card dedicada amb estil accent al pas de posició (ja no es passa per alt)
+- Comptador de caràcters visible (X/100)
+
+### 👁️ Derrota informativa
+- Quan perds, botó "Veure on era l'objecte" mostra: objecte, escenari, moble, posició i missatge
+- Ajuda a saber si estaves a prop o lluny de guanyar
+
+### 👤 Nom del rival a "Les meves partides"
+- Cada partida mostra "vs NomRival" al Lobby
+- Fàcil identificar contra qui jugues
+
+### 🐛 Report de bugs
+- Botó 🐛 al header del Lobby
+- Modal amb textarea per descriure el problema
+- Es desa a error_logs amb tag [BUG REPORT]
+
+---
+
 ## [1.3.0] — 2026-04-03 — Eines il·limitades i mobles bruts aleatoris 🧹♻️ (MINOR)
 
 ### ♻️ Eines il·limitades

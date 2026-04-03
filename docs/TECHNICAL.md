@@ -1313,31 +1313,35 @@ docker compose down
 <br/>
 
 ## 🛠️ 12. Guia de modificació
+
+> ⚠️ **IMPORTANT**: Les taules de contingut (`scenarios`, `items`, `objects`, etc.) tenen RLS **read-only** per a usuaris autenticats. Per inserir/modificar dades, cal usar la **eina de migració de Lovable** o executar SQL amb la **service_role key**. No es pot fer INSERT directament des del client.
+
 <br/>
 
 ### 12.1 Afegir un nou escenari
 
 ```sql
+-- ⚠️ Executar via migració (no des del client!)
+
 -- 1. Inserir l'escenari
 INSERT INTO scenarios (name, icon, display_order)
-VALUES ('Jardí', '🌿', 4);
+VALUES ('Soterrani', '🏚️', 8);
 
--- 2. Inserir mobles (substitueix <scenario_id> pel UUID generat)
-INSERT INTO items (name, icon, scenario_id, display_order, inner_capacity, environment)
+-- 2. Obtenir l'UUID generat
+SELECT id FROM scenarios WHERE name = 'Soterrani';
+
+-- 3. Inserir mobles (substitueix <scenario_id> pel UUID)
+INSERT INTO items (name, icon, scenario_id, display_order, inner_capacity, environment, tags)
 VALUES
-  ('Caseta', '🏠', '<scenario_id>', 1, 3, 'generic'),
-  ('Bassa', '💧', '<scenario_id>', 2, 1, 'wet'),
-  ('Barbacoa', '🔥', '<scenario_id>', 3, 2, 'hot');
+  ('Caixa forta', '🔐', '<scenario_id>', 1, 3, 'generic', '{}'),
+  ('Estanteria', '📚', '<scenario_id>', 2, 2, 'dirty', '{dirty}'),
+  ('Caldera', '♨️', '<scenario_id>', 3, 2, 'hot', '{breakable}');
 
--- 3. Connectar amb escenaris existents (bidireccional automàtic)
+-- 4. Connectar amb escenaris existents
 INSERT INTO scenario_connections (scenario_a, scenario_b)
 VALUES
-  ('<jardi_id>', '<cuina_id>'),
-  ('<jardi_id>', '<garatge_id>');
-
--- 4. Afegir bonuses (opcional)
-INSERT INTO scenario_bonuses (item_id, position, bonus_type, value)
-VALUES ('<caseta_id>', 'dins', 'extra_token', '0.5');
+  ('<soterrani_id>', '<cuina_id>'),
+  ('<soterrani_id>', '<despatx_id>');
 ```
 
 <br/>
@@ -1356,8 +1360,13 @@ VALUES
   ('<diamant_id>', 2, 'És molt dur i petit');
 
 -- 3. Afegir comportament especial (opcional)
-INSERT INTO object_specials (object_id, special_type, prompt_on, prompt_text)
-VALUES ('<diamant_id>', 'custom_name', 'find', 'Dona un nom a aquest diamant!');
+-- special_type: 'custom_name' (el trobador li posa nom), 'custom_message' (l'amagador escriu),
+--               'choose_variant' (tria variant), 'troll_effect' (animació broma)
+-- prompt_on: 'hide' (quan s'amaga) o 'find' (quan es troba)
+INSERT INTO object_specials (object_id, special_type, prompt_on, prompt_text, variants)
+VALUES ('<diamant_id>', 'troll_effect', 'find', '💎 Diamant trobat!',
+  '{"emoji": "💎", "animation": "flash"}');
+-- Animacions disponibles: shake, flash, bounce (definides a index.css)
 ```
 
 <br/>

@@ -61,6 +61,9 @@ export default function LobbyPage() {
     refetchInterval: 20_000,
   });
 
+  const [showBugReport, setShowBugReport] = useState(false);
+  const [bugMessage, setBugMessage] = useState("");
+
   const { data: profile = null } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
@@ -161,6 +164,22 @@ export default function LobbyPage() {
     finally { setLoading(false); }
   };
 
+  const handleBugReport = async () => {
+    if (!user || !bugMessage.trim()) return;
+    try {
+      await supabase.from("error_logs").insert({
+        user_id: user.id,
+        error_message: `[BUG REPORT] ${bugMessage.trim()}`,
+        component: "UserBugReport",
+        url: window.location.href,
+        user_agent: navigator.userAgent.slice(0, 500),
+      });
+      toast.success("Gràcies pel report! 🐛");
+      setBugMessage("");
+      setShowBugReport(false);
+    } catch { toast.error("Error enviant el report"); }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
@@ -180,6 +199,7 @@ export default function LobbyPage() {
         </div>
         <div className="flex gap-1">
           <HelpButton />
+          <Button variant="ghost" size="icon" onClick={() => setShowBugReport(true)} className="rounded-xl" aria-label="Reportar bug">🐛</Button>
           <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} className="rounded-xl">👤</Button>
           <Button variant="ghost" size="icon" onClick={signOut} className="rounded-xl">🚪</Button>
         </div>
@@ -296,6 +316,9 @@ export default function LobbyPage() {
                           <p className="text-sm font-bold text-accent">{creatorName} et reta!</p>
                         )}
                         <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
+                        {!isPending && gp._rival_name && (
+                          <span className="ml-2 text-[11px] text-muted-foreground">vs <span className="text-foreground/70 font-medium">{gp._rival_name}</span></span>
+                        )}
                         <p className={`text-[11px] ${s.color}`}>{s.label}</p>
                       </div>
                     </div>
@@ -368,6 +391,31 @@ export default function LobbyPage() {
         )}
       </div>
       <p className="text-center text-[10px] text-muted-foreground/50 mt-4 pb-2">v{APP_VERSION}</p>
+
+      {/* Bug Report Modal */}
+      {showBugReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowBugReport(false)}>
+          <Card className="mx-4 max-w-sm w-full glass" onClick={e => e.stopPropagation()}>
+            <CardContent className="py-5">
+              <h3 className="text-lg font-bold mb-1">🐛 Reportar un bug</h3>
+              <p className="text-xs text-muted-foreground mb-3">Descriu el problema i l'arreglarem el més aviat possible.</p>
+              <textarea
+                value={bugMessage}
+                onChange={e => setBugMessage(e.target.value)}
+                placeholder="Què ha passat? On i quan?"
+                maxLength={500}
+                rows={4}
+                className="w-full rounded-lg bg-muted/50 border border-border/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{bugMessage.length}/500</p>
+              <div className="flex gap-2 mt-3">
+                <Button variant="outline" className="flex-1" onClick={() => setShowBugReport(false)}>Cancel·lar</Button>
+                <Button className="flex-1" onClick={handleBugReport} disabled={!bugMessage.trim()}>Enviar 📩</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
