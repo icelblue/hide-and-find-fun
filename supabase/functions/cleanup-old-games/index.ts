@@ -20,12 +20,12 @@ Deno.serve(async () => {
       deleted_wall_messages: 0,
       deleted_error_logs: 0,
       fixed_blocked_social_items: 0,
+      deleted_old_backups: 0,
     };
 
     // ─────────────────────────────────────────────
     // 1. FINISHED games — only clean moves & social items
-    //    KEEP: games, game_players (rival favorit stats),
-    //          player_inventory (trophies/bonuses), player_rewards
+    //    KEEP: games, game_players (stats), player_inventory (trophies), player_rewards
     // ─────────────────────────────────────────────
     const { data: finishedGames } = await supabase
       .from("games").select("id")
@@ -37,12 +37,10 @@ Deno.serve(async () => {
       for (let i = 0; i < finishedIds.length; i += 100) {
         const batch = finishedIds.slice(i, i + 100);
 
-        // Delete game moves (play-by-play history, no longer needed)
         const { data: moves } = await supabase.from("game_moves").delete()
           .in("game_id", batch).select("id");
         stats.cleaned_finished_moves += moves?.length ?? 0;
 
-        // Delete social items (bananas, smoke bombs etc — already processed)
         const { data: social } = await supabase.from("game_social_items").delete()
           .in("game_id", batch).select("id");
         stats.cleaned_finished_social += social?.length ?? 0;
@@ -50,7 +48,7 @@ Deno.serve(async () => {
     }
 
     // ─────────────────────────────────────────────
-    // 2. Stale "waiting" games > 3 days — full delete (never played)
+    // 2. Stale "waiting" games > 3 days — full delete
     // ─────────────────────────────────────────────
     const waitingCutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const { data: staleWaiting } = await supabase
@@ -59,7 +57,7 @@ Deno.serve(async () => {
       .lt("created_at", waitingCutoff);
 
     // ─────────────────────────────────────────────
-    // 3. Stale "hiding" games > 7 days — full delete (started but never played)
+    // 3. Stale "hiding" games > 7 days — full delete
     // ─────────────────────────────────────────────
     const hidingCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: staleHiding } = await supabase
@@ -67,7 +65,6 @@ Deno.serve(async () => {
       .eq("status", "hiding")
       .lt("updated_at", hidingCutoff);
 
-    // These stale games had no real play — safe to fully delete
     const staleIds = [
       ...(staleWaiting ?? []).map(g => g.id),
       ...(staleHiding ?? []).map(g => g.id),
@@ -121,9 +118,9 @@ Deno.serve(async () => {
     stats.deleted_wall_messages = deletedWall?.length ?? 0;
 
     // ─────────────────────────────────────────────
-    // 6. Error logs > 30 days
+    // 6. Error logs > 14 days (reduced from 30)
     // ─────────────────────────────────────────────
-    const errorCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const errorCutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
     const { data: deletedErrors } = await supabase
       .from("error_logs").delete()
       .lt("created_at", errorCutoff)
@@ -140,6 +137,19 @@ Deno.serve(async () => {
       .eq("processed", false)
       .select("id");
     stats.fixed_blocked_social_items = fixedBlocked?.length ?? 0;
+
+    // ─────────────────────────────────────────────
+    // 8. Clean old backups in storage (keep last 6)
+    // ─────────────────────────────────────────────
+    const { data: backupFiles } = await supabase.storage
+      .from("backups")
+      .list("", { sortBy: { column: "created_at", order: "asc" } });
+
+    if (backupFiles && backupFiles.length > 6) {
+      const toDelete = backupFiles.slice(0, backupFiles.length - 6).map(f => f.name);
+      await supabase.storage.from("backups").remove(toDelete);
+      stats.deleted_old_backups = toDelete.length;
+    }
 
     return new Response(JSON.stringify(stats), {
       headers: { "Content-Type": "application/json" },

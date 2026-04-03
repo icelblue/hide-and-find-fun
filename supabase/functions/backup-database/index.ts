@@ -18,19 +18,22 @@ const CRITICAL_TABLES = [
 const CONFIG_TABLES = [
   "scenarios",
   "scenario_connections",
-  "scenario_bonuses",
   "items",
   "objects",
   "object_specials",
   "object_traits",
 ];
 
+// Transient data — only backup if recent (last 7 days of active games)
 const TRANSIENT_TABLES = [
   "game_moves",
   "game_social_items",
-  "wall_messages",
-  "error_logs",
 ];
+
+// Skip entirely (not worth backing up)
+// wall_messages: TTL 22h, cleaned by cron
+// error_logs: cleaned after 30 days
+// scenario_bonuses: legacy, replaced by random bonuses
 
 async function exportTable(tableName: string): Promise<{ name: string; rows: number; data: Record<string, unknown>[] }> {
   const allRows: Record<string, unknown>[] = [];
@@ -59,23 +62,46 @@ Deno.serve(async () => {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-");
     const backupData: Record<string, unknown> = {
       created_at: new Date().toISOString(),
-      version: "1.0",
+      version: "2.0",
       tables: {},
     };
     const stats: Record<string, number> = {};
 
-    // Export all tables
-    const allTables = [...CRITICAL_TABLES, ...CONFIG_TABLES, ...TRANSIENT_TABLES];
+    // Export critical + config tables (full backup)
+    const fullTables = [...CRITICAL_TABLES, ...CONFIG_TABLES];
     
-    for (const table of allTables) {
+    for (const table of fullTables) {
       const result = await exportTable(table);
       (backupData.tables as Record<string, unknown>)[table] = result.data;
       stats[table] = result.rows;
     }
 
+    // Export transient tables (only from active games to save space)
+    const { data: activeGames } = await supabase
+      .from("games").select("id")
+      .in("status", ["playing", "hiding"]);
+    const activeIds = (activeGames ?? []).map(g => g.id);
+
+    for (const table of TRANSIENT_TABLES) {
+      if (activeIds.length > 0) {
+        const allRows: Record<string, unknown>[] = [];
+        for (let i = 0; i < activeIds.length; i += 100) {
+          const batch = activeIds.slice(i, i + 100);
+          const { data } = await supabase.from(table).select("*").in("game_id", batch);
+          if (data) allRows.push(...data);
+        }
+        (backupData.tables as Record<string, unknown>)[table] = allRows;
+        stats[table] = allRows.length;
+      } else {
+        (backupData.tables as Record<string, unknown>)[table] = [];
+        stats[table] = 0;
+      }
+    }
+
     // Upload as JSON to storage
     const fileName = `backup-${timestamp}.json`;
-    const jsonBlob = new Blob([JSON.stringify(backupData)], { type: "application/json" });
+    const jsonStr = JSON.stringify(backupData);
+    const jsonBlob = new Blob([jsonStr], { type: "application/json" });
     
     const { error: uploadError } = await supabase.storage
       .from("backups")
@@ -93,17 +119,22 @@ Deno.serve(async () => {
       .from("backups")
       .list("", { sortBy: { column: "created_at", order: "asc" } });
 
-    if (files && files.length > 8) {
-      const toDelete = files.slice(0, files.length - 8).map(f => f.name);
+    let cleaned = 0;
+    if (files && files.length > 6) {
+      const toDelete = files.slice(0, files.length - 6).map(f => f.name);
       await supabase.storage.from("backups").remove(toDelete);
+      cleaned = toDelete.length;
     }
+
+    const sizeKB = Math.round(jsonStr.length / 1024);
 
     return new Response(JSON.stringify({
       status: "ok",
       file: fileName,
+      size_kb: sizeKB,
       tables: stats,
       total_rows: Object.values(stats).reduce((a, b) => a + b, 0),
-      old_backups_cleaned: Math.max(0, (files?.length ?? 0) - 8),
+      old_backups_cleaned: cleaned,
     }), {
       headers: { "Content-Type": "application/json" },
     });

@@ -9,11 +9,11 @@ const RULES = [
   },
   {
     title: "🫣 Fase d'amagar",
-    text: "Tria escenari → objecte → moble → posició (sobre/sota/dins). Tots dos amaguen alhora.",
+    text: "Tria escenari → objecte → moble → posició (sobre/sota/dins). Pots escriure un missatge opcional que es mostrarà quan el rival trobi l'objecte. Tots dos amaguen alhora.",
   },
   {
     title: "🪙 Tokens",
-    text: `Tens 5 tokens/dia. Es reinicien cada dia. Usa'ls bé!`,
+    text: "Tens 5 tokens al dia, es reinicien automàticament. Pots gastar bonus tokens guanyats de recompenses. Administra'ls bé!",
   },
   {
     title: "🚶 Moure's · " + TOKEN_COSTS.move + "🪙",
@@ -21,27 +21,31 @@ const RULES = [
   },
   {
     title: "👀 Observar · " + TOKEN_COSTS.look + "🪙",
-    text: "Mira una posició d'un moble. Reps una pista: ❄️ Fred (habitació incorrecta) · 🌡️ Calent (bona habitació, moble incorrecte) · 🔥 Molt calent (moble correcte, posició incorrecta!). NO TROBA l'objecte, només dona pistes per deduir.",
+    text: "Mira una posició d'un moble. Reps una pista progressiva:\n❄️ Fred → L'objecte NO és en aquesta habitació.\n🌡️ Calent → Bona habitació, moble incorrecte.\n🔥 Molt calent → Moble correcte, prova altra posició!\nAquesta acció NO TROBA l'objecte, només dona pistes.",
   },
   {
     title: "🔍 Confirmar · " + TOKEN_COSTS.confirm + "🪙",
-    text: "L'ÚNICA acció que pot trobar l'objecte! Si encertes moble + posició, guanyes. Si falles, perds tokens. Usa les pistes d'observar per saber on confirmar!",
+    text: "L'ÚNICA acció que pot trobar l'objecte! Si encertes moble + posició, guanyes. Si falles, perds els tokens. Usa les pistes d'observar per saber on confirmar.",
   },
   {
-    title: "🍌 Plàtan (ítem social)",
-    text: "Bloqueja una posició aleatòria del rival. Es desbloqueja quan el rival gasta tokens en una altra acció.",
+    title: "💡 Pistes de l'objecte rival",
+    text: "Al torn 2 reps la 1a pista sobre l'objecte que busques. Al torn 5, la 2a pista. Serveixen per deduir QUÈ busques.",
   },
   {
-    title: "⚡ Altres ítems socials (1/dia)",
-    text: "💣 Bomba fum: Mou el teu objecte (1 cop/partida) · 🔮 Pista falsa: Confon rival · 🛡️ Escut: Bloqueja ítem · 💬 Missatge: Envia text.",
+    title: "⚡ Ítems socials (1/dia)",
+    text: "Un cop al dia pots usar un ítem:\n🍌 Plàtan — Bloqueja 1 posició del rival (es desbloqueja amb qualsevol acció).\n💣 Bomba de fum — Mou el TEU objecte a altra posició (1 ús/partida).\n🛡️ Escut — Protegeix del pròxim plàtan o intercanvi (1 ús, es desactiva després).\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix en quina habitació és el rival.\n💡 Pista — Envia un missatge o farol al rival.",
+  },
+  {
+    title: "🎁 Bonus aleatoris",
+    text: "Quan observes o confirmes, tens un 15% de probabilitat de trobar tokens extra!",
   },
   {
     title: "🏆 Recompenses",
-    text: "Guanya partides per obtenir mobles. Col·loca'ls en escenaris o ven-los per tokens bonus.",
+    text: "Guanya partides per obtenir mobles decoratius. Col·loca'ls en escenaris o ven-los per tokens bonus. La Foto (🖼️) es pot guardar com a trofeu amb un nom personalitzat!",
   },
   {
     title: "📈 Elo i Lligues",
-    text: "Guanyar: +25 Elo · Perdre: -20 Elo. Lligues: Bronze → Silver → Gold → Platinum → Diamond.",
+    text: "Guanyar: +25 Elo · Perdre: -20 Elo.\n🥉 Bronze (< 1200) → 🥈 Silver → 🥇 Gold → 💎 Platinum → 👑 Diamond (≥ 1800).",
   },
 ];
 
@@ -115,7 +119,7 @@ export function HelpButton() {
               {RULES.map((r, i) => (
                 <div key={i}>
                   <p className="text-sm font-semibold mb-0.5">{r.title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{r.text}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
                 </div>
               ))}
             </div>

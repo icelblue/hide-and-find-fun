@@ -437,11 +437,11 @@ CREATE TYPE game_status     AS ENUM ('waiting', 'hiding', 'playing', 'finished')
 CREATE TYPE action_type     AS ENUM ('move', 'look', 'confirm');
 CREATE TYPE position_type   AS ENUM ('sobre', 'sota', 'dins');
 CREATE TYPE bonus_type      AS ENUM ('extra_token', 'hint_yes', 'hint_no');
-CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message');
+CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message', 'espia', 'swap');
 CREATE TYPE league_tier     AS ENUM ('bronze', 'silver', 'gold', 'platinum', 'diamond');
 CREATE TYPE item_rarity     AS ENUM ('common', 'uncommon', 'rare', 'epic', 'legendary');
-CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric');
-CREATE TYPE item_environment AS ENUM ('generic', 'wet', 'hot');
+CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric', 'wood', 'cardboard', 'rubber', 'ceramic', 'electronic', 'leather', 'stone');
+CREATE TYPE item_environment AS ENUM ('generic', 'wet', 'hot', 'dirty', 'outdoor', 'frozen', 'sorrenc', 'ventós', 'submergit', 'químic');
 ```
 
 <br/>
@@ -622,10 +622,10 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
    ├── same scenario, diferent moble  → 1 (calent 🌡️)
    ├── same moble, diferent posició   → 2 (molt calent 🔥)
    └── same moble, same posició       → 2 (cal confirmar!)
-4. Comprovar scenario_bonuses(item_id, position):
-   ├── extra_token → +N tokens al jugador
-   └── hint_yes / hint_no → desar a inventari
-5. INSERT game_moves
+4. Bonus aleatori (~15% probabilitat):
+   ├── 5% → +1 token extra
+   └── 10% → +0.5 token extra
+5. INSERT game_moves (amb hint_level)
 ```
 
 #### 🔍 CONFIRM — 1.5 tokens
@@ -658,13 +658,26 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 
 > Cada jugador pot usar **1 ítem per dia** (controlat per `social_item_used_today`).
 
-| Ítem | Mecànica | Límit |
-|:-----|:---------|:------|
-| 🍌 **Banana** | Bloqueja un spot aleatori al tauler del rival | 1/dia |
-| 💣 **Bomba de fum** | Canvia `hidden_position` del propi objecte aleatòriament | 1/partida |
-| 🔮 **Pista falsa** | Activa indicador fals a la UI del rival (10s) | 1/dia |
-| 🛡️ **Escut** | Bloqueja el pròxim ítem social rebut (es consumeix) | 1/dia |
-| 💬 **Missatge** | Envia text lliure al rival (bluff, provocació) | 1/dia |
+| Ítem | Mecànica | Límit | Bloquejat per escut? |
+|:-----|:---------|:------|:---------------------|
+| 🍌 **Banana** | Bloqueja un spot aleatori al tauler del rival | 1/dia | ✅ Sí |
+| 💣 **Bomba de fum** | Canvia `hidden_position` del PROPI objecte aleatòriament | 1/partida | ❌ No |
+| 🛡️ **Escut** | Protegeix del pròxim plàtan o intercanvi. Es desactiva després. | 1/dia | — |
+| 🔄 **Intercanvi** | Intercanvia `current_scenario_id` amb el rival | 1/dia | ✅ Sí |
+| 🕵️ **Espia** | Revela l'escenari actual del rival (auto-orientat, sense notificació) | 1/dia | ❌ No |
+| 💡 **Missatge** | Envia text lliure al rival (bluff, provocació) | 1/dia | ❌ No |
+
+> ⚠️ `false_clue` (pista falsa) està ELIMINADA del joc. L'enum existeix a la DB per retrocompatibilitat però no s'usa.
+
+### 5.6 Bonus aleatoris
+
+> Els bonus ja NO estan fixos per posició. Cada cop que un jugador observa o confirma, hi ha un **15% de probabilitat** de trobar tokens extra (5% → 1 token, 10% → 0.5 tokens).
+
+### 5.7 Missatge al amagar
+
+> Qualsevol objecte pot incloure un missatge opcional (≤100 chars) en amagar-lo. Es guarda a `game_players.special_data.hide_message` i es mostra al rival quan guanya.
+
+### 5.8 Detecció de proximitat
 
 ### 5.6 Detecció de proximitat
 
