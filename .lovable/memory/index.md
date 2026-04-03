@@ -9,6 +9,7 @@ Camins 100% predefinits per escenari. 7 escenaris: Cuina, Jardí, Balcó, Habita
 Missatge secret NOMÉS per objectes especials (amb object_specials).
 Materials: fabric="Roba", food="Menjar". Restriccions simplificades.
 Documentació SEMPRE sincronitzada amb codi en cada canvi.
+Lobby: menú hamburguesa (perfil, bug, ajuda, sortir) + botó 🐾 Mode Història.
 
 ## Memories
 - [Game mechanics v2](mem://features/game-mechanics-v2) — Observar+trobar, pistes progressives, items socials, restriccions materials, bomba fum mou escenari
@@ -18,3 +19,4 @@ Documentació SEMPRE sincronitzada amb codi en cada canvi.
 - [Social items](mem://features/social-items) — Plàtan, bomba fum, escut, intercanvi, espia, missatge, robar tornavís
 - [Ranking system](mem://features/ranking) — Elo intern + Lligues Bronze→Diamant
 - [Object validation](mem://features/objects) — Regex, diccionari, propietats booleanes
+- [Story Mode](mem://features/story-mode) — Tutorial single-player amb mascota, capítols progressius, accesoris
