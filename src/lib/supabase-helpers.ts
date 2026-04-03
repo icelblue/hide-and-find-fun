@@ -249,10 +249,10 @@ export function getTagActions(
 
 // Shared tool pool per game — competitive: first to find it keeps it
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
-  martell: 1,
+  martell: 5,
   drap: 2,
   llanterna: 1,
-  tornavis: 1, // extra (everyone already starts with 1)
+  tornavis: 5, // extra (everyone already starts with 1)
 };
 
 /** Get how many of each tool have been found in this game (both players combined) */
