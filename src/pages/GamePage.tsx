@@ -630,13 +630,11 @@ export default function GamePage() {
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
 
-  // Separate tracking: looked spots vs confirmed spots
+  // Track looked spots
   const lookedSpots = new Set<string>();
-  const confirmedSpots = new Set<string>();
   for (const m of moveHistory) {
-    if (m.target_item_id && m.target_position) {
-      if (m.action === "look") lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
-      if (m.action === "confirm") confirmedSpots.add(`${m.target_item_id}:${m.target_position}`);
+    if (m.target_item_id && m.target_position && m.action === "look") {
+      lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
     }
   }
 
@@ -1149,7 +1147,7 @@ export default function GamePage() {
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
-                  lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
+                  lookedSpots={lookedSpots}
                   bananaBlockedSpot={bananaBlockedSpot}
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
                   onInteraction={handleInteraction}
@@ -1433,14 +1431,13 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
   );
 }
 
-function ItemActions({ item, positions, onLook, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
+function ItemActions({ item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
   disabled: boolean;
   tokensRemaining: number;
   lookedSpots: Set<string>;
-  confirmedSpots: Set<string>;
   bananaBlockedSpot: string | null;
   interactions?: any[];
   onInteraction?: (interaction: any) => void;
