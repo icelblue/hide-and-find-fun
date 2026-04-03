@@ -68,6 +68,7 @@ const App = () => (
               <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
+              <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
