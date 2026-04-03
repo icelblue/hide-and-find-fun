@@ -143,7 +143,10 @@ export const TAG_ACTIONS = {
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
 } as const;
 
-export type ToolType = "drap" | "tornavis" | "martell";
+export type ToolType = "drap" | "tornavis" | "martell" | "llanterna";
+
+// Outdoor scenarios (no light switch, need llanterna)
+export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó"];
 
 /** Get tag-based actions available for an item given player's tools and game state */
 export function getTagActions(item: any, playerTools: Record<string, number>, gameBreaks: Set<string>) {
