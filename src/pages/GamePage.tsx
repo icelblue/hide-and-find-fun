@@ -630,13 +630,11 @@ export default function GamePage() {
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
 
-  // Separate tracking: looked spots vs confirmed spots
+  // Track looked spots
   const lookedSpots = new Set<string>();
-  const confirmedSpots = new Set<string>();
   for (const m of moveHistory) {
-    if (m.target_item_id && m.target_position) {
-      if (m.action === "look") lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
-      if (m.action === "confirm") confirmedSpots.add(`${m.target_item_id}:${m.target_position}`);
+    if (m.target_item_id && m.target_position && m.action === "look") {
+      lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
     }
   }
 
