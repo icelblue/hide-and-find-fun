@@ -1391,7 +1391,13 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
                 {rivalInfo.obj && (
                   <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
                 )}
-                <p className="font-bold text-lg mb-2">{rivalInfo.obj?.name ?? "?"}</p>
+                <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
+                {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
+                  <p className="text-[10px] text-muted-foreground mb-2">
+                    Material: <span className="font-medium text-foreground/70">{rivalInfo.obj.material}</span>
+                    {rivalInfo.obj.size && <span> · Mida {rivalInfo.obj.size}</span>}
+                  </p>
+                )}
                 <div className="text-sm text-muted-foreground space-y-1">
                   {rivalInfo.scenario && (
                     <p>{rivalInfo.scenario.icon} <strong>{rivalInfo.scenario.name}</strong></p>
@@ -1400,8 +1406,22 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
                     <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {posLabels[rivalInfo.position] ?? rivalInfo.position}</p>
                   )}
                 </div>
+                {rivalInfo.traits.length > 0 && (
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">💡 Pistes que tenia:</p>
+                    {rivalInfo.traits.map((t, i) => (
+                      <p key={i} className="text-primary/80 italic">"{t}"</p>
+                    ))}
+                  </div>
+                )}
+                {rivalInfo.specialType && (
+                  <p className="text-[10px] text-accent mt-2">⭐ Objecte especial ({rivalInfo.specialType})</p>
+                )}
                 {rivalInfo.hideMessage && (
-                  <p className="text-xs italic text-accent mt-3">💌 "{rivalInfo.hideMessage}"</p>
+                  <div className="mt-3 p-2 rounded-lg bg-accent/10 border border-accent/20">
+                    <p className="text-xs font-semibold text-accent mb-0.5">💌 Missatge del rival:</p>
+                    <p className="text-sm italic text-foreground/80">"{rivalInfo.hideMessage}"</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
