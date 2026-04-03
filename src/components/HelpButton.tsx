@@ -1,9 +1,19 @@
 // ============================================================
-// HelpButton.tsx — Panell flotant de regles del joc
+// HelpButton.tsx — Panell flotant de regles del joc + catàleg recompenses
 // ============================================================
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TOKEN_COSTS } from "@/lib/supabase-helpers";
+import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
+
+const RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"] as const;
+const DROP_RATES: Record<string, { pct: string; label: string }> = {
+  common: { pct: "50%", label: "Comú" },
+  uncommon: { pct: "30%", label: "Poc comú" },
+  rare: { pct: "13%", label: "Rar" },
+  epic: { pct: "5%", label: "Èpic" },
+  legendary: { pct: "2%", label: "Llegendari" },
+};
 
 const RULES = [
   {
@@ -32,7 +42,7 @@ const RULES = [
   },
   {
     title: "⚡ Ítems socials (1/dia)",
-    text: "Un cop al dia pots usar un ítem:\n🍌 Plàtan — Bloqueja 1 posició del rival (es desbloqueja amb qualsevol acció).\n💣 Bomba de fum — Mou el TEU objecte a altra posició (1 ús/partida).\n🛡️ Escut — Protegeix del pròxim plàtan o intercanvi.\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix on és el rival.\n💡 Pista — Envia un missatge o farol.",
+    text: "Un cop al dia pots usar un ítem:\n🍌 Plàtan — Bloqueja 1 posició del rival (es desbloqueja amb qualsevol acció).\n💣 Bomba de fum — Mou el TEU objecte a una habitació diferent aleatòria (1 ús/partida). T'avisarà de la nova ubicació.\n🛡️ Escut — Protegeix del pròxim plàtan, intercanvi o robatori.\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix on és el rival.\n🔧 Robar tornavís — Roba 1 tornavís al rival.\n💡 Pista — Envia un missatge o farol.",
   },
   {
     title: "🎁 Bonus i eines",
@@ -47,10 +57,6 @@ const RULES = [
     text: "🧹 Netejar (bruts) — 0.2🪙, cal Drap.\n💥 Trencar (fràgils) — 0.3🪙, cal Martell, notifica el rival!\n🔧 Arreglar (trencats) — 0.2🪙, cal Tornavís.",
   },
   {
-    title: "🏆 Recompenses",
-    text: "Guanya partides per obtenir mobles decoratius. Col·loca'ls en escenaris o ven-los per tokens bonus.",
-  },
-  {
     title: "📈 Elo i Lligues",
     text: "Guanyar: +25 Elo · Perdre: -20 Elo.\n🥉 Bronze → 🥈 Silver → 🥇 Gold → 💎 Platinum → 👑 Diamond.",
   },
@@ -58,6 +64,7 @@ const RULES = [
 
 export function HelpButton() {
   const [open, setOpen] = useState(false);
+  const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -65,6 +72,8 @@ export function HelpButton() {
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.style.top = `-${window.scrollY}px`;
+      // Load reward catalog
+      getRewardCatalog().then(setRewardCatalog).catch(() => {});
     } else {
       const scrollY = document.body.style.top;
       document.body.style.overflow = "";
@@ -80,6 +89,13 @@ export function HelpButton() {
       document.body.style.top = "";
     };
   }, [open]);
+
+  // Group rewards by rarity
+  const groupedRewards: Record<string, any[]> = {};
+  for (const r of RARITY_ORDER) groupedRewards[r] = [];
+  for (const item of rewardCatalog) {
+    if (groupedRewards[item.rarity]) groupedRewards[item.rarity].push(item);
+  }
 
   return (
     <>
@@ -129,6 +145,42 @@ export function HelpButton() {
                   <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
                 </div>
               ))}
+
+              {/* Reward catalog */}
+              <div className="border-t border-border/40 pt-4">
+                <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
+                </p>
+                {RARITY_ORDER.map(rarity => {
+                  const items = groupedRewards[rarity] ?? [];
+                  const cfg = RARITY_CONFIG[rarity];
+                  const drop = DROP_RATES[rarity];
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={rarity} className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold">
+                          {cfg?.emoji} {drop?.label} ({items.length})
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {drop?.pct} · {cfg?.sell}🪙
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map((item: any) => (
+                          <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
+                            {item.icon} {item.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
+                </p>
+              </div>
             </div>
           </div>
         </div>

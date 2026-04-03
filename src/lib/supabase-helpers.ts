@@ -1171,20 +1171,44 @@ export async function sendSocialItem(
       if (fromPlayer.smoke_bomb_used) {
         throw new Error("Ja has usat la bomba de fum en aquesta partida!");
       }
+      // Smoke bomb: move hidden object to a DIFFERENT scenario + random position
       const { data: self } = await supabase
         .from("game_players")
-        .select("hidden_position, id")
+        .select("hidden_item_id, hidden_position, id")
         .eq("game_id", gameId)
         .eq("user_id", fromPlayerId)
         .single();
-      if (self) {
-        const all: ("sobre" | "sota" | "dins")[] = ["sobre", "sota", "dins"];
-        const other = all.filter((p) => p !== self.hidden_position);
-        const newPos = other[Math.floor(Math.random() * other.length)];
+      if (self && self.hidden_item_id) {
+        // Get current scenario of hidden item
+        const { data: currentItem } = await supabase
+          .from("items").select("scenario_id").eq("id", self.hidden_item_id).single();
+        // Get all scenarios except the current one
+        const allScenarios = await getScenarios();
+        const otherScenarios = allScenarios.filter(s => s.id !== currentItem?.scenario_id);
+        if (otherScenarios.length === 0) throw new Error("No hi ha altres escenaris disponibles!");
+        // Pick a random different scenario
+        const newScenario = otherScenarios[Math.floor(Math.random() * otherScenarios.length)];
+        // Get items in the new scenario
+        const newItems = await getItemsByScenario(newScenario.id);
+        if (newItems.length === 0) throw new Error("L'escenari destí no té mobles!");
+        // Pick random item and position
+        const newItem = newItems[Math.floor(Math.random() * newItems.length)];
+        const allPos: ("sobre" | "sota" | "dins")[] = ["sobre", "sota", "dins"];
+        const validPos = allPos.filter(p => p !== "dins" || (newItem.inner_capacity ?? 2) >= 2);
+        const newPos = validPos[Math.floor(Math.random() * validPos.length)];
+        // Update hidden location
         await supabase
           .from("game_players")
-          .update({ hidden_position: newPos, smoke_bomb_used: true })
+          .update({ hidden_item_id: newItem.id, hidden_position: newPos, smoke_bomb_used: true })
           .eq("id", self.id);
+        // Notify the owner (fromPlayer) about the new location
+        await supabase.from("game_social_items").insert({
+          game_id: gameId,
+          from_player_id: fromPlayerId,
+          to_player_id: fromPlayerId, // self-notification
+          item_type: "message" as const,
+          message_text: `💣 Bomba de fum! El teu objecte s'ha mogut a ${newScenario.icon} ${newScenario.name} → ${newItem.icon} ${newItem.name} (${newPos})`,
+        });
       }
     } else if (itemType === "swap") {
       const { data: sender } = await supabase

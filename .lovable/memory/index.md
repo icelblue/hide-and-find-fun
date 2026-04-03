@@ -11,10 +11,10 @@ Materials: fabric="Roba", food="Menjar". Restriccions simplificades.
 Documentació SEMPRE sincronitzada amb codi en cada canvi.
 
 ## Memories
-- [Game mechanics v2](mem://features/game-mechanics-v2) — Observar+trobar, pistes progressives, items socials, restriccions materials
-- [Interactive furniture](mem://features/interactive-furniture) — Tags, eines UNLIMITED, dirty random per game
+- [Game mechanics v2](mem://features/game-mechanics-v2) — Observar+trobar, pistes progressives, items socials, restriccions materials, bomba fum mou escenari
+- [Interactive furniture](mem://features/interactive-furniture) — Tags, eines UNLIMITED, dirty random per game, pool compartit, robar tornavís
 - [Rewards](mem://features/rewards) — Win → random furniture prize, place in scenario or sell
 - [Scenarios & Actions](mem://features/scenarios) — 7 escenaris amb arbres, accions i costos
-- [Social items](mem://features/social-items) — Plàtan, bomba fum, escut, intercanvi, espia, missatge
+- [Social items](mem://features/social-items) — Plàtan, bomba fum, escut, intercanvi, espia, missatge, robar tornavís
 - [Ranking system](mem://features/ranking) — Elo intern + Lligues Bronze→Diamant
 - [Object validation](mem://features/objects) — Regex, diccionari, propietats booleanes
