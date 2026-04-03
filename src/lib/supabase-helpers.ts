@@ -1109,7 +1109,7 @@ export async function performMove(
 // SOCIAL ITEMS
 // ============================================
 
-export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap";
+export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap" | "robar_tornavis";
 
 export const SOCIAL_ITEMS = [
   { type: "banana" as const, icon: "🍌", name: "Plàtan", desc: "Bloqueja 1 posició del rival" },
@@ -1118,6 +1118,7 @@ export const SOCIAL_ITEMS = [
   { type: "swap" as const, icon: "🔄", name: "Intercanvi", desc: "Intercanvia la teva posició amb la del rival" },
   { type: "espia" as const, icon: "🕵️", name: "Espia", desc: "Descobreix on és el rival ara" },
   { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
+  { type: "robar_tornavis" as const, icon: "🔧", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
 ] as const;
 
 export async function sendSocialItem(
