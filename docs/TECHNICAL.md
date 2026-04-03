@@ -416,6 +416,8 @@
 | `target_position` | `position_type`? | Posició investigada |
 | `found_object` | boolean? | Ha trobat l'objecte? |
 | `found_bonus` | `bonus_type`? | Bonus descobert |
+| `bonus_value` | text? | Valor del bonus o `tag:action` |
+| `hint_level` | integer? | 0=fred, 1=calent, 2=molt calent, 3=trobat |
 | `turn_number` | integer | Número de torn (pistes progressives) |
 
 </details>
