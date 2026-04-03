@@ -1,3 +1,24 @@
+// ============================================================
+// App.tsx — Punt d'entrada de l'aplicació React
+// ============================================================
+// Estructura:
+//   ErrorBoundary → QueryClientProvider → AuthProvider → Router
+//
+// Rutes:
+//   /auth            — Login/registre (redirigeix si ja autenticat)
+//   /reset-password  — Recuperació de contrasenya
+//   /                — Lobby (matchmaking) — protegida
+//   /game/:gameId    — Partida activa — protegida
+//   /profile         — Perfil propi — protegida
+//   /player/:userId  — Perfil d'un altre jugador — protegida
+//   *                — 404
+//
+// Per afegir una nova pàgina:
+//   1. Crea el component a src/pages/
+//   2. Importa'l aquí
+//   3. Afegeix un <Route> dins de <Routes>
+//   4. Si requereix auth, envolta amb <ProtectedRoute>
+// ============================================================
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";

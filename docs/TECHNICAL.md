@@ -1273,12 +1273,46 @@ npx supabase stop
 
 <br/>
 
+#### 🐳 Opció C: Docker (producció)
+
+Si vols desplegar l'app com a contenidor Docker:
+
+```bash
+# 1. Copia .env.example a .env i omple les variables de Supabase
+cp .env.example .env
+# Edita .env amb els valors del teu projecte Supabase
+
+# 2. Construeix i arranca amb docker-compose
+docker compose up --build -d
+
+# 3. L'app estarà disponible a http://localhost:8080
+
+# 4. Per aturar:
+docker compose down
+```
+
+**Fitxers de desplegament:**
+
+| Fitxer | Funció |
+|:-------|:-------|
+| `Dockerfile` | Build multi-stage: Node (build Vite) → nginx (servir SPA) |
+| `docker-compose.yml` | Orquestració amb variables d'entorn |
+| `nginx.conf` | SPA fallback, gzip, cache d'assets, headers seguretat |
+| `.env.example` | Plantilla de variables d'entorn |
+| `.dockerignore` | Exclou node_modules, .git, docs del context de build |
+
+**Per producció real**, afegeix:
+- Proxy invers (Traefik/Caddy/Cloudflare) amb TLS
+- Healthcheck del contenidor (ja inclòs al Dockerfile)
+- CI/CD per rebuilds automàtics (GitHub Actions)
+
+<br/>
+
 ---
 
 <br/>
 
 ## 🛠️ 12. Guia de modificació
-
 <br/>
 
 ### 12.1 Afegir un nou escenari
