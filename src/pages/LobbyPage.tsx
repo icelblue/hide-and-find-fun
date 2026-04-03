@@ -275,6 +275,9 @@ export default function LobbyPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{s.icon}</span>
                       <div>
+                        {isPending && (
+                          <p className="text-sm font-bold text-accent">{creatorName} et reta!</p>
+                        )}
                         <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
                         <p className={`text-[11px] ${s.color}`}>{s.label}</p>
                       </div>
