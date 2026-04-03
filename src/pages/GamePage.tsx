@@ -522,7 +522,34 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos);
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
-      if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
+      if (result.foundObject) {
+        toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
+        // Check if rival's object has a "find" special
+        if (rival?.hidden_object_id) {
+          const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
+          if (rivalSpecial && rivalSpecial.prompt_on === "find") {
+            if (rivalSpecial.special_type === "troll_effect") {
+              const variants = rivalSpecial.variants as any;
+              setTrollEffect({
+                message: rivalSpecial.prompt_text,
+                emoji: variants?.emoji ?? "😈",
+                animation: variants?.animation ?? "shake",
+              });
+              setTimeout(() => setTrollEffect(null), 6000);
+            } else {
+              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+            }
+          }
+        }
+        // Show hide message from rival
+        if (rival?.special_data) {
+          const sd = rival.special_data as any;
+          const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+          if (hideMsg) {
+            toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
+          }
+        }
+      } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
         const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
