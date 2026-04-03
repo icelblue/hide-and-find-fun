@@ -350,6 +350,7 @@ export default function LobbyPage() {
           </div>
         )}
       </div>
+      <p className="text-center text-[10px] text-muted-foreground/50 mt-4 pb-2">v{APP_VERSION}</p>
     </div>
   );
 }
