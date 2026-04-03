@@ -631,8 +631,8 @@ export async function sendSocialItem(
     .from("game_players").select("shield_active, id, current_scenario_id")
     .eq("game_id", gameId).eq("user_id", toPlayerId).single();
 
-  // Shield blocks banana and message only (NOT smoke_bomb, shield, or espia)
-  const blocked = !!(toPlayer?.shield_active && itemType === "banana");
+  // Shield blocks banana and swap only (NOT smoke_bomb, shield, espia, or message)
+  const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap"));
 
   // For espia, we target ourselves (no notification to rival)
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
@@ -648,7 +648,7 @@ export async function sendSocialItem(
   let espiaResult: string | null = null;
 
   if (blocked) {
-    // Shield blocked this banana — deactivate shield after use
+    // Shield blocked this item — deactivate shield after use
     await supabase.from("game_players")
       .update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
@@ -671,6 +671,17 @@ export async function sendSocialItem(
         const newPos = other[Math.floor(Math.random() * other.length)];
         await supabase.from("game_players")
           .update({ hidden_position: newPos, smoke_bomb_used: true }).eq("id", self.id);
+      }
+    } else if (itemType === "swap") {
+      // Swap positions: sender and rival exchange current_scenario_id
+      const { data: sender } = await supabase
+        .from("game_players").select("id, current_scenario_id")
+        .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
+      if (sender && toPlayer) {
+        await supabase.from("game_players")
+          .update({ current_scenario_id: toPlayer.current_scenario_id }).eq("id", sender.id);
+        await supabase.from("game_players")
+          .update({ current_scenario_id: sender.current_scenario_id }).eq("id", toPlayer.id);
       }
     } else if (itemType === "espia") {
       // Reveal rival's current scenario to the sender
