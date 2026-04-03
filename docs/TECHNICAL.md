@@ -1262,7 +1262,7 @@ npm run dev
 2. Obtenir URL + claus (Settings → API)     ← ~1 min
 3. npx supabase login                       ← ~1 min
 4. npx supabase link --project-ref <ref>    ← ~1 min
-5. npx supabase db push                     ← ~2 min (aplica 19 migracions)
+5. npx supabase db push                     ← ~2 min (aplica 37 migracions)
 6. Configurar secrets a Edge Functions      ← ~2 min
 7. npx supabase functions deploy            ← ~1 min
 8. Editar vite.config.ts + .env             ← ~2 min
