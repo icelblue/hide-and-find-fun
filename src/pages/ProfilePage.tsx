@@ -114,13 +114,27 @@ export default function ProfilePage() {
         .in("status", ["waiting", "hiding", "playing"])
         .order("created_at", { ascending: false });
       if (activeGameData && activeGameData.length > 0) {
-        // Get object and item names
+        const activeGameIds = activeGameData.map(g => g.id);
+        // Get object and item names + rival players
         const objIds = myGamePlayers.filter(gp => gp.hidden_object_id).map(gp => gp.hidden_object_id!);
         const itmIds = myGamePlayers.filter(gp => gp.hidden_item_id).map(gp => gp.hidden_item_id!);
-        const [{ data: objs }, { data: itms }] = await Promise.all([
+        const [{ data: objs }, { data: itms }, { data: rivalPlayers }] = await Promise.all([
           objIds.length > 0 ? supabase.from("objects").select("id, name, icon").in("id", objIds) : { data: [] },
           itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
+          supabase.from("game_players").select("game_id, user_id").in("game_id", activeGameIds).neq("user_id", user.id),
         ]);
+        // Resolve rival display names
+        const rivalUserIds = [...new Set((rivalPlayers ?? []).map(rp => rp.user_id))];
+        let rivalNameMap = new Map<string, string>();
+        if (rivalUserIds.length > 0) {
+          const { data: rivalProfs } = await supabase.from("profiles").select("user_id, display_name").in("user_id", rivalUserIds);
+          rivalNameMap = new Map((rivalProfs ?? []).map(p => [p.user_id, p.display_name ?? "Anònim"]));
+        }
+        const gameRivalMap = new Map<string, string>();
+        for (const rp of rivalPlayers ?? []) {
+          gameRivalMap.set(rp.game_id, rivalNameMap.get(rp.user_id) ?? "Anònim");
+        }
+
         const objMap = new Map((objs ?? []).map((o: any) => [o.id, o] as [string, any]));
         const itmMap = new Map((itms ?? []).map((i: any) => [i.id, i] as [string, any]));
         const scenMap = new Map(scen.map((s: any) => [s.id, s] as [string, any]));
@@ -135,6 +149,7 @@ export default function ProfilePage() {
             hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
             hiddenPosition: gp?.hidden_position, hasHidden: gp?.has_hidden,
             tokens: gp?.tokens_remaining,
+            rivalName: gameRivalMap.get(g.id) ?? null,
           };
         });
         setActiveGames(enriched);
