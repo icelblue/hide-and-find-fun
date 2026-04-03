@@ -1360,8 +1360,13 @@ VALUES
   ('<diamant_id>', 2, 'És molt dur i petit');
 
 -- 3. Afegir comportament especial (opcional)
-INSERT INTO object_specials (object_id, special_type, prompt_on, prompt_text)
-VALUES ('<diamant_id>', 'custom_name', 'find', 'Dona un nom a aquest diamant!');
+-- special_type: 'custom_name' (el trobador li posa nom), 'custom_message' (l'amagador escriu),
+--               'choose_variant' (tria variant), 'troll_effect' (animació broma)
+-- prompt_on: 'hide' (quan s'amaga) o 'find' (quan es troba)
+INSERT INTO object_specials (object_id, special_type, prompt_on, prompt_text, variants)
+VALUES ('<diamant_id>', 'troll_effect', 'find', '💎 Diamant trobat!',
+  '{"emoji": "💎", "animation": "flash"}');
+-- Animacions disponibles: shake, flash, bounce (definides a index.css)
 ```
 
 <br/>
