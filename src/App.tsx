@@ -32,6 +32,7 @@ import LobbyPage from "./pages/LobbyPage";
 import GamePage from "./pages/GamePage";
 import ProfilePage from "./pages/ProfilePage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
+import StoryModePage from "./pages/StoryModePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
