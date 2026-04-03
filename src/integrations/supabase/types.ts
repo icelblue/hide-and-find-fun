@@ -140,6 +140,7 @@ export type Database = {
           special_data: Json | null
           tokens_last_reset: string
           tokens_remaining: number
+          tools: Json
           user_id: string
         }
         Insert: {
@@ -158,6 +159,7 @@ export type Database = {
           special_data?: Json | null
           tokens_last_reset?: string
           tokens_remaining?: number
+          tools?: Json
           user_id: string
         }
         Update: {
@@ -176,6 +178,7 @@ export type Database = {
           special_data?: Json | null
           tokens_last_reset?: string
           tokens_remaining?: number
+          tools?: Json
           user_id?: string
         }
         Relationships: [
@@ -357,6 +360,7 @@ export type Database = {
           inner_capacity: number
           name: string
           scenario_id: string
+          tags: string[]
         }
         Insert: {
           display_order?: number
@@ -367,6 +371,7 @@ export type Database = {
           inner_capacity?: number
           name: string
           scenario_id: string
+          tags?: string[]
         }
         Update: {
           display_order?: number
@@ -377,6 +382,7 @@ export type Database = {
           inner_capacity?: number
           name?: string
           scenario_id?: string
+          tags?: string[]
         }
         Relationships: [
           {
