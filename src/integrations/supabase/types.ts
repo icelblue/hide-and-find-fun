@@ -58,6 +58,7 @@ export type Database = {
           found_bonus: Database["public"]["Enums"]["bonus_type"] | null
           found_object: boolean | null
           game_id: string
+          hint_level: number | null
           id: string
           player_id: string
           target_item_id: string | null
@@ -73,6 +74,7 @@ export type Database = {
           found_bonus?: Database["public"]["Enums"]["bonus_type"] | null
           found_object?: boolean | null
           game_id: string
+          hint_level?: number | null
           id?: string
           player_id: string
           target_item_id?: string | null
@@ -88,6 +90,7 @@ export type Database = {
           found_bonus?: Database["public"]["Enums"]["bonus_type"] | null
           found_object?: boolean | null
           game_id?: string
+          hint_level?: number | null
           id?: string
           player_id?: string
           target_item_id?: string | null
@@ -764,6 +767,7 @@ export type Database = {
         | "false_clue"
         | "shield"
         | "message"
+        | "espia"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -930,6 +934,7 @@ export const Constants = {
         "false_clue",
         "shield",
         "message",
+        "espia",
       ],
     },
   },
