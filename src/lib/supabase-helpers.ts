@@ -499,13 +499,13 @@ export async function performTagAction(
     }
   }
 
-  // Tool finding on clean/fix (extra tool chance)
+  // Tool finding on clean/fix (shared pool)
   let toolFound: ToolType | null = null;
   if (actionType === "clean" || actionType === "fix") {
-    toolFound = rollForTool();
+    toolFound = await rollForTool(gameId);
     if (toolFound) {
       const currentTools = (player as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
-      currentTools[toolFound] = Math.min(3, (currentTools[toolFound] ?? 0) + 1);
+      currentTools[toolFound] = (currentTools[toolFound] ?? 0) + 1;
       await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
     }
   }
