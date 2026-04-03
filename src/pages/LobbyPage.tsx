@@ -1,3 +1,19 @@
+// ============================================================
+// LobbyPage.tsx — Pantalla principal (matchmaking)
+// ============================================================
+// Funcionalitats:
+//   - Header amb nom, lliga i botons (ajuda, perfil, logout)
+//   - Botó "Rival aleatori" → findRandomMatch()
+//   - Botó "Crear partida" → createGame() (pública)
+//   - Cerca de jugadors per nom → challengePlayer() (repte privat)
+//   - Unir-se per codi de 6 caràcters
+//   - Llista "Les meves partides" (inclou reptes pendents)
+//   - Llista "Partides obertes" (públiques d'altres jugadors)
+//
+// Dades: TanStack Query amb cache (15-60s staleTime) + refetch
+// Realtime: No — l'usuari refresca manualment o amb interval
+// ============================================================
+
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";

@@ -1,10 +1,26 @@
+// ============================================================
+// useAuth.tsx — Proveïdor d'autenticació (Context API)
+// ============================================================
+// Gestiona l'estat d'autenticació global de l'app:
+//   - Escolta canvis de sessió (login/logout/token refresh)
+//   - Proveeix funcions signUp, signIn, signOut
+//   - Carrega la sessió existent a l'arrencada
+//
+// Ús: <AuthProvider> envolta tota l'app a App.tsx
+//      useAuth() dins qualsevol component fill
+//
+// NOTA: El perfil de l'usuari es crea automàticament via trigger
+// PostgreSQL `handle_new_user()` — no cal fer-ho aquí.
+// ============================================================
+
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
+/** Interfície del context d'autenticació */
 interface AuthCtx {
-  user: User | null;
-  loading: boolean;
+  user: User | null;       // Usuari actual o null si no autenticat
+  loading: boolean;        // true durant la càrrega inicial de sessió
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -12,16 +28,23 @@ interface AuthCtx {
 
 const AuthContext = createContext<AuthCtx>({} as AuthCtx);
 
+/**
+ * AuthProvider — Envolta l'app i proporciona l'estat d'autenticació.
+ * Utilitza onAuthStateChange per reaccionar a canvis de sessió
+ * (login, logout, token refresh, etc.) en temps real.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Subscripció reactiva a canvis d'autenticació
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
+    // Carrega sessió existent (cookie/localStorage)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -30,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  /** Registre amb email, password i nom de jugador */
   const signUp = async (email: string, password: string, displayName: string) => {
     const { error } = await supabase.auth.signUp({
       email,
@@ -39,11 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
+  /** Login amb email i password */
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
+  /** Tancar sessió */
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -55,4 +81,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Hook per accedir al context d'autenticació des de qualsevol component */
 export const useAuth = () => useContext(AuthContext);

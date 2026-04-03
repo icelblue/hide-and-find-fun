@@ -1,3 +1,20 @@
+// ============================================================
+// ProfilePage.tsx — Perfil propi del jugador (474 línies)
+// ============================================================
+// Seccions:
+//   - Header amb lliga, icona i nom
+//   - Stats grid: partides, victòries, win rate, ratxa
+//   - Rival favorit (jugador amb més partides compartides)
+//   - Barra Elo amb progrés cap a la pròxima lliga
+//   - Partides actives (amb detall de l'objecte amagat)
+//   - Trofeus (objectes especials trobats)
+//   - Inventari de recompenses (col·locar o vendre)
+//   - Mur de missatges (TTL 22h)
+//   - Botó tancar sessió
+//
+// Modals: Col·locar moble en escenari / Confirmar venda
+// ============================================================
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";

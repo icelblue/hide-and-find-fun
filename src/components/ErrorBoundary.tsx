@@ -1,3 +1,21 @@
+// ============================================================
+// ErrorBoundary.tsx — Captura d'errors globals de React
+// ============================================================
+// Dos mecanismes de captura:
+//
+// 1. ErrorBoundary (component de classe):
+//    Envolta tota l'app. Si un component fill llança un error
+//    durant el renderitzat, mostra un fallback amigable en lloc
+//    d'una pantalla en blanc. L'error es logeja a `error_logs`.
+//
+// 2. logError() + window listeners:
+//    Captura errors no controlats (window.onerror) i rebuigs
+//    de promeses (unhandledrejection) i els desa a la taula
+//    `error_logs` de la base de dades per debugging remot.
+//
+// Ús: <ErrorBoundary><App /></ErrorBoundary> a main.tsx
+// ============================================================
+
 import { Component, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,16 +29,22 @@ interface State {
   error: Error | null;
 }
 
+/**
+ * React Error Boundary — captura errors de renderitzat.
+ * Mostra un fallback visual i logeja l'error a la DB.
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
+  /** React lifecycle — marca que hi ha error per renderitzar el fallback */
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
+  /** React lifecycle — logeja l'error amb stack i component info */
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     logError(error.message, error.stack, info.componentStack ?? undefined);
   }
@@ -46,6 +70,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
+/**
+ * Logeja un error a la taula `error_logs` de la base de dades.
+ * Inclou: missatge, stack trace, component, URL, user agent i metadata.
+ * Falla silenciosament si la inserció no funciona (evita recursió).
+ */
 export async function logError(
   message: string,
   stack?: string,
@@ -54,7 +83,6 @@ export async function logError(
 ) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    // Use rpc-style raw insert since error_logs may not be in generated types yet
     await (supabase as any).from("error_logs").insert({
       user_id: user?.id ?? null,
       error_message: message.slice(0, 1000),
@@ -65,15 +93,18 @@ export async function logError(
       metadata: metadata ?? {},
     });
   } catch {
-    // silently fail - don't recurse errors
+    // Falla silenciosament — no volem errors dins l'error handler
   }
 }
 
-// Global unhandled error/rejection catcher
+// Captura global d'errors no gestionats i rebuigs de promeses
 if (typeof window !== "undefined") {
+  /** Captura errors JS globals (ex: TypeError, ReferenceError) */
   window.addEventListener("error", (e) => {
     logError(e.message, e.error?.stack, "window.onerror");
   });
+
+  /** Captura promeses rebutjades no gestionades */
   window.addEventListener("unhandledrejection", (e) => {
     const msg = e.reason?.message ?? String(e.reason);
     logError(msg, e.reason?.stack, "unhandledrejection");

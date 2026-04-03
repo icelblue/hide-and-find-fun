@@ -1,3 +1,20 @@
+// ============================================================
+// PlayerProfilePage.tsx — Perfil públic d'un altre jugador
+// ============================================================
+// Accessible via /player/:userId (clicat des de resultats de
+// cerca, rivals, o autors de missatges al mur).
+//
+// Seccions:
+//   - Header amb lliga i nom
+//   - Stats (partides, victòries, win rate, Elo)
+//   - Trofeus públics
+//   - Mur interactiu: qualsevol pot escriure missatges curts
+//     (≤100 chars, TTL 22h, amb emojis ràpids)
+//
+// Si l'usuari visita el seu propi perfil, el mur és read-only
+// (per escriure al propi mur, l'altre jugador ho fa).
+// ============================================================
+
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";

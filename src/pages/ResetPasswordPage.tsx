@@ -1,3 +1,19 @@
+// ============================================================
+// ResetPasswordPage.tsx — Restablir contrasenya
+// ============================================================
+// L'usuari hi arriba via l'enllaç d'email de recuperació.
+// Escolta l'event PASSWORD_RECOVERY de Supabase Auth i
+// permet introduir una nova contrasenya (mínim 6 caràcters).
+//
+// Flux:
+//   1. L'usuari clica "Has oblidat la contrasenya?" a AuthPage
+//   2. Rep un email amb un enllaç a /reset-password#type=recovery
+//   3. Supabase Auth injecta el token al hash de la URL
+//   4. onAuthStateChange detecta PASSWORD_RECOVERY → mostra formulari
+//   5. updateUser({ password }) canvia la contrasenya
+//   6. Redirigeix al Lobby
+// ============================================================
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,22 +27,23 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(false); // true quan el token és vàlid
 
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event
+    // Escolta l'event PASSWORD_RECOVERY de Supabase Auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
       }
     });
-    // Also check hash for type=recovery
+    // Fallback: comprova si el hash ja conté type=recovery
     if (window.location.hash.includes("type=recovery")) {
       setReady(true);
     }
     return () => subscription.unsubscribe();
   }, []);
 
+  /** Canvia la contrasenya i redirigeix al Lobby */
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -52,6 +69,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
+      {/* Efectes de fons */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-secondary/5 blur-3xl" />
@@ -69,6 +87,7 @@ export default function ResetPasswordPage() {
         </CardHeader>
         <CardContent>
           {!ready ? (
+            // Esperant que Supabase Auth validi el token
             <div className="text-center py-4">
               <p className="text-sm text-muted-foreground animate-pulse">Verificant enllaç...</p>
             </div>

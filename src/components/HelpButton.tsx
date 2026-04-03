@@ -1,7 +1,26 @@
+// ============================================================
+// HelpButton.tsx — Panell flotant de regles del joc
+// ============================================================
+// Mostra un modal scrollable amb totes les regles de Deduction
+// Duel organitzades per seccions. S'obre amb el botó ❓ present
+// al Lobby i a GamePage.
+//
+// El component `Tip` s'exporta per mostrar petits textos d'ajuda
+// contextuals a qualsevol pàgina (ex: sota botons d'acció).
+//
+// NOTA: Quan s'obre el modal, es bloqueja l'scroll del body
+// per evitar scroll-through en iOS (position: fixed + top trick).
+// ============================================================
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TOKEN_COSTS } from "@/lib/supabase-helpers";
 
+/**
+ * Array de regles del joc.
+ * Cada entrada té un títol (amb emoji i cost si aplica) i un text descriptiu.
+ * Mantenir sincronitzat amb qualsevol canvi de mecànica!
+ */
 const RULES = [
   {
     title: "🎯 Objectiu",
@@ -57,9 +76,14 @@ const RULES = [
   },
 ];
 
+/**
+ * Botó d'ajuda "❓" que obre un modal fullscreen amb les regles del joc.
+ * Usat al header del Lobby i del GamePage.
+ */
 export function HelpButton() {
   const [open, setOpen] = useState(false);
 
+  // Bloqueja l'scroll del body quan el modal és obert (fix iOS scroll-through)
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -94,6 +118,7 @@ export function HelpButton() {
         ❓
       </Button>
 
+      {/* Modal overlay — backdrop blur + centered card */}
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm"
@@ -111,12 +136,14 @@ export function HelpButton() {
             style={{ maxHeight: "calc(100vh - max(32px, env(safe-area-inset-top, 16px)) - max(32px, env(safe-area-inset-bottom, 16px)))" }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Header fix (no scrollable) */}
             <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
               <h2 className="text-lg font-bold">📖 Com jugar</h2>
               <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
                 ✕
               </Button>
             </div>
+            {/* Scrollable rules list */}
             <div
               className="px-5 pb-5 space-y-3 overflow-y-auto flex-1 overscroll-contain"
               style={{
@@ -138,6 +165,13 @@ export function HelpButton() {
   );
 }
 
+/**
+ * Component de text d'ajuda contextual.
+ * Mostra text petit i en cursiva, usat per donar pistes
+ * sota botons o seccions de la UI.
+ *
+ * Exemple: <Tip>Observar dona pistes, no troba l'objecte!</Tip>
+ */
 export function Tip({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[11px] text-muted-foreground/70 italic leading-snug">{children}</p>
