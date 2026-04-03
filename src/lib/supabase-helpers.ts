@@ -737,6 +737,22 @@ export async function performMove(
         item_type: "extra_token", item_value: bonusAmount,
       });
     }
+
+    // 10% chance of finding a tool
+    const toolRoll = rollForTool();
+    if (toolRoll) {
+      const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0 };
+      if ((currentTools[toolRoll] ?? 0) < 3) {
+        currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
+        await supabase.from("game_players")
+          .update({ tools: currentTools }).eq("id", player.id);
+        const toolName = toolRoll === "drap" ? "🧹 Drap" : "🔧 Tornavís";
+        if (!foundBonus) {
+          foundBonus = "extra_token"; // reuse field
+          bonusValue = `tool:${toolRoll}`;
+        }
+      }
+    }
   }
 
   if (action === "move" && targetScenarioId) {
