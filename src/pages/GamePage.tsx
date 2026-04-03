@@ -333,6 +333,9 @@ export default function GamePage() {
     getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
     getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
 
+    // Skip realtime for story mode (CPU doesn't act)
+    if (isStory) return;
+
     const channel = supabase
       .channel(`game-${gameId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => loadGame())
@@ -340,7 +343,7 @@ export default function GamePage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, () => loadGame())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [gameId, user, loadGame]);
+  }, [gameId, user, loadGame, isStory]);
 
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
