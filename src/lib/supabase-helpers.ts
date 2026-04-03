@@ -247,17 +247,56 @@ export function getTagActions(
   return actions;
 }
 
-/** Roll for tool finding (~20% chance on look/confirm) */
-export function rollForTool(): ToolType | null {
-  const roll = Math.random();
-  if (roll < 0.2) {
-    // 5% each: martell, tornavis, drap, llanterna
-    if (roll < 0.05) return "martell";
-    if (roll < 0.1) return "tornavis";
-    if (roll < 0.15) return "drap";
-    return "llanterna";
+// Shared tool pool per game — competitive: first to find it keeps it
+export const TOOLS_PER_GAME: Record<ToolType, number> = {
+  martell: 1,
+  drap: 2,
+  llanterna: 1,
+  tornavis: 1, // extra (everyone already starts with 1)
+};
+
+/** Get how many of each tool have been found in this game (both players combined) */
+async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, number>> {
+  const { data: players } = await supabase
+    .from("game_players")
+    .select("tools")
+    .eq("game_id", gameId);
+
+  const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0 };
+  for (const p of players ?? []) {
+    const t = (p as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
+    // Subtract starting tornavís (1) to count only "found" tornavís
+    totals.martell += t.martell ?? 0;
+    totals.drap += t.drap ?? 0;
+    totals.llanterna += t.llanterna ?? 0;
+    totals.tornavis += Math.max(0, (t.tornavis ?? 1) - 1); // -1 for the starting one
   }
-  return null;
+  return totals;
+}
+
+/** Roll for tool finding (~20% chance, checks shared pool) */
+export async function rollForTool(gameId: string): Promise<ToolType | null> {
+  const roll = Math.random();
+  if (roll >= 0.2) return null;
+
+  // Determine which tool was rolled
+  let candidate: ToolType;
+  if (roll < 0.05) candidate = "martell";
+  else if (roll < 0.1) candidate = "tornavis";
+  else if (roll < 0.15) candidate = "drap";
+  else candidate = "llanterna";
+
+  // Check shared pool availability
+  const found = await getToolsFoundInGame(gameId);
+  if (found[candidate] >= TOOLS_PER_GAME[candidate]) {
+    // Pool exhausted for this type — try others
+    const alternatives: ToolType[] = ["martell", "drap", "llanterna", "tornavis"];
+    const available = alternatives.filter(t => found[t] < TOOLS_PER_GAME[t]);
+    if (available.length === 0) return null;
+    candidate = available[Math.floor(Math.random() * available.length)];
+  }
+
+  return candidate;
 }
 
 // ============================================
@@ -311,16 +350,14 @@ export async function toggleLight(gameId: string, playerId: string, scenarioId: 
     bonus_value: `tag:light_${turnOff ? "off" : "on"}:${scenarioId}`,
   } as any);
 
-  // Bonus roll on light toggle
+  // Bonus roll on light toggle (shared pool)
   let toolFound: ToolType | null = null;
-  const tool = rollForTool();
+  const tool = await rollForTool(gameId);
   if (tool) {
     const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
-    if ((tools[tool] ?? 0) < 3) {
-      tools[tool] = (tools[tool] ?? 0) + 1;
-      await supabase.from("game_players").update({ tools }).eq("id", player.id);
-      toolFound = tool;
-    }
+    tools[tool] = (tools[tool] ?? 0) + 1;
+    await supabase.from("game_players").update({ tools }).eq("id", player.id);
+    toolFound = tool;
   }
 
   return { toolFound };
@@ -462,13 +499,13 @@ export async function performTagAction(
     }
   }
 
-  // Tool finding on clean/fix (extra tool chance)
+  // Tool finding on clean/fix (shared pool)
   let toolFound: ToolType | null = null;
   if (actionType === "clean" || actionType === "fix") {
-    toolFound = rollForTool();
+    toolFound = await rollForTool(gameId);
     if (toolFound) {
       const currentTools = (player as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
-      currentTools[toolFound] = Math.min(3, (currentTools[toolFound] ?? 0) + 1);
+      currentTools[toolFound] = (currentTools[toolFound] ?? 0) + 1;
       await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
     }
   }
@@ -1000,17 +1037,15 @@ export async function performMove(
       });
     }
 
-    // ~20% chance of finding a tool
-    const toolRoll = rollForTool();
+    // ~20% chance of finding a tool (shared pool)
+    const toolRoll = await rollForTool(gameId);
     if (toolRoll) {
       const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
-      if ((currentTools[toolRoll] ?? 0) < 3) {
-        currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
-        await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
-        if (!foundBonus) {
-          foundBonus = "extra_token"; // reuse field
-          bonusValue = `tool:${toolRoll}`;
-        }
+      currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
+      await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
+      if (!foundBonus) {
+        foundBonus = "extra_token"; // reuse field
+        bonusValue = `tool:${toolRoll}`;
       }
     }
   }
