@@ -40,8 +40,12 @@ const RULES = [
     text: "Quan observes o confirmes, tens un 15% de probabilitat de trobar tokens extra!",
   },
   {
+    title: "⚡ Mobles interactius",
+    text: "Alguns mobles tenen accions especials (💡 encendre, 🚪 obrir...). Busca el ⚡ al costat del nom! Costen tokens però t'ajuden a buscar.",
+  },
+  {
     title: "🏆 Recompenses",
-    text: "Guanya partides per obtenir mobles decoratius. Col·loca'ls en escenaris o ven-los per tokens bonus. La Foto (🖼️) es pot guardar com a trofeu amb un nom personalitzat!",
+    text: "Guanya partides per obtenir mobles decoratius. Col·loca'ls en escenaris (fins al límit!) o ven-los per tokens bonus. La Foto (🖼️) es pot guardar com a trofeu amb un nom personalitzat!",
   },
   {
     title: "📈 Elo i Lligues",
