@@ -718,18 +718,44 @@ export default function GamePage() {
               {bonusAvailable > 0 && !showBonusPicker && (
                 <button
                   onClick={() => { setBonusAmount(1); setShowBonusPicker(true); }}
-                  className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[10px] font-bold animate-pulse"
+                  className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2.5 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[11px] font-bold"
+                  title={`Tens ${bonusAvailable} bonus tokens disponibles`}
                 >
-                  +{bonusAvailable}🪙
+                  💰+{bonusAvailable}
                 </button>
               )}
               {showBonusPicker && (
-                <div className="flex items-center gap-1 bg-card border border-border rounded-full px-2 py-1 shadow-lg">
-                  <button onClick={() => setBonusAmount(Math.max(1, bonusAmount - 1))} className="text-xs font-bold px-1 text-muted-foreground hover:text-foreground">−</button>
-                  <span className="text-xs font-bold min-w-[20px] text-center">{bonusAmount}</span>
-                  <button onClick={() => setBonusAmount(Math.min(bonusAvailable, bonusAmount + 1))} className="text-xs font-bold px-1 text-muted-foreground hover:text-foreground">+</button>
-                  <button onClick={handleRedeemBonus} disabled={actionLoading} className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">✓</button>
-                  <button onClick={() => setShowBonusPicker(false)} className="text-[10px] text-muted-foreground px-1">✕</button>
+                <div className="fixed inset-0 z-40 flex items-end justify-center bg-background/60 backdrop-blur-sm" onClick={() => setShowBonusPicker(false)}>
+                  <Card className="mx-4 mb-8 max-w-xs w-full glass glow-accent shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <CardContent className="py-5">
+                      <p className="text-sm font-bold mb-1 text-center">💰 Afegir bonus tokens</p>
+                      <p className="text-[10px] text-muted-foreground text-center mb-4">Quants tokens vols gastar? (Tens {bonusAvailable} disponibles)</p>
+                      <div className="flex items-center justify-center gap-4 mb-4">
+                        <button onClick={() => setBonusAmount(Math.max(1, bonusAmount - 1))}
+                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors">−</button>
+                        <span className="text-3xl font-bold min-w-[60px] text-center text-gradient">{bonusAmount}🪙</span>
+                        <button onClick={() => setBonusAmount(Math.min(bonusAvailable, bonusAmount + 1))}
+                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors">+</button>
+                      </div>
+                      {/* Quick select buttons */}
+                      {bonusAvailable > 2 && (
+                        <div className="flex justify-center gap-2 mb-4">
+                          {[1, Math.ceil(bonusAvailable / 2), bonusAvailable].filter((v, i, a) => a.indexOf(v) === i).map(v => (
+                            <button key={v} onClick={() => setBonusAmount(v)}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${bonusAmount === v ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+                              {v}🪙
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => setShowBonusPicker(false)}>Cancel·lar</Button>
+                        <Button className="flex-1" disabled={actionLoading} onClick={handleRedeemBonus}>
+                          Afegir {bonusAmount}🪙 ✓
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </div>
@@ -1139,80 +1165,84 @@ export default function GamePage() {
 
           {/* Social */}
           <div>
-            <Button variant="outline" className="w-full" size="sm"
+            <Button variant="outline" className="w-full h-12 text-base" size="lg"
               onClick={() => setShowSocialPanel(!showSocialPanel)}
               disabled={player.social_item_used_today}>
               {player.social_item_used_today ? "⏳ Ítem social usat avui" : "⚡ Usar ítem social (1/dia)"}
             </Button>
 
             {showSocialPanel && (
-              <div className="mt-2 space-y-1.5">
-                {SOCIAL_ITEMS.map(item => {
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {SOCIAL_ITEMS.filter(i => i.type !== "message").map(item => {
                   const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
                   return (
-                  <div key={item.type}>
-                    <button
-                      onClick={() => item.type !== "message" && !isBombUsed && handleSendSocial(item.type)}
+                    <button key={item.type}
+                      onClick={() => !isBombUsed && handleSendSocial(item.type)}
                       disabled={isBombUsed}
-                      className={`w-full glass rounded-xl p-3 flex items-center gap-3 hover:border-accent/40 transition-all text-left active:scale-[0.99] ${isBombUsed ? "opacity-40" : ""}`}>
-                      <span className="text-2xl">{item.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold">{item.name}</div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
-                        </div>
-                      </div>
-                      {item.type !== "message" && !isBombUsed && <span className="text-xs text-primary font-bold">→</span>}
+                      className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isBombUsed ? "opacity-30" : ""}`}>
+                      <span className="text-3xl block mb-1.5">{item.icon}</span>
+                      <span className="text-[11px] font-semibold block leading-tight">{item.name}</span>
+                      {/* Tooltip on hover/focus */}
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border text-[10px] text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 max-w-[200px] text-wrap text-center">
+                        {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
+                      </span>
                     </button>
-                    {item.type === "message" && (
-                      <div className="flex gap-1.5 mt-1.5">
-                        <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-                          placeholder="Escriu pista o farol..." maxLength={80} className="text-sm bg-muted/50 border-border/50" />
-                        <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")}>💡</Button>
-                      </div>
-                    )}
-                  </div>
                   );
                 })}
               </div>
             )}
+
+            {/* Message input always visible when social panel open */}
+            {showSocialPanel && (
+              <div className="mt-2">
+                <div className="flex gap-1.5 items-center glass rounded-xl p-2">
+                  <span className="text-xl pl-1">💡</span>
+                  <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
+                    placeholder="Pista o farol pel rival..." maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
+                  <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")} className="shrink-0">
+                    Enviar
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* History */}
+          {/* History — collapsible, compact on mobile */}
           {moveHistory.length > 0 && (
-            <div>
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">📋 Historial</h3>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
+            <details className="group">
+              <summary className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 cursor-pointer select-none flex items-center gap-1">
+                📋 Historial ({moveHistory.length})
+                <span className="text-[9px] group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 {moveHistory.map(m => {
                   const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
-                  const hintLabels: Record<number, string> = { 0: "fred", 1: "calent", 2: "molt calent!" };
                   const hl = (m as any).hint_level;
                   return (
-                    <div key={m.id} className={`text-[11px] rounded-lg px-3 py-1.5 flex justify-between border border-border/20 ${
+                    <div key={m.id} className={`text-[10px] rounded-md px-2 py-1 flex justify-between items-center border border-border/15 ${
                       hl === 2 ? "bg-orange-500/10 border-orange-500/30" :
                       hl === 1 ? "bg-yellow-500/10 border-yellow-500/20" :
                       hl === 0 ? "bg-blue-500/10 border-blue-500/20" :
-                      "bg-muted/30"
+                      "bg-muted/20"
                     }`}>
-                      <span>
+                      <span className="truncate mr-1">
                         <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
-                        {m.action === "move" && `🚶 → ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
+                        {m.action === "move" && `🚶→ ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
                         {m.action === "look" && (
                           <>
-                            👀 {m.target_position} {(m.items as any)?.icon} {(m.items as any)?.name}
-                            {hl != null && <span className="ml-1 font-semibold">{hintIcons[hl]} {hintLabels[hl]}</span>}
+                            👀 {(m.items as any)?.icon} {m.target_position}
+                            {hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}
                           </>
                         )}
-                        {m.action === "confirm" && `🔍 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
                         {m.found_object && " 🏆"}
                         {m.found_bonus === "extra_token" && " 🎁"}
                       </span>
-                      <span className="text-muted-foreground">-{m.token_cost}🪙</span>
+                      <span className="text-muted-foreground shrink-0">-{m.token_cost}🪙</span>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </details>
           )}
         </div>
       )}
