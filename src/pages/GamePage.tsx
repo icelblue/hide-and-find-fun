@@ -1139,41 +1139,44 @@ export default function GamePage() {
 
           {/* Social */}
           <div>
-            <Button variant="outline" className="w-full" size="sm"
+            <Button variant="outline" className="w-full h-12 text-base" size="lg"
               onClick={() => setShowSocialPanel(!showSocialPanel)}
               disabled={player.social_item_used_today}>
               {player.social_item_used_today ? "⏳ Ítem social usat avui" : "⚡ Usar ítem social (1/dia)"}
             </Button>
 
             {showSocialPanel && (
-              <div className="mt-2 space-y-1.5">
-                {SOCIAL_ITEMS.map(item => {
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {SOCIAL_ITEMS.filter(i => i.type !== "message").map(item => {
                   const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
                   return (
-                  <div key={item.type}>
-                    <button
-                      onClick={() => item.type !== "message" && !isBombUsed && handleSendSocial(item.type)}
+                    <button key={item.type}
+                      onClick={() => !isBombUsed && handleSendSocial(item.type)}
                       disabled={isBombUsed}
-                      className={`w-full glass rounded-xl p-3 flex items-center gap-3 hover:border-accent/40 transition-all text-left active:scale-[0.99] ${isBombUsed ? "opacity-40" : ""}`}>
-                      <span className="text-2xl">{item.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold">{item.name}</div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
-                        </div>
-                      </div>
-                      {item.type !== "message" && !isBombUsed && <span className="text-xs text-primary font-bold">→</span>}
+                      className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isBombUsed ? "opacity-30" : ""}`}>
+                      <span className="text-3xl block mb-1.5">{item.icon}</span>
+                      <span className="text-[11px] font-semibold block leading-tight">{item.name}</span>
+                      {/* Tooltip on hover/focus */}
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border text-[10px] text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 max-w-[200px] text-wrap text-center">
+                        {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
+                      </span>
                     </button>
-                    {item.type === "message" && (
-                      <div className="flex gap-1.5 mt-1.5">
-                        <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-                          placeholder="Escriu pista o farol..." maxLength={80} className="text-sm bg-muted/50 border-border/50" />
-                        <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")}>💡</Button>
-                      </div>
-                    )}
-                  </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Message input always visible when social panel open */}
+            {showSocialPanel && (
+              <div className="mt-2">
+                <div className="flex gap-1.5 items-center glass rounded-xl p-2">
+                  <span className="text-xl pl-1">💡</span>
+                  <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
+                    placeholder="Pista o farol pel rival..." maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
+                  <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")} className="shrink-0">
+                    Enviar
+                  </Button>
+                </div>
               </div>
             )}
           </div>
