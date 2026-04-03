@@ -572,11 +572,11 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
                           │  checkBothPlayersHidden() → true
                           │  startGame()
                           ▼
-                    ┌───────────┐
-                    │  PLAYING   │ ← performMove() repetidament
-                    └─────┬─────┘
-                          │  performMove('confirm') → found = true
-                          ▼
+                     ┌───────────┐
+                     │  PLAYING   │ ← performMove() repetidament
+                     └─────┬─────┘
+                           │  performMove('look') → found = true
+                           ▼
                     ┌───────────┐
                     │ FINISHED   │ ← trigger handle_game_finished()
                     └───────────┘
