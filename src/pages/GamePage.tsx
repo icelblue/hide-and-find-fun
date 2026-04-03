@@ -1324,15 +1324,17 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
   const hasAnySpecial = hasInteractions || tagActions.length > 0;
   const isBroken = gameBreaks?.has(item.id);
+  const isDirty = dirtyItems?.has(item.id) && !gameBreaks?.has(`clean:${item.id}`);
 
   return (
-    <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : ""}`}>
+    <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : isDirty ? "border-accent/20" : ""}`}>
       <button onClick={() => setExpanded(!expanded)}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
         <span className="font-semibold text-sm">
           {item.icon} {item.name}
           {isBroken && <span className="ml-1 text-xs text-destructive">💥</span>}
-          {hasAnySpecial && !isBroken && <span className="ml-1 text-xs">⚡</span>}
+          {isDirty && !isBroken && <span className="ml-1 text-xs">🧹</span>}
+          {hasAnySpecial && !isBroken && !isDirty && <span className="ml-1 text-xs">⚡</span>}
         </span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>
