@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
 import {
