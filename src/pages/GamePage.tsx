@@ -679,27 +679,7 @@ export default function GamePage() {
 
       {/* Banana notification toast (no longer full-screen block) */}
 
-      {/* Confirm dialog */}
-      {showConfirmDialog && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setShowConfirmDialog(null)}>
-          <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
-            <CardContent className="py-6 text-center">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-2xl gradient-accent flex items-center justify-center text-2xl shadow-lg">🔍</div>
-              <p className="font-bold mb-1">Confirmar obertura?</p>
-              <p className="text-sm text-muted-foreground mb-1">
-                {positions.find(p => p.value === showConfirmDialog.position)?.icon}{" "}
-                {positions.find(p => p.value === showConfirmDialog.position)?.label}{" "}
-                de {showConfirmDialog.itemName}
-              </p>
-              <p className="text-xs text-destructive font-medium mb-4">Costa {TOKEN_COSTS.confirm} tokens!</p>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setShowConfirmDialog(null)}>Cancel·lar</Button>
-                <Button className="flex-1" onClick={handleConfirm}>Confirmar 🔍</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Confirm dialog removed — look now finds the object */}
 
       {/* Message popup */}
       {receivedMessage && (
