@@ -1,0 +1,1 @@
+ALTER TYPE public.social_item_type ADD VALUE IF NOT EXISTS 'robar_tornavis';

@@ -249,10 +249,10 @@ export function getTagActions(
 
 // Shared tool pool per game — competitive: first to find it keeps it
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
-  martell: 1,
+  martell: 5,
   drap: 2,
   llanterna: 1,
-  tornavis: 1, // extra (everyone already starts with 1)
+  tornavis: 5, // extra (everyone already starts with 1)
 };
 
 /** Get how many of each tool have been found in this game (both players combined) */
@@ -1109,7 +1109,7 @@ export async function performMove(
 // SOCIAL ITEMS
 // ============================================
 
-export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap";
+export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap" | "robar_tornavis";
 
 export const SOCIAL_ITEMS = [
   { type: "banana" as const, icon: "🍌", name: "Plàtan", desc: "Bloqueja 1 posició del rival" },
@@ -1118,6 +1118,7 @@ export const SOCIAL_ITEMS = [
   { type: "swap" as const, icon: "🔄", name: "Intercanvi", desc: "Intercanvia la teva posició amb la del rival" },
   { type: "espia" as const, icon: "🕵️", name: "Espia", desc: "Descobreix on és el rival ara" },
   { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
+  { type: "robar_tornavis" as const, icon: "🔧", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
 ] as const;
 
 export async function sendSocialItem(
@@ -1148,7 +1149,7 @@ export async function sendSocialItem(
     .single();
 
   // Shield blocks banana and swap only (NOT smoke_bomb, shield, espia, or message)
-  const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap"));
+  const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis"));
 
   // For espia, we target ourselves (no notification to rival)
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
@@ -1215,6 +1216,35 @@ export async function sendSocialItem(
         else espiaResult = "📍 Ubicació desconeguda";
       } else {
         espiaResult = "🤷 El rival encara no s'ha mogut!";
+      }
+    } else if (itemType === "robar_tornavis") {
+      // Steal 1 tornavís from rival
+      const { data: rivalPlayer } = await supabase
+        .from("game_players")
+        .select("id, tools")
+        .eq("game_id", gameId)
+        .eq("user_id", toPlayerId)
+        .single();
+      if (rivalPlayer) {
+        const rivalTools = (rivalPlayer as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+        if (rivalTools.tornavis > 0) {
+          rivalTools.tornavis -= 1;
+          await supabase.from("game_players").update({ tools: rivalTools }).eq("id", rivalPlayer.id);
+          // Add to self
+          const { data: selfPlayer } = await supabase
+            .from("game_players")
+            .select("id, tools")
+            .eq("game_id", gameId)
+            .eq("user_id", fromPlayerId)
+            .single();
+          if (selfPlayer) {
+            const selfTools = (selfPlayer as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+            selfTools.tornavis += 1;
+            await supabase.from("game_players").update({ tools: selfTools }).eq("id", selfPlayer.id);
+          }
+        } else {
+          throw new Error("El rival no té cap tornavís per robar! 🔧");
+        }
       }
     }
   }

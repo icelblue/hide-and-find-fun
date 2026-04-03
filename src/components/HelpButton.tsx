@@ -36,7 +36,7 @@ const RULES = [
   },
   {
     title: "🎁 Bonus i eines",
-    text: "Quan observes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap (×2) — netejar mobles bruts.\n🔨 Martell (×1) — trencar mobles fràgils.\n🔧 Tornavís (×1 extra, tothom comença amb 1).\n🔦 Llanterna (×1) — zones fosques.\n⚠️ POOL COMPARTIT: Qui la troba se la queda! El rival es queda sense!",
+    text: "Quan observes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap (×2) — netejar mobles bruts.\n🔨 Martell (×5) — trencar mobles fràgils.\n🔧 Tornavís (×5 extra, tothom comença amb 1).\n🔦 Llanterna (×1) — zones fosques.\n⚠️ POOL COMPARTIT: Qui la troba se la queda! El rival es queda sense!",
   },
   {
     title: "💡 Llum i llanterna",
