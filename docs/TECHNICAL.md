@@ -261,15 +261,15 @@
            │ 1:N
            ▼
   ┌─────────────────┐        ┌────────────────────────┐
-  │     items        │───────►│   scenario_bonuses      │
+  │     items        │───────►│  item_interactions      │
   │─────────────────│        │────────────────────────│
   │ id    (uuid PK) │        │ item_id    (uuid FK)   │
-  │ name  (text)    │        │ position   (enum)      │
-  │ icon  (text)    │        │ bonus_type (enum)      │
-  │ environment     │        │ value      (text)      │
-  │ inner_capacity  │        └────────────────────────┘
-  │ scenario_id FK  │
-  └─────────────────┘
+  │ name  (text)    │        │ action_name (text)     │
+  │ icon  (text)    │        │ effect_type (text)     │
+  │ environment     │        │ effect_data (jsonb)    │
+  │ inner_capacity  │        │ cost (numeric)         │
+  │ scenario_id FK  │        │ one_time (boolean)     │
+  └─────────────────┘        └────────────────────────┘
 
   ┌─────────────────┐        ┌────────────────────────┐        ┌─────────────────┐
   │    objects       │───────►│    object_traits        │        │ object_specials  │
