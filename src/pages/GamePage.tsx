@@ -335,7 +335,6 @@ export default function GamePage() {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
           if (rivalSpecial && rivalSpecial.prompt_on === "find") {
             if (rivalSpecial.special_type === "troll_effect") {
-              // Show troll popup with animation
               const variants = rivalSpecial.variants as any;
               setTrollEffect({
                 message: rivalSpecial.prompt_text,
@@ -347,9 +346,13 @@ export default function GamePage() {
               setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
             }
           }
-          // Check carta message from hider's special_data
-          if (rival.special_data && (rival.special_data as any)?.type === "custom_message") {
-            toast.info(`✉️ Missatge del rival: "${(rival.special_data as any).message}"`, { duration: 8000 });
+        }
+        // Show hide message from rival (any object, not just specials)
+        if (rival?.special_data) {
+          const sd = rival.special_data as any;
+          const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+          if (hideMsg) {
+            toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
           }
         }
       }
