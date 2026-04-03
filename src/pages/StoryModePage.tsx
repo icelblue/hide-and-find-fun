@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
 import {
@@ -22,9 +22,10 @@ import {
   getMyAccessories, awardAccessory, resetPetAndProgress, calculateXP,
 } from "@/lib/story-helpers";
 import { getScenarios, getItemsByScenario, getObjects } from "@/lib/supabase-helpers";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type StoryPhase = "loading" | "intro" | "gift" | "naming" | "hub" | "playing" | "dead";
+type StoryPhase = "loading" | "intro" | "gift" | "hub" | "playing" | "dead";
 
 export default function StoryModePage() {
   const { user } = useAuth();
@@ -37,7 +38,6 @@ export default function StoryModePage() {
 
   // Intro animation states
   const [randomPet, setRandomPet] = useState<{ type: string; icon: string; name: string }>(PET_OPTIONS[0]);
-  const [petName, setPetName] = useState("");
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
 
@@ -83,21 +83,26 @@ export default function StoryModePage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   // ====== INTRO FLOW ======
-  const handleOpenGift = () => {
+  const handleOpenGift = async () => {
     setGiftOpened(true);
-    setTimeout(() => setPhase("naming"), 1500);
-  };
-
-  const handleCreatePet = async () => {
-    if (!user || !petName.trim()) return;
+    if (!user) return;
     try {
-      const p = await createPet(user.id, randomPet.type, petName.trim(), randomPet.icon);
+      // Fetch display_name from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const name = profile?.display_name || user.email?.split("@")[0] || "Jugador";
+      const p = await createPet(user.id, randomPet.type, name, randomPet.icon);
       setPet(p);
       await initChapter(user.id, 1);
       const prog = await getStoryProgress(user.id);
       setProgress(prog);
-      setPhase("hub");
-      toast.success(`${randomPet.icon} ${petName.trim()} és el teu company!`);
+      setTimeout(() => {
+        setPhase("hub");
+        toast.success(`${randomPet.icon} ${name} és el teu company!`);
+      }, 1500);
     } catch (err: any) { toast.error(err.message); }
   };
 
@@ -108,7 +113,7 @@ export default function StoryModePage() {
       await resetPetAndProgress(user.id);
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
       setRandomPet(rp);
-      setPetName("");
+      
       setIntroStep(0);
       setGiftOpened(false);
       setPhase("intro");
@@ -282,32 +287,6 @@ export default function StoryModePage() {
           <p className="text-lg font-bold">Un {randomPet.name}!</p>
         </div>
       )}
-    </div>
-  );
-
-  // NAMING
-  if (phase === "naming") return (
-    <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
-      <div className="text-center relative z-10 w-full max-w-xs">
-        <div className="text-7xl mb-4">{randomPet.icon}</div>
-        <TypewriterText
-          text="Aquest és el teu company en aquesta aventura. Posa-li nom!"
-          speed={60}
-          className="text-sm text-muted-foreground mb-6"
-        />
-        <Input
-          value={petName}
-          onChange={e => setPetName(e.target.value.slice(0, 20))}
-          placeholder="Nom de la mascota..."
-          maxLength={20}
-          className="text-center text-lg font-bold mb-4"
-          autoFocus
-        />
-        <Button onClick={handleCreatePet} disabled={!petName.trim()} className="w-full" size="lg">
-          Confirmar ✨
-        </Button>
-      </div>
     </div>
   );
 
