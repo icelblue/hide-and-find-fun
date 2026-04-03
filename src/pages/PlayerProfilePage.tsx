@@ -37,6 +37,8 @@ export default function PlayerProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [trophies, setTrophies] = useState<any[]>([]);
+  const [pet, setPet] = useState<any>(null);
+  const [petAccessories, setPetAccessories] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
