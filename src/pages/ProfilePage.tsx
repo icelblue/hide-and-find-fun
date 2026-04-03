@@ -582,7 +582,7 @@ function WonObjectsSection({ userId }: { userId: string }) {
   return (
     <div className="mb-6">
       <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-        🏆 Col·lecció ({ownedCount}/{catalog.length})
+        🏆 Vitrina ({ownedCount}/{catalog.length})
       </h2>
       <Tip>Mobles guanyats en partides. Els grisos encara no els tens!</Tip>
       <div className="h-2" />
