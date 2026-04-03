@@ -1204,11 +1204,15 @@ Si les migracions **no** inclouen dades inicials (seed), hauràs de crear-les ma
 Si estan buides, pots inserir dades d'exemple:
 
 ```sql
--- Escenaris inicials
+-- Escenaris (7 en total)
 INSERT INTO scenarios (name, icon, display_order) VALUES
   ('Cuina', '🍳', 1),
-  ('Biblioteca', '📚', 2),
-  ('Garatge', '🔧', 3);
+  ('Jardí', '🌿', 2),
+  ('Balcó', '🌅', 3),
+  ('Habitació', '🛏️', 4),
+  ('Menjador', '🍽️', 5),
+  ('Lavabo', '🚿', 6),
+  ('Despatx', '💼', 7);
 
 -- Mobles per escenari (exemple per Cuina)
 INSERT INTO items (name, icon, scenario_id, display_order, inner_capacity, environment) VALUES
