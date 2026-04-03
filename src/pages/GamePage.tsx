@@ -907,6 +907,11 @@ export default function GamePage() {
             {noTokens && (
               <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
+            {(playerTools.drap > 0 || playerTools.tornavis > 0) && (
+              <span className="bg-secondary/10 text-secondary text-[11px] font-semibold px-3 py-1 rounded-full border border-secondary/20">
+                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.drap > 0 && playerTools.tornavis > 0 ? " " : ""}{playerTools.tornavis > 0 ? `🔧${playerTools.tornavis}` : ""}
+              </span>
+            )}
           </div>
 
           {/* Rival's object traits */}
