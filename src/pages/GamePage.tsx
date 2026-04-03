@@ -41,9 +41,15 @@ import {
   getDirtyItemsForGame,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
+import {
+  completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
+  PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
+} from "@/lib/story-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
+
+const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
 type Phase = "waiting" | "hiding" | "playing" | "finished";
 
@@ -98,6 +104,11 @@ export default function GamePage() {
   const [bonusAmount, setBonusAmount] = useState(1);
   const [showBonusPicker, setShowBonusPicker] = useState(false);
 
+  // Story mode state
+  const isStory = !!(game as any)?.is_story;
+  const storyChapter = (game as any)?.story_chapter as number | undefined;
+  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: any; consumable?: any } | null>(null);
+
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
     { value: "sota" as const, label: "Sota", icon: "⬇️" },
@@ -139,8 +150,9 @@ export default function GamePage() {
 
     if (playerData?.has_hidden) setHideStep(4);
 
-    // Proximity alert: check if rival is at the scenario where we hid our object
-    if (gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
+    // Proximity alert: check if rival is at the scenario where we hid our object (PvP only)
+    const isStoryGame = !!(gameData as any)?.is_story;
+    if (!isStoryGame && gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
       const { data: hiddenItem } = await supabase
         .from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
       setRivalNearby(hiddenItem?.scenario_id === rivalData.current_scenario_id);
@@ -149,7 +161,7 @@ export default function GamePage() {
     }
 
     // Load rival's object traits progressively
-    if (gameData?.status === "playing" && rivalData?.hidden_object_id) {
+    if (!isStoryGame && gameData?.status === "playing" && rivalData?.hidden_object_id) {
       const { count: myMoves } = await supabase
         .from("game_moves").select("*", { count: "exact", head: true })
         .eq("game_id", gameId).eq("player_id", user.id);
@@ -280,7 +292,7 @@ export default function GamePage() {
       setReward(r);
     }
 
-    if (gameData?.status === "playing") {
+    if (gameData?.status === "playing" && !isStoryGame) {
       // Check items blocked by YOUR shield (notify you that it worked)
       const { data: blockedItems } = await supabase
         .from("game_social_items").select("*")
@@ -322,6 +334,9 @@ export default function GamePage() {
     getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
     getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
 
+    // Skip realtime for story mode (CPU doesn't act)
+    if (isStory) return;
+
     const channel = supabase
       .channel(`game-${gameId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => loadGame())
@@ -329,7 +344,7 @@ export default function GamePage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, () => loadGame())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [gameId, user, loadGame]);
+  }, [gameId, user, loadGame, isStory]);
 
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
@@ -527,9 +542,37 @@ export default function GamePage() {
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundObject) {
-        toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
-        // Check if rival's object has a "find" special
-        if (rival?.hidden_object_id) {
+        // Story mode: handle chapter completion with XP/accessories
+        if (isStory && storyChapter) {
+          const movesCount = (moveHistory?.length ?? 0) + 1;
+          const storyRes = await completeChapter(user.id, storyChapter, movesCount);
+          // Award accessory for chapters 3+
+          let wonAccessory: any = null;
+          let wonConsumable: any = null;
+          if (storyChapter >= 3) {
+            const accIdx = storyChapter - 3;
+            if (accIdx < PET_ACCESSORIES.length) {
+              const acc = PET_ACCESSORIES[accIdx];
+              const myAccs = await getMyAccessories(user.id);
+              const alreadyOwned = myAccs.some(a => a.accessory_name === acc.name);
+              if (!alreadyOwned) {
+                await awardAccessory(user.id, acc.name, acc.icon);
+                wonAccessory = acc;
+              }
+            }
+            // If all accessories collected, show consumable
+            const allAccs = await getMyAccessories(user.id);
+            if (hasAllAccessories(allAccs)) {
+              wonConsumable = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
+            }
+          }
+          setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
+          toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
+        } else {
+          toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
+        }
+        // Check if rival's object has a "find" special (PvP only)
+        if (!isStory && rival?.hidden_object_id) {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
           if (rivalSpecial && rivalSpecial.prompt_on === "find") {
             if (rivalSpecial.special_type === "troll_effect") {
@@ -545,8 +588,8 @@ export default function GamePage() {
             }
           }
         }
-        // Show hide message from rival
-        if (rival?.special_data) {
+        // Show hide message from rival (PvP only)
+        if (!isStory && rival?.special_data) {
           const sd = rival.special_data as any;
           const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
           if (hideMsg) {
@@ -700,14 +743,24 @@ export default function GamePage() {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
-        <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">← Lobby</button>
+        <button onClick={() => navigate(isStory ? "/story" : "/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+          {isStory ? "← Mode Història" : "← Lobby"}
+        </button>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[11px] bg-muted/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/30 tracking-wider font-semibold">{game.code}</span>
-          {rival && (
-            <button onClick={() => navigate(`/player/${rival.user_id}`)}
-              className="text-[11px] bg-secondary/10 text-secondary px-2.5 py-1.5 rounded-full border border-secondary/20 hover:bg-secondary/20 transition-colors font-medium">
-              👤 Rival
-            </button>
+          {isStory ? (
+            <span className="text-[11px] bg-accent/10 text-accent px-3 py-1.5 rounded-full border border-accent/20 font-semibold">
+              🐾 Capítol {storyChapter}
+            </span>
+          ) : (
+            <>
+              <span className="font-mono text-[11px] bg-muted/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/30 tracking-wider font-semibold">{game.code}</span>
+              {rival && (
+                <button onClick={() => navigate(`/player/${rival.user_id}`)}
+                  className="text-[11px] bg-secondary/10 text-secondary px-2.5 py-1.5 rounded-full border border-secondary/20 hover:bg-secondary/20 transition-colors font-medium">
+                  👤 Rival
+                </button>
+              )}
+            </>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -1012,12 +1065,12 @@ export default function GamePage() {
 
           {/* Status badges */}
           <div className="flex gap-2 flex-wrap">
-            {rivalNearby && (
+            {!isStory && rivalNearby && (
               <span className="bg-destructive/15 text-destructive text-[11px] font-semibold px-3 py-1 rounded-full animate-pulse border border-destructive/30">
                 ⚠️ Rival a prop del teu objecte!
               </span>
             )}
-            {player.shield_active && (
+            {!isStory && player.shield_active && (
               <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
             )}
             {noTokens && (
@@ -1030,8 +1083,8 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* Rival's object traits */}
-          {(rivalTraits.trait1 || rivalTraits.trait2) && (
+          {/* Rival's object traits (PvP only) */}
+          {!isStory && (rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes de l'objecte rival</p>
@@ -1047,7 +1100,7 @@ export default function GamePage() {
               </CardContent>
             </Card>
           )}
-          {!rivalTraits.trait1 && moveHistory.length < 2 && (
+          {!isStory && !rivalTraits.trait1 && moveHistory.length < 2 && (
             <p className="text-[10px] text-center text-muted-foreground">💡 Pista de l'objecte rival al torn 2</p>
           )}
 
@@ -1170,8 +1223,8 @@ export default function GamePage() {
           </div>
           )}
 
-          {/* Social */}
-          <div>
+          {/* Social — hidden in story mode */}
+          {!isStory && <div>
             <Button variant="outline" className="w-full h-12 text-base" size="lg"
               onClick={() => setShowSocialPanel(!showSocialPanel)}
               disabled={player.social_item_used_today}>
@@ -1212,7 +1265,7 @@ export default function GamePage() {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
 
           {/* History — collapsible, compact on mobile */}
           {moveHistory.length > 0 && (
@@ -1255,7 +1308,37 @@ export default function GamePage() {
       )}
 
       {/* FINISHED */}
-      {phase === "finished" && (
+      {phase === "finished" && isStory && storyResult && (
+        <div className="text-center py-10">
+          <div className="w-24 h-24 mx-auto mb-4 rounded-3xl gradient-primary flex items-center justify-center text-5xl shadow-xl glow-primary">
+            {storyResult.isDead ? "💫" : "🎉"}
+          </div>
+          <h2 className="text-2xl font-bold mb-2">
+            {storyResult.isDead ? "Màxim XP assolit!" : <span className="text-gradient">Capítol {storyChapter} completat!</span>}
+          </h2>
+          <p className="text-lg text-accent font-bold mb-1">+{storyResult.xp} XP ⭐</p>
+          <p className="text-sm text-muted-foreground mb-2">Moviments: {moveHistory.length}</p>
+          {storyResult.accessory && (
+            <p className="text-lg font-bold text-primary mb-2">
+              Nou accessori: {storyResult.accessory.icon} {storyResult.accessory.name}!
+            </p>
+          )}
+          {storyResult.consumable && (
+            <p className="text-sm font-medium text-green-500 mb-2">
+              {storyResult.consumable.icon} {storyResult.consumable.name}!
+            </p>
+          )}
+          {storyResult.isDead && (
+            <p className="text-sm text-muted-foreground mb-2">
+              La teva mascota ha viscut una vida plena. Podràs adoptar-ne una de nova.
+            </p>
+          )}
+          <div className="flex gap-2 justify-center mt-4">
+            <Button onClick={() => navigate("/story")}>📖 Mode Història</Button>
+          </div>
+        </div>
+      )}
+      {phase === "finished" && !isStory && (
         <FinishedPhase
           game={game}
           user={user}
