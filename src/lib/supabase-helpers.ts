@@ -189,16 +189,111 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
   return actions;
 }
 
-/** Roll for tool finding (~15% chance on look/confirm) */
+/** Roll for tool finding (~20% chance on look/confirm) */
 export function rollForTool(): ToolType | null {
   const roll = Math.random();
-  if (roll < 0.15) {
-    // 5% martell, 5% tornavis, 5% drap
+  if (roll < 0.20) {
+    // 5% each: martell, tornavis, drap, llanterna
     if (roll < 0.05) return "martell";
     if (roll < 0.10) return "tornavis";
-    return "drap";
+    if (roll < 0.15) return "drap";
+    return "llanterna";
   }
   return null;
+}
+
+// ============================================
+// LIGHT SYSTEM (indoor scenarios)
+// ============================================
+
+/** Check if light is OFF for a scenario in a game (from move history) */
+export function isLightOff(scenarioId: string, allTagMoves: Array<{ bonus_value: string | null }>): boolean {
+  // Replay tag:light_off / tag:light_on moves chronologically
+  let off = false;
+  for (const m of allTagMoves) {
+    const val = (m.bonus_value as string) ?? "";
+    if (val === `tag:light_off:${scenarioId}`) off = true;
+    if (val === `tag:light_on:${scenarioId}`) off = false;
+  }
+  return off;
+}
+
+/** Toggle light in a scenario (costs 0.2 tokens, affects both players) */
+export async function toggleLight(
+  gameId: string, playerId: string, scenarioId: string, turnOff: boolean
+) {
+  const { data: player } = await supabase
+    .from("game_players").select("*").eq("game_id", gameId).eq("user_id", playerId).single();
+  if (!player) throw new Error("Jugador no trobat");
+
+  const cost = 0.2;
+  let tokensRemaining = await ensureTokensReset(player);
+  if (tokensRemaining < cost) throw new Error(`No tens prou tokens! Necessites ${cost}`);
+
+  const { count } = await supabase
+    .from("game_moves").select("*", { count: "exact", head: true })
+    .eq("game_id", gameId).eq("player_id", playerId);
+  const turnNumber = (count ?? 0) + 1;
+
+  const newTokens = tokensRemaining - cost;
+  await supabase.from("game_players")
+    .update({ tokens_remaining: newTokens }).eq("id", player.id);
+
+  await supabase.from("game_moves").insert({
+    game_id: gameId, player_id: playerId, turn_number: turnNumber,
+    action: "look" as const, token_cost: cost,
+    target_scenario_id: scenarioId, target_position: "sobre" as const,
+    bonus_value: `tag:light_${turnOff ? "off" : "on"}:${scenarioId}`,
+  } as any);
+
+  // Bonus roll on light toggle
+  let toolFound: ToolType | null = null;
+  const tool = rollForTool();
+  if (tool) {
+    const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
+    if ((tools[tool] ?? 0) < 3) {
+      tools[tool] = (tools[tool] ?? 0) + 1;
+      await supabase.from("game_players").update({ tools }).eq("id", player.id);
+      toolFound = tool;
+    }
+  }
+
+  return { toolFound };
+}
+
+/** Use llanterna in an outdoor scenario to reveal hidden items */
+export async function useLlanterna(
+  gameId: string, playerId: string, scenarioId: string
+) {
+  const { data: player } = await supabase
+    .from("game_players").select("*").eq("game_id", gameId).eq("user_id", playerId).single();
+  if (!player) throw new Error("Jugador no trobat");
+
+  const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
+  if ((tools.llanterna ?? 0) <= 0) throw new Error("Necessites una 🔦 Llanterna!");
+
+  const cost = 0.2;
+  let tokensRemaining = await ensureTokensReset(player);
+  if (tokensRemaining < cost) throw new Error(`No tens prou tokens! Necessites ${cost}`);
+
+  const { count } = await supabase
+    .from("game_moves").select("*", { count: "exact", head: true })
+    .eq("game_id", gameId).eq("player_id", playerId);
+  const turnNumber = (count ?? 0) + 1;
+
+  const newTokens = tokensRemaining - cost;
+  await supabase.from("game_players")
+    .update({ tokens_remaining: newTokens }).eq("id", player.id);
+
+  // Record as a flashlight action (NOT consumed — reutilitzable)
+  await supabase.from("game_moves").insert({
+    game_id: gameId, player_id: playerId, turn_number: turnNumber,
+    action: "look" as const, token_cost: cost,
+    target_scenario_id: scenarioId, target_position: "sobre" as const,
+    bonus_value: `tag:flashlight:${scenarioId}`,
+  } as any);
+
+  return {};
 }
 
 /** Execute a tag-based action */
