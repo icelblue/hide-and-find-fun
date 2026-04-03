@@ -71,26 +71,28 @@ export default function StoryModePage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   // ====== INTRO FLOW ======
-  const handleOpenGift = async () => {
+  const handleOpenGift = () => {
     setGiftOpened(true);
+  };
+
+  const handleConfirmPetName = async () => {
     if (!user) return;
+    const trimmed = petNameInput.trim();
+    if (!trimmed || trimmed.length > 20) {
+      toast.error("El nom ha de tenir entre 1 i 20 caràcters");
+      return;
+    }
+    setNamingPet(true);
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const name = profile?.display_name || user.email?.split("@")[0] || "Jugador";
-      const p = await createPet(user.id, randomPet.type, name, randomPet.icon);
+      const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
       setPet(p);
       await initChapter(user.id, 1);
       const prog = await getStoryProgress(user.id);
       setProgress(prog);
-      setTimeout(() => {
-        setPhase("hub");
-        toast.success(`${randomPet.icon} ${name} és el teu company!`);
-      }, 1500);
+      setPhase("hub");
+      toast.success(`${randomPet.icon} ${trimmed} és el teu company!`);
     } catch (err: any) { toast.error(err.message); }
+    finally { setNamingPet(false); }
   };
 
   // ====== PET DEATH → REBIRTH ======
