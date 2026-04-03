@@ -282,9 +282,28 @@ Inclou:
 - 🔒 Matriu RLS de 16 taules
 - 🎮 Mecàniques detallades (amagar, buscar, ítems socials)
 - 💻 Guia d'instal·lació local pas a pas (amb entorn aïllat)
+- 🐳 Desplegament Docker (Dockerfile + docker-compose)
 - 🛠️ Com afegir escenaris, objectes, ítems socials
 - 🐛 Consultes SQL de debug
 - 📈 Roadmap d'escalabilitat (desenes → centenars de milers)
+
+<br/>
+
+## 🐳 Desplegament Docker
+
+```bash
+# 1. Copia i configura variables d'entorn
+cp .env.example .env
+# Edita .env amb les teves credencials Supabase
+
+# 2. Construeix i arranca
+docker compose up --build -d
+
+# 3. Obre http://localhost:8080
+```
+
+**Requisits**: Docker + Docker Compose + projecte Supabase amb esquema aplicat.
+Veure [docs/TECHNICAL.md](docs/TECHNICAL.md) per instruccions completes.
 
 <br/>
 
