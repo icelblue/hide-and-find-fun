@@ -618,7 +618,7 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 4. INSERT game_moves
 ```
 
-#### 👀 LOOK — 0.3 tokens
+#### 👀 LOOK — 0.3 tokens (troba l'objecte si encerta!)
 
 ```
 1. Obtenir hidden_item_id i hidden_position del rival
@@ -627,26 +627,23 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
    ├── rivalScenario ≠ targetScenario → 0 (fred ❄️)
    ├── same scenario, diferent moble  → 1 (calent 🌡️)
    ├── same moble, diferent posició   → 2 (molt calent 🔥)
-   └── same moble, same posició       → 2 (cal confirmar!)
-4. Bonus aleatori (~15% probabilitat):
-   ├── 5% → +1 token extra
-   └── 10% → +0.5 token extra
-5. INSERT game_moves (amb hint_level)
-```
-
-#### 🔍 CONFIRM — 1.5 tokens
-
-```
-1. Comparar targetItemId + targetPosition amb l'amagatall del rival
-2. Si coincideix:
+   └── same moble, same posició       → 3 (TROBAT! ✅)
+4. Si hintLevel = 3:
    ├── foundObject = true
    ├── UPDATE games SET status = 'finished', winner_id = playerId
    └── (trigger handle_game_finished s'executa automàticament)
-3. Si NO coincideix:
-   ├── foundObject = false
-   └── Es perden 1.5 tokens sense resultat
-4. INSERT game_moves
+5. Bonus aleatori (~15% probabilitat):
+   ├── 5% → +1 token extra
+   └── 10% → +0.5 token extra
+6. Tool roll (~20% probabilitat):
+   ├── 5% → 🔨 Martell
+   ├── 5% → 🔧 Tornavís
+   ├── 5% → 🧹 Drap
+   └── 5% → 🔦 Llanterna
+7. INSERT game_moves (amb hint_level)
 ```
+
+> ⚠️ L'acció **Confirmar** (1.5🪙) va ser **ELIMINADA** a la v1.5.0. Observar ara troba l'objecte directament.
 
 <br/>
 
