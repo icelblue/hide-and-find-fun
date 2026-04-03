@@ -34,7 +34,7 @@ export default function StoryModePage() {
   const [accessories, setAccessories] = useState<any[]>([]);
 
   // Intro animation states
-  const [randomPet, setRandomPet] = useState(PET_OPTIONS[0]);
+  const [randomPet, setRandomPet] = useState<{ type: string; icon: string; name: string }>(PET_OPTIONS[0]);
   const [petName, setPetName] = useState("");
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
