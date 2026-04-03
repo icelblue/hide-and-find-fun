@@ -336,19 +336,17 @@ export default function GamePage() {
     }
     setActionLoading(true);
     try {
-      // Record as a look move with special bonus_value to track interaction
+      // Record as a look move to track the interaction
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre");
-      // Apply effect locally
-      if (interaction.effect_type === "reveal_content") {
-        const data = interaction.effect_data as any;
+      // Apply effect
+      const data = interaction.effect_data as any;
+      if (interaction.effect_type === "reveal_items") {
+        toast.success(`${interaction.action_icon} ${data.message || "Nous mobles revelats!"}`, { duration: 6000 });
+      } else if (interaction.effect_type === "reveal_content") {
         toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
-      } else if (interaction.effect_type === "reveal_items") {
-        toast.success(`${interaction.action_icon} Nous mobles revelats!`, { duration: 4000 });
       } else if (interaction.effect_type === "give_hint") {
-        const data = interaction.effect_data as any;
         toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
       } else if (interaction.effect_type === "enable_position") {
-        const data = interaction.effect_data as any;
         toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
       }
       clearBanana();
