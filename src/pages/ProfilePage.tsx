@@ -417,6 +417,9 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Won objects (reward collection progress) */}
+      <WonObjectsSection userId={user!.id} />
+
       {/* Inventory */}
       <div className="mb-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
