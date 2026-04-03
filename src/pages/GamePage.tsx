@@ -38,6 +38,7 @@ import {
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
   type ToolType, OUTDOOR_SCENARIOS, isLightOff, toggleLight, useLlanterna,
+  getDirtyItemsForGame,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
