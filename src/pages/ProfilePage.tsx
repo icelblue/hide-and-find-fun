@@ -25,6 +25,7 @@ import { getScenarios } from "@/lib/supabase-helpers";
 import { getMyRewards, placeRewardItem, sellRewardItem, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { toast } from "sonner";
 import { Tip } from "@/components/HelpButton";
+import { getRewardCatalog } from "@/lib/reward-helpers";
 
 const WALL_TTL_HOURS = 22;
 
