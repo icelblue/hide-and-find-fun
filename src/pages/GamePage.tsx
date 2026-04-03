@@ -161,7 +161,7 @@ export default function GamePage() {
     }
 
     // Load rival's object traits progressively
-    if (gameData?.status === "playing" && rivalData?.hidden_object_id) {
+    if (!isStoryGame && gameData?.status === "playing" && rivalData?.hidden_object_id) {
       const { count: myMoves } = await supabase
         .from("game_moves").select("*", { count: "exact", head: true })
         .eq("game_id", gameId).eq("player_id", user.id);
