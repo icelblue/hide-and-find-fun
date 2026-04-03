@@ -522,7 +522,34 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos);
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
-      if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
+      if (result.foundObject) {
+        toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
+        // Check if rival's object has a "find" special
+        if (rival?.hidden_object_id) {
+          const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
+          if (rivalSpecial && rivalSpecial.prompt_on === "find") {
+            if (rivalSpecial.special_type === "troll_effect") {
+              const variants = rivalSpecial.variants as any;
+              setTrollEffect({
+                message: rivalSpecial.prompt_text,
+                emoji: variants?.emoji ?? "😈",
+                animation: variants?.animation ?? "shake",
+              });
+              setTimeout(() => setTrollEffect(null), 6000);
+            } else {
+              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+            }
+          }
+        }
+        // Show hide message from rival
+        if (rival?.special_data) {
+          const sd = rival.special_data as any;
+          const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+          if (hideMsg) {
+            toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
+          }
+        }
+      } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
         const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
@@ -544,47 +571,7 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const handleConfirm = async () => {
-    if (!gameId || !user || !showConfirmDialog) return;
-    const { itemId, position } = showConfirmDialog;
-    setShowConfirmDialog(null);
-    setActionLoading(true);
-    try {
-      const result = await performMove(gameId, user.id, "confirm", undefined, itemId, position);
-      if (result.foundObject) {
-        toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!");
-        // Check if rival's object has a "find" special
-        if (rival?.hidden_object_id) {
-          const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
-          if (rivalSpecial && rivalSpecial.prompt_on === "find") {
-            if (rivalSpecial.special_type === "troll_effect") {
-              const variants = rivalSpecial.variants as any;
-              setTrollEffect({
-                message: rivalSpecial.prompt_text,
-                emoji: variants?.emoji ?? "😈",
-                animation: variants?.animation ?? "shake",
-              });
-              setTimeout(() => setTrollEffect(null), 6000);
-            } else {
-              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
-            }
-          }
-        }
-        // Show hide message from rival (any object, not just specials)
-        if (rival?.special_data) {
-          const sd = rival.special_data as any;
-          const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
-          if (hideMsg) {
-            toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
-          }
-        }
-      }
-      else toast.error(`❌ No era aquí... (-${TOKEN_COSTS.confirm}🪙)`);
-      clearBanana();
-      await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
-  };
+  // handleConfirm removed — look now finds the object directly
 
   const handleSpecialFoundSubmit = async () => {
     if (!gameId || !user || !showSpecialFoundPopup) return;
@@ -692,27 +679,7 @@ export default function GamePage() {
 
       {/* Banana notification toast (no longer full-screen block) */}
 
-      {/* Confirm dialog */}
-      {showConfirmDialog && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setShowConfirmDialog(null)}>
-          <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
-            <CardContent className="py-6 text-center">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-2xl gradient-accent flex items-center justify-center text-2xl shadow-lg">🔍</div>
-              <p className="font-bold mb-1">Confirmar obertura?</p>
-              <p className="text-sm text-muted-foreground mb-1">
-                {positions.find(p => p.value === showConfirmDialog.position)?.icon}{" "}
-                {positions.find(p => p.value === showConfirmDialog.position)?.label}{" "}
-                de {showConfirmDialog.itemName}
-              </p>
-              <p className="text-xs text-destructive font-medium mb-4">Costa {TOKEN_COSTS.confirm} tokens!</p>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setShowConfirmDialog(null)}>Cancel·lar</Button>
-                <Button className="flex-1" onClick={handleConfirm}>Confirmar 🔍</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Confirm dialog removed — look now finds the object */}
 
       {/* Message popup */}
       {receivedMessage && (
@@ -992,7 +959,7 @@ export default function GamePage() {
                 <div className="space-y-1 text-[11px] text-muted-foreground">
                   <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
                   <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
-                  <p>🔍 <strong>Confirma</strong> (1.5🪙) quan creguis saber on és. Si encertes, guanyes!</p>
+                  <p>🎯 Si encertes moble + posició, <strong>trobes l'objecte i guanyes!</strong></p>
                 </div>
               </CardContent>
             </Card>
@@ -1145,9 +1112,9 @@ export default function GamePage() {
           {!((!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "")) && lightOffScenarios.has(player.current_scenario_id)) && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              👀 Investigar mobles
+              👀 Investigar mobles · {TOKEN_COSTS.look}🪙
             </h3>
-            <Tip>👀 Observar ({TOKEN_COSTS.look}🪙) = pista (❄️/🌡️/🔥). 🔍 Confirmar ({TOKEN_COSTS.confirm}🪙) = trobar l'objecte!</Tip>
+            <Tip>Observa posicions per rebre pistes (❄️/🌡️/🔥). Si encertes moble + posició, trobes l'objecte i guanyes!</Tip>
             {bananaEffect && bananaBlockedSpot && (
               <p className="text-xs text-destructive mt-1 animate-pulse">🍌 Una posició està bloquejada! Fes una altra acció per desbloquejar-la.</p>
             )}
@@ -1155,7 +1122,6 @@ export default function GamePage() {
               {currentScenarioItems.map(item => (
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
-                  onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
                   lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
                   bananaBlockedSpot={bananaBlockedSpot}
@@ -1437,11 +1403,10 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
+function ItemActions({ item, positions, onLook, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
-  onConfirm: (id: string, pos: "sobre" | "sota" | "dins") => void;
   disabled: boolean;
   tokensRemaining: number;
   lookedSpots: Set<string>;
@@ -1501,7 +1466,7 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
               ))}
             </div>
           )}
-          {/* Special interaction buttons (encendre, etc.) */}
+          {/* Special interaction buttons */}
           {hasInteractions && onInteraction && (
             <div className="mb-2 space-y-1">
               {interactions!.map((ia: any) => {
@@ -1527,37 +1492,26 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
               })}
             </div>
           )}
-          {/* Position grid */}
+          {/* Position grid — look only (finds object if correct!) */}
           <div className="grid grid-cols-3 gap-2">
             {positions.map(pos => {
               const spotKey = `${item.id}:${pos.value}`;
               const alreadyLooked = lookedSpots.has(spotKey);
-              const alreadyConfirmed = confirmedSpots.has(spotKey);
               const isBananaBlocked = bananaBlockedSpot === spotKey;
               return (
-                <div key={pos.value} className="space-y-1">
-                  <button onClick={() => onLook(item.id, pos.value)}
-                    disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || alreadyConfirmed || isBananaBlocked}
-                    className={`w-full rounded-lg p-2 text-xs transition-colors active:scale-[0.97] font-medium ${
-                      isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
-                      alreadyLooked || alreadyConfirmed ? "bg-muted/20 opacity-40 line-through" :
-                      "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
-                    }`}>
-                    {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
-                    <span className="block text-[9px] text-muted-foreground mt-0.5">
-                      {isBananaBlocked ? "bloquejat" : alreadyLooked || alreadyConfirmed ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
-                    </span>
-                  </button>
-                  <button onClick={() => onConfirm(item.id, pos.value)}
-                    disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyConfirmed || isBananaBlocked}
-                    className={`w-full rounded-lg p-1.5 text-[10px] font-bold transition-all active:scale-[0.97] shadow-sm ${
-                      isBananaBlocked ? "bg-destructive/20 opacity-60" :
-                      alreadyConfirmed ? "bg-muted/20 opacity-40" :
-                      "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
-                    }`}>
-                    {isBananaBlocked ? "🍌" : alreadyConfirmed ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
-                  </button>
-                </div>
+                <button key={pos.value}
+                  onClick={() => onLook(item.id, pos.value)}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked}
+                  className={`w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${
+                    isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
+                    alreadyLooked ? "bg-muted/20 opacity-40 line-through" :
+                    "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
+                  }`}>
+                  {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
+                  <span className="block text-[9px] text-muted-foreground mt-0.5">
+                    {isBananaBlocked ? "bloquejat" : alreadyLooked ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                  </span>
+                </button>
               );
             })}
           </div>
