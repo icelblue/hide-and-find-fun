@@ -161,6 +161,26 @@ export default function PlayerProfilePage() {
         ))}
       </div>
 
+      {/* Pet companion */}
+      {pet && (
+        <Card className="mb-4 glass border-accent/30 relative z-10">
+          <CardContent className="py-3 flex items-center gap-3">
+            <span className="text-3xl">{pet.pet_icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm">{pet.pet_name}</p>
+              <p className="text-[11px] text-accent font-semibold">⭐ {pet.xp ?? 0} XP</p>
+            </div>
+            {petAccessories.length > 0 && (
+              <div className="flex gap-1">
+                {petAccessories.map((a: any) => (
+                  <span key={a.id} className="text-lg" title={a.accessory_name}>{a.accessory_icon}</span>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Trophies */}
       <div className="mb-5 relative z-10">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
