@@ -1,6 +1,6 @@
 ---
-name: Interactive Furniture System v1.6.1
-description: Tag-based actions, UNLIMITED tools (per player, not shared), breakable state shared between players, dirty random per game
+name: Interactive Furniture System v1.7
+description: Tag-based actions, SHARED COMPETITIVE tool pool (first to find keeps it), breakable state shared, dirty random per game
 type: feature
 ---
 
@@ -11,29 +11,28 @@ type: feature
 | `breakable` | 💥 Trencar | 🔨 Martell ✓ | 0.3🪙 | Notifies rival, moble trencat per TOTS DOS |
 | `broken` | 🔧 Arreglar | 🔧 Tornavís ✓ | 0.2🪙 | Fixes item, 40% mini bonus |
 
-## Tools — PER PLAYER (not shared!)
-- Each player has OWN tools in `game_players.tools` JSON
-- **Default**: `{ drap: 0, tornavis: 1, martell: 0, llanterna: 0 }`
-- **UNLIMITED USE**: Once found, never consumed
-- **Max 3** of each tool per player
-- **Found**: 20% chance on look/light/clean/fix (5% each: martell, tornavis, drap, llanterna)
-- **Drap**: Auto-given (1) when entering scenario with dirty items (toast notification)
-- **One player CANNOT steal rival's tools** — completely independent inventories
+## Tools — SHARED COMPETITIVE POOL
+- **Pool per partida** (compartit entre els 2 jugadors):
+  - 🔨 Martell: **1** total
+  - 🧹 Drap: **2** total
+  - 🔦 Llanterna: **1** total
+  - 🔧 Tornavís: **1** extra (tothom ja comença amb 1)
+- **Qui la troba se la queda!** El rival es queda sense.
+- **UNLIMITED USE**: Un cop trobada, no es gasta
+- **Found**: 20% chance on look/light/clean/fix (5% each type)
+- **Drap**: Auto-donat (1) quan entres a escenari amb mobles bruts
+- **Pool check**: Abans d'atorgar, consulta `game_players.tools` de TOTS dos jugadors
 
 ## Breakable State — SHARED between players
 - Stored as `game_moves` with `bonus_value: "tag:break:{itemId}"`
-- Built from ALL moves (not filtered by player_id) → both see broken state
-- Arreglar removes the break from the shared set
+- Both players see broken state
+- Arreglar removes the break
 
 ## Dirty Furniture — Random Per Game
 - `getDirtyItemsForGame(items, gameId)` selects ~60% via deterministic hash
-- Same game = same dirty items; different games = different dirty items
+- Same game = same dirty items
 
 ## Current Interactive Items (DB)
 - **Breakable (5)**: Vitrina, Llum×2, Quadre, Televisió, Armari mirall
 - **Dirty (7)**: Catifa×3, Paperera, Armari mirall, Cistella, Rentadora
 - **Hidden (2)**: Gerro (Balcó), Baúl (Jardí)
-
-## Espia Social Item
-- Shows rival's current scenario via toast (8s)
-- If rival has no scenario: "El rival encara no s'ha mogut!"
