@@ -1,0 +1,13 @@
+# ============================================================
+# .dockerignore — Fitxers exclosos del context de build Docker
+# ============================================================
+node_modules
+dist
+.git
+.env
+.env.local
+*.md
+docs/
+.lovable/
+playwright-fixture.ts
+playwright.config.ts

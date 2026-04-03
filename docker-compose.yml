@@ -1,0 +1,47 @@
+# ============================================================
+# docker-compose.yml — Deduction Duel
+# ============================================================
+# Aixeca l'app amb un sol comandament:
+#
+#   1. Copia .env.example a .env i omple les variables
+#   2. docker compose up --build
+#   3. Obre http://localhost:8080
+#
+# NOTA: Necessites un projecte Supabase (cloud o self-hosted)
+# amb l'esquema de base de dades ja aplicat (veure README).
+# ============================================================
+
+version: "3.9"
+
+services:
+  # --- Frontend SPA (Vite build + nginx) ---
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Aquestes variables s'injecten al build de Vite
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID:-}
+    ports:
+      - "${APP_PORT:-8080}:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+# ============================================================
+# NOTES:
+#
+# - Si vols afegir Supabase self-hosted, consulta:
+#   https://supabase.com/docs/guides/self-hosting/docker
+#
+# - Les Edge Functions (cleanup-old-games, backup-database)
+#   s'executen dins de Supabase, no dins d'aquest contenidor.
+#
+# - Per producció, afegeix un proxy invers (Traefik/Caddy)
+#   amb certificat TLS davant d'aquest servei.
+# ============================================================
