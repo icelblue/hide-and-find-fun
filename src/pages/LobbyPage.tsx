@@ -224,7 +224,7 @@ export default function LobbyPage() {
       </div>
 
       {/* Main actions */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         <Button onClick={handleRandomMatch} size="lg" disabled={loading} className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">🎲</span>
@@ -235,6 +235,12 @@ export default function LobbyPage() {
           <span className="flex flex-col items-center">
             <span className="text-lg">➕</span>
             <span className="text-xs mt-0.5">Crear partida</span>
+          </span>
+        </Button>
+        <Button onClick={() => navigate("/story")} size="lg" variant="outline" className="h-14 border-accent/40">
+          <span className="flex flex-col items-center">
+            <span className="text-lg">🐾</span>
+            <span className="text-xs mt-0.5">Història</span>
           </span>
         </Button>
       </div>
