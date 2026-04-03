@@ -1307,7 +1307,37 @@ export default function GamePage() {
       )}
 
       {/* FINISHED */}
-      {phase === "finished" && (
+      {phase === "finished" && isStory && storyResult && (
+        <div className="text-center py-10">
+          <div className="w-24 h-24 mx-auto mb-4 rounded-3xl gradient-primary flex items-center justify-center text-5xl shadow-xl glow-primary">
+            {storyResult.isDead ? "💫" : "🎉"}
+          </div>
+          <h2 className="text-2xl font-bold mb-2">
+            {storyResult.isDead ? "Màxim XP assolit!" : <span className="text-gradient">Capítol {storyChapter} completat!</span>}
+          </h2>
+          <p className="text-lg text-accent font-bold mb-1">+{storyResult.xp} XP ⭐</p>
+          <p className="text-sm text-muted-foreground mb-2">Moviments: {moveHistory.length}</p>
+          {storyResult.accessory && (
+            <p className="text-lg font-bold text-primary mb-2">
+              Nou accessori: {storyResult.accessory.icon} {storyResult.accessory.name}!
+            </p>
+          )}
+          {storyResult.consumable && (
+            <p className="text-sm font-medium text-green-500 mb-2">
+              {storyResult.consumable.icon} {storyResult.consumable.name}!
+            </p>
+          )}
+          {storyResult.isDead && (
+            <p className="text-sm text-muted-foreground mb-2">
+              La teva mascota ha viscut una vida plena. Podràs adoptar-ne una de nova.
+            </p>
+          )}
+          <div className="flex gap-2 justify-center mt-4">
+            <Button onClick={() => navigate("/story")}>📖 Mode Història</Button>
+          </div>
+        </div>
+      )}
+      {phase === "finished" && !isStory && (
         <FinishedPhase
           game={game}
           user={user}
