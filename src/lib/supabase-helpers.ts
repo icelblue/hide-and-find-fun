@@ -139,11 +139,11 @@ export async function getItemInteractions(itemIds: string[]) {
 
 export const TAG_ACTIONS = {
   dirty: { icon: "🧹", label: "Netejar", cost: 0.2, requiresTool: "drap" as const },
-  breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: null },
+  breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: "martell" as const },
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
 } as const;
 
-export type ToolType = "drap" | "tornavis";
+export type ToolType = "drap" | "tornavis" | "martell";
 
 /** Get tag-based actions available for an item given player's tools and game state */
 export function getTagActions(item: any, playerTools: Record<string, number>, gameBreaks: Set<string>) {
