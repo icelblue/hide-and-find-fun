@@ -307,25 +307,33 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Pet companion */}
-      {pet && (
-        <Card className="mb-4 glass border-accent/30">
-          <CardContent className="py-3 flex items-center gap-3">
-            <span className="text-3xl">{pet.pet_icon}</span>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm">{pet.pet_name}</p>
-              <p className="text-[11px] text-accent font-semibold">⭐ {pet.xp ?? 0} XP</p>
-            </div>
-            {petAccessories.length > 0 && (
-              <div className="flex gap-1">
-                {petAccessories.map((a: any) => (
-                  <span key={a.id} className="text-lg" title={a.accessory_name}>{a.accessory_icon}</span>
-                ))}
+      {/* Pet companion with evolution */}
+      {pet && (() => {
+        const evo = getPetEvolution(pet.xp ?? 0);
+        return (
+          <Card className="mb-4 glass border-accent/30">
+            <CardContent className="py-3 flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring} flex items-center justify-center`}>
+                <span className="text-2xl">{pet.pet_icon}</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">{pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span></p>
+                <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+                  <div className="h-1.5 rounded-full bg-accent transition-all" style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
+                </div>
+                <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
+              </div>
+              {petAccessories.length > 0 && (
+                <div className="flex gap-1 flex-wrap max-w-[80px]">
+                  {petAccessories.map((a: any) => (
+                    <span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Top rival */}
       {topRival && (
