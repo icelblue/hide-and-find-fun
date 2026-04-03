@@ -104,6 +104,11 @@ export default function GamePage() {
   const [bonusAmount, setBonusAmount] = useState(1);
   const [showBonusPicker, setShowBonusPicker] = useState(false);
 
+  // Story mode state
+  const isStory = !!(game as any)?.is_story;
+  const storyChapter = (game as any)?.story_chapter as number | undefined;
+  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: any; consumable?: any } | null>(null);
+
   const positions = [
     { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
     { value: "sota" as const, label: "Sota", icon: "⬇️" },
