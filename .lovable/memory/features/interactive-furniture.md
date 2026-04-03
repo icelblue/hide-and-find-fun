@@ -1,32 +1,43 @@
 ---
-name: Interactive Furniture System
-description: item_interactions table for reveal_items, enable_position, give_hint, reveal_content effects. DB + UI implemented.
+name: Interactive Furniture System v1.1
+description: Tag-based actions (dirty→clean, breakable→break, broken→fix), tools (drap, tornavís), item_interactions for specials (encendre)
 type: feature
 ---
 
-## Architecture
-- Table `item_interactions` linked to `items` via item_id
-- effect_type: reveal_items | enable_position | give_hint | reveal_content
-- effect_data: JSONB with type-specific params
-- cost: tokens, one_time: bool
-- UI shows ⚡ indicator on items with interactions
-- Interaction buttons appear above position grid when item expanded
+## Tag-Based Actions (v1.1)
+Items have `tags text[]` column. Actions derived from tags dynamically:
 
-## Scenario Limits
-- `max_items` column on scenarios (default 20)
-- Cuina/Jardí/Habitació/Menjador/Despatx: 15
-- Balcó/Lavabo: 12
-- Enforced in place_reward_item function
+| Tag | Action | Tool | Cost | Effect |
+|-----|--------|------|------|--------|
+| `dirty` | 🧹 Netejar | Drap ✓ | 0.2🪙 | 50% mini bonus, consumes drap |
+| `breakable` | 💥 Trencar | — | 0.3🪙 | Notifies rival, blocks item visually, spawns 🔧 for BOTH players |
+| `broken` | 🔧 Arreglar | Tornavís ✓ | 0.2🪙 | Fixes item, 40% mini bonus, consumes tornavís |
 
-## Current Interactions
-- 💡 Encendre el llum (Menjador) → reveal_content, 0.2🪙
-- 🚪 Obrir l'armari (Habitació) → reveal_content, 0.2🪙
+## Tools
+- Stored in `game_players.tools` JSONB: `{"drap": 0, "tornavis": 0}`
+- Only last during the game (not persistent)
+- Max 3 of each
+- Found: 10% chance on look/confirm actions
+- Breaking spawns tornavís for BOTH players (easy to fix)
 
-## Adding New Interactions
-Just INSERT into item_interactions — no code changes needed:
-```sql
-INSERT INTO item_interactions (item_id, action_name, action_icon, action_label, cost, effect_type, effect_data, one_time)
-VALUES ('item-uuid', 'netejar', '🧹', 'Netejar la taula', 0.3, 'reveal_content', '{"message": "..."}', true);
-```
+## Tagged Items
+- `dirty`: Catifa, Cistella, Paperera, Rentadora
+- `breakable`: Vitrina, Llum, Quadre
+- `dirty+breakable`: Armari mirall
 
-## Status: ✅ Fase 1 + Fase 2 complete
+## Special Interactions (item_interactions table)
+Still used for unique effects like:
+- 💡 Encendre el llum (Menjador) → reveal_items, 0.2🪙
+
+## Game State Tracking
+- Breaks tracked via `game_moves.bonus_value = "tag:break:{item_id}"`
+- Fixes tracked via `tag:fix:{item_id}`
+- Cleans tracked via `tag:clean:{item_id}`
+- gameBreaks Set computed from all players' moves
+
+## Key Design Principles
+- All actions serve the core objective: finding the rival's hidden object
+- Netejar = facilitador (bonus tokens/tools)
+- Trencar = dificultador (reveals your position to rival)
+- Arreglar = easy (tornavís spawns automatically when something breaks)
+- "Obrir" action REMOVED — conflicts with confirm (1.5🪙)
