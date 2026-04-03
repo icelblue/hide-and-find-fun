@@ -511,3 +511,64 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+/** Section showing which reward items the player has collected */
+function WonObjectsSection({ userId }: { userId: string }) {
+  const [catalog, setCatalog] = useState<any[]>([]);
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [items, { data: owned }] = await Promise.all([
+        getRewardCatalog(),
+        supabase.from("player_rewards")
+          .select("reward_item_id")
+          .eq("user_id", userId),
+      ]);
+      setCatalog(items);
+      setOwnedIds(new Set((owned ?? []).map((r: any) => r.reward_item_id)));
+      setLoading(false);
+    })();
+  }, [userId]);
+
+  if (loading || catalog.length === 0) return null;
+
+  const ownedCount = catalog.filter(i => ownedIds.has(i.id)).length;
+
+  const RARITY_BORDER_MAP: Record<string, string> = {
+    common: "border-muted-foreground/20",
+    uncommon: "border-green-500/30",
+    rare: "border-blue-500/30",
+    epic: "border-purple-500/40",
+    legendary: "border-amber-400/50",
+  };
+
+  return (
+    <div className="mb-6">
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+        🏆 Col·lecció ({ownedCount}/{catalog.length})
+      </h2>
+      <Tip>Mobles guanyats en partides. Els grisos encara no els tens!</Tip>
+      <div className="h-2" />
+      <div className="flex flex-wrap gap-2">
+        {catalog.map((item: any) => {
+          const has = ownedIds.has(item.id);
+          const rarity = RARITY_CONFIG[item.rarity];
+          const border = RARITY_BORDER_MAP[item.rarity] ?? "";
+          return (
+            <div key={item.id}
+              className={`flex flex-col items-center gap-0.5 rounded-xl border p-2 min-w-[60px] transition-all ${
+                has ? `${border} bg-muted/30` : "border-border/20 opacity-30 grayscale"
+              }`}
+              title={`${item.name} — ${rarity?.emoji} ${rarity?.label}`}>
+              <span className="text-2xl">{item.icon}</span>
+              <span className="text-[9px] font-medium leading-tight text-center">{item.name}</span>
+              <span className="text-[8px] text-muted-foreground">{rarity?.emoji}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
