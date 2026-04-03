@@ -388,6 +388,7 @@ export default function GamePage() {
       const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
       if (result.blocked) toast.error(`🛡️ Bloquejat per l'escut del rival!`);
+      else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
       else toast.success(`${info?.icon} ${info?.name} enviat!`);
       setShowSocialPanel(false);
       setMessageInput("");
