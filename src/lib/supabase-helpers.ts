@@ -173,12 +173,12 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
     });
   }
 
-  // Breakable → Trencar (only if not already broken)
+  // Breakable → Trencar (only if not already broken AND has martell)
   if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
       tag: "breakable", ...cfg,
-      hasTool: true, // no tool needed
+      hasTool: (playerTools.martell ?? 0) > 0,
       actionKey: `break:${item.id}`,
     });
   }
