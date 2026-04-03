@@ -181,6 +181,8 @@ export default function GamePage() {
           }
         } else if (item.item_type === "smoke_bomb") {
           toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+        } else if (item.item_type === "swap") {
+          toast.warning("🔄 El rival ha usat un Intercanvi! Heu intercanviat posicions!", { duration: 5000 });
         } else if (item.item_type === "shield") {
           // Shield activates on the SENDER, not the receiver — no effect here
         } else if (item.item_type === "message" && item.message_text) {

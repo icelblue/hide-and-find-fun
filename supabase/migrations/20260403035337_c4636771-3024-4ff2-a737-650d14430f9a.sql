@@ -1,0 +1,1 @@
+ALTER TYPE social_item_type ADD VALUE IF NOT EXISTS 'swap';
