@@ -1019,7 +1019,77 @@ export default function GamePage() {
             </div>
           </div>
 
+          {/* Light toggle (indoor) / Llanterna (outdoor) */}
+          {(() => {
+            const scenarioName = currentScenario?.name ?? "";
+            const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
+            const currentLightOff = lightOffScenarios.has(player.current_scenario_id);
+            const flashlightUsedHere = flashlightRevealed.has(player.current_scenario_id);
+
+            return (
+              <div>
+                {!isOutdoor && (
+                  <button
+                    onClick={handleToggleLight}
+                    disabled={actionLoading || player.tokens_remaining < 0.2}
+                    className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
+                      currentLightOff
+                        ? "border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20"
+                        : "hover:border-destructive/40"
+                    }`}
+                  >
+                    <span className="text-2xl">{currentLightOff ? "💡" : "🌑"}</span>
+                    <div className="flex-1 text-left">
+                      <div className="text-sm font-semibold">{currentLightOff ? "Encendre el llum" : "Apagar el llum"}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {currentLightOff ? "Encén per veure els mobles" : "Apaga perquè ningú vegi els mobles"}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">0.2🪙</span>
+                  </button>
+                )}
+                {isOutdoor && !flashlightUsedHere && (
+                  <button
+                    onClick={handleUseLlanterna}
+                    disabled={actionLoading || player.tokens_remaining < 0.2 || (playerTools.llanterna ?? 0) <= 0}
+                    className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
+                      (playerTools.llanterna ?? 0) > 0
+                        ? "border-yellow-500/30 hover:border-yellow-500/50"
+                        : "opacity-50"
+                    }`}
+                  >
+                    <span className="text-2xl">🔦</span>
+                    <div className="flex-1 text-left">
+                      <div className="text-sm font-semibold">Usar llanterna</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {(playerTools.llanterna ?? 0) > 0
+                          ? "Il·lumina la zona i revela mobles ocults"
+                          : "Necessites una 🔦 Llanterna (es troben explorant)"}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">0.2🪙</span>
+                  </button>
+                )}
+                {isOutdoor && flashlightUsedHere && (
+                  <p className="text-[10px] text-center text-muted-foreground">🔦 Zona il·luminada — mobles ocults revelats</p>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Light off warning */}
+          {!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "") && lightOffScenarios.has(player.current_scenario_id) && (
+            <Card className="glass border-yellow-500/30">
+              <CardContent className="py-3 text-center">
+                <div className="text-3xl mb-1">🌑</div>
+                <p className="text-sm font-semibold">El llum està apagat!</p>
+                <p className="text-[11px] text-muted-foreground">No pots veure cap moble. Encén el llum per investigar.</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Look / Confirm */}
+          {!((!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "")) && lightOffScenarios.has(player.current_scenario_id)) && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               👀 Investigar mobles
@@ -1045,6 +1115,7 @@ export default function GamePage() {
               ))}
             </div>
           </div>
+          )}
 
           {/* Social */}
           <div>
