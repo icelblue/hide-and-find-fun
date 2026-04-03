@@ -56,7 +56,7 @@ const RULES = [
   },
   {
     title: "🎁 Bonus i eines",
-    text: "Quan observes o confirmes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap — per netejar mobles bruts.\n🔨 Martell — per trencar mobles fràgils.\n🔧 Tornavís — per arreglar mobles trencats.\n🔦 Llanterna — per il·luminar zones fosques a l'exterior.\nMàxim 3 de cada. Les eines només duren la partida.",
+    text: "Quan observes o confirmes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap — per netejar mobles bruts (es troba automàticament si hi ha mobles bruts a prop).\n🔨 Martell — per trencar mobles fràgils.\n🔧 Tornavís — tothom comença amb 1! Per arreglar mobles trencats.\n🔦 Llanterna — per il·luminar zones fosques a l'exterior.\n⚡ Les eines són IL·LIMITADES dins la mateixa partida (no es consumeixen).",
   },
   {
     title: "💡 Llum i llanterna",
@@ -64,7 +64,7 @@ const RULES = [
   },
   {
     title: "⚡ Mobles interactius",
-    text: "Alguns mobles tenen accions basades en les seves propietats:\n🧹 Netejar (mobles bruts) — 0.2🪙, cal Drap, 50% bonus.\n💥 Trencar (mobles fràgils) — 0.3🪙, cal Martell, notifica el rival on ets!\n🔧 Arreglar (mobles trencats) — 0.2🪙, cal Tornavís, 40% bonus.\nBusca el ⚡ al nom del moble!",
+    text: "Alguns mobles tenen accions basades en les seves propietats:\n🧹 Netejar (mobles bruts 🧹) — 0.2🪙, cal Drap, 50% bonus. Els mobles bruts canvien cada partida!\n💥 Trencar (mobles fràgils) — 0.3🪙, cal Martell, notifica el rival on ets!\n🔧 Arreglar (mobles trencats) — 0.2🪙, cal Tornavís, 40% bonus.\nBusca el 🧹 o ⚡ al nom del moble!",
   },
   {
     title: "🏆 Recompenses",

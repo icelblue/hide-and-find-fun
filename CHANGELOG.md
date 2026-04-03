@@ -7,6 +7,29 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.3.0] — 2026-04-03 — Eines il·limitades i mobles bruts aleatoris 🧹♻️ (MINOR)
+
+### ♻️ Eines il·limitades
+- 🧹 Drap, 🔨 Martell, 🔧 Tornavís i 🔦 Llanterna ja NO es consumeixen
+- Un cop tens una eina, la pots usar tantes vegades com vulguis dins la partida
+- 🔧 Tornavís: tothom comença amb 1 per defecte
+
+### 🧹 Drap intel·ligent
+- El drap s'obté automàticament quan entres a un escenari amb mobles bruts
+- Toast: "🧹 Has trobat un Drap a prop d'un moble brut!"
+- No cal trobar-lo aleatòriament (però també es pot trobar per atzar)
+
+### 🎲 Mobles bruts aleatoris
+- Quins mobles estan bruts canvia cada partida (~60% dels elegibles)
+- Determinístic per gameId (mateixa partida = mateixos bruts)
+- Indicador visual 🧹 als mobles bruts + borde accent
+
+### 🕵️ Fix espia
+- L'ítem social Espia ara mostra missatge clar si el rival no té ubicació
+- "🤷 El rival encara no s'ha mogut!" si el rival no s'ha posicionat
+
+---
+
 ## [1.2.0] — 2026-04-03 — Llum i llanterna 💡🔦 (MINOR)
 
 ### 💡 Sistema de llum
@@ -20,6 +43,7 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - Usable en escenaris exteriors (Jardí, Balcó) per revelar mobles ocults
 - Reutilitzable (no es consumeix), costa 0.2🪙
 - Jardí → revela 📦 Baúl | Balcó → revela 🏺 Gerro
+- Botó gran i destacat als escenaris exteriors
 
 ### 🔄 Canvis
 - ❌ Eliminada interacció antiga "Encendre el llum" del Menjador

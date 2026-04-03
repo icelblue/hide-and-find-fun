@@ -116,11 +116,12 @@ Cada jugador pot usar **1 ítem per dia**. Afegeixen caos estratègic:
 
 | Ítem | Efecte | Contrarestable? |
 |:-----|:-------|:---------------:|
-| 🍌 **Plàtan** | Borra la pantalla del rival durant 3 segons | 🛡️ Sí |
-| 💣 **Bomba de fum** | Mou el **teu** objecte a una posició diferent | 🛡️ Sí |
-| 🔮 **Pista falsa** | Activa un indicador enganyós al rival | 🛡️ Sí |
-| 🛡️ **Escut** | Bloqueja el pròxim ítem social que et llancin | — |
-| 💬 **Missatge** | Envia text curt al rival (bluff, provocació, amistat) | 🛡️ Sí |
+| 🍌 **Plàtan** | Bloqueja 1 posició del rival | 🛡️ Sí |
+| 💣 **Bomba de fum** | Mou el **teu** objecte a una posició diferent (1x/partida) | — |
+| 🛡️ **Escut** | Bloqueja el pròxim plàtan o intercanvi | — |
+| 🔄 **Intercanvi** | Intercanvia la teva ubicació amb la del rival | 🛡️ Sí |
+| 🕵️ **Espia** | Descobreix en quina habitació és el rival | — |
+| 💬 **Missatge** | Envia text curt al rival (bluff, provocació) | — |
 
 > L'escut es consumeix en bloquejar. **Timing és tot**: activar-lo massa aviat és malgastar-lo.
 
