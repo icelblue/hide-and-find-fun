@@ -211,8 +211,22 @@ export default function GamePage() {
       }
     }
     setRevealedItemIds(revealed);
-    // Filter: show non-hidden items + revealed hidden items
-    const visibleItems = loadedItems.filter((i: any) => !i.hidden || revealed.has(i.id));
+
+    // Flashlight-revealed hidden items (per player, outdoor only)
+    const scenarioName = scenarios.find((s: any) => s.id === playerData?.current_scenario_id)?.name;
+    const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName ?? "");
+    const flashlightUsedHere = flashRevealed.has(playerData?.current_scenario_id ?? "");
+
+    // Filter: show non-hidden items + revealed hidden items + flashlight-revealed
+    // If light is OFF in indoor scenario, hide ALL items
+    const lightIsOff = !isOutdoor && lightsOff.has(playerData?.current_scenario_id ?? "");
+    const visibleItems = lightIsOff ? [] : loadedItems.filter((i: any) => {
+      if (!i.hidden) return true;
+      if (revealed.has(i.id)) return true;
+      // For outdoor hidden items, only show if flashlight was used here
+      if (isOutdoor && flashlightUsedHere) return true;
+      return false;
+    });
     setCurrentScenarioItems(visibleItems);
 
     if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
