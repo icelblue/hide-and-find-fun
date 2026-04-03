@@ -256,19 +256,20 @@
   │ name  (text)    │        │ scenario_b  (uuid FK)  │
   │ icon  (text)    │        └────────────────────────┘
   │ display_order   │
+  │ max_items       │
   └────────┬────────┘
            │ 1:N
            ▼
   ┌─────────────────┐        ┌────────────────────────┐
-  │     items        │───────►│   scenario_bonuses      │
+  │     items        │───────►│  item_interactions      │
   │─────────────────│        │────────────────────────│
   │ id    (uuid PK) │        │ item_id    (uuid FK)   │
-  │ name  (text)    │        │ position   (enum)      │
-  │ icon  (text)    │        │ bonus_type (enum)      │
-  │ environment     │        │ value      (text)      │
-  │ inner_capacity  │        └────────────────────────┘
-  │ scenario_id FK  │
-  └─────────────────┘
+  │ name  (text)    │        │ action_name (text)     │
+  │ icon  (text)    │        │ effect_type (text)     │
+  │ environment     │        │ effect_data (jsonb)    │
+  │ inner_capacity  │        │ cost (numeric)         │
+  │ scenario_id FK  │        │ one_time (boolean)     │
+  └─────────────────┘        └────────────────────────┘
 
   ┌─────────────────┐        ┌────────────────────────┐        ┌─────────────────┐
   │    objects       │───────►│    object_traits        │        │ object_specials  │
@@ -524,9 +525,10 @@ INSERT player_rewards amb reward_item aleatori d'aquesta rarity
 ```
 1. Verifica ownership i status = 'owned'
 2. Verifica que el reward_item no està ja col·locat
-3. INSERT nou item a l'escenari (display_order automàtic)
-4. UPDATE reward_items SET placed_in_scenario_id, placed_by, placed_at
-5. UPDATE player_rewards SET status = 'placed'
+3. Comprova que l'escenari no supera max_items
+4. INSERT nou item a l'escenari (display_order automàtic)
+5. UPDATE reward_items SET placed_in_scenario_id, placed_by, placed_at
+6. UPDATE player_rewards SET status = 'placed'
 ```
 
 </details>
@@ -679,13 +681,26 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 
 ### 5.8 Detecció de proximitat
 
-### 5.6 Detecció de proximitat
-
 ```
 Si el rival està a l'habitació on TU has amagat l'objecte:
   → rivalNearby = true
   → Avís visual ⚠️ al teu tauler
 ```
+
+### 5.9 Mobles interactius
+
+> Alguns mobles tenen accions especials (💡 encendre, 🚪 obrir, 🧹 netejar). Definits a `item_interactions`.
+
+| Efecte | Descripció |
+|:-------|:-----------|
+| `reveal_items` | Mostra mobles ocults de l'escenari |
+| `enable_position` | Desbloqueja una posició d'un moble |
+| `give_hint` | Dona una pista addicional |
+| `reveal_content` | Mostra contingut descriptiu |
+
+### 5.10 Límit de mobles per escenari
+
+> Cada escenari té un `max_items` que limita quants mobles hi pot haver. La funció `place_reward_item` ho valida.
 
 <br/>
 

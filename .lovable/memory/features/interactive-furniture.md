@@ -1,6 +1,6 @@
 ---
 name: Interactive Furniture System
-description: item_interactions table for reveal_items, enable_position, give_hint, reveal_content effects. Fase 1 DB ready, Fase 2 UI pending.
+description: item_interactions table for reveal_items, enable_position, give_hint, reveal_content effects. DB + UI implemented.
 type: feature
 ---
 
@@ -9,7 +9,8 @@ type: feature
 - effect_type: reveal_items | enable_position | give_hint | reveal_content
 - effect_data: JSONB with type-specific params
 - cost: tokens, one_time: bool
-- Tracked in game_moves as action "interact"
+- UI shows ⚡ indicator on items with interactions
+- Interaction buttons appear above position grid when item expanded
 
 ## Scenario Limits
 - `max_items` column on scenarios (default 20)
@@ -17,6 +18,15 @@ type: feature
 - Balcó/Lavabo: 12
 - Enforced in place_reward_item function
 
-## Status
-- Fase 1 ✅: DB tables + max_items + function updated
-- Fase 2 🔲: UI in GamePage + example interactions data
+## Current Interactions
+- 💡 Encendre el llum (Menjador) → reveal_content, 0.2🪙
+- 🚪 Obrir l'armari (Habitació) → reveal_content, 0.2🪙
+
+## Adding New Interactions
+Just INSERT into item_interactions — no code changes needed:
+```sql
+INSERT INTO item_interactions (item_id, action_name, action_icon, action_label, cost, effect_type, effect_data, one_time)
+VALUES ('item-uuid', 'netejar', '🧹', 'Netejar la taula', 0.3, 'reveal_content', '{"message": "..."}', true);
+```
+
+## Status: ✅ Fase 1 + Fase 2 complete

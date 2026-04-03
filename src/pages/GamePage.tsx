@@ -11,7 +11,7 @@ import {
   sendSocialItem, getUnprocessedSocialItems, markSocialItemProcessed,
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
-  redeemBonusTokens,
+  redeemBonusTokens, getItemInteractions,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,7 @@ export default function GamePage() {
   const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
+  const [itemInteractions, setItemInteractions] = useState<any[]>([]);
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
@@ -143,6 +144,9 @@ export default function GamePage() {
       loadedItems = itemsData;
       setCurrentScenarioItems(itemsData);
       setConnectedScenarios(connected);
+      // Load interactions for current scenario items
+      const interactions = await getItemInteractions(itemsData.map((i: any) => i.id));
+      setItemInteractions(interactions);
     }
 
     const { data: moves } = await supabase
@@ -291,6 +295,44 @@ export default function GamePage() {
       await performMove(gameId, user.id, "move", scenarioId);
       const s = scenarios.find(s => s.id === scenarioId);
       toast.success(`${s?.icon} ${s?.name} (-${TOKEN_COSTS.move}🪙)`);
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleInteraction = async (interaction: any) => {
+    if (!gameId || !user || !player) return;
+    // Check if already used (one_time) by looking at move history
+    const alreadyUsed = moveHistory.some((m: any) =>
+      m.action === "look" && m.target_item_id === interaction.item_id &&
+      (m as any).bonus_value === `interact:${interaction.action_name}`
+    );
+    if (interaction.one_time && alreadyUsed) {
+      toast.error("Ja has fet aquesta acció!");
+      return;
+    }
+    if (player.tokens_remaining < interaction.cost) {
+      toast.error("No tens prou tokens!");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      // Record as a look move with special bonus_value to track interaction
+      await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre");
+      // Apply effect locally
+      if (interaction.effect_type === "reveal_content") {
+        const data = interaction.effect_data as any;
+        toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
+      } else if (interaction.effect_type === "reveal_items") {
+        toast.success(`${interaction.action_icon} Nous mobles revelats!`, { duration: 4000 });
+      } else if (interaction.effect_type === "give_hint") {
+        const data = interaction.effect_data as any;
+        toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
+      } else if (interaction.effect_type === "enable_position") {
+        const data = interaction.effect_data as any;
+        toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
+      }
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -851,7 +893,10 @@ export default function GamePage() {
                   onConfirm={(id, pos) => setShowConfirmDialog({ itemId: id, position: pos, itemName: item.name })}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
                   lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
-                  bananaBlockedSpot={bananaBlockedSpot} />
+                  bananaBlockedSpot={bananaBlockedSpot}
+                  interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
+                  onInteraction={handleInteraction}
+                  moveHistory={moveHistory} />
               ))}
             </div>
           </div>
@@ -995,7 +1040,7 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
@@ -1005,51 +1050,85 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   lookedSpots: Set<string>;
   confirmedSpots: Set<string>;
   bananaBlockedSpot: string | null;
+  interactions?: any[];
+  onInteraction?: (interaction: any) => void;
+  moveHistory?: any[];
 }) {
   const [expanded, setExpanded] = useState(false);
+  const hasInteractions = interactions && interactions.length > 0;
 
   return (
     <div className="glass rounded-xl overflow-hidden">
       <button onClick={() => setExpanded(!expanded)}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
-        <span className="font-semibold text-sm">{item.icon} {item.name}</span>
+        <span className="font-semibold text-sm">
+          {item.icon} {item.name}
+          {hasInteractions && <span className="ml-1 text-xs">⚡</span>}
+        </span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>
       {expanded && (
-        <div className="border-t border-border/30 p-2.5 grid grid-cols-3 gap-2">
-          {positions.map(pos => {
-            const spotKey = `${item.id}:${pos.value}`;
-            const alreadyLooked = lookedSpots.has(spotKey);
-            const alreadyConfirmed = confirmedSpots.has(spotKey);
-            const isBananaBlocked = bananaBlockedSpot === spotKey;
-            return (
-              <div key={pos.value} className="space-y-1">
-                {/* LOOK button: disabled if already looked OR confirmed OR banana blocked */}
-                <button onClick={() => onLook(item.id, pos.value)}
-                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || alreadyConfirmed || isBananaBlocked}
-                  className={`w-full rounded-lg p-2 text-xs transition-colors active:scale-[0.97] font-medium ${
-                    isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
-                    alreadyLooked || alreadyConfirmed ? "bg-muted/20 opacity-40 line-through" :
-                    "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
-                  }`}>
-                  {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
-                  <span className="block text-[9px] text-muted-foreground mt-0.5">
-                    {isBananaBlocked ? "bloquejat" : alreadyLooked || alreadyConfirmed ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
-                  </span>
-                </button>
-                {/* CONFIRM button: disabled if already confirmed OR banana blocked, BUT allowed even if looked */}
-                <button onClick={() => onConfirm(item.id, pos.value)}
-                  disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyConfirmed || isBananaBlocked}
-                  className={`w-full rounded-lg p-1.5 text-[10px] font-bold transition-all active:scale-[0.97] shadow-sm ${
-                    isBananaBlocked ? "bg-destructive/20 opacity-60" :
-                    alreadyConfirmed ? "bg-muted/20 opacity-40" :
-                    "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
-                  }`}>
-                  {isBananaBlocked ? "🍌" : alreadyConfirmed ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
-                </button>
-              </div>
-            );
-          })}
+        <div className="border-t border-border/30 p-2.5">
+          {/* Interaction buttons */}
+          {hasInteractions && onInteraction && (
+            <div className="mb-2 space-y-1">
+              {interactions!.map((ia: any) => {
+                const alreadyUsed = ia.one_time && moveHistory?.some((m: any) =>
+                  m.target_item_id === ia.item_id && m.action === "look" &&
+                  (m as any).bonus_value === `interact:${ia.action_name}`
+                );
+                return (
+                  <button key={ia.id}
+                    onClick={() => onInteraction(ia)}
+                    disabled={disabled || tokensRemaining < ia.cost || !!alreadyUsed}
+                    className={`w-full rounded-lg p-2.5 text-xs font-medium transition-all active:scale-[0.97] flex items-center gap-2 ${
+                      alreadyUsed ? "bg-muted/20 opacity-40" :
+                      "bg-primary/10 hover:bg-primary/20 border border-primary/20"
+                    }`}>
+                    <span className="text-lg">{ia.action_icon}</span>
+                    <span className="flex-1 text-left">{ia.action_label}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {alreadyUsed ? "✓ fet" : `${ia.cost}🪙`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {/* Position grid */}
+          <div className="grid grid-cols-3 gap-2">
+            {positions.map(pos => {
+              const spotKey = `${item.id}:${pos.value}`;
+              const alreadyLooked = lookedSpots.has(spotKey);
+              const alreadyConfirmed = confirmedSpots.has(spotKey);
+              const isBananaBlocked = bananaBlockedSpot === spotKey;
+              return (
+                <div key={pos.value} className="space-y-1">
+                  <button onClick={() => onLook(item.id, pos.value)}
+                    disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || alreadyConfirmed || isBananaBlocked}
+                    className={`w-full rounded-lg p-2 text-xs transition-colors active:scale-[0.97] font-medium ${
+                      isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
+                      alreadyLooked || alreadyConfirmed ? "bg-muted/20 opacity-40 line-through" :
+                      "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
+                    }`}>
+                    {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
+                    <span className="block text-[9px] text-muted-foreground mt-0.5">
+                      {isBananaBlocked ? "bloquejat" : alreadyLooked || alreadyConfirmed ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                    </span>
+                  </button>
+                  <button onClick={() => onConfirm(item.id, pos.value)}
+                    disabled={disabled || tokensRemaining < TOKEN_COSTS.confirm || alreadyConfirmed || isBananaBlocked}
+                    className={`w-full rounded-lg p-1.5 text-[10px] font-bold transition-all active:scale-[0.97] shadow-sm ${
+                      isBananaBlocked ? "bg-destructive/20 opacity-60" :
+                      alreadyConfirmed ? "bg-muted/20 opacity-40" :
+                      "gradient-accent text-accent-foreground hover:opacity-90 disabled:opacity-30"
+                    }`}>
+                    {isBananaBlocked ? "🍌" : alreadyConfirmed ? "✓" : `🔍 ${TOKEN_COSTS.confirm}🪙`}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
