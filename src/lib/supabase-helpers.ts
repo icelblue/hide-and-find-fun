@@ -1217,6 +1217,35 @@ export async function sendSocialItem(
       } else {
         espiaResult = "🤷 El rival encara no s'ha mogut!";
       }
+    } else if (itemType === "robar_tornavis") {
+      // Steal 1 tornavís from rival
+      const { data: rivalPlayer } = await supabase
+        .from("game_players")
+        .select("id, tools")
+        .eq("game_id", gameId)
+        .eq("user_id", toPlayerId)
+        .single();
+      if (rivalPlayer) {
+        const rivalTools = (rivalPlayer as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+        if (rivalTools.tornavis > 0) {
+          rivalTools.tornavis -= 1;
+          await supabase.from("game_players").update({ tools: rivalTools }).eq("id", rivalPlayer.id);
+          // Add to self
+          const { data: selfPlayer } = await supabase
+            .from("game_players")
+            .select("id, tools")
+            .eq("game_id", gameId)
+            .eq("user_id", fromPlayerId)
+            .single();
+          if (selfPlayer) {
+            const selfTools = (selfPlayer as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+            selfTools.tornavis += 1;
+            await supabase.from("game_players").update({ tools: selfTools }).eq("id", selfPlayer.id);
+          }
+        } else {
+          throw new Error("El rival no té cap tornavís per robar! 🔧");
+        }
+      }
     }
   }
 
