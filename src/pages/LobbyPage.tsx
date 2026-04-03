@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
+import { APP_VERSION } from "@/lib/constants";
 
 const leagueBadge: Record<string, string> = {
   bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎", diamond: "👑",
@@ -350,6 +351,7 @@ export default function LobbyPage() {
           </div>
         )}
       </div>
+      <p className="text-center text-[10px] text-muted-foreground/50 mt-4 pb-2">v{APP_VERSION}</p>
     </div>
   );
 }

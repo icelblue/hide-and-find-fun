@@ -297,6 +297,56 @@ export type Database = {
           },
         ]
       }
+      item_interactions: {
+        Row: {
+          action_icon: string
+          action_label: string
+          action_name: string
+          cost: number
+          display_order: number
+          effect_data: Json
+          effect_type: string
+          id: string
+          item_id: string
+          one_time: boolean
+          requires: Json | null
+        }
+        Insert: {
+          action_icon?: string
+          action_label: string
+          action_name: string
+          cost?: number
+          display_order?: number
+          effect_data?: Json
+          effect_type: string
+          id?: string
+          item_id: string
+          one_time?: boolean
+          requires?: Json | null
+        }
+        Update: {
+          action_icon?: string
+          action_label?: string
+          action_name?: string
+          cost?: number
+          display_order?: number
+          effect_data?: Json
+          effect_type?: string
+          id?: string
+          item_id?: string
+          one_time?: boolean
+          requires?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_interactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           display_order: number
@@ -672,6 +722,7 @@ export type Database = {
           display_order: number
           icon: string
           id: string
+          max_items: number
           name: string
         }
         Insert: {
@@ -679,6 +730,7 @@ export type Database = {
           display_order?: number
           icon: string
           id?: string
+          max_items?: number
           name: string
         }
         Update: {
@@ -686,6 +738,7 @@ export type Database = {
           display_order?: number
           icon?: string
           id?: string
+          max_items?: number
           name?: string
         }
         Relationships: []
