@@ -542,24 +542,21 @@ export async function performMove(
     }
   }
 
-  // Both look and confirm check for bonus (skip hint_yes/hint_no — only keep extra_token)
+  // Random bonus chance on look/confirm (replaces fixed scenario_bonuses)
   if ((action === "look" || action === "confirm") && targetItemId && targetPosition) {
-    const { data: bonus } = await supabase
-      .from("scenario_bonuses").select("*")
-      .eq("item_id", targetItemId).eq("position", targetPosition).maybeSingle();
+    // ~15% chance of finding a bonus token (0.5 or 1.0)
+    const roll = Math.random();
+    if (roll < 0.15) {
+      const bonusAmount = roll < 0.05 ? "1" : "0.5"; // 5% chance of 1 token, 10% chance of 0.5
+      foundBonus = "extra_token";
+      bonusValue = bonusAmount;
+      bonusTokens = parseFloat(bonusAmount);
 
-    if (bonus && bonus.bonus_type === "extra_token") {
-      foundBonus = bonus.bonus_type;
-      bonusValue = bonus.value;
-      bonusTokens = parseFloat(bonus.value ?? "1");
-
-      // Save to inventory
       await supabase.from("player_inventory").insert({
         user_id: playerId, game_id: gameId,
-        item_type: bonus.bonus_type, item_value: bonus.value,
+        item_type: "extra_token", item_value: bonusAmount,
       });
     }
-    // hint_yes / hint_no bonuses are ignored — progressive hints replace them
   }
 
   if (action === "move" && targetScenarioId) {
