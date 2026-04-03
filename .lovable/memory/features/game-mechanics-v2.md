@@ -1,6 +1,6 @@
 ---
 name: Game Mechanics v2
-description: Progressive hints, explored spots tracking, banana blocks 1 spot, smoke bomb 1x/game, espia reveals rival location
+description: Progressive hints, explored spots tracking, banana blocks 1 spot, smoke bomb 1x/game, espia reveals rival location, swap exchanges positions
 type: feature
 ---
 
@@ -17,8 +17,9 @@ type: feature
 ## Social Items (1/day)
 - 🍌 **Plàtan**: Blocks 1 random position button. Unblocks on any other action.
 - 💣 **Bomba de fum**: Moves YOUR hidden object to different position (1x/game). NOT blocked by shield.
-- 🛡️ **Escut**: Protects from next banana ONLY. Deactivates after blocking. Does NOT block smoke bomb or espia.
+- 🛡️ **Escut**: Protects from next banana OR swap. Deactivates after blocking. Does NOT block smoke bomb or espia.
 - 🕵️ **Espia**: Reveals which scenario the rival is currently in. Self-targeted (no notification to rival).
+- 🔄 **Intercanvi**: Swaps your current scenario with the rival's. Blocked by shield.
 - 💡 **Pista personalitzada**: Send a message/bluff to the rival.
 - ~~🔮 Pista falsa~~: REMOVED from game.
 
@@ -34,14 +35,14 @@ type: feature
 - Hide message from the hider is saved in the trophy's custom_message
 
 ## Furniture Positions
-- Some furniture has inner_capacity=0 (can't hide "dins"): Cadira, Llum, Catifa, Quadre, Taula, Tovalloler
+- inner_capacity=0 (can't hide "dins"): Cadira, Llum, Catifa, Quadre, Taula, Tovalloler, Barana, Hamaca, Pedra, Banc, Ordinador
 - UI blocks "dins" position when object size > inner_capacity
 
 ## Bonuses
-- hint_yes / hint_no bonuses DELETED from DB (replaced by progressive hints)
-- extra_token bonuses still work and are fixed per item/position
+- **Random per game**: 15% chance on each look/confirm action to find extra tokens (5% → 1 token, 10% → 0.5 tokens)
+- No longer fixed in scenario_bonuses table
+- hint_yes / hint_no bonuses DELETED from DB
 
 ## Pending Ideas
-- 🔄 **Intercanvi** (proposed new social item): Swap your scenario position with the rival's. Strategic disruption.
-- Random bonus placement per game (currently fixed)
+- Interactive furniture actions (encendre llum → reveal mobles, netejar → see inside, etc.)
 - Database dump export for local development (idempotent migrations + pg_dump)
