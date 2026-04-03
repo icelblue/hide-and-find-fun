@@ -715,7 +715,7 @@ export default function GamePage() {
               </div>
               {bonusAvailable > 0 && !showBonusPicker && (
                 <button
-                  onClick={() => { setBonusAmount(1); setShowBonusPicker(true); }}
+                  onClick={() => { setBonusAmount(Math.min(bonusAvailable, 0.5)); setShowBonusPicker(true); }}
                   className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2.5 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[11px] font-bold"
                   title={`Tens ${bonusAvailable} bonus tokens disponibles`}
                 >
@@ -729,26 +729,29 @@ export default function GamePage() {
                       <p className="text-sm font-bold mb-1 text-center">💰 Afegir bonus tokens</p>
                       <p className="text-[10px] text-muted-foreground text-center mb-4">Quants tokens vols gastar? (Tens {bonusAvailable} disponibles)</p>
                       <div className="flex items-center justify-center gap-4 mb-4">
-                        <button onClick={() => setBonusAmount(Math.max(1, bonusAmount - 1))}
-                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors">−</button>
-                        <span className="text-3xl font-bold min-w-[60px] text-center text-gradient">{bonusAmount}🪙</span>
-                        <button onClick={() => setBonusAmount(Math.min(bonusAvailable, bonusAmount + 1))}
-                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors">+</button>
+                        <button onClick={() => setBonusAmount(Math.max(0.1, Math.round((bonusAmount - 0.1) * 10) / 10))}
+                          disabled={bonusAmount <= 0.1}
+                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">−</button>
+                        <span className="text-3xl font-bold min-w-[70px] text-center text-gradient">{bonusAmount}🪙</span>
+                        <button onClick={() => setBonusAmount(Math.min(bonusAvailable, Math.round((bonusAmount + 0.1) * 10) / 10))}
+                          disabled={bonusAmount >= bonusAvailable}
+                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">+</button>
                       </div>
                       {/* Quick select buttons */}
-                      {bonusAvailable > 2 && (
-                        <div className="flex justify-center gap-2 mb-4">
-                          {[1, Math.ceil(bonusAvailable / 2), bonusAvailable].filter((v, i, a) => a.indexOf(v) === i).map(v => (
-                            <button key={v} onClick={() => setBonusAmount(v)}
-                              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${bonusAmount === v ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
-                              {v}🪙
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      <div className="flex justify-center gap-2 mb-4 flex-wrap">
+                        {[0.1, 0.5, 1, Math.round(bonusAvailable * 10) / 10]
+                          .filter(v => v <= bonusAvailable && v > 0)
+                          .filter((v, i, a) => a.indexOf(v) === i)
+                          .map(v => (
+                          <button key={v} onClick={() => setBonusAmount(v)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${bonusAmount === v ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+                            {v}🪙
+                          </button>
+                        ))}
+                      </div>
                       <div className="flex gap-2">
                         <Button variant="outline" className="flex-1" onClick={() => setShowBonusPicker(false)}>Cancel·lar</Button>
-                        <Button className="flex-1" disabled={actionLoading} onClick={handleRedeemBonus}>
+                        <Button className="flex-1" disabled={actionLoading || bonusAmount > bonusAvailable || bonusAmount <= 0} onClick={handleRedeemBonus}>
                           Afegir {bonusAmount}🪙 ✓
                         </Button>
                       </div>
