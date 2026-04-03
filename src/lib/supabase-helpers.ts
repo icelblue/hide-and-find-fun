@@ -1133,32 +1133,23 @@ export async function sendSocialItem(
   // For espia, we target ourselves (no notification to rival)
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
 
-  await supabase.from("game_social_items").insert({
-    game_id: gameId,
-    from_player_id: fromPlayerId,
-    to_player_id: actualToPlayer,
-    item_type: itemType,
-    message_text: messageText,
-    blocked_by_shield: blocked,
-  });
+  let espiaResult: string | null = null;
+
+  // === APPLY SIDE EFFECTS BEFORE inserting the social item ===
+  // (The insert triggers realtime → loadGame, so DB must be updated first)
 
   await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
-
-  let espiaResult: string | null = null;
 
   if (blocked) {
     // Shield blocked this item — deactivate shield after use
     await supabase.from("game_players").update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
     if (itemType === "shield") {
-      // Shield activates on the SENDER (protects yourself)
       await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
-      // Check if already used this game
       if (fromPlayer.smoke_bomb_used) {
         throw new Error("Ja has usat la bomba de fum en aquesta partida!");
       }
-      // Move YOUR hidden object to a different position
       const { data: self } = await supabase
         .from("game_players")
         .select("hidden_position, id")
@@ -1175,7 +1166,6 @@ export async function sendSocialItem(
           .eq("id", self.id);
       }
     } else if (itemType === "swap") {
-      // Swap positions: sender and rival exchange current_scenario_id
       const { data: sender } = await supabase
         .from("game_players")
         .select("id, current_scenario_id")
@@ -1183,17 +1173,17 @@ export async function sendSocialItem(
         .eq("user_id", fromPlayerId)
         .single();
       if (sender && toPlayer) {
-        await supabase
-          .from("game_players")
-          .update({ current_scenario_id: toPlayer.current_scenario_id })
-          .eq("id", sender.id);
-        await supabase
-          .from("game_players")
-          .update({ current_scenario_id: sender.current_scenario_id })
-          .eq("id", toPlayer.id);
+        // Swap both positions atomically (parallel updates)
+        await Promise.all([
+          supabase.from("game_players")
+            .update({ current_scenario_id: toPlayer.current_scenario_id })
+            .eq("id", sender.id),
+          supabase.from("game_players")
+            .update({ current_scenario_id: sender.current_scenario_id })
+            .eq("id", toPlayer.id),
+        ]);
       }
     } else if (itemType === "espia") {
-      // Reveal rival's current scenario to the sender
       const rivalScenarioId = toPlayer?.current_scenario_id;
       if (rivalScenarioId) {
         const { data: scenario } = await supabase
@@ -1208,6 +1198,16 @@ export async function sendSocialItem(
       }
     }
   }
+
+  // === NOW insert the social item (triggers realtime for the rival) ===
+  await supabase.from("game_social_items").insert({
+    game_id: gameId,
+    from_player_id: fromPlayerId,
+    to_player_id: actualToPlayer,
+    item_type: itemType,
+    message_text: messageText,
+    blocked_by_shield: blocked,
+  });
 
   return { blocked, espiaResult };
 }
