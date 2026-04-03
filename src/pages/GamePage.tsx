@@ -1147,7 +1147,7 @@ export default function GamePage() {
                 <ItemActions key={item.id} item={item} positions={positions}
                   onLook={handleLook}
                   disabled={actionLoading} tokensRemaining={player.tokens_remaining}
-                  lookedSpots={lookedSpots} confirmedSpots={confirmedSpots}
+                  lookedSpots={lookedSpots}
                   bananaBlockedSpot={bananaBlockedSpot}
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
                   onInteraction={handleInteraction}
