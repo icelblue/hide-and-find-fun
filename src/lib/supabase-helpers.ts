@@ -42,17 +42,17 @@ export function getMaterialBlockReason(material: string, environment: string): s
       submergit: "es desfaria 🌊",
       químic: "es disoldria ☣️",
     },
-    Food: {  
-  dirty: "no és higiènic 🗑️",
-  químic: "seria tòxic ☣️",
-  outdoor: "s'ho menjarien els animals 🐾",
-}
+    Food: {
+      dirty: "no és higiènic 🗑️",
+      químic: "seria tòxic ☣️",
+      outdoor: "s'ho menjarien els animals 🐾",
+    },
     glass: {
       hot: "es trencaria amb la calor 🔥",
       frozen: "es trencaria amb el gel 🧊",
       ventós: "es cauria 💨",
       submergit: "✅", // OK actually — glass is fine underwater
-      químic: "✅",    // glass resists chemicals
+      químic: "✅", // glass resists chemicals
     },
     fabric: {
       hot: "es cremaria 🔥",
@@ -181,7 +181,7 @@ export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó"];
 function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = (hash << 5) - hash + str.charCodeAt(i);
     hash |= 0;
   }
   return Math.abs(hash);
@@ -209,20 +209,28 @@ export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<strin
 
 /** Get tag-based actions available for an item given player's tools and game state */
 export function getTagActions(
-  item: any, playerTools: Record<string, number>,
-  gameBreaks: Set<string>, dirtyItems?: Set<string>
+  item: any,
+  playerTools: Record<string, number>,
+  gameBreaks: Set<string>,
+  dirtyItems?: Set<string>,
 ) {
   const tags: string[] = item.tags ?? [];
   const actions: Array<{
-    tag: string; icon: string; label: string; cost: number;
-    requiresTool: ToolType | null; hasTool: boolean; actionKey: string;
+    tag: string;
+    icon: string;
+    label: string;
+    cost: number;
+    requiresTool: ToolType | null;
+    hasTool: boolean;
+    actionKey: string;
   }> = [];
 
   // If broken (by someone in this game), show Arreglar
   if (gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.broken;
     actions.push({
-      tag: "broken", ...cfg,
+      tag: "broken",
+      ...cfg,
       hasTool: (playerTools.tornavis ?? 0) > 0,
       actionKey: `fix:${item.id}`,
     });
@@ -233,7 +241,8 @@ export function getTagActions(
   if (isDirtyThisGame && !gameBreaks.has(`clean:${item.id}`)) {
     const cfg = TAG_ACTIONS.dirty;
     actions.push({
-      tag: "dirty", ...cfg,
+      tag: "dirty",
+      ...cfg,
       hasTool: (playerTools.drap ?? 0) > 0,
       actionKey: `clean:${item.id}`,
     });
@@ -243,7 +252,8 @@ export function getTagActions(
   if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
-      tag: "breakable", ...cfg,
+      tag: "breakable",
+      ...cfg,
       hasTool: (playerTools.martell ?? 0) > 0,
       actionKey: `break:${item.id}`,
     });
@@ -255,10 +265,10 @@ export function getTagActions(
 /** Roll for tool finding (~20% chance on look/confirm) */
 export function rollForTool(): ToolType | null {
   const roll = Math.random();
-  if (roll < 0.20) {
+  if (roll < 0.2) {
     // 5% each: martell, tornavis, drap, llanterna
     if (roll < 0.05) return "martell";
-    if (roll < 0.10) return "tornavis";
+    if (roll < 0.1) return "tornavis";
     if (roll < 0.15) return "drap";
     return "llanterna";
   }
@@ -282,11 +292,13 @@ export function isLightOff(scenarioId: string, allTagMoves: Array<{ bonus_value:
 }
 
 /** Toggle light in a scenario (costs 0.2 tokens, affects both players) */
-export async function toggleLight(
-  gameId: string, playerId: string, scenarioId: string, turnOff: boolean
-) {
+export async function toggleLight(gameId: string, playerId: string, scenarioId: string, turnOff: boolean) {
   const { data: player } = await supabase
-    .from("game_players").select("*").eq("game_id", gameId).eq("user_id", playerId).single();
+    .from("game_players")
+    .select("*")
+    .eq("game_id", gameId)
+    .eq("user_id", playerId)
+    .single();
   if (!player) throw new Error("Jugador no trobat");
 
   const cost = 0.2;
@@ -294,18 +306,23 @@ export async function toggleLight(
   if (tokensRemaining < cost) throw new Error(`No tens prou tokens! Necessites ${cost}`);
 
   const { count } = await supabase
-    .from("game_moves").select("*", { count: "exact", head: true })
-    .eq("game_id", gameId).eq("player_id", playerId);
+    .from("game_moves")
+    .select("*", { count: "exact", head: true })
+    .eq("game_id", gameId)
+    .eq("player_id", playerId);
   const turnNumber = (count ?? 0) + 1;
 
   const newTokens = tokensRemaining - cost;
-  await supabase.from("game_players")
-    .update({ tokens_remaining: newTokens }).eq("id", player.id);
+  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
 
   await supabase.from("game_moves").insert({
-    game_id: gameId, player_id: playerId, turn_number: turnNumber,
-    action: "look" as const, token_cost: cost,
-    target_scenario_id: scenarioId, target_position: "sobre" as const,
+    game_id: gameId,
+    player_id: playerId,
+    turn_number: turnNumber,
+    action: "look" as const,
+    token_cost: cost,
+    target_scenario_id: scenarioId,
+    target_position: "sobre" as const,
     bonus_value: `tag:light_${turnOff ? "off" : "on"}:${scenarioId}`,
   } as any);
 
@@ -325,11 +342,13 @@ export async function toggleLight(
 }
 
 /** Use llanterna in an outdoor scenario to reveal hidden items */
-export async function useLlanterna(
-  gameId: string, playerId: string, scenarioId: string
-) {
+export async function useLlanterna(gameId: string, playerId: string, scenarioId: string) {
   const { data: player } = await supabase
-    .from("game_players").select("*").eq("game_id", gameId).eq("user_id", playerId).single();
+    .from("game_players")
+    .select("*")
+    .eq("game_id", gameId)
+    .eq("user_id", playerId)
+    .single();
   if (!player) throw new Error("Jugador no trobat");
 
   const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
@@ -340,19 +359,24 @@ export async function useLlanterna(
   if (tokensRemaining < cost) throw new Error(`No tens prou tokens! Necessites ${cost}`);
 
   const { count } = await supabase
-    .from("game_moves").select("*", { count: "exact", head: true })
-    .eq("game_id", gameId).eq("player_id", playerId);
+    .from("game_moves")
+    .select("*", { count: "exact", head: true })
+    .eq("game_id", gameId)
+    .eq("player_id", playerId);
   const turnNumber = (count ?? 0) + 1;
 
   const newTokens = tokensRemaining - cost;
-  await supabase.from("game_players")
-    .update({ tokens_remaining: newTokens }).eq("id", player.id);
+  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
 
   // Record as a flashlight action (NOT consumed — reutilitzable)
   await supabase.from("game_moves").insert({
-    game_id: gameId, player_id: playerId, turn_number: turnNumber,
-    action: "look" as const, token_cost: cost,
-    target_scenario_id: scenarioId, target_position: "sobre" as const,
+    game_id: gameId,
+    player_id: playerId,
+    turn_number: turnNumber,
+    action: "look" as const,
+    token_cost: cost,
+    target_scenario_id: scenarioId,
+    target_position: "sobre" as const,
     bonus_value: `tag:flashlight:${scenarioId}`,
   } as any);
 
@@ -361,17 +385,23 @@ export async function useLlanterna(
 
 /** Execute a tag-based action */
 export async function performTagAction(
-  gameId: string, playerId: string, itemId: string, actionKey: string,
-  playerTools: Record<string, number>
+  gameId: string,
+  playerId: string,
+  itemId: string,
+  actionKey: string,
+  playerTools: Record<string, number>,
 ) {
   const { data: player } = await supabase
-    .from("game_players").select("*").eq("game_id", gameId).eq("user_id", playerId).single();
+    .from("game_players")
+    .select("*")
+    .eq("game_id", gameId)
+    .eq("user_id", playerId)
+    .single();
   if (!player) throw new Error("Jugador no trobat");
 
   const [actionType, _itemId] = actionKey.split(":");
-  const cfg = actionType === "clean" ? TAG_ACTIONS.dirty :
-              actionType === "break" ? TAG_ACTIONS.breakable :
-              TAG_ACTIONS.broken;
+  const cfg =
+    actionType === "clean" ? TAG_ACTIONS.dirty : actionType === "break" ? TAG_ACTIONS.breakable : TAG_ACTIONS.broken;
 
   let tokensRemaining = await ensureTokensReset(player);
   if (tokensRemaining < cfg.cost) throw new Error(`No tens prou tokens! Necessites ${cfg.cost}`);
@@ -385,8 +415,10 @@ export async function performTagAction(
 
   // Count turns
   const { count } = await supabase
-    .from("game_moves").select("*", { count: "exact", head: true })
-    .eq("game_id", gameId).eq("player_id", playerId);
+    .from("game_moves")
+    .select("*", { count: "exact", head: true })
+    .eq("game_id", gameId)
+    .eq("player_id", playerId);
   const turnNumber = (count ?? 0) + 1;
 
   // Deduct tokens (tools are NOT consumed — unlimited use within the game)
@@ -398,15 +430,17 @@ export async function performTagAction(
     tornavisSpawned = true;
   }
 
-  await supabase.from("game_players")
-    .update({ tokens_remaining: newTokens })
-    .eq("id", player.id);
+  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
 
   // Record the move (use bonus_value to track the action type)
   await supabase.from("game_moves").insert({
-    game_id: gameId, player_id: playerId, turn_number: turnNumber,
-    action: "look" as const, token_cost: cfg.cost,
-    target_item_id: itemId, target_position: "sobre" as const,
+    game_id: gameId,
+    player_id: playerId,
+    turn_number: turnNumber,
+    action: "look" as const,
+    token_cost: cfg.cost,
+    target_item_id: itemId,
+    target_position: "sobre" as const,
     bonus_value: `tag:${actionKey}`,
   } as any);
 
@@ -415,21 +449,28 @@ export async function performTagAction(
   const bonusChance = actionType === "clean" ? 0.5 : actionType === "break" ? 0.3 : 0.4;
   if (Math.random() < bonusChance) {
     const bonusAmount = Math.random() < 0.3 ? 0.5 : 0.3;
-    await supabase.from("game_players")
-      .update({ tokens_remaining: newTokens + bonusAmount }).eq("id", player.id);
+    await supabase
+      .from("game_players")
+      .update({ tokens_remaining: newTokens + bonusAmount })
+      .eq("id", player.id);
     bonusResult = { amount: bonusAmount };
   }
 
   // If breaking: notify rival via social items mechanism
   if (actionType === "break") {
     const { data: rival } = await supabase
-      .from("game_players").select("user_id, tools")
-      .eq("game_id", gameId).neq("user_id", playerId).single();
+      .from("game_players")
+      .select("user_id, tools")
+      .eq("game_id", gameId)
+      .neq("user_id", playerId)
+      .single();
     if (rival) {
       // Send notification
       const { data: item } = await supabase.from("items").select("name, icon").eq("id", itemId).single();
       await supabase.from("game_social_items").insert({
-        game_id: gameId, from_player_id: playerId, to_player_id: rival.user_id,
+        game_id: gameId,
+        from_player_id: playerId,
+        to_player_id: rival.user_id,
         item_type: "message" as const,
         message_text: `💥 El rival ha trencat ${item?.icon} ${item?.name}!`,
       });
@@ -443,8 +484,7 @@ export async function performTagAction(
     if (toolFound) {
       const currentTools = (player as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
       currentTools[toolFound] = Math.min(3, (currentTools[toolFound] ?? 0) + 1);
-      await supabase.from("game_players")
-        .update({ tools: currentTools }).eq("id", player.id);
+      await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
     }
   }
 
@@ -460,22 +500,13 @@ export async function getObjects() {
 export async function getConnectedScenarios(scenarioId: string) {
   // Query both directions: A→B and B→A
   const [{ data: forward, error: e1 }, { data: reverse, error: e2 }] = await Promise.all([
-    supabase
-      .from("scenario_connections")
-      .select("scenario_b")
-      .eq("scenario_a", scenarioId),
-    supabase
-      .from("scenario_connections")
-      .select("scenario_a")
-      .eq("scenario_b", scenarioId),
+    supabase.from("scenario_connections").select("scenario_b").eq("scenario_a", scenarioId),
+    supabase.from("scenario_connections").select("scenario_a").eq("scenario_b", scenarioId),
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
 
-  const connectedIds = [
-    ...(forward ?? []).map(c => c.scenario_b),
-    ...(reverse ?? []).map(c => c.scenario_a),
-  ];
+  const connectedIds = [...(forward ?? []).map((c) => c.scenario_b), ...(reverse ?? []).map((c) => c.scenario_a)];
   if (connectedIds.length === 0) return [];
 
   const { data: scenarios, error } = await supabase
@@ -496,12 +527,10 @@ export async function createGame(userId: string, invitedUserId?: string) {
   const insertData: any = { code, created_by: userId };
   if (invitedUserId) insertData.invited_user_id = invitedUserId;
 
-  const { data: game, error: gameError } = await supabase
-    .from("games").insert(insertData).select().single();
+  const { data: game, error: gameError } = await supabase.from("games").insert(insertData).select().single();
   if (gameError) throw gameError;
 
-  const { error: playerError } = await supabase
-    .from("game_players").insert({ game_id: game.id, user_id: userId });
+  const { error: playerError } = await supabase.from("game_players").insert({ game_id: game.id, user_id: userId });
   if (playerError) throw playerError;
   return game;
 }
@@ -509,12 +538,15 @@ export async function createGame(userId: string, invitedUserId?: string) {
 export async function joinGame(gameId: string, userId: string) {
   // Check not already joined
   const { data: existing } = await supabase
-    .from("game_players").select("id").eq("game_id", gameId).eq("user_id", userId).maybeSingle();
+    .from("game_players")
+    .select("id")
+    .eq("game_id", gameId)
+    .eq("user_id", userId)
+    .maybeSingle();
   if (existing) throw new Error("Ja ets a aquesta partida!");
 
   // Check game is waiting
-  const { data: game } = await supabase
-    .from("games").select("id, status, invited_user_id").eq("id", gameId).single();
+  const { data: game } = await supabase.from("games").select("id, status, invited_user_id").eq("id", gameId).single();
   if (!game) throw new Error("Partida no trobada");
   if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
 
@@ -525,20 +557,25 @@ export async function joinGame(gameId: string, userId: string) {
 
   // Check game has room
   const { count } = await supabase
-    .from("game_players").select("*", { count: "exact", head: true }).eq("game_id", gameId);
+    .from("game_players")
+    .select("*", { count: "exact", head: true })
+    .eq("game_id", gameId);
   if ((count ?? 0) >= 2) throw new Error("La partida ja està plena!");
 
-  const { error } = await supabase
-    .from("game_players").insert({ game_id: gameId, user_id: userId });
+  const { error } = await supabase.from("game_players").insert({ game_id: gameId, user_id: userId });
   if (error) throw error;
 
-  await supabase.from("games").update({ status: "hiding" as const }).eq("id", gameId);
+  await supabase
+    .from("games")
+    .update({ status: "hiding" as const })
+    .eq("id", gameId);
 }
 
 export async function getAvailableGames(currentUserId: string) {
   // Only show PUBLIC games (no invited_user_id) — challenges are private
   const { data, error } = await supabase
-    .from("games").select("*")
+    .from("games")
+    .select("*")
     .eq("status", "waiting")
     .is("invited_user_id", null)
     .neq("created_by", currentUserId)
@@ -546,12 +583,11 @@ export async function getAvailableGames(currentUserId: string) {
   if (error) throw error;
   if (!data || data.length === 0) return [];
 
-  const creatorIds = [...new Set(data.map(g => g.created_by))];
-  const { data: profiles } = await supabase
-    .from("profiles").select("user_id, display_name").in("user_id", creatorIds);
-  const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
+  const creatorIds = [...new Set(data.map((g) => g.created_by))];
+  const { data: profiles } = await supabase.from("profiles").select("user_id, display_name").in("user_id", creatorIds);
+  const profileMap = new Map(profiles?.map((p) => [p.user_id, p.display_name]) ?? []);
 
-  return data.map(game => ({
+  return data.map((game) => ({
     ...game,
     creator_name: profileMap.get(game.created_by) ?? "Anònim",
   }));
@@ -560,7 +596,8 @@ export async function getAvailableGames(currentUserId: string) {
 export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
   // Try to join an existing public waiting game first
   const { data: available } = await supabase
-    .from("games").select("id")
+    .from("games")
+    .select("id")
     .eq("status", "waiting")
     .neq("created_by", userId)
     .is("invited_user_id", null)
@@ -634,8 +671,8 @@ export async function getMyGames(userId: string) {
   // Combine: convert pending invites to same shape, mark as pending
   const joinedIds = new Set((joined ?? []).map((gp: any) => gp.game_id));
   const pendingFormatted = (pendingInvites ?? [])
-    .filter(g => !joinedIds.has(g.id))
-    .map(g => ({ game_id: g.id, games: g, _pending: true }));
+    .filter((g) => !joinedIds.has(g.id))
+    .map((g) => ({ game_id: g.id, games: g, _pending: true }));
 
   const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
 
@@ -647,39 +684,51 @@ export async function getMyGames(userId: string) {
   let rivalMap = new Map<string, string>();
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase
-      .from("game_players").select("game_id, user_id")
-      .in("game_id", allGameIds).neq("user_id", userId);
-    const rivalUserIds = [...new Set((allPlayers ?? []).map(p => p.user_id))];
+      .from("game_players")
+      .select("game_id, user_id")
+      .in("game_id", allGameIds)
+      .neq("user_id", userId);
+    const rivalUserIds = [...new Set((allPlayers ?? []).map((p) => p.user_id))];
     if (rivalUserIds.length > 0) {
       const { data: rivalProfiles } = await supabase
-        .from("profiles").select("user_id, display_name").in("user_id", rivalUserIds);
-      const rpMap = new Map(rivalProfiles?.map(p => [p.user_id, p.display_name]) ?? []);
-      for (const p of (allPlayers ?? [])) {
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", rivalUserIds);
+      const rpMap = new Map(rivalProfiles?.map((p) => [p.user_id, p.display_name]) ?? []);
+      for (const p of allPlayers ?? []) {
         rivalMap.set(p.game_id, rpMap.get(p.user_id) ?? "Anònim");
       }
     }
   }
 
   // For waiting games with invited_user_id, resolve the invited player's name too
-  const invitedUserIds = [...new Set(
-    all.filter((gp: any) => gp.games.status === "waiting" && gp.games.invited_user_id && gp.games.invited_user_id !== userId)
-      .map((gp: any) => gp.games.invited_user_id)
-  )];
+  const invitedUserIds = [
+    ...new Set(
+      all
+        .filter(
+          (gp: any) => gp.games.status === "waiting" && gp.games.invited_user_id && gp.games.invited_user_id !== userId,
+        )
+        .map((gp: any) => gp.games.invited_user_id),
+    ),
+  ];
   // Also resolve when I'm invited (show who invited me → creator)
   // And when I created & invited someone → show invited person
   let invitedProfileMap = new Map<string, string>();
   if (invitedUserIds.length > 0) {
     const { data: invProfiles } = await supabase
-      .from("profiles").select("user_id, display_name").in("user_id", invitedUserIds);
-    invitedProfileMap = new Map(invProfiles?.map(p => [p.user_id, p.display_name ?? "Anònim"]) ?? []);
+      .from("profiles")
+      .select("user_id, display_name")
+      .in("user_id", invitedUserIds);
+    invitedProfileMap = new Map(invProfiles?.map((p) => [p.user_id, p.display_name ?? "Anònim"]) ?? []);
   }
 
   // Collect all unique user IDs we need profiles for (creators + invited)
   const allProfileIds = [...new Set([...creatorIds, ...invitedUserIds])];
-  const { data: allProfiles } = allProfileIds.length > 0
-    ? await supabase.from("profiles").select("user_id, display_name").in("user_id", allProfileIds)
-    : { data: [] };
-  const profileMap = new Map((allProfiles ?? []).map(p => [p.user_id, p.display_name]));
+  const { data: allProfiles } =
+    allProfileIds.length > 0
+      ? await supabase.from("profiles").select("user_id, display_name").in("user_id", allProfileIds)
+      : { data: [] };
+  const profileMap = new Map((allProfiles ?? []).map((p) => [p.user_id, p.display_name]));
 
   for (const gp of all) {
     const game = (gp as any).games;
@@ -714,9 +763,12 @@ export async function deleteGame(gameId: string) {
 // ============================================
 
 export async function hideObject(
-  gameId: string, userId: string, objectId: string, itemId: string,
+  gameId: string,
+  userId: string,
+  objectId: string,
+  itemId: string,
   position: "sobre" | "sota" | "dins",
-  specialData?: any
+  specialData?: any,
 ) {
   const [{ data: obj }, { data: itm }] = await Promise.all([
     supabase.from("objects").select("size, material").eq("id", objectId).single(),
@@ -741,13 +793,14 @@ export async function hideObject(
   }
 
   const updateData: any = {
-    hidden_object_id: objectId, hidden_item_id: itemId,
-    hidden_position: position, has_hidden: true,
+    hidden_object_id: objectId,
+    hidden_item_id: itemId,
+    hidden_position: position,
+    has_hidden: true,
   };
   if (specialData) updateData.special_data = specialData;
 
-  const { error } = await supabase.from("game_players").update(updateData)
-    .eq("game_id", gameId).eq("user_id", userId);
+  const { error } = await supabase.from("game_players").update(updateData).eq("game_id", gameId).eq("user_id", userId);
   if (error) throw error;
 }
 
@@ -756,54 +809,61 @@ export async function hideObject(
 // ============================================
 
 export async function getObjectSpecial(objectId: string) {
-  const { data } = await supabase
-    .from("object_specials").select("*").eq("object_id", objectId).maybeSingle();
+  const { data } = await supabase.from("object_specials").select("*").eq("object_id", objectId).maybeSingle();
   return data;
 }
 
 export async function autoFixMissingScenario(gameId: string, userId: string, hiddenItemId: string) {
   const scenarios = await getScenarios();
-  const { data: hiddenItem } = await supabase
-    .from("items").select("scenario_id").eq("id", hiddenItemId).single();
-  const available = scenarios.filter(s => s.id !== hiddenItem?.scenario_id);
+  const { data: hiddenItem } = await supabase.from("items").select("scenario_id").eq("id", hiddenItemId).single();
+  const available = scenarios.filter((s) => s.id !== hiddenItem?.scenario_id);
   const random = available[Math.floor(Math.random() * available.length)];
-  await supabase.from("game_players")
+  await supabase
+    .from("game_players")
     .update({ current_scenario_id: random.id })
-    .eq("game_id", gameId).eq("user_id", userId);
+    .eq("game_id", gameId)
+    .eq("user_id", userId);
   return random.id;
 }
 
 export async function checkBothPlayersHidden(gameId: string) {
-  const { data, error } = await supabase
-    .from("game_players").select("has_hidden").eq("game_id", gameId);
+  const { data, error } = await supabase.from("game_players").select("has_hidden").eq("game_id", gameId);
   if (error) throw error;
   // Need exactly 2 players and both must have hidden
-  return data?.length === 2 && data.every(p => p.has_hidden);
+  return data?.length === 2 && data.every((p) => p.has_hidden);
 }
 
 export async function startGame(gameId: string) {
   // Assign starting scenarios to ALL players BEFORE changing status
   const scenarios = await getScenarios();
   const { data: players, error } = await supabase
-    .from("game_players").select("user_id, hidden_item_id, current_scenario_id").eq("game_id", gameId);
+    .from("game_players")
+    .select("user_id, hidden_item_id, current_scenario_id")
+    .eq("game_id", gameId);
   if (error) throw error;
 
   // Only assign scenarios to players who don't have one yet
   for (const player of players) {
     if (player.current_scenario_id) continue; // already assigned (by another call)
     const { data: hiddenItem } = await supabase
-      .from("items").select("scenario_id").eq("id", player.hidden_item_id!).single();
+      .from("items")
+      .select("scenario_id")
+      .eq("id", player.hidden_item_id!)
+      .single();
 
-    const available = scenarios.filter(s => s.id !== hiddenItem?.scenario_id);
+    const available = scenarios.filter((s) => s.id !== hiddenItem?.scenario_id);
     const random = available[Math.floor(Math.random() * available.length)];
 
-    await supabase.from("game_players")
+    await supabase
+      .from("game_players")
       .update({ current_scenario_id: random.id })
-      .eq("game_id", gameId).eq("user_id", player.user_id);
+      .eq("game_id", gameId)
+      .eq("user_id", player.user_id);
   }
 
   // Only transition status if still in hiding (prevents double-transition)
-  await supabase.from("games")
+  await supabase
+    .from("games")
     .update({ status: "playing" as const })
     .eq("id", gameId)
     .in("status", ["hiding", "waiting"]);
@@ -821,9 +881,14 @@ export async function ensureTokensReset(player: any) {
 
   // Daily reset: base 5 tokens only. Bonus tokens are NOT auto-added.
   // Players spend bonus tokens manually via redeemBonusTokens().
-  await supabase.from("game_players").update({
-    tokens_remaining: 5.0, tokens_last_reset: today, social_item_used_today: false,
-  }).eq("id", player.id);
+  await supabase
+    .from("game_players")
+    .update({
+      tokens_remaining: 5.0,
+      tokens_last_reset: today,
+      social_item_used_today: false,
+    })
+    .eq("id", player.id);
 
   return 5.0;
 }
@@ -832,37 +897,51 @@ export async function ensureTokensReset(player: any) {
 export async function redeemBonusTokens(gameId: string, userId: string, amount: number) {
   if (amount <= 0) throw new Error("Has de triar almenys 1 token!");
 
-  const { data: profile } = await supabase
-    .from("profiles").select("bonus_tokens").eq("user_id", userId).single();
+  const { data: profile } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", userId).single();
   const available = profile?.bonus_tokens ?? 0;
   if (available <= 0) throw new Error("No tens bonus tokens disponibles!");
   if (amount > available) throw new Error(`Només tens ${available} bonus tokens!`);
 
   // Add to this game's tokens and track how many bonus were added
   const { data: player } = await supabase
-    .from("game_players").select("id, tokens_remaining, bonus_tokens_added")
-    .eq("game_id", gameId).eq("user_id", userId).single();
+    .from("game_players")
+    .select("id, tokens_remaining, bonus_tokens_added")
+    .eq("game_id", gameId)
+    .eq("user_id", userId)
+    .single();
   if (!player) throw new Error("No ets a aquesta partida!");
 
-  await supabase.from("game_players").update({
-    tokens_remaining: player.tokens_remaining + amount,
-    bonus_tokens_added: (player as any).bonus_tokens_added + amount,
-  }).eq("id", player.id);
+  await supabase
+    .from("game_players")
+    .update({
+      tokens_remaining: player.tokens_remaining + amount,
+      bonus_tokens_added: (player as any).bonus_tokens_added + amount,
+    })
+    .eq("id", player.id);
 
   // Subtract from profile
-  await supabase.from("profiles").update({ bonus_tokens: available - amount }).eq("user_id", userId);
+  await supabase
+    .from("profiles")
+    .update({ bonus_tokens: available - amount })
+    .eq("user_id", userId);
 
   return amount;
 }
 
 export async function performMove(
-  gameId: string, playerId: string,
+  gameId: string,
+  playerId: string,
   action: "move" | "look" | "confirm",
-  targetScenarioId?: string, targetItemId?: string,
-  targetPosition?: "sobre" | "sota" | "dins"
+  targetScenarioId?: string,
+  targetItemId?: string,
+  targetPosition?: "sobre" | "sota" | "dins",
 ) {
   const { data: player, error: playerError } = await supabase
-    .from("game_players").select("*").eq("game_id", gameId).eq("user_id", playerId).single();
+    .from("game_players")
+    .select("*")
+    .eq("game_id", gameId)
+    .eq("user_id", playerId)
+    .single();
   if (playerError) throw playerError;
 
   let tokensRemaining = await ensureTokensReset(player);
@@ -872,8 +951,10 @@ export async function performMove(
   }
 
   const { count } = await supabase
-    .from("game_moves").select("*", { count: "exact", head: true })
-    .eq("game_id", gameId).eq("player_id", playerId);
+    .from("game_moves")
+    .select("*", { count: "exact", head: true })
+    .eq("game_id", gameId)
+    .eq("player_id", playerId);
   const turnNumber = (count ?? 0) + 1;
 
   let foundObject = false;
@@ -884,17 +965,22 @@ export async function performMove(
 
   // Get rival's hidden info for both look and confirm
   const { data: rival } = await supabase
-    .from("game_players").select("hidden_item_id, hidden_position")
-    .eq("game_id", gameId).neq("user_id", playerId).single();
+    .from("game_players")
+    .select("hidden_item_id, hidden_position")
+    .eq("game_id", gameId)
+    .neq("user_id", playerId)
+    .single();
 
   // LOOK: gives progressive hints AND can find the object if correct
   if (action === "look" && targetItemId && targetPosition && rival) {
     // Get the scenario of the rival's hidden item
     const { data: rivalHiddenItem } = await supabase
-      .from("items").select("scenario_id").eq("id", rival.hidden_item_id!).single();
+      .from("items")
+      .select("scenario_id")
+      .eq("id", rival.hidden_item_id!)
+      .single();
     // Get scenario of the item we're looking at
-    const { data: targetItem } = await supabase
-      .from("items").select("scenario_id").eq("id", targetItemId).single();
+    const { data: targetItem } = await supabase.from("items").select("scenario_id").eq("id", targetItemId).single();
 
     if (rivalHiddenItem && targetItem) {
       if (targetItem.scenario_id !== rivalHiddenItem.scenario_id) {
@@ -922,8 +1008,10 @@ export async function performMove(
       bonusTokens = parseFloat(bonusAmount);
 
       await supabase.from("player_inventory").insert({
-        user_id: playerId, game_id: gameId,
-        item_type: "extra_token", item_value: bonusAmount,
+        user_id: playerId,
+        game_id: gameId,
+        item_type: "extra_token",
+        item_value: bonusAmount,
       });
     }
 
@@ -933,8 +1021,7 @@ export async function performMove(
       const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
       if ((currentTools[toolRoll] ?? 0) < 3) {
         currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
-        await supabase.from("game_players")
-          .update({ tools: currentTools }).eq("id", player.id);
+        await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
         if (!foundBonus) {
           foundBonus = "extra_token"; // reuse field
           bonusValue = `tool:${toolRoll}`;
@@ -947,33 +1034,52 @@ export async function performMove(
     // Validate connection exists
     // Validate connection in either direction
     const [{ data: fwd }, { data: rev }] = await Promise.all([
-      supabase.from("scenario_connections").select("id")
-        .eq("scenario_a", player.current_scenario_id).eq("scenario_b", targetScenarioId).maybeSingle(),
-      supabase.from("scenario_connections").select("id")
-        .eq("scenario_a", targetScenarioId).eq("scenario_b", player.current_scenario_id).maybeSingle(),
+      supabase
+        .from("scenario_connections")
+        .select("id")
+        .eq("scenario_a", player.current_scenario_id)
+        .eq("scenario_b", targetScenarioId)
+        .maybeSingle(),
+      supabase
+        .from("scenario_connections")
+        .select("id")
+        .eq("scenario_a", targetScenarioId)
+        .eq("scenario_b", player.current_scenario_id)
+        .maybeSingle(),
     ]);
     if (!fwd && !rev) throw new Error("No pots anar a aquesta habitació des d'aquí!");
 
-    await supabase.from("game_players")
-      .update({ current_scenario_id: targetScenarioId }).eq("id", player.id);
+    await supabase.from("game_players").update({ current_scenario_id: targetScenarioId }).eq("id", player.id);
   }
 
   const newTokens = tokensRemaining - cost + bonusTokens;
-  await supabase.from("game_players")
-    .update({ tokens_remaining: newTokens }).eq("id", player.id);
+  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
 
-  const { data: move, error: moveError } = await supabase.from("game_moves").insert({
-    game_id: gameId, player_id: playerId, turn_number: turnNumber,
-    action, token_cost: cost, target_scenario_id: targetScenarioId,
-    target_item_id: targetItemId, target_position: targetPosition,
-    found_object: foundObject, found_bonus: foundBonus as any, bonus_value: bonusValue,
-    hint_level: hintLevel,
-  } as any).select().single();
+  const { data: move, error: moveError } = await supabase
+    .from("game_moves")
+    .insert({
+      game_id: gameId,
+      player_id: playerId,
+      turn_number: turnNumber,
+      action,
+      token_cost: cost,
+      target_scenario_id: targetScenarioId,
+      target_item_id: targetItemId,
+      target_position: targetPosition,
+      found_object: foundObject,
+      found_bonus: foundBonus as any,
+      bonus_value: bonusValue,
+      hint_level: hintLevel,
+    } as any)
+    .select()
+    .single();
   if (moveError) throw moveError;
 
   if (foundObject) {
-    await supabase.from("games")
-      .update({ status: "finished" as const, winner_id: playerId }).eq("id", gameId);
+    await supabase
+      .from("games")
+      .update({ status: "finished" as const, winner_id: playerId })
+      .eq("id", gameId);
   }
 
   return { move, foundObject, foundBonus, bonusValue, tokensRemaining: newTokens, hintLevel };
@@ -995,12 +1101,18 @@ export const SOCIAL_ITEMS = [
 ] as const;
 
 export async function sendSocialItem(
-  gameId: string, fromPlayerId: string, toPlayerId: string,
-  itemType: SocialItemType, messageText?: string
+  gameId: string,
+  fromPlayerId: string,
+  toPlayerId: string,
+  itemType: SocialItemType,
+  messageText?: string,
 ) {
   const { data: fromPlayer } = await supabase
-    .from("game_players").select("social_item_used_today, id, tokens_last_reset, smoke_bomb_used")
-    .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
+    .from("game_players")
+    .select("social_item_used_today, id, tokens_last_reset, smoke_bomb_used")
+    .eq("game_id", gameId)
+    .eq("user_id", fromPlayerId)
+    .single();
   if (!fromPlayer) throw new Error("Jugador no trobat");
 
   const today = new Date().toISOString().split("T")[0];
@@ -1009,8 +1121,11 @@ export async function sendSocialItem(
   }
 
   const { data: toPlayer } = await supabase
-    .from("game_players").select("shield_active, id, current_scenario_id")
-    .eq("game_id", gameId).eq("user_id", toPlayerId).single();
+    .from("game_players")
+    .select("shield_active, id, current_scenario_id")
+    .eq("game_id", gameId)
+    .eq("user_id", toPlayerId)
+    .single();
 
   // Shield blocks banana and swap only (NOT smoke_bomb, shield, espia, or message)
   const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap"));
@@ -1019,24 +1134,25 @@ export async function sendSocialItem(
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
 
   await supabase.from("game_social_items").insert({
-    game_id: gameId, from_player_id: fromPlayerId, to_player_id: actualToPlayer,
-    item_type: itemType, message_text: messageText, blocked_by_shield: blocked,
+    game_id: gameId,
+    from_player_id: fromPlayerId,
+    to_player_id: actualToPlayer,
+    item_type: itemType,
+    message_text: messageText,
+    blocked_by_shield: blocked,
   });
 
-  await supabase.from("game_players")
-    .update({ social_item_used_today: true }).eq("id", fromPlayer.id);
+  await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
 
   let espiaResult: string | null = null;
 
   if (blocked) {
     // Shield blocked this item — deactivate shield after use
-    await supabase.from("game_players")
-      .update({ shield_active: false }).eq("id", toPlayer!.id);
+    await supabase.from("game_players").update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
     if (itemType === "shield") {
       // Shield activates on the SENDER (protects yourself)
-      await supabase.from("game_players")
-        .update({ shield_active: true }).eq("id", fromPlayer.id);
+      await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
       // Check if already used this game
       if (fromPlayer.smoke_bomb_used) {
@@ -1044,33 +1160,47 @@ export async function sendSocialItem(
       }
       // Move YOUR hidden object to a different position
       const { data: self } = await supabase
-        .from("game_players").select("hidden_position, id")
-        .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
+        .from("game_players")
+        .select("hidden_position, id")
+        .eq("game_id", gameId)
+        .eq("user_id", fromPlayerId)
+        .single();
       if (self) {
         const all: ("sobre" | "sota" | "dins")[] = ["sobre", "sota", "dins"];
-        const other = all.filter(p => p !== self.hidden_position);
+        const other = all.filter((p) => p !== self.hidden_position);
         const newPos = other[Math.floor(Math.random() * other.length)];
-        await supabase.from("game_players")
-          .update({ hidden_position: newPos, smoke_bomb_used: true }).eq("id", self.id);
+        await supabase
+          .from("game_players")
+          .update({ hidden_position: newPos, smoke_bomb_used: true })
+          .eq("id", self.id);
       }
     } else if (itemType === "swap") {
       // Swap positions: sender and rival exchange current_scenario_id
       const { data: sender } = await supabase
-        .from("game_players").select("id, current_scenario_id")
-        .eq("game_id", gameId).eq("user_id", fromPlayerId).single();
+        .from("game_players")
+        .select("id, current_scenario_id")
+        .eq("game_id", gameId)
+        .eq("user_id", fromPlayerId)
+        .single();
       if (sender && toPlayer) {
-        await supabase.from("game_players")
-          .update({ current_scenario_id: toPlayer.current_scenario_id }).eq("id", sender.id);
-        await supabase.from("game_players")
-          .update({ current_scenario_id: sender.current_scenario_id }).eq("id", toPlayer.id);
+        await supabase
+          .from("game_players")
+          .update({ current_scenario_id: toPlayer.current_scenario_id })
+          .eq("id", sender.id);
+        await supabase
+          .from("game_players")
+          .update({ current_scenario_id: sender.current_scenario_id })
+          .eq("id", toPlayer.id);
       }
     } else if (itemType === "espia") {
       // Reveal rival's current scenario to the sender
       const rivalScenarioId = toPlayer?.current_scenario_id;
       if (rivalScenarioId) {
         const { data: scenario } = await supabase
-          .from("scenarios").select("name, icon")
-          .eq("id", rivalScenarioId).single();
+          .from("scenarios")
+          .select("name, icon")
+          .eq("id", rivalScenarioId)
+          .single();
         if (scenario) espiaResult = `${scenario.icon} ${scenario.name}`;
         else espiaResult = "📍 Ubicació desconeguda";
       } else {
@@ -1084,17 +1214,19 @@ export async function sendSocialItem(
 
 export async function getUnprocessedSocialItems(gameId: string, playerId: string) {
   const { data, error } = await supabase
-    .from("game_social_items").select("*")
-    .eq("game_id", gameId).eq("to_player_id", playerId)
-    .eq("processed", false).eq("blocked_by_shield", false)
+    .from("game_social_items")
+    .select("*")
+    .eq("game_id", gameId)
+    .eq("to_player_id", playerId)
+    .eq("processed", false)
+    .eq("blocked_by_shield", false)
     .order("created_at", { ascending: true });
   if (error) throw error;
   return data ?? [];
 }
 
 export async function markSocialItemProcessed(itemId: string) {
-  await supabase.from("game_social_items")
-    .update({ processed: true }).eq("id", itemId);
+  await supabase.from("game_social_items").update({ processed: true }).eq("id", itemId);
 }
 
 // ============================================
@@ -1103,15 +1235,18 @@ export async function markSocialItemProcessed(itemId: string) {
 
 export async function getPlayerInventory(userId: string) {
   const { data, error } = await supabase
-    .from("player_inventory").select("*")
-    .eq("user_id", userId).is("gifted_to", null)
+    .from("player_inventory")
+    .select("*")
+    .eq("user_id", userId)
+    .is("gifted_to", null)
     .order("collected_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
 }
 
 export async function giftInventoryItem(itemId: string, toUserId: string) {
-  const { error } = await supabase.from("player_inventory")
+  const { error } = await supabase
+    .from("player_inventory")
     .update({ gifted_to: toUserId, gifted_at: new Date().toISOString() })
     .eq("id", itemId);
   if (error) throw error;
