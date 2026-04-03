@@ -1090,26 +1090,28 @@ export default function GamePage() {
                   </button>
                 )}
                 {isOutdoor && !flashlightUsedHere && (
-                  <button
-                    onClick={handleUseLlanterna}
-                    disabled={actionLoading || player.tokens_remaining < 0.2 || (playerTools.llanterna ?? 0) <= 0}
-                    className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
-                      (playerTools.llanterna ?? 0) > 0
-                        ? "border-yellow-500/30 hover:border-yellow-500/50"
-                        : "opacity-50"
-                    }`}
-                  >
-                    <span className="text-2xl">🔦</span>
-                    <div className="flex-1 text-left">
-                      <div className="text-sm font-semibold">Usar llanterna</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {(playerTools.llanterna ?? 0) > 0
-                          ? "Il·lumina la zona i revela mobles ocults"
-                          : "Necessites una 🔦 Llanterna (es troben explorant)"}
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleUseLlanterna}
+                      disabled={actionLoading || player.tokens_remaining < 0.2 || (playerTools.llanterna ?? 0) <= 0}
+                      className={`w-full rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.97] ${
+                        (playerTools.llanterna ?? 0) > 0
+                          ? "bg-accent/20 border-2 border-accent/50 hover:border-accent/70 shadow-lg animate-pulse"
+                          : "glass opacity-50"
+                      }`}
+                    >
+                      <span className="text-3xl">🔦</span>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-bold">Usar llanterna</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {(playerTools.llanterna ?? 0) > 0
+                            ? "⚡ Il·lumina la zona i revela mobles ocults!"
+                            : "Necessites una 🔦 Llanterna (es troben explorant)"}
+                        </div>
                       </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">0.2🪙</span>
-                  </button>
+                      <span className="text-xs font-semibold text-accent">0.2🪙</span>
+                    </button>
+                  </div>
                 )}
                 {isOutdoor && flashlightUsedHere && (
                   <p className="text-[10px] text-center text-muted-foreground">🔦 Zona il·luminada — mobles ocults revelats</p>
