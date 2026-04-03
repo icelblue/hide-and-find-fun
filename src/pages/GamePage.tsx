@@ -381,6 +381,36 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  const handleTagAction = async (itemId: string, actionKey: string) => {
+    if (!gameId || !user) return;
+    setActionLoading(true);
+    try {
+      const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
+      const [actionType] = actionKey.split(":");
+      const item = currentScenarioItems.find(i => i.id === itemId);
+
+      if (actionType === "clean") {
+        toast.success(`🧹 Has netejat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      } else if (actionType === "break") {
+        toast.success(`💥 Has trencat ${item?.icon} ${item?.name}! El rival ho sabrà... 🔧+1`, { duration: 5000 });
+      } else if (actionType === "fix") {
+        toast.success(`🔧 Has arreglat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      }
+
+      if (result.bonusResult) {
+        toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
+      }
+      if (result.toolFound) {
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+      }
+
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
   const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
     if (!gameId || !user) return;
     setActionLoading(true);
