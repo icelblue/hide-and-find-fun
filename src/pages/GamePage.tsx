@@ -49,6 +49,8 @@ export default function GamePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
+  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 0 });
+  const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
 
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
