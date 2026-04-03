@@ -274,7 +274,7 @@ export async function performTagAction(
       .eq("game_id", gameId).neq("user_id", playerId).single();
     if (rival) {
       // Also give rival a tornavís so they can fix it
-      const rivalTools = (rival.tools as any) ?? { drap: 0, tornavis: 0 };
+      const rivalTools = (rival.tools as any) ?? { drap: 0, tornavis: 0, martell: 0 };
       rivalTools.tornavis = Math.min(3, (rivalTools.tornavis ?? 0) + 1);
       await supabase.from("game_players")
         .update({ tools: rivalTools })
