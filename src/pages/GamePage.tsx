@@ -440,7 +440,40 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
+  const handleToggleLight = async () => {
+    if (!gameId || !user || !player?.current_scenario_id) return;
+    const isOff = lightOffScenarios.has(player.current_scenario_id);
+    setActionLoading(true);
+    try {
+      const result = await toggleLight(gameId, user.id, player.current_scenario_id, !isOff);
+      if (!isOff) {
+        toast.success("🌑 Has apagat el llum! Ningú veu els mobles.", { duration: 4000 });
+      } else {
+        toast.success("💡 Has encès el llum! Tots els mobles visibles.", { duration: 4000 });
+      }
+      if (result.toolFound) {
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+      }
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleUseLlanterna = async () => {
+    if (!gameId || !user || !player?.current_scenario_id) return;
+    setActionLoading(true);
+    try {
+      await useLlanterna(gameId, user.id, player.current_scenario_id);
+      toast.success("🔦 La llanterna il·lumina la zona! Nous mobles revelats!", { duration: 5000 });
+      clearBanana();
+      await loadGame();
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    finally { setActionLoading(false); }
+  };
+
+
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
