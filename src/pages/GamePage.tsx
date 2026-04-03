@@ -473,7 +473,7 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-
+  const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
