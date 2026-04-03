@@ -1181,41 +1181,42 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* History */}
+          {/* History — collapsible, compact on mobile */}
           {moveHistory.length > 0 && (
-            <div>
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">📋 Historial</h3>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
+            <details className="group">
+              <summary className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 cursor-pointer select-none flex items-center gap-1">
+                📋 Historial ({moveHistory.length})
+                <span className="text-[9px] group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 {moveHistory.map(m => {
                   const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
-                  const hintLabels: Record<number, string> = { 0: "fred", 1: "calent", 2: "molt calent!" };
                   const hl = (m as any).hint_level;
                   return (
-                    <div key={m.id} className={`text-[11px] rounded-lg px-3 py-1.5 flex justify-between border border-border/20 ${
+                    <div key={m.id} className={`text-[10px] rounded-md px-2 py-1 flex justify-between items-center border border-border/15 ${
                       hl === 2 ? "bg-orange-500/10 border-orange-500/30" :
                       hl === 1 ? "bg-yellow-500/10 border-yellow-500/20" :
                       hl === 0 ? "bg-blue-500/10 border-blue-500/20" :
-                      "bg-muted/30"
+                      "bg-muted/20"
                     }`}>
-                      <span>
+                      <span className="truncate mr-1">
                         <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
-                        {m.action === "move" && `🚶 → ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
+                        {m.action === "move" && `🚶→ ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
                         {m.action === "look" && (
                           <>
-                            👀 {m.target_position} {(m.items as any)?.icon} {(m.items as any)?.name}
-                            {hl != null && <span className="ml-1 font-semibold">{hintIcons[hl]} {hintLabels[hl]}</span>}
+                            👀 {(m.items as any)?.icon} {m.target_position}
+                            {hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}
                           </>
                         )}
-                        {m.action === "confirm" && `🔍 ${m.target_position} ${(m.items as any)?.icon} ${(m.items as any)?.name}`}
                         {m.found_object && " 🏆"}
                         {m.found_bonus === "extra_token" && " 🎁"}
                       </span>
-                      <span className="text-muted-foreground">-{m.token_cost}🪙</span>
+                      <span className="text-muted-foreground shrink-0">-{m.token_cost}🪙</span>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </details>
           )}
         </div>
       )}
