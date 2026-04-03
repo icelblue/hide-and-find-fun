@@ -5,14 +5,13 @@ type: feature
 ---
 
 ## Actions
-- **Observar (0.3🪙)**: Gives progressive hints only. ❄️ cold (wrong scenario), 🌡️ warm (right scenario wrong item), 🔥 hot (right item wrong position). NEVER finds the object. hint_level stored in game_moves.
-- **Confirmar (1.5🪙)**: The ONLY way to find the object. If correct item+position, player wins.
+- **Observar (0.3🪙)**: Gives progressive hints. ❄️ cold (wrong scenario), 🌡️ warm (right scenario wrong item), 🔥 hot (right item wrong position). **If correct item+position → FINDS the object and wins!** hint_level stored in game_moves (0=cold, 1=warm, 2=hot, 3=found).
 - **Moure (0.5🪙)**: Move to connected scenario.
+- ~~**Confirmar**~~: REMOVED in v1.5.0. Observar now finds the object directly.
 
 ## Explored Spots
-- **Looked spots**: Disable only the look button (can still confirm there)
-- **Confirmed spots**: Disable both look and confirm buttons
-- Critical: after looking and getting 🔥 hot, player MUST be able to confirm there
+- **Looked spots**: Disable the look button (already checked)
+- Critical: only one action per position needed
 
 ## Social Items (1/day)
 - 🍌 **Plàtan**: Blocks 1 random position button. Unblocks on any other action.
@@ -39,10 +38,9 @@ type: feature
 - UI blocks "dins" position when object size > inner_capacity
 
 ## Bonuses
-- **Random per game**: 15% chance on each look/confirm action to find extra tokens (5% → 1 token, 10% → 0.5 tokens)
-- No longer fixed in scenario_bonuses table
-- hint_yes / hint_no bonuses DELETED from DB
+- **Random per game**: 15% chance on each look action to find extra tokens (5% → 1 token, 10% → 0.5 tokens)
+- 20% chance to find tools (drap, martell, tornavís, llanterna)
+- Tools are UNLIMITED within a game (never consumed)
 
-## Pending Ideas
-- Interactive furniture actions (encendre llum → reveal mobles, netejar → see inside, etc.)
-- Database dump export for local development (idempotent migrations + pg_dump)
+## Defeat Reveal
+- When losing, player can see: rival's object, scenario, furniture, position, material, traits, special type, and hide message

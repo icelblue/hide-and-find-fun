@@ -959,7 +959,7 @@ export default function GamePage() {
                 <div className="space-y-1 text-[11px] text-muted-foreground">
                   <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
                   <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
-                  <p>🔍 <strong>Confirma</strong> (1.5🪙) quan creguis saber on és. Si encertes, guanyes!</p>
+                  <p>🎯 Si encertes moble + posició, <strong>trobes l'objecte i guanyes!</strong></p>
                 </div>
               </CardContent>
             </Card>
