@@ -177,6 +177,20 @@ export default function GamePage() {
       ]);
       loadedItems = itemsData;
       setConnectedScenarios(connected);
+      // Compute which items are dirty THIS game (random per game)
+      const gameDirty = getDirtyItemsForGame(itemsData, gameId);
+      setDirtyItems(gameDirty);
+      // Auto-give drap if there are dirty items in this scenario
+      const hasDirtyHere = itemsData.some((i: any) => gameDirty.has(i.id));
+      if (hasDirtyHere && playerData) {
+        const tools = (playerData as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+        if ((tools.drap ?? 0) === 0) {
+          tools.drap = 1;
+          await supabase.from("game_players").update({ tools }).eq("id", playerData.id);
+          playerData.tools = tools;
+          setPlayerTools({ ...tools });
+        }
+      }
       // Load interactions for current scenario items
       loadedInteractions = await getItemInteractions(itemsData.map((i: any) => i.id));
       setItemInteractions(loadedInteractions);
