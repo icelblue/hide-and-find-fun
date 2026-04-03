@@ -674,7 +674,7 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 
 ### 5.6 Bonus aleatoris
 
-> Els bonus ja NO estan fixos per posició. Cada cop que un jugador observa o confirma, hi ha un **15% de probabilitat** de trobar tokens extra (5% → 1 token, 10% → 0.5 tokens).
+> Els bonus ja NO estan fixos per posició. Cada cop que un jugador observa, hi ha un **15% de probabilitat** de trobar tokens extra (5% → 1 token, 10% → 0.5 tokens). A més, 20% de trobar eines (5% cadascuna: martell, tornavís, drap, llanterna).
 
 ### 5.7 Missatge al amagar
 
