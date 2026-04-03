@@ -1,3 +1,10 @@
+// ============================================================
+// NotFound.tsx — Pàgina 404
+// ============================================================
+// Es mostra quan l'usuari navega a una ruta que no existeix.
+// Inclou un botó per tornar al Lobby.
+// ============================================================
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 

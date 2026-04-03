@@ -1,3 +1,17 @@
+// ============================================================
+// AuthPage.tsx — Pàgina de login i registre
+// ============================================================
+// Landing page pública amb:
+//   - Hero amb logo, títol i descripció del joc
+//   - Secció "Com funciona?" amb 3 passos visuals
+//   - Grid de features (deducció, PvP, pistes, Elo)
+//   - Formulari d'autenticació (login/registre toggle)
+//   - Modal de "recuperar contrasenya"
+//
+// L'autenticació és via email+password (Supabase Auth).
+// Al registrar-se, el trigger `handle_new_user()` crea el perfil.
+// ============================================================
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+/** Features destacades del joc per la landing */
 const FEATURES = [
   { icon: "🧩", title: "Deducció pura", desc: "Res de sort. Observa, dedueix i troba!" },
   { icon: "⚔️", title: "PvP en temps real", desc: "Amaga el teu objecte i busca el del rival" },
@@ -13,6 +28,7 @@ const FEATURES = [
   { icon: "🏆", title: "Elo i Lligues", desc: "Puja de Bronze a Diamond amb cada victòria" },
 ];
 
+/** Resum visual del flux de joc en 3 passos */
 const HOW_IT_WORKS = [
   { step: "1", icon: "🫣", text: "Amaga un objecte en un moble d'una habitació" },
   { step: "2", icon: "👀", text: "Observa posicions per rebre pistes (fred/calent/molt calent)" },
@@ -21,14 +37,15 @@ const HOW_IT_WORKS = [
 
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(true);        // Toggle login/registre
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);  // Modal recuperar password
   const [forgotEmail, setForgotEmail] = useState("");
 
+  /** Envia email de recuperació de contrasenya */
   const handleForgotPassword = async () => {
     setLoading(true);
     try {
@@ -45,6 +62,7 @@ export default function AuthPage() {
     }
   };
 
+  /** Gestiona submit del formulari (login o registre) */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -65,7 +83,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* BG effects */}
+      {/* Efectes de fons decoratius (blur radial) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/8 blur-[120px]" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-secondary/8 blur-[120px]" />
@@ -73,7 +91,7 @@ export default function AuthPage() {
       </div>
 
       <div className="relative z-10 max-w-md mx-auto px-4 py-8 space-y-6">
-        {/* Hero */}
+        {/* Hero — Logo + títol */}
         <div className="text-center pt-4">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-xl glow-primary">
             <span className="text-4xl">🔍</span>
@@ -85,7 +103,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* How it works */}
+        {/* Com funciona — 3 passos visuals */}
         <div className="space-y-2">
           <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Com funciona?</h2>
           <div className="flex gap-2">
@@ -98,7 +116,7 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Features */}
+        {/* Grid de features */}
         <div className="grid grid-cols-2 gap-2">
           {FEATURES.map(f => (
             <div key={f.title} className="glass rounded-xl p-3">
@@ -109,10 +127,11 @@ export default function AuthPage() {
           ))}
         </div>
 
-        {/* Auth Form */}
+        {/* Formulari d'autenticació */}
         <Card className="glass glow-primary">
           <CardContent className="pt-5 pb-4">
             <form onSubmit={handleSubmit} className="space-y-3">
+              {/* Camp nom de jugador (només registre) */}
               {!isLogin && (
                 <Input
                   placeholder="Nom de jugador"
@@ -143,6 +162,7 @@ export default function AuthPage() {
                 {loading ? "..." : isLogin ? "Entrar 🎮" : "Crear compte 🚀"}
               </Button>
             </form>
+            {/* Enllaç recuperar contrasenya (només login) */}
             {isLogin && (
               <button
                 type="button"
@@ -152,6 +172,7 @@ export default function AuthPage() {
                 Has oblidat la contrasenya?
               </button>
             )}
+            {/* Toggle login ↔ registre */}
             <button
               onClick={() => setIsLogin(!isLogin)}
               className="mt-3 w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -161,13 +182,13 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        {/* Tagline */}
+        {/* Tagline final */}
         <p className="text-center text-[10px] text-muted-foreground/50">
           🧠 No és qüestió de sort. És qüestió de lògica.
         </p>
       </div>
 
-      {/* Forgot password modal */}
+      {/* Modal recuperar contrasenya */}
       {showForgot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowForgot(false)}>
           <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
