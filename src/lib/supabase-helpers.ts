@@ -1,3 +1,25 @@
+// ============================================================
+// supabase-helpers.ts — Lògica de negoci completa del joc
+// ============================================================
+// Aquest fitxer conté TOTA la lògica client-side:
+//   - Validació material↔entorn
+//   - Fetch de dades (escenaris, ítems, objectes, connexions)
+//   - Sistema de tags i eines (netejar, trencar, arreglar)
+//   - Sistema de llum (indoor) i llanterna (outdoor)
+//   - Cicle de vida de partida (crear, unir, amagar, jugar)
+//   - Moviments i pistes progressives (fred/calent/molt calent)
+//   - Ítems socials (plàtan, bomba, escut, espia, missatge)
+//   - Inventari i regals
+//
+// NOTA: No hi ha API custom — tot passa via Supabase SDK.
+// La seguretat la garanteixen les polítiques RLS a PostgreSQL.
+//
+// Per entendre el flux complet:
+//   1. Crear/unir partida → createGame / joinGame
+//   2. Amagar objecte → hideObject → checkBothPlayersHidden → startGame
+//   3. Buscar → performMove (move/look/confirm)
+//   4. Trobar → status = "finished", trigger actualitza Elo
+// ============================================================
 import { supabase } from "@/integrations/supabase/client";
 
 // ============================================
