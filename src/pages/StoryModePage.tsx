@@ -54,6 +54,7 @@ export default function StoryModePage() {
   const [xpEarned, setXpEarned] = useState(0);
   const [wonConsumable, setWonConsumable] = useState<any>(null);
   const [petDied, setPetDied] = useState(false);
+  const [exploredSpots, setExploredSpots] = useState<Set<string>>(new Set());
 
   const allAccsCollected = useMemo(() => hasAllAccessories(accessories), [accessories]);
 
@@ -134,6 +135,7 @@ export default function StoryModePage() {
     setXpEarned(0);
     setWonConsumable(null);
     setPetDied(false);
+    setExploredSpots(new Set());
 
     const positions = ["sobre", "sota", "dins"] as const;
 
@@ -181,6 +183,8 @@ export default function StoryModePage() {
   };
 
   const handleLook = (itemId: string, position: string) => {
+    const spotKey = `${currentScenarioId}:${itemId}:${position}`;
+    setExploredSpots(prev => new Set(prev).add(spotKey));
     setMovesUsed(m => m + 1);
     if (hiddenSpot && hiddenSpot.itemId === itemId && hiddenSpot.position === position && hiddenSpot.scenarioId === currentScenarioId) {
       handleFound();
@@ -497,22 +501,33 @@ export default function StoryModePage() {
         )}
 
         <div className="space-y-2 relative z-10">
-          {currentItems.filter(i => !i.hidden).map((item: any) => (
-            <Card key={item.id} className="glass">
-              <CardContent className="py-3">
-                <p className="text-sm font-semibold mb-2">{item.icon} {item.name}</p>
-                <div className="flex gap-2">
-                  {positions.map(pos => (
-                    <Button key={pos.value} size="sm" variant="outline"
-                      className="flex-1 text-xs"
-                      onClick={() => handleLook(item.id, pos.value)}>
-                      {pos.icon} {pos.label}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {currentItems.filter(i => !i.hidden).map((item: any) => {
+            const allExplored = positions.every(pos => exploredSpots.has(`${currentScenarioId}:${item.id}:${pos.value}`));
+            return (
+              <Card key={item.id} className={`glass transition-all ${allExplored ? "opacity-40 border-muted-foreground/10" : ""}`}>
+                <CardContent className="py-3">
+                  <p className="text-sm font-semibold mb-2">
+                    {item.icon} {item.name}
+                    {allExplored && <span className="text-[10px] text-muted-foreground ml-1.5">✓ revisat</span>}
+                  </p>
+                  <div className="flex gap-2">
+                    {positions.map(pos => {
+                      const explored = exploredSpots.has(`${currentScenarioId}:${item.id}:${pos.value}`);
+                      return (
+                        <Button key={pos.value} size="sm"
+                          variant={explored ? "ghost" : "outline"}
+                          className={`flex-1 text-xs ${explored ? "opacity-40 line-through" : ""}`}
+                          disabled={explored}
+                          onClick={() => handleLook(item.id, pos.value)}>
+                          {pos.icon} {pos.label}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     );

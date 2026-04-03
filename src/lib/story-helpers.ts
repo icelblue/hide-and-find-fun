@@ -185,7 +185,7 @@ export async function completeChapter(userId: string, chapter: number, movesUsed
       await supabase.from("story_progress").insert({
         user_id: userId,
         chapter: nextChapter,
-        status: "locked",
+        status: "unlocked",
       });
     }
   }
