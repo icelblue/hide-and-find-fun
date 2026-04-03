@@ -1431,14 +1431,13 @@ function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios
   );
 }
 
-function ItemActions({ item, positions, onLook, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
+function ItemActions({ item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
   disabled: boolean;
   tokensRemaining: number;
   lookedSpots: Set<string>;
-  confirmedSpots: Set<string>;
   bananaBlockedSpot: string | null;
   interactions?: any[];
   onInteraction?: (interaction: any) => void;
