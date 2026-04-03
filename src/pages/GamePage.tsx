@@ -418,7 +418,10 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos);
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
-      if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
+      if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
+        const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+      } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
       else {
         // Progressive hints
