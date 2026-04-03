@@ -38,6 +38,7 @@ import {
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
   type ToolType, OUTDOOR_SCENARIOS, isLightOff, toggleLight, useLlanterna,
+  getDirtyItemsForGame,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +75,8 @@ export default function GamePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
-  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 0, martell: 0, llanterna: 0 });
+  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 1, martell: 0, llanterna: 0 });
+  const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
   const [lightOffScenarios, setLightOffScenarios] = useState<Set<string>>(new Set());
   const [flashlightRevealed, setFlashlightRevealed] = useState<Set<string>>(new Set());
@@ -128,7 +130,7 @@ export default function GamePage() {
       }
     }
     setPlayer(playerData);
-    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 });
+    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 });
     // Load available bonus tokens from profile
     if (gameData?.status === "playing") {
       const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
@@ -175,6 +177,20 @@ export default function GamePage() {
       ]);
       loadedItems = itemsData;
       setConnectedScenarios(connected);
+      // Compute which items are dirty THIS game (random per game)
+      const gameDirty = getDirtyItemsForGame(itemsData, gameId);
+      setDirtyItems(gameDirty);
+      // Auto-give drap if there are dirty items in this scenario
+      const hasDirtyHere = itemsData.some((i: any) => gameDirty.has(i.id));
+      if (hasDirtyHere && playerData) {
+        const tools = (playerData as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+        if ((tools.drap ?? 0) === 0) {
+          tools.drap = 1;
+          await supabase.from("game_players").update({ tools }).eq("id", playerData.id);
+          playerData.tools = tools;
+          setPlayerTools({ ...tools });
+        }
+      }
       // Load interactions for current scenario items
       loadedInteractions = await getItemInteractions(itemsData.map((i: any) => i.id));
       setItemInteractions(loadedInteractions);
@@ -1074,26 +1090,28 @@ export default function GamePage() {
                   </button>
                 )}
                 {isOutdoor && !flashlightUsedHere && (
-                  <button
-                    onClick={handleUseLlanterna}
-                    disabled={actionLoading || player.tokens_remaining < 0.2 || (playerTools.llanterna ?? 0) <= 0}
-                    className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
-                      (playerTools.llanterna ?? 0) > 0
-                        ? "border-yellow-500/30 hover:border-yellow-500/50"
-                        : "opacity-50"
-                    }`}
-                  >
-                    <span className="text-2xl">🔦</span>
-                    <div className="flex-1 text-left">
-                      <div className="text-sm font-semibold">Usar llanterna</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {(playerTools.llanterna ?? 0) > 0
-                          ? "Il·lumina la zona i revela mobles ocults"
-                          : "Necessites una 🔦 Llanterna (es troben explorant)"}
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleUseLlanterna}
+                      disabled={actionLoading || player.tokens_remaining < 0.2 || (playerTools.llanterna ?? 0) <= 0}
+                      className={`w-full rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.97] ${
+                        (playerTools.llanterna ?? 0) > 0
+                          ? "bg-accent/20 border-2 border-accent/50 hover:border-accent/70 shadow-lg animate-pulse"
+                          : "glass opacity-50"
+                      }`}
+                    >
+                      <span className="text-3xl">🔦</span>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-bold">Usar llanterna</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {(playerTools.llanterna ?? 0) > 0
+                            ? "⚡ Il·lumina la zona i revela mobles ocults!"
+                            : "Necessites una 🔦 Llanterna (es troben explorant)"}
+                        </div>
                       </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">0.2🪙</span>
-                  </button>
+                      <span className="text-xs font-semibold text-accent">0.2🪙</span>
+                    </button>
+                  </div>
                 )}
                 {isOutdoor && flashlightUsedHere && (
                   <p className="text-[10px] text-center text-muted-foreground">🔦 Zona il·luminada — mobles ocults revelats</p>
@@ -1136,7 +1154,8 @@ export default function GamePage() {
                   moveHistory={moveHistory}
                   playerTools={playerTools}
                   gameBreaks={gameBreaks}
-                  onTagAction={handleTagAction} />
+                  onTagAction={handleTagAction}
+                  dirtyItems={dirtyItems} />
               ))}
             </div>
           </div>
@@ -1281,7 +1300,7 @@ export default function GamePage() {
   );
 }
 
-function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction }: {
+function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemaining, lookedSpots, confirmedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
   item: any;
   positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
   onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
@@ -1297,10 +1316,11 @@ function ItemActions({ item, positions, onLook, onConfirm, disabled, tokensRemai
   playerTools?: Record<string, number>;
   gameBreaks?: Set<string>;
   onTagAction?: (itemId: string, actionKey: string) => void;
+  dirtyItems?: Set<string>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasInteractions = interactions && interactions.length > 0;
-  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set());
+  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
   const hasAnySpecial = hasInteractions || tagActions.length > 0;
   const isBroken = gameBreaks?.has(item.id);
 

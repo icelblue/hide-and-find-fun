@@ -170,8 +170,44 @@ export type ToolType = "drap" | "tornavis" | "martell" | "llanterna";
 // Outdoor scenarios (no light switch, need llanterna)
 export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó"];
 
+/**
+ * Deterministic hash from gameId to decide which items are dirty per game.
+ * Uses a simple string hash so the same game always has the same dirty items.
+ */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Given all items with 'dirty' tag and a gameId, returns a Set of item IDs
+ * that are dirty THIS game (~60% of eligible items, randomized per game).
+ */
+export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<string> {
+  const eligible = allItems.filter((i: any) => (i.tags ?? []).includes("dirty"));
+  const dirtySet = new Set<string>();
+  const seed = hashString(gameId);
+  for (let i = 0; i < eligible.length; i++) {
+    // Use item index + seed to decide
+    const itemSeed = hashString(eligible[i].id + gameId);
+    if (itemSeed % 100 < 60) dirtySet.add(eligible[i].id); // ~60% chance
+  }
+  // Ensure at least 1 dirty item if there are eligible ones
+  if (dirtySet.size === 0 && eligible.length > 0) {
+    dirtySet.add(eligible[seed % eligible.length].id);
+  }
+  return dirtySet;
+}
+
 /** Get tag-based actions available for an item given player's tools and game state */
-export function getTagActions(item: any, playerTools: Record<string, number>, gameBreaks: Set<string>) {
+export function getTagActions(
+  item: any, playerTools: Record<string, number>,
+  gameBreaks: Set<string>, dirtyItems?: Set<string>
+) {
   const tags: string[] = item.tags ?? [];
   const actions: Array<{
     tag: string; icon: string; label: string; cost: number;
@@ -188,8 +224,9 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
     });
   }
 
-  // Dirty → Netejar (only if not already cleaned by this player)
-  if (tags.includes("dirty") && !gameBreaks.has(`clean:${item.id}`)) {
+  // Dirty → Netejar (only if this item is dirty THIS game and not already cleaned)
+  const isDirtyThisGame = dirtyItems ? dirtyItems.has(item.id) : tags.includes("dirty");
+  if (isDirtyThisGame && !gameBreaks.has(`clean:${item.id}`)) {
     const cfg = TAG_ACTIONS.dirty;
     actions.push({
       tag: "dirty", ...cfg,
@@ -198,7 +235,7 @@ export function getTagActions(item: any, playerTools: Record<string, number>, ga
     });
   }
 
-  // Breakable → Trencar (only if not already broken AND has martell)
+  // Breakable → Trencar (only if not already broken)
   if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
@@ -348,25 +385,17 @@ export async function performTagAction(
     .eq("game_id", gameId).eq("player_id", playerId);
   const turnNumber = (count ?? 0) + 1;
 
-  // Deduct tokens
+  // Deduct tokens (tools are NOT consumed — unlimited use within the game)
   const newTokens = tokensRemaining - cfg.cost;
-  const toolsUpdate = { ...playerTools };
 
-  // Consume tool if needed
-  if (toolNeeded) {
-    toolsUpdate[toolNeeded] = Math.max(0, (toolsUpdate[toolNeeded] ?? 0) - 1);
-  }
-
-  // If breaking: tornavís appears in same scenario for everyone
+  // If breaking: no extra tornavís needed since everyone starts with one
   let tornavisSpawned = false;
   if (actionType === "break") {
-    // Spawn tornavís for the breaker
-    toolsUpdate.tornavis = Math.min(3, (toolsUpdate.tornavis ?? 0) + 1);
     tornavisSpawned = true;
   }
 
   await supabase.from("game_players")
-    .update({ tokens_remaining: newTokens, tools: toolsUpdate })
+    .update({ tokens_remaining: newTokens })
     .eq("id", player.id);
 
   // Record the move (use bonus_value to track the action type)
@@ -393,13 +422,6 @@ export async function performTagAction(
       .from("game_players").select("user_id, tools")
       .eq("game_id", gameId).neq("user_id", playerId).single();
     if (rival) {
-      // Also give rival a tornavís so they can fix it
-      const rivalTools = (rival.tools as any) ?? { drap: 0, tornavis: 0, martell: 0 };
-      rivalTools.tornavis = Math.min(3, (rivalTools.tornavis ?? 0) + 1);
-      await supabase.from("game_players")
-        .update({ tools: rivalTools })
-        .eq("game_id", gameId).eq("user_id", rival.user_id);
-
       // Send notification
       const { data: item } = await supabase.from("items").select("name, icon").eq("id", itemId).single();
       await supabase.from("game_social_items").insert({
@@ -415,10 +437,10 @@ export async function performTagAction(
   if (actionType === "clean" || actionType === "fix") {
     toolFound = rollForTool();
     if (toolFound) {
-      const updatedTools = { ...toolsUpdate };
-      updatedTools[toolFound] = Math.min(3, (updatedTools[toolFound] ?? 0) + 1);
+      const currentTools = (player as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+      currentTools[toolFound] = Math.min(3, (currentTools[toolFound] ?? 0) + 1);
       await supabase.from("game_players")
-        .update({ tools: updatedTools }).eq("id", player.id);
+        .update({ tools: currentTools }).eq("id", player.id);
     }
   }
 
