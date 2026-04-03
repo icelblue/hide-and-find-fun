@@ -237,9 +237,23 @@ export default function StoryModePage() {
           </div>
         )}
 
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 relative z-10">
-          📖 Capítols ({completedCount}/{totalChapters})
-        </h2>
+        <div className="flex items-center justify-between mb-3 relative z-10">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            📖 Capítols ({completedCount}/{totalChapters})
+          </h2>
+          <Button variant="ghost" size="sm" className="text-[10px] text-destructive hover:text-destructive h-6 px-2"
+            onClick={async () => {
+              if (!user) return;
+              if (!confirm("Segur que vols reiniciar el Mode Història? Perdràs mascota, progrés i accesoris.")) return;
+              try {
+                await resetPetAndProgress(user.id);
+                toast("Mode Història reiniciat 🔄");
+                loadData();
+              } catch (e: any) { toast.error(e.message); }
+            }}>
+            🔄 Reiniciar
+          </Button>
+        </div>
 
         <div className="space-y-2 relative z-10">
           {renderChapterCard(1, `Troba ${pet?.pet_name ?? "la mascota"}!`,
