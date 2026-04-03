@@ -883,14 +883,7 @@ export async function performMove(
     .from("game_players").select("hidden_item_id, hidden_position")
     .eq("game_id", gameId).neq("user_id", playerId).single();
 
-  // CONFIRM: checks rival's object AND costs more
-  if (action === "confirm" && targetItemId && targetPosition) {
-    if (rival && targetItemId === rival.hidden_item_id && targetPosition === rival.hidden_position) {
-      foundObject = true;
-    }
-  }
-
-  // LOOK: gives progressive hints + checks bonus
+  // LOOK: gives progressive hints AND can find the object if correct
   if (action === "look" && targetItemId && targetPosition && rival) {
     // Get the scenario of the rival's hidden item
     const { data: rivalHiddenItem } = await supabase
@@ -907,7 +900,9 @@ export async function performMove(
       } else if (targetPosition !== rival.hidden_position) {
         hintLevel = 2; // Hot - right item, wrong position!
       } else {
-        hintLevel = 2; // Also hot (but they'd need confirm to actually find it)
+        // FOUND! Correct item + correct position
+        foundObject = true;
+        hintLevel = 3;
       }
     }
   }
