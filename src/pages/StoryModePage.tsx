@@ -291,32 +291,6 @@ export default function StoryModePage() {
     </div>
   );
 
-  // NAMING
-  if (phase === "naming") return (
-    <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
-      <div className="text-center relative z-10 w-full max-w-xs">
-        <div className="text-7xl mb-4">{randomPet.icon}</div>
-        <TypewriterText
-          text="Aquest és el teu company en aquesta aventura. Posa-li nom!"
-          speed={60}
-          className="text-sm text-muted-foreground mb-6"
-        />
-        <Input
-          value={petName}
-          onChange={e => setPetName(e.target.value.slice(0, 20))}
-          placeholder="Nom de la mascota..."
-          maxLength={20}
-          className="text-center text-lg font-bold mb-4"
-          autoFocus
-        />
-        <Button onClick={handleCreatePet} disabled={!petName.trim()} className="w-full" size="lg">
-          Confirmar ✨
-        </Button>
-      </div>
-    </div>
-  );
-
   // HUB
   if (phase === "hub") {
     const totalChapters = 2 + PET_ACCESSORIES.length;
