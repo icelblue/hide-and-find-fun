@@ -13,14 +13,15 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - 🧹 **Netejar** — mobles amb tag `dirty` (Catifa, Cistella, Paperera, Rentadora, Armari mirall)
   - Requereix eina 🧹 Drap, costa 0.2🪙, 50% de trobar mini bonus
 - 💥 **Trencar** — mobles amb tag `breakable` (Vitrina, Llum, Quadre, Armari mirall)
-  - Notifica el rival on ets, costa 0.3🪙, 30% de trobar mini bonus
+  - Requereix eina 🔨 Martell, notifica el rival on ets, costa 0.3🪙, 30% bonus
   - Genera 🔧 Tornavís per AMBDÓS jugadors (fàcil d'arreglar)
 - 🔧 **Arreglar** — mobles trencats per un altre jugador
   - Requereix 🔧 Tornavís, costa 0.2🪙, 40% de trobar mini bonus
 
 ### 🎒 Sistema d'eines
+- 3 eines: 🧹 Drap, 🔨 Martell, 🔧 Tornavís
 - Eines guardades a `game_players.tools` (només duren la partida)
-- 10% de trobar 🧹 Drap o 🔧 Tornavís en accions look/confirm
+- 15% de trobar eines en accions look/confirm (5% cada)
 - Màxim 3 de cada eina
 - Indicador d'eines a la barra d'estat
 
