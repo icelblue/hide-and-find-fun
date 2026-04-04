@@ -424,6 +424,8 @@ export default function LobbyPage() {
                     </div>
                   </CardContent>
                 </Card>
+                {isFinished && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none">→ llisca</div>}
+                </div>
               );
             })}
           </div>
