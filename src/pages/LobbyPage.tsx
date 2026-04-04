@@ -221,7 +221,7 @@ export default function LobbyPage() {
               <button onClick={() => { setMenuOpen(false); navigate("/story"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐾 Mode Història</button>
               <button onClick={() => { setMenuOpen(false); navigate("/profile"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">👤 Perfil</button>
               <button onClick={() => { setMenuOpen(false); setShowBugReport(true); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐛 Reportar bug</button>
-              <HelpButton />
+              <HelpButton variant="menu" />
               <div className="border-t border-border/30 my-1" />
               <button onClick={() => { setMenuOpen(false); signOut(); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2 text-destructive">🚪 Sortir</button>
             </div>
