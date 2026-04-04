@@ -99,6 +99,28 @@ Deno.serve(async () => {
     }
 
     // ─────────────────────────────────────────────
+    // 2b. Finished story games > 1 day — full cleanup (no value keeping them)
+    // ─────────────────────────────────────────────
+    const storyCutoff = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: finishedStory } = await supabase
+      .from("games").select("id")
+      .eq("status", "finished")
+      .eq("is_story", true)
+      .lt("updated_at", storyCutoff);
+
+    const storyIds = (finishedStory ?? []).map(g => g.id);
+    stats.deleted_finished_story_games = storyIds.length;
+
+    if (storyIds.length > 0) {
+      for (let i = 0; i < storyIds.length; i += 100) {
+        const batch = storyIds.slice(i, i + 100);
+        await supabase.from("game_moves").delete().in("game_id", batch);
+        await supabase.from("game_players").delete().in("game_id", batch);
+        await supabase.from("games").delete().in("id", batch);
+      }
+    }
+
+    // ─────────────────────────────────────────────
     // 4. Sold rewards > 30 days
     // ─────────────────────────────────────────────
     const soldCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
