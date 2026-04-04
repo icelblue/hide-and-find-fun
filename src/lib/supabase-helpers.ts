@@ -957,6 +957,7 @@ export async function performMove(
   targetScenarioId?: string,
   targetItemId?: string,
   targetPosition?: "sobre" | "sota" | "dins",
+  isStory?: boolean,
 ) {
   const { data: player, error: playerError } = await supabase
     .from("game_players")
@@ -966,10 +967,14 @@ export async function performMove(
     .single();
   if (playerError) throw playerError;
 
-  let tokensRemaining = await ensureTokensReset(player);
-  const cost = TOKEN_COSTS[action];
-  if (tokensRemaining < cost) {
-    throw new Error(`No tens prou tokens! Necessites ${cost}, tens ${tokensRemaining}`);
+  // Story mode: skip token checks entirely (unlimited moves)
+  let tokensRemaining = player.tokens_remaining;
+  const cost = isStory ? 0 : TOKEN_COSTS[action];
+  if (!isStory) {
+    tokensRemaining = await ensureTokensReset(player);
+    if (tokensRemaining < cost) {
+      throw new Error(`No tens prou tokens! Necessites ${cost}, tens ${tokensRemaining}`);
+    }
   }
 
   const { count } = await supabase
@@ -983,7 +988,7 @@ export async function performMove(
   let foundBonus: string | null = null;
   let bonusValue: string | null = null;
   let bonusTokens = 0;
-  let hintLevel: number | null = null; // 0=cold, 1=warm(right scenario), 2=hot(right item)
+  let hintLevel: number | null = null;
 
   // Get rival's hidden info for both look and confirm
   const { data: rival } = await supabase
@@ -995,36 +1000,32 @@ export async function performMove(
 
   // LOOK: gives progressive hints AND can find the object if correct
   if (action === "look" && targetItemId && targetPosition && rival) {
-    // Get the scenario of the rival's hidden item
     const { data: rivalHiddenItem } = await supabase
       .from("items")
       .select("scenario_id")
       .eq("id", rival.hidden_item_id!)
       .single();
-    // Get scenario of the item we're looking at
     const { data: targetItem } = await supabase.from("items").select("scenario_id").eq("id", targetItemId).single();
 
     if (rivalHiddenItem && targetItem) {
       if (targetItem.scenario_id !== rivalHiddenItem.scenario_id) {
-        hintLevel = 0; // Cold - wrong scenario
+        hintLevel = 0;
       } else if (targetItemId !== rival.hidden_item_id) {
-        hintLevel = 1; // Warm - right scenario, wrong item
+        hintLevel = 1;
       } else if (targetPosition !== rival.hidden_position) {
-        hintLevel = 2; // Hot - right item, wrong position!
+        hintLevel = 2;
       } else {
-        // FOUND! Correct item + correct position
         foundObject = true;
         hintLevel = 3;
       }
     }
   }
 
-  // Random bonus chance on look/confirm (replaces fixed scenario_bonuses)
-  if ((action === "look" || action === "confirm") && targetItemId && targetPosition) {
-    // ~15% chance of finding a bonus token (0.5 or 1.0)
+  // Random bonus chance — SKIP in story mode (no inventory/token effects)
+  if (!isStory && (action === "look" || action === "confirm") && targetItemId && targetPosition) {
     const roll = Math.random();
     if (roll < 0.15) {
-      const bonusAmount = roll < 0.05 ? "1" : "0.5"; // 5% chance of 1 token, 10% chance of 0.5
+      const bonusAmount = roll < 0.05 ? "1" : "0.5";
       foundBonus = "extra_token";
       bonusValue = bonusAmount;
       bonusTokens = parseFloat(bonusAmount);
@@ -1037,43 +1038,45 @@ export async function performMove(
       });
     }
 
-    // ~20% chance of finding a tool (shared pool)
     const toolRoll = await rollForTool(gameId);
     if (toolRoll) {
       const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
       currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
       await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
       if (!foundBonus) {
-        foundBonus = "extra_token"; // reuse field
+        foundBonus = "extra_token";
         bonusValue = `tool:${toolRoll}`;
       }
     }
   }
 
   if (action === "move" && targetScenarioId) {
-    // Validate connection exists
-    // Validate connection in either direction
-    const [{ data: fwd }, { data: rev }] = await Promise.all([
-      supabase
-        .from("scenario_connections")
-        .select("id")
-        .eq("scenario_a", player.current_scenario_id)
-        .eq("scenario_b", targetScenarioId)
-        .maybeSingle(),
-      supabase
-        .from("scenario_connections")
-        .select("id")
-        .eq("scenario_a", targetScenarioId)
-        .eq("scenario_b", player.current_scenario_id)
-        .maybeSingle(),
-    ]);
-    if (!fwd && !rev) throw new Error("No pots anar a aquesta habitació des d'aquí!");
+    // Story mode: skip connection validation (allow free movement)
+    if (!isStory) {
+      const [{ data: fwd }, { data: rev }] = await Promise.all([
+        supabase
+          .from("scenario_connections")
+          .select("id")
+          .eq("scenario_a", player.current_scenario_id)
+          .eq("scenario_b", targetScenarioId)
+          .maybeSingle(),
+        supabase
+          .from("scenario_connections")
+          .select("id")
+          .eq("scenario_a", targetScenarioId)
+          .eq("scenario_b", player.current_scenario_id)
+          .maybeSingle(),
+      ]);
+      if (!fwd && !rev) throw new Error("No pots anar a aquesta habitació des d'aquí!");
+    }
 
     await supabase.from("game_players").update({ current_scenario_id: targetScenarioId }).eq("id", player.id);
   }
 
   const newTokens = tokensRemaining - cost + bonusTokens;
-  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
+  if (!isStory) {
+    await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
+  }
 
   const { data: move, error: moveError } = await supabase
     .from("game_moves")
@@ -1096,10 +1099,15 @@ export async function performMove(
   if (moveError) throw moveError;
 
   if (foundObject) {
-    await supabase
-      .from("games")
-      .update({ status: "finished" as const, winner_id: playerId })
-      .eq("id", gameId);
+    // Story mode: use RPC to finish (bypasses RLS for CPU games)
+    if (isStory) {
+      await supabase.rpc("finish_story_game", { _game_id: gameId, _winner_id: playerId });
+    } else {
+      await supabase
+        .from("games")
+        .update({ status: "finished" as const, winner_id: playerId })
+        .eq("id", gameId);
+    }
   }
 
   return { move, foundObject, foundBonus, bonusValue, tokensRemaining: newTokens, hintLevel };
