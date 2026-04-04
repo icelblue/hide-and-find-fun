@@ -30,6 +30,8 @@ import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_VERSION } from "@/lib/constants";
 
+const DISMISSED_GAMES_KEY = "dd_dismissed_games";
+
 const leagueBadge: Record<string, string> = {
   bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎", diamond: "👑",
 };
