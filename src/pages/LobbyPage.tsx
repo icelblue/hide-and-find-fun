@@ -339,7 +339,7 @@ export default function LobbyPage() {
             Les meves partides
           </h2>
           <div className="space-y-2">
-            {myGames.map((gp: any) => {
+            {myGames.filter((gp: any) => !dismissedGames.has(gp.game_id)).map((gp: any) => {
               const game = gp.games;
               const isPending = gp._pending; // Invited but not yet joined
               const statusMap: Record<string, { icon: string; label: string; color: string }> = {
