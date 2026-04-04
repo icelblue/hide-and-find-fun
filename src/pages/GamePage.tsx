@@ -538,7 +538,7 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      const result = await performMove(gameId, user.id, "look", undefined, itemId, pos);
+      const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundObject) {
