@@ -62,7 +62,7 @@ const RULES = [
   },
 ];
 
-export function HelpButton() {
+export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const [open, setOpen] = useState(false);
   const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
 
