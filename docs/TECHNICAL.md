@@ -183,20 +183,23 @@
 │   ├── 📁 pages/
 │   │   ├── 📄 AuthPage.tsx          ← Login / Signup (email + password)
 │   │   ├── 📄 ResetPasswordPage.tsx ← Recuperació de contrasenya
-│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (~421 línies)
+│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (~495 línies)
 │   │   │     · Crear partida / rival aleatori / buscar jugador
 │   │   │     · Unir-se per codi / partides obertes
-│   │   │     · Les meves partides (reptes pendents) / bug report
-│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1550 línies)
-│   │   │     · Fase amagar (4 passos) + missatge opcional
+│   │   │     · Les meves partides + swipe-to-dismiss
+│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1650 línies)
+│   │   │     · Fase amagar (4 passos) + missatge secret (has_hide_message)
 │   │   │     · Ítems socials + pistes progressives
 │   │   │     · Eines, llum, llanterna, mobles bruts
-│   │   │     · Pistes progressives + bonus picker
+│   │   │     · Mode Història: tokens il·limitats, sense bonus/inventari
+│   │   ├── 📄 StoryModePage.tsx     ← 🐾 Mode Història (~332 línies)
+│   │   │     · Adopció mascota + capítols + evolucions
+│   │   │     · CPU rival amb decisions aleatòries
 │   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (~491 línies)
-│   │   │     · Stats, Elo, lliga, recompenses
+│   │   │     · Stats, Elo, lliga, recompenses, mascota
 │   │   │     · Vendre/col·locar mobles, mur, rival favorit
 │   │   ├── 📄 PlayerProfilePage.tsx ← 👥 Perfil d'altri
-│   │   │     · Stats públiques, mur interactiu, repte directe
+│   │   │     · Stats públiques, mur interactiu, repte directe, mascota
 │   │   └── 📄 NotFound.tsx          ← 404 en català
 │   │
 │   ├── 📁 hooks/
@@ -204,17 +207,22 @@
 │   │   └── 📄 use-mobile.tsx        ← Hook per detectar mòbil
 │   │
 │   ├── 📁 lib/
-│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica de negoci (~1250 línies)
+│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica PvP (~1250 línies)
 │   │   │     · DATA: scenarios, items, objects, connections
 │   │   │     · LIFECYCLE: create, join, delete, available, myGames
 │   │   │     · MATCHMAKING: findRandom, search, challenge
 │   │   │     · HIDING: hideObject, checkBothHidden, startGame
 │   │   │     · TAGS: getTagActions, performTagAction, rollForTool
 │   │   │     · LIGHT: toggleLight, isLightOff, useLlanterna
-│   │   │     · SEARCH: performMove, ensureTokensReset, TOKEN_COSTS
+│   │   │     · SEARCH: performMove (isStory flag), TOKEN_COSTS
 │   │   │     · SOCIAL: sendSocialItem, getUnprocessed, markProcessed
 │   │   │     · INVENTORY: getPlayerInventory, giftInventoryItem
 │   │   │     · BONUS: redeemBonusTokens
+│   │   ├── 📄 story-helpers.ts      ← 🐾 Lògica Mode Història (~230 línies)
+│   │   │     · PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES
+│   │   │     · Evolucions (XP → tiers), mort + renaixement
+│   │   │     · CRUD mascota, progrés capítols, accesoris
+│   │   │     · CPU: cpuChooseHidingSpot (random)
 │   │   ├── 📄 reward-helpers.ts     ← Recompenses via Supabase RPC
 │   │   ├── 📄 constants.ts         ← APP_VERSION, constants globals
 │   │   └── 📄 utils.ts             ← cn() per Tailwind merge
@@ -222,6 +230,7 @@
 │   ├── 📁 components/
 │   │   ├── 📄 ErrorBoundary.tsx     ← Error boundary + log a DB
 │   │   ├── 📄 HelpButton.tsx        ← Modal regles + component Tip
+│   │   ├── 📄 TypewriterText.tsx    ← Animació text màquina d'escriure
 │   │   └── 📁 ui/                   ← 40+ shadcn/ui components
 │   │
 │   └── 📁 integrations/supabase/
@@ -231,10 +240,12 @@
 ├── 📁 supabase/
 │   ├── 📄 config.toml               ← Config Supabase (auto-gestionat)
 │   ├── 📁 functions/
-│   │   └── 📁 cleanup-old-games/
-│   │       └── 📄 index.ts          ← Edge fn: neteja automàtica
+│   │   ├── 📁 cleanup-old-games/
+│   │   │   └── 📄 index.ts          ← Edge fn: neteja automàtica
+│   │   └── 📁 backup-database/
+│   │       └── 📄 index.ts          ← Edge fn: backup automàtic
 │   └── 📁 migrations/               ← ⚠️ NO TOCAR — gestionat per Lovable
-│       └── 37 fitxers .sql           ← Esquema complet de la DB
+│       └── 40+ fitxers .sql          ← Esquema complet de la DB
 │
 └── 📁 docs/
     └── 📄 TECHNICAL.md              ← 📘 Aquest document
