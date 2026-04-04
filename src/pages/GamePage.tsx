@@ -453,7 +453,7 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       // Record as a look move to track the interaction
-      await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre");
+      await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
       // Apply effect
       const data = interaction.effect_data as any;
       if (interaction.effect_type === "reveal_items") {
