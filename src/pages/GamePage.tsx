@@ -708,6 +708,16 @@ export default function GamePage() {
             <CardContent className="py-6 text-center">
               <div className="text-5xl mb-3">{objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon ?? "⭐"}</div>
               <p className="font-bold text-lg mb-1">⭐ Objecte especial trobat!</p>
+              {(() => {
+                const sd = rival?.special_data as any;
+                const hm = sd?.hide_message;
+                return hm ? (
+                  <div className="mb-3 p-2 rounded-lg bg-accent/10 border border-accent/30">
+                    <p className="text-[10px] text-muted-foreground mb-1">💌 Missatge secret del rival:</p>
+                    <p className="text-sm italic text-accent-foreground">"{hm}"</p>
+                  </div>
+                ) : null;
+              })()}
               <p className="text-sm text-muted-foreground mb-4">{showSpecialFoundPopup.special.prompt_text}</p>
               <Input value={specialFoundInput} onChange={e => setSpecialFoundInput(e.target.value)}
                 placeholder="Escriu un nom..." maxLength={40} className="text-center bg-muted/50 mb-3" />
@@ -931,7 +941,7 @@ export default function GamePage() {
               <div className="h-3" />
 
               {/* Optional hide message — only for special objects (Foto, Joguina, etc.) */}
-              {objectSpecial && objectSpecial.prompt_on === "hide" && (
+              {objectSpecial && (objectSpecial.prompt_on === "hide" || (objectSpecial as any).has_hide_message) && (
               <Card className="mb-4 glass border-accent/30 glow-accent">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-2 mb-2">

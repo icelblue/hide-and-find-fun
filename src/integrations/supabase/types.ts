@@ -402,6 +402,7 @@ export type Database = {
       }
       object_specials: {
         Row: {
+          has_hide_message: boolean
           id: string
           object_id: string
           prompt_on: string
@@ -410,6 +411,7 @@ export type Database = {
           variants: Json | null
         }
         Insert: {
+          has_hide_message?: boolean
           id?: string
           object_id: string
           prompt_on: string
@@ -418,6 +420,7 @@ export type Database = {
           variants?: Json | null
         }
         Update: {
+          has_hide_message?: boolean
           id?: string
           object_id?: string
           prompt_on?: string
