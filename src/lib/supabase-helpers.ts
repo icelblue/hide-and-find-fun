@@ -677,16 +677,16 @@ export async function getMyInvites(userId: string) {
 }
 
 export async function getMyGames(userId: string) {
-  // 1. Games I'm already a player in
+  // 1. Games I'm already a player in (exclude story mode games)
   const { data: joined } = await supabase
     .from("game_players")
-    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id)")
+    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id, is_story)")
     .eq("user_id", userId);
 
   // 2. Games where I'm invited but haven't joined yet
   const { data: pendingInvites } = await supabase
     .from("games")
-    .select("id, code, status, created_by, created_at, invited_user_id")
+    .select("id, code, status, created_by, created_at, invited_user_id, is_story")
     .eq("status", "waiting")
     .eq("invited_user_id", userId);
 
@@ -696,7 +696,9 @@ export async function getMyGames(userId: string) {
     .filter((g) => !joinedIds.has(g.id))
     .map((g) => ({ game_id: g.id, games: g, _pending: true }));
 
-  const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
+  const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted]
+    // Filter out story mode games
+    .filter((gp: any) => !(gp.games as any).is_story);
 
   // Fetch creator profiles AND rival profiles for all games
   const allGameIds = all.map((gp: any) => gp.game_id);
@@ -733,8 +735,6 @@ export async function getMyGames(userId: string) {
         .map((gp: any) => gp.games.invited_user_id),
     ),
   ];
-  // Also resolve when I'm invited (show who invited me → creator)
-  // And when I created & invited someone → show invited person
   let invitedProfileMap = new Map<string, string>();
   if (invitedUserIds.length > 0) {
     const { data: invProfiles } = await supabase
@@ -755,10 +755,8 @@ export async function getMyGames(userId: string) {
   for (const gp of all) {
     const game = (gp as any).games;
     (gp as any)._creator_name = profileMap.get(game.created_by) ?? "Anònim";
-    // Rival name: from game_players first, then from invited_user_id
     let rivalName = rivalMap.get((gp as any).game_id) ?? null;
     if (!rivalName && game.status === "waiting" && game.invited_user_id) {
-      // If I created it, rival is the invited person; if I'm invited, rival is the creator
       if (game.created_by === userId && game.invited_user_id !== userId) {
         rivalName = profileMap.get(game.invited_user_id) ?? "Anònim";
       }
