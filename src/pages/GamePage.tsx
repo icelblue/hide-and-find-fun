@@ -1055,10 +1055,12 @@ export default function GamePage() {
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Ubicació</span>
                 <div className="font-bold text-lg leading-tight">{currentScenario?.icon} {currentScenario?.name}</div>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Tokens</span>
-                <div className="font-bold text-lg leading-tight text-accent">🪙 {player.tokens_remaining}</div>
-              </div>
+              {!isStory && (
+                <div className="text-right">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Tokens</span>
+                  <div className="font-bold text-lg leading-tight text-accent">🪙 {player.tokens_remaining}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
