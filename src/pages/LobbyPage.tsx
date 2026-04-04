@@ -353,8 +353,31 @@ export default function LobbyPage() {
                 ? { icon: "⚔️", label: `Repte pendent`, color: "text-accent" }
                 : (statusMap[game.status] ?? statusMap.waiting);
 
+              const isFinished = game.status === "finished";
+
               return (
-                <Card key={gp.game_id}
+                <div key={gp.game_id} className="relative overflow-hidden rounded-xl"
+                  onTouchStart={(e) => {
+                    if (!isFinished) return;
+                    const startX = e.touches[0].clientX;
+                    const el = e.currentTarget;
+                    const card = el.firstElementChild as HTMLElement;
+                    const onMove = (ev: TouchEvent) => {
+                      const dx = ev.touches[0].clientX - startX;
+                      if (dx > 0) card.style.transform = `translateX(${dx}px)`;
+                      card.style.opacity = `${Math.max(0, 1 - dx / 200)}`;
+                    };
+                    const onEnd = (ev: TouchEvent) => {
+                      const dx = ev.changedTouches[0].clientX - startX;
+                      if (dx > 100) { dismissGame(game.id); }
+                      else { card.style.transform = ""; card.style.opacity = ""; }
+                      el.removeEventListener("touchmove", onMove);
+                      el.removeEventListener("touchend", onEnd);
+                    };
+                    el.addEventListener("touchmove", onMove, { passive: true });
+                    el.addEventListener("touchend", onEnd);
+                  }}>
+                <Card
                   className={`glass transition-all ${isPending ? "border-accent/40 glow-accent" : "cursor-pointer hover:border-primary/40 hover:glow-primary"}`}
                   onClick={() => !isPending && navigate(`/game/${game.id}`)}>
                   <CardContent className="py-3 flex items-center justify-between">
