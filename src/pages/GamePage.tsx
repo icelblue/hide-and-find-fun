@@ -764,7 +764,7 @@ export default function GamePage() {
           )}
         </div>
         <div className="flex items-center gap-1">
-          {phase === "playing" && (
+          {phase === "playing" && !isStory && (
             <div className="flex items-center gap-1">
               <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
                 <span className="text-xs">🪙</span>
@@ -794,7 +794,6 @@ export default function GamePage() {
                           disabled={bonusAmount >= bonusAvailable}
                           className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">+</button>
                       </div>
-                      {/* Quick select buttons */}
                       <div className="flex justify-center gap-2 mb-4 flex-wrap">
                         {[0.1, 0.5, 1, Math.round(bonusAvailable * 10) / 10]
                           .filter(v => v <= bonusAvailable && v > 0)
