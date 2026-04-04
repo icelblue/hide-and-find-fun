@@ -568,6 +568,87 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 
 <br/>
 
+## 🐾 4.5 Mode Història (single-player)
+
+<br/>
+
+### Taules dedicades
+
+| Taula | Descripció |
+|:------|:-----------|
+| `player_pets` | Mascota del jugador: tipus, nom, icona, XP |
+| `story_progress` | Progrés per capítol: status, moves, best_moves |
+| `pet_accessories` | Accesoris obtinguts per la mascota |
+
+### Aïllament PvP ↔ Història
+
+| Aspecte | PvP | Història |
+|:--------|:---:|:--------:|
+| Elo / Lligues | ✅ | ❌ |
+| Tokens (5/dia) | ✅ | ❌ (99, il·limitats) |
+| Bonus rolls | ✅ | ❌ |
+| Inventory drops | ✅ | ❌ |
+| Recompenses | ✅ | Només XP mascota |
+| Llistat "Les meves partides" | ✅ | ❌ (filtrat `is_story`) |
+
+### Flux del Mode Història
+
+```
+1. Adopció → Obrir regal → Triar nom mascota
+2. Capítol 1: "Troba la mascota" — 1 escenari, sense moure's
+3. Capítol 2: "S'ha escapat!" — 3 escenaris, moviment
+4. Capítol 3+: "Accesoris" — Partida vs CPU (6 accesoris)
+5. Post-accesoris: Consumibles (il·limitat)
+```
+
+### XP i Evolucions
+
+| Tier | XP mínim | Badge |
+|:-----|:--------:|:-----:|
+| Bebè | 0 | 🥚 |
+| Jove | 500 | 🌱 |
+| Adult | 1500 | ⭐ |
+| Veterà | 3000 | 🔥 |
+| Llegendari | 4500 | 👑 |
+| Mort (renaixement) | 5000 | 💀 |
+
+### CPU Rival
+
+- Amaga objecte random en posició random
+- No fa accions actives (simplificat)
+- Moviments inserits via `insert_cpu_move` (SECURITY DEFINER)
+
+### Funcions SQL dedicades
+
+| Funció | Descripció |
+|:-------|:-----------|
+| `create_story_game` | Crea partida amb CPU, escenari random, objecte random |
+| `finish_story_game` | Marca partida com finished (SECURITY DEFINER) |
+| `insert_cpu_move` | Insereix moviment del CPU (verificat per RLS) |
+
+<br/>
+
+---
+
+<br/>
+
+### Objectes especials — has_hide_message
+
+El camp `has_hide_message` a `object_specials` permet que un objecte tingui missatge secret al amagar **independentment** del `prompt_on`:
+
+| Objecte | prompt_on | has_hide_message | Comportament |
+|:--------|:----------|:----------------:|:-------------|
+| Carta ✉️ | hide | ✅ | Missatge obligatori al amagar |
+| Foto 🖼️ | find | ✅ | Missatge al amagar + nom al trobar |
+| Joguina 🧸 | find | ❌ | Només nom al trobar |
+| Cor de vidre ❤️ | find | ❌ | Només text al trobar |
+
+<br/>
+
+---
+
+<br/>
+
 ## 🎮 5. Mecàniques de joc
 
 <br/>
