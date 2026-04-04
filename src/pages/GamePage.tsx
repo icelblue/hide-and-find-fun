@@ -931,7 +931,7 @@ export default function GamePage() {
               <div className="h-3" />
 
               {/* Optional hide message — only for special objects (Foto, Joguina, etc.) */}
-              {objectSpecial && objectSpecial.prompt_on === "hide" && (
+              {objectSpecial && (objectSpecial.prompt_on === "hide" || (objectSpecial as any).has_hide_message) && (
               <Card className="mb-4 glass border-accent/30 glow-accent">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-2 mb-2">
