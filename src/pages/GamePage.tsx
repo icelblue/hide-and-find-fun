@@ -1199,7 +1199,7 @@ export default function GamePage() {
           {!((!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "")) && lightOffScenarios.has(player.current_scenario_id)) && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              👀 Investigar mobles · {TOKEN_COSTS.look}🪙
+              👀 Investigar mobles {!isStory && `· ${TOKEN_COSTS.look}🪙`}
             </h3>
             <Tip>Observa posicions per rebre pistes (❄️/🌡️/🔥). Si encertes moble + posició, trobes l'objecte i guanyes!</Tip>
             {bananaEffect && bananaBlockedSpot && (
