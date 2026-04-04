@@ -294,14 +294,17 @@ src/
 ├── pages/
 │   ├── AuthPage.tsx              ← Login / registre amb email
 │   ├── LobbyPage.tsx             ← Matchmaking: aleatori, codi, reptes, cerca
-│   ├── GamePage.tsx              ← Motor de joc complet (~1550 línies)
+│   ├── GamePage.tsx              ← Motor de joc complet (~1650 línies)
+│   ├── StoryModePage.tsx         ← 🐾 Mode Història (mascota + capítols)
 │   ├── ProfilePage.tsx           ← Perfil: stats, Elo, inventari, mur
 │   ├── PlayerProfilePage.tsx     ← Perfil públic amb mur interactiu
+│   ├── ResetPasswordPage.tsx     ← Recuperació de contrasenya
 │   └── NotFound.tsx              ← 404 en català
 │
 ├── components/
 │   ├── ErrorBoundary.tsx         ← Error boundary + log a DB
 │   ├── HelpButton.tsx            ← Panel flotant amb regles
+│   ├── TypewriterText.tsx        ← Animació text màquina d'escriure
 │   └── ui/                       ← 40+ components shadcn/ui
 │
 ├── hooks/
@@ -309,6 +312,7 @@ src/
 │
 ├── lib/
 │   ├── supabase-helpers.ts       ← ⭐ Lògica core del joc (~1250 línies)
+│   ├── story-helpers.ts          ← 🐾 Lògica Mode Història (~230 línies)
 │   ├── reward-helpers.ts         ← Recompenses via RPC (~93 línies)
 │   └── constants.ts              ← APP_VERSION i constants globals
 │
@@ -318,7 +322,7 @@ supabase/
 ├── functions/
 │   ├── cleanup-old-games/        ← Edge fn: neteja partides >7d
 │   └── backup-database/          ← Edge fn: backup automàtic
-└── migrations/                   ← 37 migracions SQL
+└── migrations/                   ← 40+ migracions SQL
 ```
 
 <br/>
