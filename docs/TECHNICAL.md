@@ -183,20 +183,23 @@
 │   ├── 📁 pages/
 │   │   ├── 📄 AuthPage.tsx          ← Login / Signup (email + password)
 │   │   ├── 📄 ResetPasswordPage.tsx ← Recuperació de contrasenya
-│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (~421 línies)
+│   │   ├── 📄 LobbyPage.tsx         ← 🎯 Matchmaking (~495 línies)
 │   │   │     · Crear partida / rival aleatori / buscar jugador
 │   │   │     · Unir-se per codi / partides obertes
-│   │   │     · Les meves partides (reptes pendents) / bug report
-│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1550 línies)
-│   │   │     · Fase amagar (4 passos) + missatge opcional
+│   │   │     · Les meves partides + swipe-to-dismiss
+│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1650 línies)
+│   │   │     · Fase amagar (4 passos) + missatge secret (has_hide_message)
 │   │   │     · Ítems socials + pistes progressives
 │   │   │     · Eines, llum, llanterna, mobles bruts
-│   │   │     · Pistes progressives + bonus picker
+│   │   │     · Mode Història: tokens il·limitats, sense bonus/inventari
+│   │   ├── 📄 StoryModePage.tsx     ← 🐾 Mode Història (~332 línies)
+│   │   │     · Adopció mascota + capítols + evolucions
+│   │   │     · CPU rival amb decisions aleatòries
 │   │   ├── 📄 ProfilePage.tsx       ← 👤 Perfil propi (~491 línies)
-│   │   │     · Stats, Elo, lliga, recompenses
+│   │   │     · Stats, Elo, lliga, recompenses, mascota
 │   │   │     · Vendre/col·locar mobles, mur, rival favorit
 │   │   ├── 📄 PlayerProfilePage.tsx ← 👥 Perfil d'altri
-│   │   │     · Stats públiques, mur interactiu, repte directe
+│   │   │     · Stats públiques, mur interactiu, repte directe, mascota
 │   │   └── 📄 NotFound.tsx          ← 404 en català
 │   │
 │   ├── 📁 hooks/
@@ -204,17 +207,22 @@
 │   │   └── 📄 use-mobile.tsx        ← Hook per detectar mòbil
 │   │
 │   ├── 📁 lib/
-│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica de negoci (~1250 línies)
+│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica PvP (~1250 línies)
 │   │   │     · DATA: scenarios, items, objects, connections
 │   │   │     · LIFECYCLE: create, join, delete, available, myGames
 │   │   │     · MATCHMAKING: findRandom, search, challenge
 │   │   │     · HIDING: hideObject, checkBothHidden, startGame
 │   │   │     · TAGS: getTagActions, performTagAction, rollForTool
 │   │   │     · LIGHT: toggleLight, isLightOff, useLlanterna
-│   │   │     · SEARCH: performMove, ensureTokensReset, TOKEN_COSTS
+│   │   │     · SEARCH: performMove (isStory flag), TOKEN_COSTS
 │   │   │     · SOCIAL: sendSocialItem, getUnprocessed, markProcessed
 │   │   │     · INVENTORY: getPlayerInventory, giftInventoryItem
 │   │   │     · BONUS: redeemBonusTokens
+│   │   ├── 📄 story-helpers.ts      ← 🐾 Lògica Mode Història (~230 línies)
+│   │   │     · PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES
+│   │   │     · Evolucions (XP → tiers), mort + renaixement
+│   │   │     · CRUD mascota, progrés capítols, accesoris
+│   │   │     · CPU: cpuChooseHidingSpot (random)
 │   │   ├── 📄 reward-helpers.ts     ← Recompenses via Supabase RPC
 │   │   ├── 📄 constants.ts         ← APP_VERSION, constants globals
 │   │   └── 📄 utils.ts             ← cn() per Tailwind merge
@@ -222,6 +230,7 @@
 │   ├── 📁 components/
 │   │   ├── 📄 ErrorBoundary.tsx     ← Error boundary + log a DB
 │   │   ├── 📄 HelpButton.tsx        ← Modal regles + component Tip
+│   │   ├── 📄 TypewriterText.tsx    ← Animació text màquina d'escriure
 │   │   └── 📁 ui/                   ← 40+ shadcn/ui components
 │   │
 │   └── 📁 integrations/supabase/
@@ -231,10 +240,12 @@
 ├── 📁 supabase/
 │   ├── 📄 config.toml               ← Config Supabase (auto-gestionat)
 │   ├── 📁 functions/
-│   │   └── 📁 cleanup-old-games/
-│   │       └── 📄 index.ts          ← Edge fn: neteja automàtica
+│   │   ├── 📁 cleanup-old-games/
+│   │   │   └── 📄 index.ts          ← Edge fn: neteja automàtica
+│   │   └── 📁 backup-database/
+│   │       └── 📄 index.ts          ← Edge fn: backup automàtic
 │   └── 📁 migrations/               ← ⚠️ NO TOCAR — gestionat per Lovable
-│       └── 37 fitxers .sql           ← Esquema complet de la DB
+│       └── 40+ fitxers .sql          ← Esquema complet de la DB
 │
 └── 📁 docs/
     └── 📄 TECHNICAL.md              ← 📘 Aquest document
@@ -550,6 +561,87 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 ```
 
 </details>
+
+<br/>
+
+---
+
+<br/>
+
+## 🐾 4.5 Mode Història (single-player)
+
+<br/>
+
+### Taules dedicades
+
+| Taula | Descripció |
+|:------|:-----------|
+| `player_pets` | Mascota del jugador: tipus, nom, icona, XP |
+| `story_progress` | Progrés per capítol: status, moves, best_moves |
+| `pet_accessories` | Accesoris obtinguts per la mascota |
+
+### Aïllament PvP ↔ Història
+
+| Aspecte | PvP | Història |
+|:--------|:---:|:--------:|
+| Elo / Lligues | ✅ | ❌ |
+| Tokens (5/dia) | ✅ | ❌ (99, il·limitats) |
+| Bonus rolls | ✅ | ❌ |
+| Inventory drops | ✅ | ❌ |
+| Recompenses | ✅ | Només XP mascota |
+| Llistat "Les meves partides" | ✅ | ❌ (filtrat `is_story`) |
+
+### Flux del Mode Història
+
+```
+1. Adopció → Obrir regal → Triar nom mascota
+2. Capítol 1: "Troba la mascota" — 1 escenari, sense moure's
+3. Capítol 2: "S'ha escapat!" — 3 escenaris, moviment
+4. Capítol 3+: "Accesoris" — Partida vs CPU (6 accesoris)
+5. Post-accesoris: Consumibles (il·limitat)
+```
+
+### XP i Evolucions
+
+| Tier | XP mínim | Badge |
+|:-----|:--------:|:-----:|
+| Bebè | 0 | 🥚 |
+| Jove | 500 | 🌱 |
+| Adult | 1500 | ⭐ |
+| Veterà | 3000 | 🔥 |
+| Llegendari | 4500 | 👑 |
+| Mort (renaixement) | 5000 | 💀 |
+
+### CPU Rival
+
+- Amaga objecte random en posició random
+- No fa accions actives (simplificat)
+- Moviments inserits via `insert_cpu_move` (SECURITY DEFINER)
+
+### Funcions SQL dedicades
+
+| Funció | Descripció |
+|:-------|:-----------|
+| `create_story_game` | Crea partida amb CPU, escenari random, objecte random |
+| `finish_story_game` | Marca partida com finished (SECURITY DEFINER) |
+| `insert_cpu_move` | Insereix moviment del CPU (verificat per RLS) |
+
+<br/>
+
+---
+
+<br/>
+
+### Objectes especials — has_hide_message
+
+El camp `has_hide_message` a `object_specials` permet que un objecte tingui missatge secret al amagar **independentment** del `prompt_on`:
+
+| Objecte | prompt_on | has_hide_message | Comportament |
+|:--------|:----------|:----------------:|:-------------|
+| Carta ✉️ | hide | ✅ | Missatge obligatori al amagar |
+| Foto 🖼️ | find | ✅ | Missatge al amagar + nom al trobar |
+| Joguina 🧸 | find | ❌ | Només nom al trobar |
+| Cor de vidre ❤️ | find | ❌ | Només text al trobar |
 
 <br/>
 
