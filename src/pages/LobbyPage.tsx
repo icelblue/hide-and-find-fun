@@ -71,7 +71,6 @@ export default function LobbyPage() {
     try { return new Set(JSON.parse(localStorage.getItem(DISMISSED_GAMES_KEY) || "[]")); }
     catch { return new Set(); }
   });
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on outside click
   useEffect(() => {
