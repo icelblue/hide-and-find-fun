@@ -58,6 +58,7 @@ No és un joc de sort. **És un puzle mental contra un rival humà.**
 | ⚡ **Ítems socials** | Plàtan, bomba de fum, escuts, espia, intercanvi, missatges |
 | 🏆 **Sistema ranked** | Elo + 5 lligues visuals (Bronze → Diamond) |
 | 🎁 **Loot de mobles** | Guanya mobiliari rar que amplia el joc per a tothom |
+| 🐾 **Mode Història** | Tutorial single-player amb mascota virtual i capítols progressius |
 | 💬 **Murs efímers** | Deixa missatges al perfil del rival — desapareixen en 22h |
 | 📱 **Juga des de qualsevol lloc** | Mobile-first, compatible amb tots els navegadors |
 
