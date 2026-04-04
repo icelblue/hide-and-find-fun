@@ -338,9 +338,10 @@ Per a una guia detallada d'arquitectura, base de dades, debugging, instal·laci�
 ### **→ [docs/TECHNICAL.md](docs/TECHNICAL.md)**
 
 Inclou:
-- 📊 Diagrama ER complet amb 16 taules
-- 🔒 Matriu RLS de 17 taules
+- 📊 Diagrama ER complet amb 19 taules (inclou story_progress, player_pets, pet_accessories)
+- 🔒 Matriu RLS de 19 taules
 - 🎮 Mecàniques detallades (amagar, buscar, eines, llum, ítems socials)
+- 🐾 Mode Història: mascota, capítols, XP, evolucions, CPU
 - 💻 Guia d'instal·lació local pas a pas (amb entorn aïllat)
 - 🐳 Desplegament Docker (Dockerfile + docker-compose)
 - 🛠️ Com afegir escenaris, objectes, ítems socials
