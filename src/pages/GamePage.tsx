@@ -426,9 +426,9 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      await performMove(gameId, user.id, "move", scenarioId);
+      await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
       const s = scenarios.find(s => s.id === scenarioId);
-      toast.success(`${s?.icon} ${s?.name} (-${TOKEN_COSTS.move}🪙)`);
+      toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${TOKEN_COSTS.move}🪙)`}`);
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -453,7 +453,7 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       // Record as a look move to track the interaction
-      await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre");
+      await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
       // Apply effect
       const data = interaction.effect_data as any;
       if (interaction.effect_type === "reveal_items") {
@@ -538,7 +538,7 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      const result = await performMove(gameId, user.id, "look", undefined, itemId, pos);
+      const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
       const item = currentScenarioItems.find(i => i.id === itemId);
       const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundObject) {
@@ -764,7 +764,7 @@ export default function GamePage() {
           )}
         </div>
         <div className="flex items-center gap-1">
-          {phase === "playing" && (
+          {phase === "playing" && !isStory && (
             <div className="flex items-center gap-1">
               <div className="flex items-center gap-1.5 gradient-primary px-3 py-1.5 rounded-full shadow-md">
                 <span className="text-xs">🪙</span>
@@ -794,7 +794,6 @@ export default function GamePage() {
                           disabled={bonusAmount >= bonusAvailable}
                           className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">+</button>
                       </div>
-                      {/* Quick select buttons */}
                       <div className="flex justify-center gap-2 mb-4 flex-wrap">
                         {[0.1, 0.5, 1, Math.round(bonusAvailable * 10) / 10]
                           .filter(v => v <= bonusAvailable && v > 0)
@@ -932,7 +931,7 @@ export default function GamePage() {
               <div className="h-3" />
 
               {/* Optional hide message — only for special objects (Foto, Joguina, etc.) */}
-              {objectSpecial && (
+              {objectSpecial && objectSpecial.prompt_on === "hide" && (
               <Card className="mb-4 glass border-accent/30 glow-accent">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -1056,10 +1055,12 @@ export default function GamePage() {
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Ubicació</span>
                 <div className="font-bold text-lg leading-tight">{currentScenario?.icon} {currentScenario?.name}</div>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Tokens</span>
-                <div className="font-bold text-lg leading-tight text-accent">🪙 {player.tokens_remaining}</div>
-              </div>
+              {!isStory && (
+                <div className="text-right">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Tokens</span>
+                  <div className="font-bold text-lg leading-tight text-accent">🪙 {player.tokens_remaining}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -1107,13 +1108,13 @@ export default function GamePage() {
           {/* Move */}
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              🚶 Moure's · {TOKEN_COSTS.move}🪙
+              🚶 Moure's {!isStory && `· ${TOKEN_COSTS.move}🪙`}
             </h3>
             <Tip>Ves a una habitació adjacent (cada sala té 2 portes)</Tip>
             <div className="grid grid-cols-2 gap-1.5 mt-2">
               {connectedScenarios.map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
-                  disabled={actionLoading || player.tokens_remaining < TOKEN_COSTS.move}
+                  disabled={actionLoading || (!isStory && player.tokens_remaining < TOKEN_COSTS.move)}
                   className="glass rounded-xl p-3 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
                   <div className="text-2xl">{s.icon}</div>
                   <div className="text-[11px] leading-tight font-medium mt-1">{s.name}</div>
@@ -1198,7 +1199,7 @@ export default function GamePage() {
           {!((!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "")) && lightOffScenarios.has(player.current_scenario_id)) && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              👀 Investigar mobles · {TOKEN_COSTS.look}🪙
+              👀 Investigar mobles {!isStory && `· ${TOKEN_COSTS.look}🪙`}
             </h3>
             <Tip>Observa posicions per rebre pistes (❄️/🌡️/🔥). Si encertes moble + posició, trobes l'objecte i guanyes!</Tip>
             {bananaEffect && bananaBlockedSpot && (

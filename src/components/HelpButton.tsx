@@ -62,7 +62,7 @@ const RULES = [
   },
 ];
 
-export function HelpButton() {
+export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const [open, setOpen] = useState(false);
   const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
 
@@ -99,15 +99,21 @@ export function HelpButton() {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(true)}
-        className="text-lg"
-        aria-label="Com jugar"
-      >
-        ❓
-      </Button>
+      {variant === "menu" ? (
+        <button onClick={() => setOpen(true)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">
+          ❓ Com jugar
+        </button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(true)}
+          className="text-lg"
+          aria-label="Com jugar"
+        >
+          ❓
+        </Button>
+      )}
 
       {open && (
         <div

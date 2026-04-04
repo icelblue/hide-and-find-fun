@@ -30,6 +30,8 @@ import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_VERSION } from "@/lib/constants";
 
+const DISMISSED_GAMES_KEY = "dd_dismissed_games";
+
 const leagueBadge: Record<string, string> = {
   bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎", diamond: "👑",
 };
@@ -65,6 +67,10 @@ export default function LobbyPage() {
   const [bugMessage, setBugMessage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [dismissedGames, setDismissedGames] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(DISMISSED_GAMES_KEY) || "[]")); }
+    catch { return new Set(); }
+  });
 
   // Close menu on outside click
   useEffect(() => {
@@ -88,6 +94,13 @@ export default function LobbyPage() {
   const invalidateLobby = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["lobby"] });
   }, [queryClient]);
+
+  const dismissGame = (gameId: string) => {
+    const next = new Set(dismissedGames);
+    next.add(gameId);
+    setDismissedGames(next);
+    localStorage.setItem(DISMISSED_GAMES_KEY, JSON.stringify([...next]));
+  };
 
   const handleCreate = async () => {
     if (!user) return;
@@ -215,7 +228,7 @@ export default function LobbyPage() {
               <button onClick={() => { setMenuOpen(false); navigate("/story"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐾 Mode Història</button>
               <button onClick={() => { setMenuOpen(false); navigate("/profile"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">👤 Perfil</button>
               <button onClick={() => { setMenuOpen(false); setShowBugReport(true); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐛 Reportar bug</button>
-              <HelpButton />
+              <HelpButton variant="menu" />
               <div className="border-t border-border/30 my-1" />
               <button onClick={() => { setMenuOpen(false); signOut(); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2 text-destructive">🚪 Sortir</button>
             </div>
@@ -224,7 +237,7 @@ export default function LobbyPage() {
       </div>
 
       {/* Main actions */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-2 gap-2 mb-4">
         <Button onClick={handleRandomMatch} size="lg" disabled={loading} className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">🎲</span>
@@ -235,12 +248,6 @@ export default function LobbyPage() {
           <span className="flex flex-col items-center">
             <span className="text-lg">➕</span>
             <span className="text-xs mt-0.5">Crear partida</span>
-          </span>
-        </Button>
-        <Button onClick={() => navigate("/story")} size="lg" variant="outline" className="h-14 border-accent/40">
-          <span className="flex flex-col items-center">
-            <span className="text-lg">🐾</span>
-            <span className="text-xs mt-0.5">Història</span>
           </span>
         </Button>
       </div>
@@ -332,7 +339,7 @@ export default function LobbyPage() {
             Les meves partides
           </h2>
           <div className="space-y-2">
-            {myGames.map((gp: any) => {
+            {myGames.filter((gp: any) => !dismissedGames.has(gp.game_id)).map((gp: any) => {
               const game = gp.games;
               const isPending = gp._pending; // Invited but not yet joined
               const statusMap: Record<string, { icon: string; label: string; color: string }> = {
@@ -346,8 +353,31 @@ export default function LobbyPage() {
                 ? { icon: "⚔️", label: `Repte pendent`, color: "text-accent" }
                 : (statusMap[game.status] ?? statusMap.waiting);
 
+              const isFinished = game.status === "finished";
+
               return (
-                <Card key={gp.game_id}
+                <div key={gp.game_id} className="relative overflow-hidden rounded-xl"
+                  onTouchStart={(e) => {
+                    if (!isFinished) return;
+                    const startX = e.touches[0].clientX;
+                    const el = e.currentTarget;
+                    const card = el.firstElementChild as HTMLElement;
+                    const onMove = (ev: TouchEvent) => {
+                      const dx = ev.touches[0].clientX - startX;
+                      if (dx > 0) card.style.transform = `translateX(${dx}px)`;
+                      card.style.opacity = `${Math.max(0, 1 - dx / 200)}`;
+                    };
+                    const onEnd = (ev: TouchEvent) => {
+                      const dx = ev.changedTouches[0].clientX - startX;
+                      if (dx > 100) { dismissGame(game.id); }
+                      else { card.style.transform = ""; card.style.opacity = ""; }
+                      el.removeEventListener("touchmove", onMove);
+                      el.removeEventListener("touchend", onEnd);
+                    };
+                    el.addEventListener("touchmove", onMove, { passive: true });
+                    el.addEventListener("touchend", onEnd);
+                  }}>
+                <Card
                   className={`glass transition-all ${isPending ? "border-accent/40 glow-accent" : "cursor-pointer hover:border-primary/40 hover:glow-primary"}`}
                   onClick={() => !isPending && navigate(`/game/${game.id}`)}>
                   <CardContent className="py-3 flex items-center justify-between">
@@ -394,6 +424,8 @@ export default function LobbyPage() {
                     </div>
                   </CardContent>
                 </Card>
+                {isFinished && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none">→ llisca</div>}
+                </div>
               );
             })}
           </div>
