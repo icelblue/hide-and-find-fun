@@ -95,6 +95,13 @@ export default function LobbyPage() {
     queryClient.invalidateQueries({ queryKey: ["lobby"] });
   }, [queryClient]);
 
+  const dismissGame = (gameId: string) => {
+    const next = new Set(dismissedGames);
+    next.add(gameId);
+    setDismissedGames(next);
+    localStorage.setItem(DISMISSED_GAMES_KEY, JSON.stringify([...next]));
+  };
+
   const handleCreate = async () => {
     if (!user) return;
     setLoading(true);
