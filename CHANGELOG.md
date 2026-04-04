@@ -7,6 +7,42 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.7.0] — 2026-04-04 — Mode Història + aïllament PvP 🐾🎮 (MINOR)
+
+### 🐾 Mode Història (single-player)
+- Tutorial progressiu amb mascota virtual (gos/gat/conill/hàmster/tortuga)
+- Adopció: animació d'obrir regal + posar nom a la mascota
+- 3 tipus de capítols: Troba la mascota, S'ha escapat!, Accesoris vs CPU
+- CPU rival amb decisions aleatòries (simplificat)
+- Sistema d'XP: bonus per eficiència de moviments
+- Evolucions: Bebè → Jove → Adult → Veterà → Llegendari → Mort (renaixement)
+- 6 accesoris + 3 consumibles post-accesoris
+
+### 🔒 Aïllament complet PvP ↔ Història
+- Partides del Mode Història NO afecten Elo, lligues ni estadístiques
+- Tokens il·limitats (99) al mode història — UI de tokens oculta
+- No hi ha bonus rolls ni inventory drops en partides de història
+- `handle_game_finished` ignora completament partides `is_story=true`
+- Partides de història excloses del llistat "Les meves partides"
+
+### 🖼️ Foto — missatge secret dual
+- Nou camp `has_hide_message` a `object_specials`
+- La Foto ara permet missatge secret al amagar I nom personalitzat al trobar
+- El missatge del rival es mostra al popup quan trobes l'objecte especial
+
+### 📱 UX Lobby
+- Botó gran "Mode Història" eliminat del grid (resta al menú hamburguesa)
+- Swipe-to-dismiss: partides acabades s'oculten lliscant d'esquerra a dreta
+- Partides ocultes persistides a `localStorage`
+- Menú hamburguesa optimitzat: totes les opcions amb text clar
+
+### 🐛 Correccions
+- Fix FK constraint `game_players.user_id` per permetre CPU virtual
+- Fix missatge secret: només per objectes amb `has_hide_message` o `prompt_on=hide`
+- Menu "Com jugar" amb text visible (era només ❓)
+
+---
+
 ## [1.6.0] — 2026-04-03 — UX mòbil i bonus picker 📱💰 (MINOR)
 
 ### 📱 Panell social millorat
