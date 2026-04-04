@@ -1108,7 +1108,7 @@ export default function GamePage() {
           {/* Move */}
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-              🚶 Moure's · {TOKEN_COSTS.move}🪙
+              🚶 Moure's {!isStory && `· ${TOKEN_COSTS.move}🪙`}
             </h3>
             <Tip>Ves a una habitació adjacent (cada sala té 2 portes)</Tip>
             <div className="grid grid-cols-2 gap-1.5 mt-2">
