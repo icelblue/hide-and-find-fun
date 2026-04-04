@@ -92,7 +92,7 @@ export default function GamePage() {
   const [hideMessage, setHideMessage] = useState("");
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [showConfirmDialog, setShowConfirmDialog] = useState<{ itemId: string; position: "sobre" | "sota" | "dins"; itemName: string } | null>(null);
+  // showConfirmDialog removed — confirm action no longer exists
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
