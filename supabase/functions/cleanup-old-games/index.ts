@@ -21,6 +21,7 @@ Deno.serve(async () => {
       deleted_error_logs: 0,
       fixed_blocked_social_items: 0,
       deleted_old_backups: 0,
+      deleted_finished_story_games: 0,
     };
 
     // ─────────────────────────────────────────────
