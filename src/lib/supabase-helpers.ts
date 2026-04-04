@@ -264,7 +264,7 @@ async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, num
 
   const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0 };
   for (const p of players ?? []) {
-    const t = (p as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
+    const t = (p as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
     // Subtract starting tornavís (1) to count only "found" tornavís
     totals.martell += t.martell ?? 0;
     totals.drap += t.drap ?? 0;
@@ -354,7 +354,7 @@ export async function toggleLight(gameId: string, playerId: string, scenarioId: 
   let toolFound: ToolType | null = null;
   const tool = await rollForTool(gameId);
   if (tool) {
-    const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
+    const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
     tools[tool] = (tools[tool] ?? 0) + 1;
     await supabase.from("game_players").update({ tools }).eq("id", player.id);
     toolFound = tool;
@@ -373,7 +373,7 @@ export async function useLlanterna(gameId: string, playerId: string, scenarioId:
     .single();
   if (!player) throw new Error("Jugador no trobat");
 
-  const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
+  const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
   if ((tools.llanterna ?? 0) <= 0) throw new Error("Necessites una 🔦 Llanterna!");
 
   const cost = 0.2;
@@ -1038,7 +1038,7 @@ export async function performMove(
 
     const toolRoll = await rollForTool(gameId);
     if (toolRoll) {
-      const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 0 };
+      const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
       currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
       await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
       if (!foundBonus) {

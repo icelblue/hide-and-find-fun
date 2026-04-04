@@ -81,7 +81,7 @@ export default function GamePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
-  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 1, martell: 0, llanterna: 0 });
+  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 1, martell: 0, llanterna: 1 });
   const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
   const [lightOffScenarios, setLightOffScenarios] = useState<Set<string>>(new Set());
@@ -141,7 +141,7 @@ export default function GamePage() {
       }
     }
     setPlayer(playerData);
-    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 });
+    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 1 });
     // Load available bonus tokens from profile
     if (gameData?.status === "playing") {
       const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
@@ -195,7 +195,7 @@ export default function GamePage() {
       // Auto-give drap if there are dirty items in this scenario and player has none
       const hasDirtyHere = itemsData.some((i: any) => gameDirty.has(i.id));
       if (hasDirtyHere && playerData) {
-        const tools = (playerData as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+        const tools = (playerData as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 1 };
         if ((tools.drap ?? 0) === 0) {
           tools.drap = 1;
           await supabase.from("game_players").update({ tools }).eq("id", playerData.id);
@@ -349,7 +349,7 @@ export default function GamePage() {
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
     setItems(await getItemsByScenario(id));
-    setHideStep(1);
+    setHideStep(2);
   };
 
   const handleSelectObject = async (objId: string) => {
@@ -358,7 +358,7 @@ export default function GamePage() {
     setObjectSpecial(special);
     setSpecialInput("");
     setSelectedVariant(null);
-    setHideStep(2);
+    setHideStep(1);
   };
 
   const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
@@ -694,7 +694,8 @@ export default function GamePage() {
     </div>;
   }
 
-  const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
+  //const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
+  const hideSteps = ["🎯 Objecte", "📍 Escenari", "🪑 Moble", "📌 Posició"];
 
   return (
     <div className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative">
@@ -871,24 +872,6 @@ export default function GamePage() {
 
           {hideStep === 0 && (
             <div>
-              <h2 className="text-lg font-bold mb-1">On amagues?</h2>
-              <Tip>Tria l'habitació on el rival haurà de buscar. Un bon lloc és on hi ha molts mobles!</Tip>
-              <div className="h-3" />
-              <div className="grid grid-cols-2 gap-2.5">
-                {scenarios.map(s => (
-                  <Card key={s.id} className="cursor-pointer glass hover:border-primary/40 hover:glow-primary transition-all active:scale-[0.97]" onClick={() => handleSelectScenario(s.id)}>
-                    <CardContent className="py-5 text-center">
-                      <div className="text-4xl mb-2">{s.icon}</div>
-                      <div className="text-sm font-semibold">{s.name}</div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {hideStep === 1 && (
-            <div>
               <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
               <Tip>Escull l'objecte que el rival haurà de trobar. ⭐ = objecte especial!</Tip>
               <div className="h-3" />
@@ -902,7 +885,25 @@ export default function GamePage() {
                   </Card>
                 ))}
               </div>
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(0)}>← Canviar escenari</Button>
+            </div>
+          )}
+
+          {hideStep === 1 && (
+            <div>
+              <h2 className="text-lg font-bold mb-1">On amagues?</h2>
+              <Tip>Tria l'habitació on el rival haurà de buscar. Un bon lloc és on hi ha molts mobles!</Tip>
+              <div className="h-3" />
+              <div className="grid grid-cols-2 gap-2.5">
+                {scenarios.map(s => (
+                  <Card key={s.id} className="cursor-pointer glass hover:border-primary/40 hover:glow-primary transition-all active:scale-[0.97]" onClick={() => handleSelectScenario(s.id)}>
+                    <CardContent className="py-5 text-center">
+                      <div className="text-4xl mb-2">{s.icon}</div>
+                      <div className="text-sm font-semibold">{s.name}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(0)}>← Canviar objecte</Button>
             </div>
           )}
 
@@ -930,7 +931,7 @@ export default function GamePage() {
                   );
                 })}
               </div>
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(1)}>← Canviar objecte</Button>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(1)}>← Canviar escenari</Button>
             </div>
           )}
 
