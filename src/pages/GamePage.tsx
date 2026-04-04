@@ -426,9 +426,9 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      await performMove(gameId, user.id, "move", scenarioId);
+      await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
       const s = scenarios.find(s => s.id === scenarioId);
-      toast.success(`${s?.icon} ${s?.name} (-${TOKEN_COSTS.move}🪙)`);
+      toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${TOKEN_COSTS.move}🪙)`}`);
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
