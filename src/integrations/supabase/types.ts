@@ -518,6 +518,33 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_consumables: {
+        Row: {
+          consumable_icon: string
+          consumable_name: string
+          id: string
+          obtained_at: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          consumable_icon: string
+          consumable_name: string
+          id?: string
+          obtained_at?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          consumable_icon?: string
+          consumable_name?: string
+          id?: string
+          obtained_at?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_inventory: {
         Row: {
           collected_at: string
@@ -566,6 +593,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          max_xp: number
           pet_icon: string
           pet_name: string
           pet_type: string
@@ -575,6 +603,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          max_xp?: number
           pet_icon: string
           pet_name: string
           pet_type: string
@@ -584,6 +613,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          max_xp?: number
           pet_icon?: string
           pet_name?: string
           pet_type?: string
