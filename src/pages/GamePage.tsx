@@ -1,26 +1,11 @@
 // ============================================================
-// GamePage.tsx — Motor principal del joc (1384 línies)
+// GamePage.tsx — Motor principal del joc (refactoritzat v1.8)
 // ============================================================
-// Gestiona el cicle complet d'una partida:
-//
-// FASE 1 — WAITING: Mostra codi de partida, permet amagar objecte
-// FASE 2 — HIDING:  Ambdós jugadors amaguen simultàniament
-// FASE 3 — PLAYING: Cerca activa amb moviments, observació, confirmació
-// FASE 4 — FINISHED: Resultats, Elo, recompenses
-//
-// Seccions principals del component:
-//   - State (línies ~29-72): Tots els estats del joc
-//   - loadGame() (~80-271): Càrrega completa de l'estat de partida
-//   - Realtime subscription (~273-286): WebSocket per canvis en viu
-//   - Hiding handlers (~288-354): Selecció escenari→objecte→moble→posició
-//   - Action handlers (~364-599): move, look, confirm, social items
-//   - Render — Waiting/Hiding/Playing/Finished (~625-1257)
-//   - ItemActions component (~1259-1384): Moble expandible amb accions
-//
-// Sistemes integrats:
-//   🪙 Tokens (5/dia + bonus) | 🌡️ Pistes progressives
-//   ⚡ Ítems socials (1/dia)  | 🔦 Llum/Llanterna
-//   🧹🔨🔧 Eines interactives  | 🏆 Trofeus especials
+// Components externalitzats:
+//   - ItemActions → src/components/game/ItemActions.tsx
+//   - GameFinishedPhase → src/components/game/GameFinishedPhase.tsx
+//   - SocialItemsPanel → src/components/game/SocialItemsPanel.tsx
+//   - GamePopups → src/components/game/GamePopups.tsx
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -37,35 +22,43 @@ import {
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason, MATERIAL_LABELS,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
-  type ToolType, OUTDOOR_SCENARIOS, isLightOff, toggleLight, useLlanterna,
-  getDirtyItemsForGame,
+  OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
   completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
 } from "@/lib/story-helpers";
+import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
 
-const CPU_ID = "00000000-0000-0000-0000-000000000001";
+// Extracted components
+import ItemActions from "@/components/game/ItemActions";
+import GameFinishedPhase from "@/components/game/GameFinishedPhase";
+import SocialItemsPanel from "@/components/game/SocialItemsPanel";
+import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker } from "@/components/game/GamePopups";
 
-type Phase = "waiting" | "hiding" | "playing" | "finished";
+const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
 export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Core game state
   const [game, setGame] = useState<any>(null);
   const [player, setPlayer] = useState<any>(null);
   const [rival, setRival] = useState<any>(null);
   const [phase, setPhase] = useState<Phase>("waiting");
 
+  // Data lists
   const [scenarios, setScenarios] = useState<any[]>([]);
   const [objects, setObjects] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
+
+  // Hiding state
   const [selectedScenario, setSelectedScenario] = useState("");
   const [selectedObject, setSelectedObject] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
@@ -74,25 +67,24 @@ export default function GamePage() {
   const [objectSpecial, setObjectSpecial] = useState<any>(null);
   const [specialInput, setSpecialInput] = useState("");
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [hideMessage, setHideMessage] = useState("");
 
+  // Playing state
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
   const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
-  const [revealedItemIds, setRevealedItemIds] = useState<Set<string>>(new Set());
-  const [playerTools, setPlayerTools] = useState<Record<string, number>>({ drap: 0, tornavis: 1, martell: 0, llanterna: 1 });
+  const [playerTools, setPlayerTools] = useState<PlayerTools>(parseTools(null));
   const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
-  const [lightOffScenarios, setLightOffScenarios] = useState<Set<string>>(new Set());
-  const [flashlightRevealed, setFlashlightRevealed] = useState<Set<string>>(new Set());
+  const [illuminatedScenarios, setIlluminatedScenarios] = useState<Set<string>>(new Set());
 
+  // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
-  const [hideMessage, setHideMessage] = useState("");
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  // showConfirmDialog removed — confirm action no longer exists
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
@@ -104,17 +96,14 @@ export default function GamePage() {
   const [bonusAmount, setBonusAmount] = useState(1);
   const [showBonusPicker, setShowBonusPicker] = useState(false);
 
-  // Story mode state
+  // Story mode
   const isStory = !!(game as any)?.is_story;
   const storyChapter = (game as any)?.story_chapter as number | undefined;
   const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: any; consumable?: any } | null>(null);
 
-  const positions = [
-    { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
-    { value: "sota" as const, label: "Sota", icon: "⬇️" },
-    { value: "dins" as const, label: "Dins", icon: "📦" },
-  ];
-
+  // ============================================
+  // LOAD GAME
+  // ============================================
   const loadGame = useCallback(async () => {
     if (!gameId || !user) return;
 
@@ -128,21 +117,19 @@ export default function GamePage() {
     setPhase((gameData?.status as Phase) ?? "waiting");
     setRival(rivalData);
 
-    // Ensure daily token reset on load
     if (playerData && (gameData?.status === "playing" || gameData?.status === "hiding")) {
       const resetTokens = await ensureTokensReset(playerData);
       playerData.tokens_remaining = resetTokens;
       playerData.tokens_last_reset = new Date().toISOString().split("T")[0];
 
-      // Safety: auto-fix missing scenario
       if (gameData?.status === "playing" && !playerData.current_scenario_id && playerData.hidden_item_id) {
         const fixedId = await autoFixMissingScenario(gameId, user.id, playerData.hidden_item_id);
         playerData.current_scenario_id = fixedId;
       }
     }
     setPlayer(playerData);
-    setPlayerTools((playerData as any)?.tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 1 });
-    // Load available bonus tokens from profile
+    setPlayerTools(parseTools(playerData?.tools));
+
     if (gameData?.status === "playing") {
       const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
       setBonusAvailable(prof?.bonus_tokens ?? 0);
@@ -150,7 +137,7 @@ export default function GamePage() {
 
     if (playerData?.has_hidden) setHideStep(4);
 
-    // Proximity alert: check if rival is at the scenario where we hid our object (PvP only)
+    // Proximity alert (PvP only)
     const isStoryGame = !!(gameData as any)?.is_story;
     if (!isStoryGame && gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
       const { data: hiddenItem } = await supabase
@@ -160,7 +147,7 @@ export default function GamePage() {
       setRivalNearby(false);
     }
 
-    // Load rival's object traits progressively
+    // Load rival's object traits
     if (!isStoryGame && gameData?.status === "playing" && rivalData?.hidden_object_id) {
       const { count: myMoves } = await supabase
         .from("game_moves").select("*", { count: "exact", head: true })
@@ -189,14 +176,14 @@ export default function GamePage() {
       ]);
       loadedItems = itemsData;
       setConnectedScenarios(connected);
-      // Compute which items are dirty THIS game (random per game)
       const gameDirty = getDirtyItemsForGame(itemsData, gameId);
       setDirtyItems(gameDirty);
-      // Auto-give drap if there are dirty items in this scenario and player has none
+
+      // Auto-give drap if dirty items here
       const hasDirtyHere = itemsData.some((i: any) => gameDirty.has(i.id));
       if (hasDirtyHere && playerData) {
-        const tools = (playerData as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 1 };
-        if ((tools.drap ?? 0) === 0) {
+        const tools = parseTools(playerData.tools);
+        if (tools.drap === 0) {
           tools.drap = 1;
           await supabase.from("game_players").update({ tools }).eq("id", playerData.id);
           playerData.tools = tools;
@@ -204,7 +191,6 @@ export default function GamePage() {
           toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
         }
       }
-      // Load interactions for current scenario items
       loadedInteractions = await getItemInteractions(itemsData.map((i: any) => i.id));
       setItemInteractions(loadedInteractions);
     }
@@ -217,46 +203,35 @@ export default function GamePage() {
     const allMoves = moves ?? [];
     setMoveHistory(allMoves);
 
-    // Compute game breaks, cleans, light states, and flashlight reveals from ALL players' tag actions
+    // Compute breaks, illumination from ALL tag moves
     const { data: allGameMoves } = await supabase
       .from("game_moves").select("bonus_value, player_id")
       .eq("game_id", gameId)
       .like("bonus_value", "tag:%")
       .order("created_at", { ascending: true });
     const breaks = new Set<string>();
-    const lightsOff = new Set<string>();
-    const flashRevealed = new Set<string>();
+    const litScenarios = new Set<string>();
+
+    // Start with all known scenario illumination defaults
+    // Indoor = lit by default, outdoor = dark by default
+    // We track which scenarios are currently illuminated
     for (const m of allGameMoves ?? []) {
       const val = (m.bonus_value as string) ?? "";
-      if (val.startsWith("tag:break:")) {
-        breaks.add(val.replace("tag:break:", ""));
-      }
-      if (val.startsWith("tag:fix:")) {
-        breaks.delete(val.replace("tag:fix:", ""));
-      }
-      if (val.startsWith("tag:clean:")) {
-        breaks.add(`clean:${val.replace("tag:clean:", "")}`);
-      }
-      if (val.startsWith("tag:light_off:")) {
-        lightsOff.add(val.replace("tag:light_off:", ""));
-      }
-      if (val.startsWith("tag:light_on:")) {
-        lightsOff.delete(val.replace("tag:light_on:", ""));
-      }
-      // Flashlight reveals are per-player
-      if (val.startsWith("tag:flashlight:") && (m as any).player_id === user.id) {
-        flashRevealed.add(val.replace("tag:flashlight:", ""));
-      }
+      if (val.startsWith("tag:break:")) breaks.add(val.replace("tag:break:", ""));
+      if (val.startsWith("tag:fix:")) breaks.delete(val.replace("tag:fix:", ""));
+      if (val.startsWith("tag:clean:")) breaks.add(`clean:${val.replace("tag:clean:", "")}`);
+      if (val.startsWith("tag:light_on:")) litScenarios.add(val.replace("tag:light_on:", ""));
+      if (val.startsWith("tag:light_off:")) litScenarios.delete(val.replace("tag:light_off:", ""));
+      // Backwards compat: old flashlight moves count as light_on
+      if (val.startsWith("tag:flashlight:")) litScenarios.add(val.replace("tag:flashlight:", ""));
     }
     setGameBreaks(breaks);
-    setLightOffScenarios(lightsOff);
-    setFlashlightRevealed(flashRevealed);
+    setIlluminatedScenarios(litScenarios);
 
-    // Compute revealed items from interactions + move history
+    // Compute revealed items from interactions
     const revealed = new Set<string>();
     for (const ia of loadedInteractions) {
       if (ia.effect_type === "reveal_items") {
-        // Check if this interaction was used (item_id appears in moves for this item)
         const wasUsed = (moves ?? []).some((m: any) => m.target_item_id === ia.item_id);
         if (wasUsed) {
           const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
@@ -264,25 +239,40 @@ export default function GamePage() {
         }
       }
     }
-    setRevealedItemIds(revealed);
 
-    // Flashlight-revealed hidden items (per player, outdoor only)
-    // Fetch scenario name directly to avoid stale closure on `scenarios` state
+    // Determine current scenario illumination
     let isOutdoor = false;
     if (playerData?.current_scenario_id) {
       const { data: curScen } = await supabase.from("scenarios").select("name").eq("id", playerData.current_scenario_id).single();
       isOutdoor = OUTDOOR_SCENARIOS.includes(curScen?.name ?? "");
     }
-    const flashlightUsedHere = flashRevealed.has(playerData?.current_scenario_id ?? "");
 
-    // Filter: show non-hidden items + revealed hidden items + flashlight-revealed
-    // If light is OFF in indoor scenario, hide ALL items
-    const lightIsOff = !isOutdoor && lightsOff.has(playerData?.current_scenario_id ?? "");
-    const visibleItems = lightIsOff ? [] : loadedItems.filter((i: any) => {
+    // Unified illumination logic:
+    // Indoor: lit unless explicitly turned off (tag:light_off without subsequent tag:light_on)
+    // Outdoor: dark unless explicitly turned on (tag:light_on or tag:flashlight)
+    const scenarioId = playerData?.current_scenario_id ?? "";
+    const isLit = isOutdoor
+      ? litScenarios.has(scenarioId) // outdoor: need explicit light_on
+      : !litScenarios.has("off:" + scenarioId); // indoor: check if turned off
+
+    // For indoor: we need to check light_off state differently
+    // Re-derive indoor light state from raw moves
+    let indoorLightOff = false;
+    if (!isOutdoor) {
+      for (const m of allGameMoves ?? []) {
+        const val = (m.bonus_value as string) ?? "";
+        if (val === `tag:light_off:${scenarioId}`) indoorLightOff = true;
+        if (val === `tag:light_on:${scenarioId}`) indoorLightOff = false;
+      }
+    }
+
+    const scenarioIsDark = isOutdoor ? !litScenarios.has(scenarioId) : indoorLightOff;
+
+    const visibleItems = scenarioIsDark ? [] : loadedItems.filter((i: any) => {
       if (!i.hidden) return true;
       if (revealed.has(i.id)) return true;
-      // For outdoor hidden items, only show if flashlight was used here
-      if (isOutdoor && flashlightUsedHere) return true;
+      // For outdoor: if illuminated, show hidden items too
+      if (isOutdoor && litScenarios.has(scenarioId)) return true;
       return false;
     });
     setCurrentScenarioItems(visibleItems);
@@ -292,8 +282,8 @@ export default function GamePage() {
       setReward(r);
     }
 
+    // Process social items (PvP only)
     if (gameData?.status === "playing" && !isStoryGame) {
-      // Check items blocked by YOUR shield (notify you that it worked)
       const { data: blockedItems } = await supabase
         .from("game_social_items").select("*")
         .eq("game_id", gameId).eq("to_player_id", user.id)
@@ -318,8 +308,6 @@ export default function GamePage() {
           toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
         } else if (item.item_type === "swap") {
           toast.warning("🔄 El rival ha usat un Intercanvi! Heu intercanviat posicions!", { duration: 5000 });
-        } else if (item.item_type === "shield") {
-          // Shield activates on the SENDER, not the receiver — no effect here
         } else if (item.item_type === "message" && item.message_text) {
           setReceivedMessage(item.message_text);
         }
@@ -328,13 +316,15 @@ export default function GamePage() {
     }
   }, [gameId, user]);
 
+  // ============================================
+  // EFFECTS
+  // ============================================
   useEffect(() => {
     if (!gameId || !user) return;
     loadGame();
     getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
     getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
 
-    // Skip realtime for story mode (CPU doesn't act)
     if (isStory) return;
 
     const channel = supabase
@@ -346,6 +336,9 @@ export default function GamePage() {
     return () => { supabase.removeChannel(channel); };
   }, [gameId, user, loadGame, isStory]);
 
+  // ============================================
+  // HIDING HANDLERS
+  // ============================================
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
     setItems(await getItemsByScenario(id));
@@ -362,7 +355,6 @@ export default function GamePage() {
   };
 
   const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
-    // Check size restriction for "dins"
     const obj = objects.find((o: any) => o.id === selectedObject);
     const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
@@ -373,7 +365,6 @@ export default function GamePage() {
         return;
       }
     }
-    // Check material vs environment in UI
     const material = (obj as any)?.material ?? "generic";
     const environment = (itm as any)?.environment ?? "generic";
     const blockReason = getMaterialBlockReason(material, environment);
@@ -383,13 +374,10 @@ export default function GamePage() {
     }
     setSelectedPosition(pos);
 
-    // Check if special object needs extra input on hide
     if (objectSpecial && objectSpecial.prompt_on === "hide") {
-      setHideStep(5); // Extra step for special input
+      setHideStep(5);
       return;
     }
-
-    // Directly hide
     await doHide(pos);
   };
 
@@ -398,7 +386,6 @@ export default function GamePage() {
     if (!gameId || !user || !finalPos) return;
     setActionLoading(true);
     try {
-      // Merge hide message into special data if present
       let specialData = extraSpecialData || undefined;
       if (hideMessage.trim()) {
         specialData = { ...(specialData || {}), hide_message: hideMessage.trim() };
@@ -414,7 +401,9 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  // Clear banana block after any token-spending action
+  // ============================================
+  // ACTION HANDLERS
+  // ============================================
   const clearBanana = () => {
     if (bananaEffect) {
       setBananaEffect(false);
@@ -437,34 +426,20 @@ export default function GamePage() {
 
   const handleInteraction = async (interaction: any) => {
     if (!gameId || !user || !player) return;
-    // Check if already used (one_time) by looking at move history
     const alreadyUsed = moveHistory.some((m: any) =>
       m.action === "look" && m.target_item_id === interaction.item_id &&
       (m as any).bonus_value === `interact:${interaction.action_name}`
     );
-    if (interaction.one_time && alreadyUsed) {
-      toast.error("Ja has fet aquesta acció!");
-      return;
-    }
-    if (player.tokens_remaining < interaction.cost) {
-      toast.error("No tens prou tokens!");
-      return;
-    }
+    if (interaction.one_time && alreadyUsed) { toast.error("Ja has fet aquesta acció!"); return; }
+    if (player.tokens_remaining < interaction.cost) { toast.error("No tens prou tokens!"); return; }
     setActionLoading(true);
     try {
-      // Record as a look move to track the interaction
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
-      // Apply effect
       const data = interaction.effect_data as any;
-      if (interaction.effect_type === "reveal_items") {
-        toast.success(`${interaction.action_icon} ${data.message || "Nous mobles revelats!"}`, { duration: 6000 });
-      } else if (interaction.effect_type === "reveal_content") {
-        toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
-      } else if (interaction.effect_type === "give_hint") {
-        toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
-      } else if (interaction.effect_type === "enable_position") {
-        toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
-      }
+      if (interaction.effect_type === "reveal_items") toast.success(`${interaction.action_icon} ${data.message || "Nous mobles revelats!"}`, { duration: 6000 });
+      else if (interaction.effect_type === "reveal_content") toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
+      else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
+      else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -478,22 +453,14 @@ export default function GamePage() {
       const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
       const [actionType] = actionKey.split(":");
       const item = currentScenarioItems.find(i => i.id === itemId);
+      const getToolName = (t: string) => t === "drap" ? "🧹 Drap" : t === "martell" ? "🔨 Martell" : t === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
 
-      if (actionType === "clean") {
-        toast.success(`🧹 Has netejat ${item?.icon} ${item?.name}!`, { duration: 4000 });
-      } else if (actionType === "break") {
-        toast.success(`💥 Has trencat ${item?.icon} ${item?.name}! El rival ho sabrà... 🔧+1`, { duration: 5000 });
-      } else if (actionType === "fix") {
-        toast.success(`🔧 Has arreglat ${item?.icon} ${item?.name}!`, { duration: 4000 });
-      }
+      if (actionType === "clean") toast.success(`🧹 Has netejat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      else if (actionType === "break") toast.success(`💥 Has trencat ${item?.icon} ${item?.name}! El rival ho sabrà... 🔧+1`, { duration: 5000 });
+      else if (actionType === "fix") toast.success(`🔧 Has arreglat ${item?.icon} ${item?.name}!`, { duration: 4000 });
 
-      if (result.bonusResult) {
-        toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
-      }
-      if (result.toolFound) {
-        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
-        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
-      }
+      if (result.bonusResult) toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
+      if (result.toolFound) toast.info(`🔍 Has trobat un ${getToolName(result.toolFound)}!`, { duration: 4000 });
 
       clearBanana();
       await loadGame();
@@ -503,31 +470,41 @@ export default function GamePage() {
 
   const handleToggleLight = async () => {
     if (!gameId || !user || !player?.current_scenario_id) return;
-    const isOff = lightOffScenarios.has(player.current_scenario_id);
+    const scenarioName = currentScenario?.name ?? "";
+    const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
+
+    // Determine current state
+    const isCurrentlyDark = isOutdoor
+      ? !illuminatedScenarios.has(player.current_scenario_id)
+      : (() => {
+          // For indoor, check raw light state
+          let off = false;
+          // We don't have allTagMoves here, so use the illuminatedScenarios logic
+          // illuminatedScenarios tracks light_on events; for indoor we need inverse
+          // Simpler: just look at whether items are visible
+          return currentScenarioItems.length === 0 && !isOutdoor;
+        })();
+
     setActionLoading(true);
     try {
-      const result = await toggleLight(gameId, user.id, player.current_scenario_id, !isOff);
-      if (!isOff) {
-        toast.success("🌑 Has apagat el llum! Ningú veu els mobles.", { duration: 4000 });
+      const result = await toggleLight(gameId, user.id, player.current_scenario_id, !isCurrentlyDark, scenarioName);
+      if (isOutdoor) {
+        if (isCurrentlyDark) {
+          toast.success("🔦 La llanterna il·lumina la zona! Nous mobles revelats!", { duration: 5000 });
+        } else {
+          toast.success("🌑 Has apagat la il·luminació de la zona.", { duration: 4000 });
+        }
       } else {
-        toast.success("💡 Has encès el llum! Tots els mobles visibles.", { duration: 4000 });
+        if (!isCurrentlyDark) {
+          toast.success("🌑 Has apagat el llum! Ningú veu els mobles.", { duration: 4000 });
+        } else {
+          toast.success("💡 Has encès el llum! Tots els mobles visibles.", { duration: 4000 });
+        }
       }
       if (result.toolFound) {
         const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       }
-      clearBanana();
-      await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
-  };
-
-  const handleUseLlanterna = async () => {
-    if (!gameId || !user || !player?.current_scenario_id) return;
-    setActionLoading(true);
-    try {
-      await useLlanterna(gameId, user.id, player.current_scenario_id);
-      toast.success("🔦 La llanterna il·lumina la zona! Nous mobles revelats!", { duration: 5000 });
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -540,13 +517,10 @@ export default function GamePage() {
     try {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
       const item = currentScenarioItems.find(i => i.id === itemId);
-      const posLabel = positions.find(p => p.value === pos)?.label;
       if (result.foundObject) {
-        // Story mode: handle chapter completion with XP/accessories
         if (isStory && storyChapter) {
           const movesCount = (moveHistory?.length ?? 0) + 1;
           const storyRes = await completeChapter(user.id, storyChapter, movesCount);
-          // Award accessory for chapters 3+
           let wonAccessory: any = null;
           let wonConsumable: any = null;
           if (storyChapter >= 3) {
@@ -560,7 +534,6 @@ export default function GamePage() {
                 wonAccessory = acc;
               }
             }
-            // If all accessories collected, show consumable
             const allAccs = await getMyAccessories(user.id);
             if (hasAllAccessories(allAccs)) {
               wonConsumable = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
@@ -571,30 +544,22 @@ export default function GamePage() {
         } else {
           toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
         }
-        // Check if rival's object has a "find" special (PvP only)
         if (!isStory && rival?.hidden_object_id) {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
           if (rivalSpecial && rivalSpecial.prompt_on === "find") {
             if (rivalSpecial.special_type === "troll_effect") {
               const variants = rivalSpecial.variants as any;
-              setTrollEffect({
-                message: rivalSpecial.prompt_text,
-                emoji: variants?.emoji ?? "😈",
-                animation: variants?.animation ?? "shake",
-              });
+              setTrollEffect({ message: rivalSpecial.prompt_text, emoji: variants?.emoji ?? "😈", animation: variants?.animation ?? "shake" });
               setTimeout(() => setTrollEffect(null), 6000);
             } else {
               setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
             }
           }
         }
-        // Show hide message from rival (PvP only)
         if (!isStory && rival?.special_data) {
           const sd = rival.special_data as any;
           const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
-          if (hideMsg) {
-            toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
-          }
+          if (hideMsg) toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
         }
       } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
         const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
@@ -602,15 +567,10 @@ export default function GamePage() {
       } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
       else {
-        // Progressive hints
         const level = result.hintLevel ?? 0;
-        if (level === 0) {
-          toast.info(`❄️ Fred! L'objecte NO és a ${currentScenario?.icon} ${currentScenario?.name}. (-${TOKEN_COSTS.look}🪙)`);
-        } else if (level === 1) {
-          toast.warning(`🌡️ Calent! L'objecte ÉS en aquesta habitació, però no a ${item?.icon} ${item?.name}. (-${TOKEN_COSTS.look}🪙)`);
-        } else {
-          toast.success(`🔥 MOLT CALENT! ${item?.icon} ${item?.name} és el moble correcte! Prova altra posició. (-${TOKEN_COSTS.look}🪙)`);
-        }
+        if (level === 0) toast.info(`❄️ Fred! L'objecte NO és a ${currentScenario?.icon} ${currentScenario?.name}. (-${TOKEN_COSTS.look}🪙)`);
+        else if (level === 1) toast.warning(`🌡️ Calent! L'objecte ÉS en aquesta habitació, però no a ${item?.icon} ${item?.name}. (-${TOKEN_COSTS.look}🪙)`);
+        else toast.success(`🔥 MOLT CALENT! ${item?.icon} ${item?.name} és el moble correcte! Prova altra posició. (-${TOKEN_COSTS.look}🪙)`);
       }
       clearBanana();
       await loadGame();
@@ -618,12 +578,9 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  // handleConfirm removed — look now finds the object directly
-
   const handleSpecialFoundSubmit = async () => {
     if (!gameId || !user || !showSpecialFoundPopup) return;
     const { special } = showSpecialFoundPopup;
-    // Save as trophy to player_inventory
     const rivalObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
     const rivalSd = rival?.special_data as any;
     const hideMsg = rivalSd?.hide_message || (rivalSd?.type === "custom_message" ? rivalSd.message : null);
@@ -632,11 +589,9 @@ export default function GamePage() {
       item_type: "special_trophy",
       item_value: special.special_type === "custom_name" ? specialFoundInput.trim() : null,
       special_data: {
-        object_name: rivalObj?.name,
-        object_icon: rivalObj?.icon,
+        object_name: rivalObj?.name, object_icon: rivalObj?.icon,
         custom_name: specialFoundInput.trim() || null,
-        special_type: special.special_type,
-        custom_message: hideMsg,
+        special_type: special.special_type, custom_message: hideMsg,
       },
     });
     toast.success(`🏆 Trofeu desat!`);
@@ -674,10 +629,16 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  // ============================================
+  // DERIVED STATE
+  // ============================================
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
+  const isOutdoor = OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "");
+  const scenarioIsDark = isOutdoor
+    ? !illuminatedScenarios.has(player?.current_scenario_id ?? "")
+    : currentScenarioItems.length === 0 && phase === "playing";
 
-  // Track looked spots
   const lookedSpots = new Set<string>();
   for (const m of moveHistory) {
     if (m.target_item_id && m.target_position && m.action === "look") {
@@ -685,6 +646,9 @@ export default function GamePage() {
     }
   }
 
+  // ============================================
+  // LOADING
+  // ============================================
   if (!game || !player) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
@@ -694,63 +658,21 @@ export default function GamePage() {
     </div>;
   }
 
-  //const hideSteps = ["📍 Escenari", "🎯 Objecte", "🪑 Moble", "📌 Posició"];
   const hideSteps = ["🎯 Objecte", "📍 Escenari", "🪑 Moble", "📌 Posició"];
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative">
-      {/* BG glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
-      {/* Special found popup (joguina/anell name input) */}
-      {showSpecialFoundPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md">
-          <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
-            <CardContent className="py-6 text-center">
-              <div className="text-5xl mb-3">{objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon ?? "⭐"}</div>
-              <p className="font-bold text-lg mb-1">⭐ Objecte especial trobat!</p>
-              {(() => {
-                const sd = rival?.special_data as any;
-                const hm = sd?.hide_message;
-                return hm ? (
-                  <div className="mb-3 p-2 rounded-lg bg-accent/10 border border-accent/30">
-                    <p className="text-[10px] text-muted-foreground mb-1">💌 Missatge secret del rival:</p>
-                    <p className="text-sm italic text-accent-foreground">"{hm}"</p>
-                  </div>
-                ) : null;
-              })()}
-              <p className="text-sm text-muted-foreground mb-4">{showSpecialFoundPopup.special.prompt_text}</p>
-              <Input value={specialFoundInput} onChange={e => setSpecialFoundInput(e.target.value)}
-                placeholder="Escriu un nom..." maxLength={40} className="text-center bg-muted/50 mb-3" />
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); }}>Saltar</Button>
-                <Button className="flex-1" disabled={!specialFoundInput.trim()} onClick={handleSpecialFoundSubmit}>
-                  Desar trofeu 🏆
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Banana notification toast (no longer full-screen block) */}
-
-      {/* Confirm dialog removed — look now finds the object */}
-
-      {/* Message popup */}
-      {receivedMessage && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setReceivedMessage(null)}>
-          <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
-            <CardContent className="py-6 text-center">
-              <div className="text-4xl mb-2">💡</div>
-              <p className="text-xs text-muted-foreground mb-1">Pista del rival:</p>
-              <p className="text-lg font-medium italic my-3 text-primary">"{receivedMessage}"</p>
-              <p className="text-[10px] text-muted-foreground mb-3">⚠️ Pot ser veritat o un farol!</p>
-              <Button size="sm" onClick={() => setReceivedMessage(null)}>Tancar</Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Popups */}
+      <SpecialFoundPopup show={showSpecialFoundPopup} rival={rival} objects={objects}
+        specialFoundInput={specialFoundInput} onInputChange={setSpecialFoundInput}
+        onSubmit={handleSpecialFoundSubmit} onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); }} />
+      <MessagePopup message={receivedMessage} onClose={() => setReceivedMessage(null)} />
+      <TrollEffect effect={trollEffect} onClose={() => setTrollEffect(null)} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
@@ -791,40 +713,9 @@ export default function GamePage() {
                 </button>
               )}
               {showBonusPicker && (
-                <div className="fixed inset-0 z-40 flex items-end justify-center bg-background/60 backdrop-blur-sm" onClick={() => setShowBonusPicker(false)}>
-                  <Card className="mx-4 mb-8 max-w-xs w-full glass glow-accent shadow-2xl" onClick={e => e.stopPropagation()}>
-                    <CardContent className="py-5">
-                      <p className="text-sm font-bold mb-1 text-center">💰 Afegir bonus tokens</p>
-                      <p className="text-[10px] text-muted-foreground text-center mb-4">Quants tokens vols gastar? (Tens {bonusAvailable} disponibles)</p>
-                      <div className="flex items-center justify-center gap-4 mb-4">
-                        <button onClick={() => setBonusAmount(Math.max(0.1, Math.round((bonusAmount - 0.1) * 10) / 10))}
-                          disabled={bonusAmount <= 0.1}
-                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">−</button>
-                        <span className="text-3xl font-bold min-w-[70px] text-center text-gradient">{bonusAmount}🪙</span>
-                        <button onClick={() => setBonusAmount(Math.min(bonusAvailable, Math.round((bonusAmount + 0.1) * 10) / 10))}
-                          disabled={bonusAmount >= bonusAvailable}
-                          className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">+</button>
-                      </div>
-                      <div className="flex justify-center gap-2 mb-4 flex-wrap">
-                        {[0.1, 0.5, 1, Math.round(bonusAvailable * 10) / 10]
-                          .filter(v => v <= bonusAvailable && v > 0)
-                          .filter((v, i, a) => a.indexOf(v) === i)
-                          .map(v => (
-                          <button key={v} onClick={() => setBonusAmount(v)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${bonusAmount === v ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
-                            {v}🪙
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => setShowBonusPicker(false)}>Cancel·lar</Button>
-                        <Button className="flex-1" disabled={actionLoading || bonusAmount > bonusAvailable || bonusAmount <= 0} onClick={handleRedeemBonus}>
-                          Afegir {bonusAmount}🪙 ✓
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <BonusTokenPicker bonusAvailable={bonusAvailable} bonusAmount={bonusAmount}
+                  setBonusAmount={setBonusAmount} onRedeem={handleRedeemBonus}
+                  onClose={() => setShowBonusPicker(false)} actionLoading={actionLoading} />
               )}
             </div>
           )}
@@ -843,7 +734,7 @@ export default function GamePage() {
         </Card>
       )}
 
-      {/* WAITING — already hidden, just waiting */}
+      {/* WAITING — already hidden */}
       {phase === "waiting" && player.has_hidden && (
         <div className="text-center py-16">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
@@ -857,14 +748,13 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* HIDING */}
+      {/* HIDING PHASE */}
       {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep < 4 && (
         <div>
-          {/* Step indicator */}
           <div className="flex items-center gap-1 mb-5">
             {hideSteps.map((step, i) => (
               <div key={i} className={`flex-1 text-center text-[10px] py-1.5 rounded-full font-medium transition-all ${
-                i === hideStep ? "gradient-primary text-primary-foreground shadow-md" : 
+                i === hideStep ? "gradient-primary text-primary-foreground shadow-md" :
                 i < hideStep ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
               }`}>{step}</div>
             ))}
@@ -941,7 +831,6 @@ export default function GamePage() {
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
 
-              {/* Optional hide message — only for special objects (Foto, Joguina, etc.) */}
               {objectSpecial && (objectSpecial.prompt_on === "hide" || (objectSpecial as any).has_hide_message) && (
               <Card className="mb-4 glass border-accent/30 glow-accent">
                 <CardContent className="py-3 px-4">
@@ -952,20 +841,16 @@ export default function GamePage() {
                       <p className="text-[10px] text-muted-foreground">El rival el veurà quan trobi l'objecte!</p>
                     </div>
                   </div>
-                  <Input
-                    value={hideMessage}
-                    onChange={e => setHideMessage(e.target.value)}
-                    placeholder="Ex: T'ha costat eh! 😏"
-                    maxLength={100}
-                    className="text-sm bg-accent/10 border-accent/30 placeholder:text-muted-foreground/50"
-                  />
+                  <Input value={hideMessage} onChange={e => setHideMessage(e.target.value)}
+                    placeholder="Ex: T'ha costat eh! 😏" maxLength={100}
+                    className="text-sm bg-accent/10 border-accent/30 placeholder:text-muted-foreground/50" />
                   <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{hideMessage.length}/100</p>
                 </CardContent>
               </Card>
               )}
 
               <div className="grid grid-cols-3 gap-3">
-                {positions.map(pos => {
+                {POSITIONS.map(pos => {
                   const obj = objects.find((o: any) => o.id === selectedObject);
                   const itm = items.find((i: any) => i.id === selectedItem);
                   const blocked = pos.value === "dins" && ((obj as any)?.size ?? 2) > ((itm as any)?.inner_capacity ?? 2);
@@ -988,7 +873,7 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* SPECIAL HIDE STEP — extra input for carta (message) or pilota (variant) */}
+      {/* SPECIAL HIDE STEP */}
       {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep === 5 && objectSpecial && (
         <div className="py-4">
           <Card className="glass glow-accent">
@@ -996,6 +881,17 @@ export default function GamePage() {
               <div className="text-4xl mb-3">{objects.find((o: any) => o.id === selectedObject)?.icon}</div>
               <p className="font-bold mb-1">⭐ Objecte especial!</p>
               <p className="text-sm text-muted-foreground mb-4">{objectSpecial.prompt_text}</p>
+
+              {objectSpecial.special_type === "custom_name" && (
+                <div className="space-y-3">
+                  <Input value={specialInput} onChange={e => setSpecialInput(e.target.value)}
+                    placeholder="Nom personalitzat..." maxLength={40} className="text-center bg-muted/50" />
+                  <Button disabled={!specialInput.trim() || actionLoading} className="w-full"
+                    onClick={() => doHide(undefined, { type: "custom_name", name: specialInput.trim() })}>
+                    Amagar amb nom ✨
+                  </Button>
+                </div>
+              )}
 
               {objectSpecial.special_type === "custom_message" && (
                 <div className="space-y-3">
@@ -1024,7 +920,7 @@ export default function GamePage() {
                   </div>
                   <Button disabled={!selectedVariant || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "choose_variant", variant: selectedVariant })}>
-                    Amagar {selectedVariant?.icon ?? "⚽"} 
+                    Amagar {selectedVariant?.icon ?? "⚽"}
                   </Button>
                 </div>
               )}
@@ -1060,6 +956,8 @@ export default function GamePage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Location */}
           <Card className="glass">
             <CardContent className="py-3 flex items-center justify-between">
               <div>
@@ -1095,20 +993,14 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* Rival's object traits (PvP only) */}
+          {/* Rival traits (PvP) */}
           {!isStory && (rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes de l'objecte rival</p>
-                {rivalTraits.trait1 && (
-                  <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalTraits.trait1}"</span></p>
-                )}
-                {rivalTraits.trait2 && (
-                  <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalTraits.trait2}"</span></p>
-                )}
-                {!rivalTraits.trait2 && rivalTraits.trait1 && (
-                  <p className="text-[10px] text-muted-foreground mt-1">🔒 2a pista al torn 5</p>
-                )}
+                {rivalTraits.trait1 && <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalTraits.trait1}"</span></p>}
+                {rivalTraits.trait2 && <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalTraits.trait2}"</span></p>}
+                {!rivalTraits.trait2 && rivalTraits.trait1 && <p className="text-[10px] text-muted-foreground mt-1">🔒 2a pista al torn 5</p>}
               </CardContent>
             </Card>
           )}
@@ -1135,79 +1027,72 @@ export default function GamePage() {
             </div>
           </div>
 
-          {/* Light toggle (indoor) / Llanterna (outdoor) */}
-          {(() => {
-            const scenarioName = currentScenario?.name ?? "";
-            const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
-            const currentLightOff = lightOffScenarios.has(player.current_scenario_id);
-            const flashlightUsedHere = flashlightRevealed.has(player.current_scenario_id);
+          {/* Unified Light/Illumination toggle */}
+          <div>
+            {(() => {
+              const isCurrentlyDark = isOutdoor
+                ? !illuminatedScenarios.has(player.current_scenario_id)
+                : scenarioIsDark;
+              const hasLlanterna = playerTools.llanterna > 0;
+              const canToggle = isOutdoor ? (isCurrentlyDark ? hasLlanterna : true) : true;
 
-            return (
-              <div>
-                {!isOutdoor && (
-                  <button
-                    onClick={handleToggleLight}
-                    disabled={actionLoading || player.tokens_remaining < 0.2}
-                    className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
-                      currentLightOff
-                        ? "border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20"
-                        : "hover:border-destructive/40"
-                    }`}
-                  >
-                    <span className="text-2xl">{currentLightOff ? "💡" : "🌑"}</span>
-                    <div className="flex-1 text-left">
-                      <div className="text-sm font-semibold">{currentLightOff ? "Encendre el llum" : "Apagar el llum"}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {currentLightOff ? "Encén per veure els mobles" : "Apaga perquè ningú vegi els mobles"}
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">0.2🪙</span>
-                  </button>
-                )}
-                {isOutdoor && !flashlightUsedHere && (
-                  <div className="space-y-2">
+              return (
+                <>
+                  {/* Already illuminated outdoor — just info */}
+                  {isOutdoor && !isCurrentlyDark && (
+                    <p className="text-[10px] text-center text-muted-foreground">🔦 Zona il·luminada — mobles ocults revelats</p>
+                  )}
+                  {/* Show toggle button when: indoor always, outdoor when dark + has tool OR when lit (to turn off) */}
+                  {(!isOutdoor || isCurrentlyDark) && (
                     <button
-                      onClick={handleUseLlanterna}
-                      disabled={actionLoading || player.tokens_remaining < 0.2 || (playerTools.llanterna ?? 0) <= 0}
-                      className={`w-full rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.97] ${
-                        (playerTools.llanterna ?? 0) > 0
-                          ? "bg-accent/20 border-2 border-accent/50 hover:border-accent/70 shadow-lg animate-pulse"
-                          : "glass opacity-50"
+                      onClick={handleToggleLight}
+                      disabled={actionLoading || player.tokens_remaining < 0.2 || !canToggle}
+                      className={`w-full glass rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.97] ${
+                        isCurrentlyDark
+                          ? isOutdoor && hasLlanterna
+                            ? "bg-accent/20 border-2 border-accent/50 hover:border-accent/70 shadow-lg animate-pulse"
+                            : "border-yellow-500/40 bg-yellow-500/10 hover:bg-yellow-500/20"
+                          : "hover:border-destructive/40"
                       }`}
                     >
-                      <span className="text-3xl">🔦</span>
+                      <span className="text-2xl">{isCurrentlyDark ? (isOutdoor ? "🔦" : "💡") : "🌑"}</span>
                       <div className="flex-1 text-left">
-                        <div className="text-sm font-bold">Usar llanterna</div>
+                        <div className="text-sm font-semibold">
+                          {isCurrentlyDark
+                            ? (isOutdoor ? "Usar llanterna" : "Encendre el llum")
+                            : "Apagar el llum"}
+                        </div>
                         <div className="text-[11px] text-muted-foreground">
-                          {(playerTools.llanterna ?? 0) > 0
-                            ? "⚡ Il·lumina la zona i revela mobles ocults!"
-                            : "Necessites una 🔦 Llanterna (es troben explorant)"}
+                          {isCurrentlyDark
+                            ? (isOutdoor
+                              ? (hasLlanterna ? "⚡ Il·lumina la zona i revela mobles ocults!" : "Necessites una 🔦 Llanterna")
+                              : "Encén per veure els mobles")
+                            : "Apaga perquè ningú vegi els mobles"}
                         </div>
                       </div>
-                      <span className="text-xs font-semibold text-accent">0.2🪙</span>
+                      <span className="text-[10px] text-muted-foreground">0.2🪙</span>
                     </button>
-                  </div>
-                )}
-                {isOutdoor && flashlightUsedHere && (
-                  <p className="text-[10px] text-center text-muted-foreground">🔦 Zona il·luminada — mobles ocults revelats</p>
-                )}
-              </div>
-            );
-          })()}
+                  )}
+                </>
+              );
+            })()}
+          </div>
 
-          {/* Light off warning */}
-          {!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "") && lightOffScenarios.has(player.current_scenario_id) && (
+          {/* Dark warning */}
+          {scenarioIsDark && (
             <Card className="glass border-yellow-500/30">
               <CardContent className="py-3 text-center">
-                <div className="text-3xl mb-1">🌑</div>
-                <p className="text-sm font-semibold">El llum està apagat!</p>
-                <p className="text-[11px] text-muted-foreground">No pots veure cap moble. Encén el llum per investigar.</p>
+                <div className="text-3xl mb-1">{isOutdoor ? "🌙" : "🌑"}</div>
+                <p className="text-sm font-semibold">{isOutdoor ? "Zona fosca!" : "El llum està apagat!"}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {isOutdoor ? "Usa la llanterna per il·luminar." : "No pots veure cap moble. Encén el llum per investigar."}
+                </p>
               </CardContent>
             </Card>
           )}
 
-          {/* Look / Confirm */}
-          {!((!OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "")) && lightOffScenarios.has(player.current_scenario_id)) && (
+          {/* Look / Items */}
+          {!scenarioIsDark && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               👀 Investigar mobles {!isStory && `· ${TOKEN_COSTS.look}🪙`}
@@ -1218,68 +1103,26 @@ export default function GamePage() {
             )}
             <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
-                <ItemActions key={item.id} item={item} positions={positions}
-                  onLook={handleLook}
-                  disabled={actionLoading} tokensRemaining={player.tokens_remaining}
-                  lookedSpots={lookedSpots}
-                  bananaBlockedSpot={bananaBlockedSpot}
+                <ItemActions key={item.id} item={item} positions={POSITIONS}
+                  onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
+                  lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
-                  onInteraction={handleInteraction}
-                  moveHistory={moveHistory}
-                  playerTools={playerTools}
-                  gameBreaks={gameBreaks}
-                  onTagAction={handleTagAction}
-                  dirtyItems={dirtyItems} />
+                  onInteraction={handleInteraction} moveHistory={moveHistory}
+                  playerTools={playerTools} gameBreaks={gameBreaks}
+                  onTagAction={handleTagAction} dirtyItems={dirtyItems} />
               ))}
             </div>
           </div>
           )}
 
-          {/* Social — hidden in story mode */}
-          {!isStory && <div>
-            <Button variant="outline" className="w-full h-12 text-base" size="lg"
-              onClick={() => setShowSocialPanel(!showSocialPanel)}
-              disabled={player.social_item_used_today}>
-              {player.social_item_used_today ? "⏳ Ítem social usat avui" : "⚡ Usar ítem social (1/dia)"}
-            </Button>
+          {/* Social items (PvP only) */}
+          {!isStory && (
+            <SocialItemsPanel showPanel={showSocialPanel} setShowPanel={setShowSocialPanel}
+              player={player} onSendSocial={handleSendSocial}
+              messageInput={messageInput} setMessageInput={setMessageInput} />
+          )}
 
-            {showSocialPanel && (
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {SOCIAL_ITEMS.filter(i => i.type !== "message").map(item => {
-                  const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
-                  return (
-                    <button key={item.type}
-                      onClick={() => !isBombUsed && handleSendSocial(item.type)}
-                      disabled={isBombUsed}
-                      className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isBombUsed ? "opacity-30" : ""}`}>
-                      <span className="text-3xl block mb-1.5">{item.icon}</span>
-                      <span className="text-[11px] font-semibold block leading-tight">{item.name}</span>
-                      {/* Tooltip on hover/focus */}
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border text-[10px] text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 max-w-[200px] text-wrap text-center">
-                        {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Message input always visible when social panel open */}
-            {showSocialPanel && (
-              <div className="mt-2">
-                <div className="flex gap-1.5 items-center glass rounded-xl p-2">
-                  <span className="text-xl pl-1">💡</span>
-                  <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-                    placeholder="Pista o farol pel rival..." maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
-                  <Button size="sm" disabled={!messageInput.trim()} onClick={() => handleSendSocial("message")} className="shrink-0">
-                    Enviar
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>}
-
-          {/* History — collapsible, compact on mobile */}
+          {/* History */}
           {moveHistory.length > 0 && (
             <details className="group">
               <summary className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 cursor-pointer select-none flex items-center gap-1">
@@ -1319,7 +1162,7 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* FINISHED */}
+      {/* FINISHED — Story */}
       {phase === "finished" && isStory && storyResult && (
         <div className="text-center py-10">
           <div className="w-24 h-24 mx-auto mb-4 rounded-3xl gradient-primary flex items-center justify-center text-5xl shadow-xl glow-primary">
@@ -1350,303 +1193,11 @@ export default function GamePage() {
           </div>
         </div>
       )}
+
+      {/* FINISHED — PvP */}
       {phase === "finished" && !isStory && (
-        <FinishedPhase
-          game={game}
-          user={user}
-          rival={rival}
-          reward={reward}
-          navigate={navigate}
-          objects={objects}
-          scenarios={scenarios}
-          gameId={gameId!}
-        />
-      )}
-
-      {/* Troll effect popup overlay */}
-      {trollEffect && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className={`text-center space-y-4 p-8 rounded-2xl glass max-w-sm mx-4 ${
-            trollEffect.animation === "shake" ? "animate-troll-shake" :
-            trollEffect.animation === "flash" ? "animate-troll-flash" :
-            "animate-troll-bounce"
-          }`}>
-            <div className="text-8xl">{trollEffect.emoji}</div>
-            <p className="text-lg font-bold text-foreground leading-relaxed">{trollEffect.message}</p>
-            <Button onClick={() => setTrollEffect(null)} variant="outline" size="sm">
-              😂 Bona broma!
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** FinishedPhase — shows results, rival object location on defeat */
-function FinishedPhase({ game, user, rival, reward, navigate, objects, scenarios, gameId }: {
-  game: any; user: any; rival: any; reward: any;
-  navigate: (path: string) => void; objects: any[]; scenarios: any[];
-  gameId: string;
-}) {
-  const [rivalInfo, setRivalInfo] = useState<{
-    obj: any; item: any; scenario: any; position: string;
-    hideMessage: string | null; rivalName: string;
-    specialType: string | null; traits: string[];
-  } | null>(null);
-  const [showRivalInfo, setShowRivalInfo] = useState(false);
-
-  useEffect(() => {
-    if (game.winner_id === user?.id || !rival) return;
-    // Load rival's hidden object details for the loser
-    (async () => {
-      const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
-        rival.hidden_object_id
-          ? supabase.from("objects").select("name, icon, material, size").eq("id", rival.hidden_object_id).single()
-          : { data: null },
-        rival.hidden_item_id
-          ? supabase.from("items").select("name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
-          : { data: null },
-        supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
-      ]);
-      let scn = null;
-      if (itm?.scenario_id) {
-        scn = scenarios.find((s: any) => s.id === itm.scenario_id) ?? null;
-      }
-      const sd = rival.special_data as any;
-      const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
-
-      // Load traits & special for this object
-      let traits: string[] = [];
-      let specialType: string | null = null;
-      if (rival.hidden_object_id) {
-        const [{ data: traitData }, { data: specialData }] = await Promise.all([
-          supabase.from("object_traits").select("trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
-          supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
-        ]);
-        traits = (traitData ?? []).map((t: any) => t.trait_text);
-        specialType = specialData?.special_type ?? null;
-      }
-
-      setRivalInfo({
-        obj, item: itm, scenario: scn,
-        position: rival.hidden_position ?? "?",
-        hideMessage: hideMsg,
-        rivalName: rivalProf?.display_name ?? "Rival",
-        specialType,
-        traits,
-      });
-    })();
-  }, [game.winner_id, user?.id, rival, scenarios]);
-
-  const posLabels: Record<string, string> = { sobre: "⬆️ Sobre", sota: "⬇️ Sota", dins: "📦 Dins" };
-  const isWinner = game.winner_id === user?.id;
-
-  return (
-    <div className="text-center py-10">
-      {isWinner ? (
-        <div className="w-24 h-24 mx-auto mb-4 rounded-3xl gradient-primary flex items-center justify-center text-5xl shadow-xl glow-primary">🏆</div>
-      ) : (
-        <div className="text-7xl mb-4 opacity-60">😢</div>
-      )}
-      <h2 className="text-2xl font-bold mb-2">
-        {isWinner ? <span className="text-gradient">Victòria!</span> : "Derrota..."}
-      </h2>
-      <p className="text-sm text-muted-foreground mb-4">
-        {isWinner ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
-      </p>
-
-      {reward?.reward_items && (
-        <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
-          <CardContent className="py-5 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🎁 Recompensa</p>
-            <div className="text-5xl mb-2">{reward.reward_items.icon}</div>
-            <p className="font-bold text-lg">{reward.reward_items.name}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {RARITY_CONFIG[reward.reward_items.rarity]?.emoji}{" "}
-              {RARITY_CONFIG[reward.reward_items.rarity]?.label}
-            </p>
-            <p className="text-[10px] text-muted-foreground/60 mt-2">
-              Ves al perfil per col·locar-lo o vendre'l
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Loser: show where the object was */}
-      {!isWinner && rivalInfo && (
-        <div className="mb-6">
-          {!showRivalInfo ? (
-            <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
-              👁️ Veure on era l'objecte
-            </Button>
-          ) : (
-            <Card className="mx-auto max-w-xs glass border-secondary/30">
-              <CardContent className="py-4">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
-                  📍 L'objecte de {rivalInfo.rivalName}
-                </p>
-                {rivalInfo.obj && (
-                  <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
-                )}
-                <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
-                {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
-                  <p className="text-[10px] text-muted-foreground mb-2">
-                    Material: <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
-                    {rivalInfo.obj.size && <span> · Mida {rivalInfo.obj.size}</span>}
-                  </p>
-                )}
-                <div className="text-sm text-muted-foreground space-y-1">
-                  {rivalInfo.scenario && (
-                    <p>{rivalInfo.scenario.icon} <strong>{rivalInfo.scenario.name}</strong></p>
-                  )}
-                  {rivalInfo.item && (
-                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {posLabels[rivalInfo.position] ?? rivalInfo.position}</p>
-                  )}
-                </div>
-                {rivalInfo.traits.length > 0 && (
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">💡 Pistes que tenia:</p>
-                    {rivalInfo.traits.map((t, i) => (
-                      <p key={i} className="text-primary/80 italic">"{t}"</p>
-                    ))}
-                  </div>
-                )}
-                {rivalInfo.specialType && (
-                  <p className="text-[10px] text-accent mt-2">⭐ Objecte especial ({rivalInfo.specialType})</p>
-                )}
-                {rivalInfo.hideMessage && (
-                  <div className="mt-3 p-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <p className="text-xs font-semibold text-accent mb-0.5">💌 Missatge del rival:</p>
-                    <p className="text-sm italic text-foreground/80">"{rivalInfo.hideMessage}"</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      <div className="flex gap-2 justify-center">
-        <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
-        <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
-      </div>
-    </div>
-  );
-}
-
-function ItemActions({ item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot, interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems }: {
-  item: any;
-  positions: { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
-  onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
-  disabled: boolean;
-  tokensRemaining: number;
-  lookedSpots: Set<string>;
-  bananaBlockedSpot: string | null;
-  interactions?: any[];
-  onInteraction?: (interaction: any) => void;
-  moveHistory?: any[];
-  playerTools?: Record<string, number>;
-  gameBreaks?: Set<string>;
-  onTagAction?: (itemId: string, actionKey: string) => void;
-  dirtyItems?: Set<string>;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const hasInteractions = interactions && interactions.length > 0;
-  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
-  const hasAnySpecial = hasInteractions || tagActions.length > 0;
-  const isBroken = gameBreaks?.has(item.id);
-  const isDirty = dirtyItems?.has(item.id) && !gameBreaks?.has(`clean:${item.id}`);
-
-  return (
-    <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : isDirty ? "border-accent/20" : ""}`}>
-      <button onClick={() => setExpanded(!expanded)}
-        className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
-        <span className="font-semibold text-sm">
-          {item.icon} {item.name}
-          {isBroken && <span className="ml-1 text-xs text-destructive">💥</span>}
-          {isDirty && !isBroken && <span className="ml-1 text-xs">🧹</span>}
-          {hasAnySpecial && !isBroken && !isDirty && <span className="ml-1 text-xs">⚡</span>}
-        </span>
-        <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
-      </button>
-      {expanded && (
-        <div className="border-t border-border/30 p-2.5">
-          {/* Tag-based actions */}
-          {tagActions.length > 0 && onTagAction && (
-            <div className="mb-2 space-y-1">
-              {tagActions.map((ta) => (
-                <button key={ta.actionKey}
-                  onClick={() => onTagAction(item.id, ta.actionKey)}
-                  disabled={disabled || tokensRemaining < ta.cost || !ta.hasTool}
-                  className={`w-full rounded-lg p-2.5 text-xs font-medium transition-all active:scale-[0.97] flex items-center gap-2 ${
-                    !ta.hasTool ? "bg-muted/20 opacity-50 border border-muted/30" :
-                    "bg-primary/10 hover:bg-primary/20 border border-primary/20"
-                  }`}>
-                  <span className="text-lg">{ta.icon}</span>
-                  <span className="flex-1 text-left">
-                    {ta.label}
-                    {ta.requiresTool && !ta.hasTool && (
-                      <span className="text-[9px] text-muted-foreground ml-1">
-                        (cal {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : "🔧"})
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">{ta.cost}🪙</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {/* Special interaction buttons */}
-          {hasInteractions && onInteraction && (
-            <div className="mb-2 space-y-1">
-              {interactions!.map((ia: any) => {
-                const alreadyUsed = ia.one_time && moveHistory?.some((m: any) =>
-                  m.target_item_id === ia.item_id && m.action === "look" &&
-                  (m as any).bonus_value === `interact:${ia.action_name}`
-                );
-                return (
-                  <button key={ia.id}
-                    onClick={() => onInteraction(ia)}
-                    disabled={disabled || tokensRemaining < ia.cost || !!alreadyUsed}
-                    className={`w-full rounded-lg p-2.5 text-xs font-medium transition-all active:scale-[0.97] flex items-center gap-2 ${
-                      alreadyUsed ? "bg-muted/20 opacity-40" :
-                      "bg-primary/10 hover:bg-primary/20 border border-primary/20"
-                    }`}>
-                    <span className="text-lg">{ia.action_icon}</span>
-                    <span className="flex-1 text-left">{ia.action_label}</span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {alreadyUsed ? "✓ fet" : `${ia.cost}🪙`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {/* Position grid — look only (finds object if correct!) */}
-          <div className="grid grid-cols-3 gap-2">
-            {positions.map(pos => {
-              const spotKey = `${item.id}:${pos.value}`;
-              const alreadyLooked = lookedSpots.has(spotKey);
-              const isBananaBlocked = bananaBlockedSpot === spotKey;
-              return (
-                <button key={pos.value}
-                  onClick={() => onLook(item.id, pos.value)}
-                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked}
-                  className={`w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${
-                    isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
-                    alreadyLooked ? "bg-muted/20 opacity-40 line-through" :
-                    "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
-                  }`}>
-                  {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
-                  <span className="block text-[9px] text-muted-foreground mt-0.5">
-                    {isBananaBlocked ? "bloquejat" : alreadyLooked ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <GameFinishedPhase game={game} user={user} rival={rival} reward={reward}
+          navigate={navigate} objects={objects} scenarios={scenarios} gameId={gameId!} />
       )}
     </div>
   );

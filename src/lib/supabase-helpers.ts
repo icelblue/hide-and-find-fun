@@ -5,7 +5,7 @@
 //   - Validació material↔entorn
 //   - Fetch de dades (escenaris, ítems, objectes, connexions)
 //   - Sistema de tags i eines (netejar, trencar, arreglar)
-//   - Sistema de llum (indoor) i llanterna (outdoor)
+//   - Sistema de visibilitat unificat (indoor/outdoor)
 //   - Cicle de vida de partida (crear, unir, amagar, jugar)
 //   - Moviments i pistes progressives (fred/calent/molt calent)
 //   - Ítems socials (plàtan, bomba, escut, espia, missatge)
@@ -13,14 +13,12 @@
 //
 // NOTA: No hi ha API custom — tot passa via Supabase SDK.
 // La seguretat la garanteixen les polítiques RLS a PostgreSQL.
-//
-// Per entendre el flux complet:
-//   1. Crear/unir partida → createGame / joinGame
-//   2. Amagar objecte → hideObject → checkBothPlayersHidden → startGame
-//   3. Buscar → performMove (move/look/confirm)
-//   4. Trobar → status = "finished", trigger actualitza Elo
 // ============================================================
 import { supabase } from "@/integrations/supabase/client";
+import { parseTools, type PlayerTools, type ToolType } from "@/lib/game-types";
+
+// Re-export for backwards compatibility
+export { parseTools, type ToolType } from "@/lib/game-types";
 
 // ============================================
 // MATERIAL vs ENVIRONMENT VALIDATION
@@ -30,8 +28,6 @@ import { supabase } from "@/integrations/supabase/client";
 export function getMaterialBlockReason(material: string, environment: string): string | null {
   if (environment === "generic") return null;
 
-  // Simplified, logical compatibility matrix
-  // Only truly incompatible combinations are blocked
   const rules: Record<string, Record<string, string>> = {
     paper: {
       wet: "es mullaria 💧",
@@ -55,36 +51,24 @@ export function getMaterialBlockReason(material: string, environment: string): s
       hot: "es cremaria 🔥",
       submergit: "flotaria 🌊",
     },
-    // fabric (Roba): pot anar a la rentadora, secadora, etc. Gairebé tot OK
     fabric: {
       hot: "es cremaria 🔥",
     },
-    // metal (acer inox): resistent a quasi tot
-    metal: {
-      // No restrictions — stainless steel handles water fine
-    },
+    metal: {},
     plastic: {
       hot: "es fondria 🔥",
     },
     rubber: {
       hot: "es fondria 🔥",
     },
-    glass: {
-      // Glass is resistant to water, chemicals, etc.
-    },
-    ceramic: {
-      // Ceramic is mostly resistant
-    },
+    glass: {},
+    ceramic: {},
     leather: {
       submergit: "es podriria 🌊",
       hot: "es ressecaria 🔥",
     },
-    stone: {
-      // Stone resists everything
-    },
-    generic: {
-      // No restrictions for generic material
-    },
+    stone: {},
+    generic: {},
   };
 
   const reason = rules[material]?.[environment];
@@ -115,7 +99,7 @@ export const MATERIAL_LABELS: Record<string, string> = {
 // ============================================
 
 export function generateGameCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no confusing chars
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
   for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
@@ -154,14 +138,11 @@ export const TAG_ACTIONS = {
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
 } as const;
 
-export type ToolType = "drap" | "tornavis" | "martell" | "llanterna";
-
-// Outdoor scenarios (no light switch, need llanterna)
+// Outdoor scenarios: start dark (need illumination)
 export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó"];
 
 /**
  * Deterministic hash from gameId to decide which items are dirty per game.
- * Uses a simple string hash so the same game always has the same dirty items.
  */
 function hashString(str: string): number {
   let hash = 0;
@@ -181,11 +162,9 @@ export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<strin
   const dirtySet = new Set<string>();
   const seed = hashString(gameId);
   for (let i = 0; i < eligible.length; i++) {
-    // Use item index + seed to decide
     const itemSeed = hashString(eligible[i].id + gameId);
-    if (itemSeed % 100 < 60) dirtySet.add(eligible[i].id); // ~60% chance
+    if (itemSeed % 100 < 60) dirtySet.add(eligible[i].id);
   }
-  // Ensure at least 1 dirty item if there are eligible ones
   if (dirtySet.size === 0 && eligible.length > 0) {
     dirtySet.add(eligible[seed % eligible.length].id);
   }
@@ -210,7 +189,6 @@ export function getTagActions(
     actionKey: string;
   }> = [];
 
-  // If broken (by someone in this game), show Arreglar
   if (gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.broken;
     actions.push({
@@ -221,7 +199,6 @@ export function getTagActions(
     });
   }
 
-  // Dirty → Netejar (only if this item is dirty THIS game and not already cleaned)
   const isDirtyThisGame = dirtyItems ? dirtyItems.has(item.id) : tags.includes("dirty");
   if (isDirtyThisGame && !gameBreaks.has(`clean:${item.id}`)) {
     const cfg = TAG_ACTIONS.dirty;
@@ -233,7 +210,6 @@ export function getTagActions(
     });
   }
 
-  // Breakable → Trencar (only if not already broken)
   if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
@@ -247,12 +223,12 @@ export function getTagActions(
   return actions;
 }
 
-// Shared tool pool per game — competitive: first to find it keeps it
+// Shared tool pool per game
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
   martell: 5,
   drap: 2,
   llanterna: 1,
-  tornavis: 5, // extra (everyone already starts with 1)
+  tornavis: 5,
 };
 
 /** Get how many of each tool have been found in this game (both players combined) */
@@ -264,12 +240,11 @@ async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, num
 
   const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0 };
   for (const p of players ?? []) {
-    const t = (p as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
-    // Subtract starting tornavís (1) to count only "found" tornavís
-    totals.martell += t.martell ?? 0;
-    totals.drap += t.drap ?? 0;
-    totals.llanterna += t.llanterna ?? 0;
-    totals.tornavis += Math.max(0, (t.tornavis ?? 1) - 1); // -1 for the starting one
+    const t = parseTools(p.tools);
+    totals.martell += t.martell;
+    totals.drap += t.drap;
+    totals.llanterna += t.llanterna;
+    totals.tornavis += Math.max(0, t.tornavis - 1); // -1 for the starting one
   }
   return totals;
 }
@@ -279,17 +254,14 @@ export async function rollForTool(gameId: string): Promise<ToolType | null> {
   const roll = Math.random();
   if (roll >= 0.2) return null;
 
-  // Determine which tool was rolled
   let candidate: ToolType;
   if (roll < 0.05) candidate = "martell";
   else if (roll < 0.1) candidate = "tornavis";
   else if (roll < 0.15) candidate = "drap";
   else candidate = "llanterna";
 
-  // Check shared pool availability
   const found = await getToolsFoundInGame(gameId);
   if (found[candidate] >= TOOLS_PER_GAME[candidate]) {
-    // Pool exhausted for this type — try others
     const alternatives: ToolType[] = ["martell", "drap", "llanterna", "tornavis"];
     const available = alternatives.filter(t => found[t] < TOOLS_PER_GAME[t]);
     if (available.length === 0) return null;
@@ -300,23 +272,60 @@ export async function rollForTool(gameId: string): Promise<ToolType | null> {
 }
 
 // ============================================
-// LIGHT SYSTEM (indoor scenarios)
+// UNIFIED VISIBILITY SYSTEM (indoor light + outdoor illumination)
 // ============================================
 
-/** Check if light is OFF for a scenario in a game (from move history) */
+/**
+ * Check if a scenario is illuminated.
+ * - Indoor scenarios: start ON, can be toggled off/on
+ * - Outdoor scenarios: start OFF, can be toggled on with llanterna
+ * 
+ * We look at tag:light_off / tag:light_on moves.
+ * Outdoor scenarios without any light_on move are considered dark.
+ */
+export function isIlluminated(
+  scenarioId: string,
+  scenarioName: string,
+  allTagMoves: Array<{ bonus_value: string | null }>,
+): boolean {
+  const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
+  // Default: indoor=ON, outdoor=OFF
+  let lit = !isOutdoor;
+  for (const m of allTagMoves) {
+    const val = (m.bonus_value as string) ?? "";
+    if (val === `tag:light_off:${scenarioId}`) lit = false;
+    if (val === `tag:light_on:${scenarioId}`) lit = true;
+  }
+  return lit;
+}
+
+/**
+ * Backwards-compatible: also check old tag:flashlight: moves as light_on for outdoor
+ */
 export function isLightOff(scenarioId: string, allTagMoves: Array<{ bonus_value: string | null }>): boolean {
-  // Replay tag:light_off / tag:light_on moves chronologically
   let off = false;
   for (const m of allTagMoves) {
     const val = (m.bonus_value as string) ?? "";
     if (val === `tag:light_off:${scenarioId}`) off = true;
     if (val === `tag:light_on:${scenarioId}`) off = false;
+    // Backwards compat: old flashlight moves count as light_on
+    if (val === `tag:flashlight:${scenarioId}`) off = false;
   }
   return off;
 }
 
-/** Toggle light in a scenario (costs 0.2 tokens, affects both players) */
-export async function toggleLight(gameId: string, playerId: string, scenarioId: string, turnOff: boolean) {
+/**
+ * Toggle illumination in any scenario.
+ * - Indoor: regular light switch (no tool needed)
+ * - Outdoor: requires llanterna tool to turn ON
+ */
+export async function toggleLight(
+  gameId: string,
+  playerId: string,
+  scenarioId: string,
+  turnOff: boolean,
+  scenarioName?: string,
+) {
   const { data: player } = await supabase
     .from("game_players")
     .select("*")
@@ -324,6 +333,14 @@ export async function toggleLight(gameId: string, playerId: string, scenarioId: 
     .eq("user_id", playerId)
     .single();
   if (!player) throw new Error("Jugador no trobat");
+
+  const isOutdoor = scenarioName ? OUTDOOR_SCENARIOS.includes(scenarioName) : false;
+
+  // Outdoor: turning ON requires llanterna
+  if (isOutdoor && !turnOff) {
+    const tools = parseTools(player.tools);
+    if (tools.llanterna <= 0) throw new Error("Necessites una 🔦 Llanterna!");
+  }
 
   const cost = 0.2;
   let tokensRemaining = await ensureTokensReset(player);
@@ -350,11 +367,11 @@ export async function toggleLight(gameId: string, playerId: string, scenarioId: 
     bonus_value: `tag:light_${turnOff ? "off" : "on"}:${scenarioId}`,
   } as any);
 
-  // Bonus roll on light toggle (shared pool)
+  // Bonus roll on light toggle
   let toolFound: ToolType | null = null;
   const tool = await rollForTool(gameId);
   if (tool) {
-    const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
+    const tools = parseTools(player.tools);
     tools[tool] = (tools[tool] ?? 0) + 1;
     await supabase.from("game_players").update({ tools }).eq("id", player.id);
     toolFound = tool;
@@ -363,47 +380,7 @@ export async function toggleLight(gameId: string, playerId: string, scenarioId: 
   return { toolFound };
 }
 
-/** Use llanterna in an outdoor scenario to reveal hidden items */
-export async function useLlanterna(gameId: string, playerId: string, scenarioId: string) {
-  const { data: player } = await supabase
-    .from("game_players")
-    .select("*")
-    .eq("game_id", gameId)
-    .eq("user_id", playerId)
-    .single();
-  if (!player) throw new Error("Jugador no trobat");
-
-  const tools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
-  if ((tools.llanterna ?? 0) <= 0) throw new Error("Necessites una 🔦 Llanterna!");
-
-  const cost = 0.2;
-  let tokensRemaining = await ensureTokensReset(player);
-  if (tokensRemaining < cost) throw new Error(`No tens prou tokens! Necessites ${cost}`);
-
-  const { count } = await supabase
-    .from("game_moves")
-    .select("*", { count: "exact", head: true })
-    .eq("game_id", gameId)
-    .eq("player_id", playerId);
-  const turnNumber = (count ?? 0) + 1;
-
-  const newTokens = tokensRemaining - cost;
-  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
-
-  // Record as a flashlight action (NOT consumed — reutilitzable)
-  await supabase.from("game_moves").insert({
-    game_id: gameId,
-    player_id: playerId,
-    turn_number: turnNumber,
-    action: "look" as const,
-    token_cost: cost,
-    target_scenario_id: scenarioId,
-    target_position: "sobre" as const,
-    bonus_value: `tag:flashlight:${scenarioId}`,
-  } as any);
-
-  return {};
-}
+// useLlanterna removed — unified into toggleLight with isOutdoor detection
 
 /** Execute a tag-based action */
 export async function performTagAction(
@@ -428,14 +405,12 @@ export async function performTagAction(
   let tokensRemaining = await ensureTokensReset(player);
   if (tokensRemaining < cfg.cost) throw new Error(`No tens prou tokens! Necessites ${cfg.cost}`);
 
-  // Check tool requirement
   const toolNeeded = cfg.requiresTool;
   if (toolNeeded && (playerTools[toolNeeded] ?? 0) <= 0) {
     const toolName = toolNeeded === "drap" ? "🧹 Drap" : toolNeeded === "martell" ? "🔨 Martell" : "🔧 Tornavís";
     throw new Error(`Necessites un ${toolName} per fer això!`);
   }
 
-  // Count turns
   const { count } = await supabase
     .from("game_moves")
     .select("*", { count: "exact", head: true })
@@ -443,10 +418,8 @@ export async function performTagAction(
     .eq("player_id", playerId);
   const turnNumber = (count ?? 0) + 1;
 
-  // Deduct tokens (tools are NOT consumed — unlimited use within the game)
   const newTokens = tokensRemaining - cfg.cost;
 
-  // If breaking: no extra tornavís needed since everyone starts with one
   let tornavisSpawned = false;
   if (actionType === "break") {
     tornavisSpawned = true;
@@ -454,7 +427,6 @@ export async function performTagAction(
 
   await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
 
-  // Record the move (use bonus_value to track the action type)
   await supabase.from("game_moves").insert({
     game_id: gameId,
     player_id: playerId,
@@ -478,7 +450,7 @@ export async function performTagAction(
     bonusResult = { amount: bonusAmount };
   }
 
-  // If breaking: notify rival via social items mechanism
+  // If breaking: notify rival
   if (actionType === "break") {
     const { data: rival } = await supabase
       .from("game_players")
@@ -487,7 +459,6 @@ export async function performTagAction(
       .neq("user_id", playerId)
       .single();
     if (rival) {
-      // Send notification
       const { data: item } = await supabase.from("items").select("name, icon").eq("id", itemId).single();
       await supabase.from("game_social_items").insert({
         game_id: gameId,
@@ -499,12 +470,12 @@ export async function performTagAction(
     }
   }
 
-  // Tool finding on clean/fix (shared pool)
+  // Tool finding on clean/fix
   let toolFound: ToolType | null = null;
   if (actionType === "clean" || actionType === "fix") {
     toolFound = await rollForTool(gameId);
     if (toolFound) {
-      const currentTools = (player as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+      const currentTools = parseTools(player.tools);
       currentTools[toolFound] = (currentTools[toolFound] ?? 0) + 1;
       await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
     }
@@ -520,7 +491,6 @@ export async function getObjects() {
 }
 
 export async function getConnectedScenarios(scenarioId: string) {
-  // Query both directions: A→B and B→A
   const [{ data: forward, error: e1 }, { data: reverse, error: e2 }] = await Promise.all([
     supabase.from("scenario_connections").select("scenario_b").eq("scenario_a", scenarioId),
     supabase.from("scenario_connections").select("scenario_a").eq("scenario_b", scenarioId),
@@ -558,7 +528,6 @@ export async function createGame(userId: string, invitedUserId?: string) {
 }
 
 export async function joinGame(gameId: string, userId: string) {
-  // Check not already joined
   const { data: existing } = await supabase
     .from("game_players")
     .select("id")
@@ -567,17 +536,14 @@ export async function joinGame(gameId: string, userId: string) {
     .maybeSingle();
   if (existing) throw new Error("Ja ets a aquesta partida!");
 
-  // Check game is waiting
   const { data: game } = await supabase.from("games").select("id, status, invited_user_id").eq("id", gameId).single();
   if (!game) throw new Error("Partida no trobada");
   if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
 
-  // If it's a private challenge, only the invited user can join
   if (game.invited_user_id && game.invited_user_id !== userId) {
     throw new Error("Aquesta partida és un repte privat!");
   }
 
-  // Check game has room
   const { count } = await supabase
     .from("game_players")
     .select("*", { count: "exact", head: true })
@@ -594,7 +560,6 @@ export async function joinGame(gameId: string, userId: string) {
 }
 
 export async function getAvailableGames(currentUserId: string) {
-  // Only show PUBLIC games (no invited_user_id) — challenges are private
   const { data, error } = await supabase
     .from("games")
     .select("*")
@@ -616,7 +581,6 @@ export async function getAvailableGames(currentUserId: string) {
 }
 
 export async function findRandomMatch(userId: string): Promise<{ type: "joined" | "created"; gameId: string }> {
-  // Try to join an existing public waiting game first
   const { data: available } = await supabase
     .from("games")
     .select("id")
@@ -631,7 +595,6 @@ export async function findRandomMatch(userId: string): Promise<{ type: "joined" 
     return { type: "joined", gameId: available[0].id };
   }
 
-  // No public games — find a random active player and challenge them
   const { data: candidates } = await supabase
     .from("profiles")
     .select("user_id")
@@ -646,7 +609,6 @@ export async function findRandomMatch(userId: string): Promise<{ type: "joined" 
     return { type: "created", gameId: game.id };
   }
 
-  // No other players at all — create public game
   const game = await createGame(userId);
   return { type: "created", gameId: game.id };
 }
@@ -677,34 +639,28 @@ export async function getMyInvites(userId: string) {
 }
 
 export async function getMyGames(userId: string) {
-  // 1. Games I'm already a player in (exclude story mode games)
   const { data: joined } = await supabase
     .from("game_players")
     .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id, is_story)")
     .eq("user_id", userId);
 
-  // 2. Games where I'm invited but haven't joined yet
   const { data: pendingInvites } = await supabase
     .from("games")
     .select("id, code, status, created_by, created_at, invited_user_id, is_story")
     .eq("status", "waiting")
     .eq("invited_user_id", userId);
 
-  // Combine: convert pending invites to same shape, mark as pending
   const joinedIds = new Set((joined ?? []).map((gp: any) => gp.game_id));
   const pendingFormatted = (pendingInvites ?? [])
     .filter((g) => !joinedIds.has(g.id))
     .map((g) => ({ game_id: g.id, games: g, _pending: true }));
 
   const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted]
-    // Filter out story mode games
     .filter((gp: any) => !(gp.games as any).is_story);
 
-  // Fetch creator profiles AND rival profiles for all games
   const allGameIds = all.map((gp: any) => gp.game_id);
   const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];
 
-  // Fetch all players in these games to find rivals
   let rivalMap = new Map<string, string>();
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase
@@ -725,7 +681,6 @@ export async function getMyGames(userId: string) {
     }
   }
 
-  // For waiting games with invited_user_id, resolve the invited player's name too
   const invitedUserIds = [
     ...new Set(
       all
@@ -744,7 +699,6 @@ export async function getMyGames(userId: string) {
     invitedProfileMap = new Map(invProfiles?.map((p) => [p.user_id, p.display_name ?? "Anònim"]) ?? []);
   }
 
-  // Collect all unique user IDs we need profiles for (creators + invited)
   const allProfileIds = [...new Set([...creatorIds, ...invitedUserIds])];
   const { data: allProfiles } =
     allProfileIds.length > 0
@@ -772,7 +726,6 @@ export async function getMyGames(userId: string) {
 }
 
 export async function deleteGame(gameId: string) {
-  // Delete players first, then game
   await supabase.from("game_players").delete().eq("game_id", gameId);
   const { error } = await supabase.from("games").delete().eq("id", gameId);
   if (error) throw error;
@@ -795,7 +748,6 @@ export async function hideObject(
     supabase.from("items").select("inner_capacity, environment").eq("id", itemId).single(),
   ]);
 
-  // Validate size restriction for "dins"
   if (position === "dins") {
     const objSize = (obj as any)?.size ?? 2;
     const capacity = (itm as any)?.inner_capacity ?? 2;
@@ -804,7 +756,6 @@ export async function hideObject(
     }
   }
 
-  // Validate material vs environment
   const material = (obj as any)?.material ?? "generic";
   const environment = (itm as any)?.environment ?? "generic";
   const blockReason = getMaterialBlockReason(material, environment);
@@ -849,12 +800,10 @@ export async function autoFixMissingScenario(gameId: string, userId: string, hid
 export async function checkBothPlayersHidden(gameId: string) {
   const { data, error } = await supabase.from("game_players").select("has_hidden").eq("game_id", gameId);
   if (error) throw error;
-  // Need exactly 2 players and both must have hidden
   return data?.length === 2 && data.every((p) => p.has_hidden);
 }
 
 export async function startGame(gameId: string) {
-  // Assign starting scenarios to ALL players BEFORE changing status
   const scenarios = await getScenarios();
   const { data: players, error } = await supabase
     .from("game_players")
@@ -862,9 +811,8 @@ export async function startGame(gameId: string) {
     .eq("game_id", gameId);
   if (error) throw error;
 
-  // Only assign scenarios to players who don't have one yet
   for (const player of players) {
-    if (player.current_scenario_id) continue; // already assigned (by another call)
+    if (player.current_scenario_id) continue;
     const { data: hiddenItem } = await supabase
       .from("items")
       .select("scenario_id")
@@ -881,7 +829,6 @@ export async function startGame(gameId: string) {
       .eq("user_id", player.user_id);
   }
 
-  // Only transition status if still in hiding (prevents double-transition)
   await supabase
     .from("games")
     .update({ status: "playing" as const })
@@ -899,8 +846,6 @@ export async function ensureTokensReset(player: any) {
   const today = new Date().toISOString().split("T")[0];
   if (player.tokens_last_reset === today) return player.tokens_remaining;
 
-  // Daily reset: base 5 tokens only. Bonus tokens are NOT auto-added.
-  // Players spend bonus tokens manually via redeemBonusTokens().
   await supabase
     .from("game_players")
     .update({
@@ -913,7 +858,6 @@ export async function ensureTokensReset(player: any) {
   return 5.0;
 }
 
-/** Spend a chosen amount of bonus tokens from profile into a specific game. */
 export async function redeemBonusTokens(gameId: string, userId: string, amount: number) {
   if (amount <= 0) throw new Error("Has de triar almenys 1 token!");
 
@@ -922,7 +866,6 @@ export async function redeemBonusTokens(gameId: string, userId: string, amount: 
   if (available <= 0) throw new Error("No tens bonus tokens disponibles!");
   if (amount > available) throw new Error(`Només tens ${available} bonus tokens!`);
 
-  // Add to this game's tokens and track how many bonus were added
   const { data: player } = await supabase
     .from("game_players")
     .select("id, tokens_remaining, bonus_tokens_added")
@@ -939,7 +882,6 @@ export async function redeemBonusTokens(gameId: string, userId: string, amount: 
     })
     .eq("id", player.id);
 
-  // Subtract from profile
   await supabase
     .from("profiles")
     .update({ bonus_tokens: available - amount })
@@ -965,7 +907,6 @@ export async function performMove(
     .single();
   if (playerError) throw playerError;
 
-  // Story mode: skip token checks entirely (unlimited moves)
   let tokensRemaining = player.tokens_remaining;
   const cost = isStory ? 0 : TOKEN_COSTS[action];
   if (!isStory) {
@@ -988,7 +929,6 @@ export async function performMove(
   let bonusTokens = 0;
   let hintLevel: number | null = null;
 
-  // Get rival's hidden info for both look and confirm
   const { data: rival } = await supabase
     .from("game_players")
     .select("hidden_item_id, hidden_position")
@@ -996,7 +936,6 @@ export async function performMove(
     .neq("user_id", playerId)
     .single();
 
-  // LOOK: gives progressive hints AND can find the object if correct
   if (action === "look" && targetItemId && targetPosition && rival) {
     const { data: rivalHiddenItem } = await supabase
       .from("items")
@@ -1019,7 +958,7 @@ export async function performMove(
     }
   }
 
-  // Random bonus chance — SKIP in story mode (no inventory/token effects)
+  // Random bonus — SKIP in story mode
   if (!isStory && (action === "look" || action === "confirm") && targetItemId && targetPosition) {
     const roll = Math.random();
     if (roll < 0.15) {
@@ -1038,7 +977,7 @@ export async function performMove(
 
     const toolRoll = await rollForTool(gameId);
     if (toolRoll) {
-      const currentTools = (player as any).tools ?? { drap: 0, tornavis: 0, martell: 0, llanterna: 1 };
+      const currentTools = parseTools(player.tools);
       currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
       await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
       if (!foundBonus) {
@@ -1049,7 +988,6 @@ export async function performMove(
   }
 
   if (action === "move" && targetScenarioId) {
-    // Story mode: skip connection validation (allow free movement)
     if (!isStory) {
       const [{ data: fwd }, { data: rev }] = await Promise.all([
         supabase
@@ -1097,7 +1035,6 @@ export async function performMove(
   if (moveError) throw moveError;
 
   if (foundObject) {
-    // Story mode: use RPC to finish (bypasses RLS for CPU games)
     if (isStory) {
       await supabase.rpc("finish_story_game", { _game_id: gameId, _winner_id: playerId });
     } else {
@@ -1154,21 +1091,15 @@ export async function sendSocialItem(
     .eq("user_id", toPlayerId)
     .single();
 
-  // Shield blocks banana and swap only (NOT smoke_bomb, shield, espia, or message)
   const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis"));
 
-  // For espia, we target ourselves (no notification to rival)
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
 
   let espiaResult: string | null = null;
 
-  // === APPLY SIDE EFFECTS BEFORE inserting the social item ===
-  // (The insert triggers realtime → loadGame, so DB must be updated first)
-
   await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
 
   if (blocked) {
-    // Shield blocked this item — deactivate shield after use
     await supabase.from("game_players").update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
     if (itemType === "shield") {
@@ -1177,7 +1108,6 @@ export async function sendSocialItem(
       if (fromPlayer.smoke_bomb_used) {
         throw new Error("Ja has usat la bomba de fum en aquesta partida!");
       }
-      // Smoke bomb: move hidden object to a DIFFERENT scenario + random position
       const { data: self } = await supabase
         .from("game_players")
         .select("hidden_item_id, hidden_position, id")
@@ -1185,33 +1115,26 @@ export async function sendSocialItem(
         .eq("user_id", fromPlayerId)
         .single();
       if (self && self.hidden_item_id) {
-        // Get current scenario of hidden item
         const { data: currentItem } = await supabase
           .from("items").select("scenario_id").eq("id", self.hidden_item_id).single();
-        // Get all scenarios except the current one
         const allScenarios = await getScenarios();
         const otherScenarios = allScenarios.filter(s => s.id !== currentItem?.scenario_id);
         if (otherScenarios.length === 0) throw new Error("No hi ha altres escenaris disponibles!");
-        // Pick a random different scenario
         const newScenario = otherScenarios[Math.floor(Math.random() * otherScenarios.length)];
-        // Get items in the new scenario
         const newItems = await getItemsByScenario(newScenario.id);
         if (newItems.length === 0) throw new Error("L'escenari destí no té mobles!");
-        // Pick random item and position
         const newItem = newItems[Math.floor(Math.random() * newItems.length)];
         const allPos: ("sobre" | "sota" | "dins")[] = ["sobre", "sota", "dins"];
         const validPos = allPos.filter(p => p !== "dins" || (newItem.inner_capacity ?? 2) >= 2);
         const newPos = validPos[Math.floor(Math.random() * validPos.length)];
-        // Update hidden location
         await supabase
           .from("game_players")
           .update({ hidden_item_id: newItem.id, hidden_position: newPos, smoke_bomb_used: true })
           .eq("id", self.id);
-        // Notify the owner (fromPlayer) about the new location
         await supabase.from("game_social_items").insert({
           game_id: gameId,
           from_player_id: fromPlayerId,
-          to_player_id: fromPlayerId, // self-notification
+          to_player_id: fromPlayerId,
           item_type: "message" as const,
           message_text: `💣 Bomba de fum! El teu objecte s'ha mogut a ${newScenario.icon} ${newScenario.name} → ${newItem.icon} ${newItem.name} (${newPos})`,
         });
@@ -1224,7 +1147,6 @@ export async function sendSocialItem(
         .eq("user_id", fromPlayerId)
         .single();
       if (sender && toPlayer) {
-        // Swap both positions atomically (parallel updates)
         await Promise.all([
           supabase.from("game_players")
             .update({ current_scenario_id: toPlayer.current_scenario_id })
@@ -1248,7 +1170,6 @@ export async function sendSocialItem(
         espiaResult = "🤷 El rival encara no s'ha mogut!";
       }
     } else if (itemType === "robar_tornavis") {
-      // Steal 1 tornavís from rival
       const { data: rivalPlayer } = await supabase
         .from("game_players")
         .select("id, tools")
@@ -1256,11 +1177,10 @@ export async function sendSocialItem(
         .eq("user_id", toPlayerId)
         .single();
       if (rivalPlayer) {
-        const rivalTools = (rivalPlayer as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+        const rivalTools = parseTools(rivalPlayer.tools);
         if (rivalTools.tornavis > 0) {
           rivalTools.tornavis -= 1;
           await supabase.from("game_players").update({ tools: rivalTools }).eq("id", rivalPlayer.id);
-          // Add to self
           const { data: selfPlayer } = await supabase
             .from("game_players")
             .select("id, tools")
@@ -1268,7 +1188,7 @@ export async function sendSocialItem(
             .eq("user_id", fromPlayerId)
             .single();
           if (selfPlayer) {
-            const selfTools = (selfPlayer as any).tools ?? { drap: 0, tornavis: 1, martell: 0, llanterna: 0 };
+            const selfTools = parseTools(selfPlayer.tools);
             selfTools.tornavis += 1;
             await supabase.from("game_players").update({ tools: selfTools }).eq("id", selfPlayer.id);
           }
@@ -1279,7 +1199,6 @@ export async function sendSocialItem(
     }
   }
 
-  // === NOW insert the social item (triggers realtime for the rival) ===
   await supabase.from("game_social_items").insert({
     game_id: gameId,
     from_player_id: fromPlayerId,
