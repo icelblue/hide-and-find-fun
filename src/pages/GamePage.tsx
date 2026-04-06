@@ -79,6 +79,7 @@ export default function GamePage() {
   const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
   const [illuminatedScenarios, setIlluminatedScenarios] = useState<Set<string>>(new Set());
+  const [scenarioIsDarkState, setScenarioIsDarkState] = useState(false);
 
   // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
