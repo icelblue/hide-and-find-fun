@@ -79,6 +79,7 @@ export default function GamePage() {
   const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
   const [illuminatedScenarios, setIlluminatedScenarios] = useState<Set<string>>(new Set());
+  const [scenarioIsDarkState, setScenarioIsDarkState] = useState(false);
 
   // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
@@ -267,6 +268,7 @@ export default function GamePage() {
     }
 
     const scenarioIsDark = isOutdoor ? !litScenarios.has(scenarioId) : indoorLightOff;
+    setScenarioIsDarkState(scenarioIsDark);
 
     const visibleItems = scenarioIsDark ? [] : loadedItems.filter((i: any) => {
       if (!i.hidden) return true;
@@ -473,17 +475,8 @@ export default function GamePage() {
     const scenarioName = currentScenario?.name ?? "";
     const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
 
-    // Determine current state
-    const isCurrentlyDark = isOutdoor
-      ? !illuminatedScenarios.has(player.current_scenario_id)
-      : (() => {
-          // For indoor, check raw light state
-          let off = false;
-          // We don't have allTagMoves here, so use the illuminatedScenarios logic
-          // illuminatedScenarios tracks light_on events; for indoor we need inverse
-          // Simpler: just look at whether items are visible
-          return currentScenarioItems.length === 0 && !isOutdoor;
-        })();
+    // Use the pre-computed dark state
+    const isCurrentlyDark = scenarioIsDarkState;
 
     setActionLoading(true);
     try {
@@ -635,9 +628,7 @@ export default function GamePage() {
   const currentScenario = scenarios.find(s => s.id === player?.current_scenario_id);
   const noTokens = player && player.tokens_remaining < TOKEN_COSTS.look;
   const isOutdoor = OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "");
-  const scenarioIsDark = isOutdoor
-    ? !illuminatedScenarios.has(player?.current_scenario_id ?? "")
-    : currentScenarioItems.length === 0 && phase === "playing";
+  const scenarioIsDark = scenarioIsDarkState;
 
   const lookedSpots = new Set<string>();
   for (const m of moveHistory) {
@@ -1030,20 +1021,14 @@ export default function GamePage() {
           {/* Unified Light/Illumination toggle */}
           <div>
             {(() => {
-              const isCurrentlyDark = isOutdoor
-                ? !illuminatedScenarios.has(player.current_scenario_id)
-                : scenarioIsDark;
+              const isCurrentlyDark = scenarioIsDark;
               const hasLlanterna = playerTools.llanterna > 0;
               const canToggle = isOutdoor ? (isCurrentlyDark ? hasLlanterna : true) : true;
 
               return (
                 <>
-                  {/* Already illuminated outdoor — just info */}
-                  {isOutdoor && !isCurrentlyDark && (
-                    <p className="text-[10px] text-center text-muted-foreground">🔦 Zona il·luminada — mobles ocults revelats</p>
-                  )}
-                  {/* Show toggle button when: indoor always, outdoor when dark + has tool OR when lit (to turn off) */}
-                  {(!isOutdoor || isCurrentlyDark) && (
+                  {/* Show toggle button always: indoor on/off, outdoor on/off */}
+                  {(
                     <button
                       onClick={handleToggleLight}
                       disabled={actionLoading || player.tokens_remaining < 0.2 || !canToggle}
