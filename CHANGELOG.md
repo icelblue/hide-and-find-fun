@@ -7,6 +7,40 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.8.0] — 2026-04-06 — Refactorització & Seguretat 🏗️🔒 (MINOR)
+
+### 🏗️ Modularització de GamePage.tsx
+- Reduït de ~1650 a ~1190 línies extraient 4 components:
+  - `GameFinishedPhase.tsx`: resultats, recompenses, info rival
+  - `GamePopups.tsx`: modals d'especials, troll effects, bonus tokens
+  - `SocialItemsPanel.tsx`: panel d'ítems socials i missatges
+  - `ItemActions.tsx`: moble expandible amb accions de tags i posicions
+
+### 🔦 Unificació Llum/Llanterna
+- Sistema de visibilitat unificat: indoor (interruptor) i outdoor (llanterna) amb el mateix botó toggle
+- Outdoor ara permet encendre I apagar (abans només encendre)
+- Estat de llum derivat correctament dels moviments (no heurístic)
+- Backwards compatible amb moviments `tag:flashlight:` antics
+
+### 🔧 Eines Tipades
+- `PlayerTools` tipus i `DEFAULT_TOOLS` constant a `game-types.ts`
+- `parseTools()` helper elimina 6+ fallbacks hardcodejats `{ drap: 0, tornavis: 1, ... }`
+- `Phase` type centralitzat
+
+### 🔒 Validació servidor del flux d'amagar
+- Trigger PostgreSQL `BEFORE UPDATE ON game_players` valida:
+  - Existència d'objecte i moble
+  - Mida vs capacitat interior (posició "dins")
+  - Compatibilitat material vs entorn
+- Impossible bypassar des del client
+
+### 🧹 Neteja
+- Eliminat `showConfirmDialog` state mort
+- Eliminat `useLlanterna()` duplicat
+- `cleanup-old-games` ara neteja partides d'història acabades >24h
+
+---
+
 ## [1.7.0] — 2026-04-04 — Mode Història + aïllament PvP 🐾🎮 (MINOR)
 
 ### 🐾 Mode Història (single-player)
