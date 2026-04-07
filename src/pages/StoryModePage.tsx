@@ -137,7 +137,7 @@ export default function StoryModePage() {
   };
 
   // ====== PET EVOLUTION DISPLAY ======
-  const evolution = pet ? getPetEvolution(pet.xp ?? 0) : null;
+  const evolution = pet ? getPetEvolution(pet.xp ?? 0, pet.max_xp) : null;
 
   // ====== RENDER ======
   if (phase === "loading") return (

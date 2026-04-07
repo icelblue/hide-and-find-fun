@@ -199,7 +199,7 @@ export default function PlayerProfilePage() {
 
       {/* Pet companion with evolution */}
       {pet && (() => {
-        const evo = getPetEvolution(pet.xp ?? 0);
+        const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
         return (
           <Card className={`mb-4 glass relative z-10 ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
             <CardContent className="py-3 flex items-center gap-3">
