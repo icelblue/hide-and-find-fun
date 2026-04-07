@@ -310,14 +310,25 @@ export async function useConsumable(userId: string, consumableName: string) {
     }
   }
 
-  // Resolve any active events of matching type
-  await supabase
+  // Only resolve events that THIS consumable actually cures
+  const curedEvents = consumable.curesEvent;
+  const { data: resolvedCount } = await supabase
     .from("pet_events")
     .update({ resolved: true, resolved_at: new Date().toISOString() })
     .eq("user_id", userId)
-    .eq("resolved", false);
+    .eq("resolved", false)
+    .eq("event_type", curedEvents)
+    .select("id");
 
-  return { healed: consumable.xpHeal, maxXpBoost: consumable.maxXpBoost, newXp: result?.newXp ?? 0 };
+  const didCureEvent = (resolvedCount?.length ?? 0) > 0;
+
+  return {
+    healed: consumable.xpHeal,
+    maxXpBoost: consumable.maxXpBoost,
+    newXp: result?.newXp ?? 0,
+    didCureEvent,
+    curesEvent: curedEvents,
+  };
 }
 
 // ============================================
