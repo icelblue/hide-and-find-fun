@@ -349,6 +349,13 @@ export default function ProfilePage() {
         );
       })()}
 
+      {/* Pet health events */}
+      {petEvents.length > 0 && (
+        <div className="mb-4">
+          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
+        </div>
+      )}
+
       {/* Top rival */}
       {topRival && (
         <Card className="mb-4 glass border-secondary/30">

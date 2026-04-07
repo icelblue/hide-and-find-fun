@@ -23,7 +23,9 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP } from "@/lib/story-helpers";
+import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
+import { PetHealthBadge } from "@/components/PetHealthBadge";
+import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
@@ -39,12 +41,13 @@ export default function PlayerProfilePage() {
   const [trophies, setTrophies] = useState<any[]>([]);
   const [pet, setPet] = useState<any>(null);
   const [petAccessories, setPetAccessories] = useState<any[]>([]);
+  const [petEvents, setPetEvents] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
-    const [{ data: prof }, { data: msgs }, { data: trophyData }, petData, accs] = await Promise.all([
+    const [{ data: prof }, { data: msgs }, { data: trophyData }, petData, accs, events] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
       supabase.from("wall_messages")
         .select("*")
@@ -59,11 +62,13 @@ export default function PlayerProfilePage() {
         .order("collected_at", { ascending: false }),
       getMyPet(userId).catch(() => null),
       getMyAccessories(userId).catch(() => []),
+      getActiveEvents(userId).catch(() => []),
     ]);
     setProfile(prof);
     setTrophies(trophyData ?? []);
     setPet(petData);
     setPetAccessories(accs);
+    setPetEvents(events);
 
     // Fetch author names
     const wallMsgs: any[] = msgs ?? [];
