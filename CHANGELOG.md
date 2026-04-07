@@ -7,6 +7,23 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.9.0] — 2026-04-07 — UX & Mascota Health 🐾🩺 (MINOR)
+
+### Afegit
+- **Mecànica de virus/malaltia**: 25% probabilitat d'event negatiu (🤒 Virus +200XP, 🤕 Caiguda +150XP, 🫠 Febre +100XP) al completar capítols
+- **Consumibles curatius**: Menjar (-100XP), Aigua (-50XP), Vacuna (-200XP) per curar la mascota
+- **Mapa d'habitacions** al panell "Com jugar": mostra connexions entre escenaris
+- **Swipe-to-delete** a "Les meves partides": lliscar per eliminar (confirmació per partides obertes)
+- Taula `pet_events` per rastrejar events de salut
+
+### Canviat
+- **Menú**: Perfil primer, Mode Història segon
+- **Rival favorit**: Filtra CPU i jugadors anònims — només mostra rivals reals
+- **Mascota morta**: Icona 🪦 (tombstone) en lloc de la icona de mascota amb opacitat
+- Eliminat botó 🗑️ de partides (substituït per swipe)
+
+---
+
 ## [1.8.1] — 2026-04-07 — Seguretat Avançada & RPC 🔒🛡️ (PATCH)
 
 ### 🔒 Moviments via RPC (Server-Side)
