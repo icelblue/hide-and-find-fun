@@ -311,7 +311,8 @@ src/
 │
 ├── components/
 │   ├── ErrorBoundary.tsx         ← Error boundary + log a DB
-│   ├── HelpButton.tsx            ← Panel flotant amb regles
+│   ├── HelpButton.tsx            ← Panel flotant amb regles completes
+│   ├── PetHealthBadge.tsx        ← Estat salut mascota (malalt/sa/mort)
 │   ├── TypewriterText.tsx        ← Animació text màquina d'escriure
 │   ├── game/                     ← Components extraïts de GamePage
 │
@@ -347,11 +348,13 @@ Per a una guia detallada d'arquitectura, base de dades, debugging, instal·laci�
 ### **→ [docs/TECHNICAL.md](docs/TECHNICAL.md)**
 
 Inclou:
-- 📊 Diagrama ER complet amb 19 taules (inclou story_progress, player_pets, pet_accessories)
-- 🔒 Matriu RLS de 19 taules + funcions SECURITY DEFINER
-- 🔐 Arquitectura RPC: moviments, llum i accions de tags al servidor
+- 📊 Diagrama ER complet amb 21 taules (inclou pet_events, pet_consumables, pet_accessories)
+- 🔒 Matriu RLS de 21 taules + funcions SECURITY DEFINER
+- 🔐 Arquitectura RPC: moviments, llum, accions de tags, gift_consumable
 - 🎮 Mecàniques detallades (amagar, buscar, eines, llum, ítems socials)
-- 🐾 Mode Història: mascota, capítols, XP, evolucions, CPU
+- 🐾 Mode Història: mascota, capítols, XP, evolucions, salut, consumibles, CPU
+- 💊 Sistema de regal de consumibles entre jugadors
+- 🏆 Vitrina pública de col·leccionables
 - 💻 Guia d'instal·lació local pas a pas (amb entorn aïllat)
 - 🐳 Desplegament Docker (Dockerfile + docker-compose)
 - 🛠️ Com afegir escenaris, objectes, ítems socials
