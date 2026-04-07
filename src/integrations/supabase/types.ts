@@ -943,6 +943,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_both_hidden: { Args: { _game_id: string }; Returns: boolean }
+      count_game_players: { Args: { _game_id: string }; Returns: number }
       create_story_game: {
         Args: { _chapter: number; _user_id: string }
         Returns: string
@@ -979,6 +981,13 @@ export type Database = {
       finish_story_game: {
         Args: { _game_id: string; _winner_id: string }
         Returns: undefined
+      }
+      get_game_participants: {
+        Args: { _game_ids: string[] }
+        Returns: {
+          game_id: string
+          user_id: string
+        }[]
       }
       get_safe_game_players: {
         Args: { _game_id: string }
@@ -1029,6 +1038,7 @@ export type Database = {
         Returns: undefined
       }
       sell_reward_item: { Args: { _player_reward_id: string }; Returns: number }
+      start_game_setup: { Args: { _game_id: string }; Returns: undefined }
     }
     Enums: {
       action_type: "move" | "look" | "confirm"

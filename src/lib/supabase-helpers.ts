@@ -243,13 +243,10 @@ export const TOOLS_PER_GAME: Record<ToolType, number> = {
 
 /** Get how many of each tool have been found in this game (both players combined) */
 async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, number>> {
-  const { data: players } = await supabase
-    .from("game_players")
-    .select("tools")
-    .eq("game_id", gameId);
+  const { data: players } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
 
   const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0 };
-  for (const p of players ?? []) {
+  for (const p of (players as any[]) ?? []) {
     const t = parseTools(p.tools);
     totals.martell += t.martell;
     totals.drap += t.drap;
@@ -433,11 +430,8 @@ export async function joinGame(gameId: string, userId: string) {
     throw new Error("Aquesta partida és un repte privat!");
   }
 
-  const { count } = await supabase
-    .from("game_players")
-    .select("*", { count: "exact", head: true })
-    .eq("game_id", gameId);
-  if ((count ?? 0) >= 2) throw new Error("La partida ja està plena!");
+  const { data: playerCount } = await supabase.rpc("count_game_players" as any, { _game_id: gameId });
+  if ((playerCount ?? 0) >= 2) throw new Error("La partida ja està plena!");
 
   const { error } = await supabase.from("game_players").insert({ game_id: gameId, user_id: userId });
   if (error) throw error;
@@ -552,19 +546,16 @@ export async function getMyGames(userId: string) {
 
   let rivalMap = new Map<string, string>();
   if (allGameIds.length > 0) {
-    const { data: allPlayers } = await supabase
-      .from("game_players")
-      .select("game_id, user_id")
-      .in("game_id", allGameIds)
-      .neq("user_id", userId);
-    const rivalUserIds = [...new Set((allPlayers ?? []).map((p) => p.user_id))];
+    const { data: allPlayers } = await supabase.rpc("get_game_participants" as any, { _game_ids: allGameIds });
+    const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== userId);
+    const rivalUserIds = [...new Set(filteredPlayers.map((p: any) => p.user_id as string))];
     if (rivalUserIds.length > 0) {
       const { data: rivalProfiles } = await supabase
         .from("profiles")
         .select("user_id, display_name")
         .in("user_id", rivalUserIds);
       const rpMap = new Map(rivalProfiles?.map((p) => [p.user_id, p.display_name]) ?? []);
-      for (const p of allPlayers ?? []) {
+      for (const p of filteredPlayers) {
         rivalMap.set(p.game_id, rpMap.get(p.user_id) ?? "Anònim");
       }
     }
@@ -687,42 +678,14 @@ export async function autoFixMissingScenario(gameId: string, userId: string, hid
 }
 
 export async function checkBothPlayersHidden(gameId: string) {
-  const { data, error } = await supabase.from("game_players").select("has_hidden").eq("game_id", gameId);
+  const { data, error } = await supabase.rpc("check_both_hidden" as any, { _game_id: gameId });
   if (error) throw error;
-  return data?.length === 2 && data.every((p) => p.has_hidden);
+  return !!data;
 }
 
 export async function startGame(gameId: string) {
-  const scenarios = await getScenarios();
-  const { data: players, error } = await supabase
-    .from("game_players")
-    .select("user_id, hidden_item_id, current_scenario_id")
-    .eq("game_id", gameId);
-  if (error) throw error;
-
-  for (const player of players) {
-    if (player.current_scenario_id) continue;
-    const { data: hiddenItem } = await supabase
-      .from("items")
-      .select("scenario_id")
-      .eq("id", player.hidden_item_id!)
-      .single();
-
-    const available = scenarios.filter((s) => s.id !== hiddenItem?.scenario_id);
-    const random = available[Math.floor(Math.random() * available.length)];
-
-    await supabase
-      .from("game_players")
-      .update({ current_scenario_id: random.id })
-      .eq("game_id", gameId)
-      .eq("user_id", player.user_id);
-  }
-
-  await supabase
-    .from("games")
-    .update({ status: "playing" as const })
-    .eq("id", gameId)
-    .in("status", ["hiding", "waiting"]);
+  const { error } = await supabase.rpc("start_game_setup" as any, { _game_id: gameId });
+  if (error) throw new Error(error.message);
 }
 
 // ============================================
@@ -844,12 +807,9 @@ export async function sendSocialItem(
     throw new Error("Ja has usat el teu ítem social avui! 😉");
   }
 
-  const { data: toPlayer } = await supabase
-    .from("game_players")
-    .select("shield_active, id, current_scenario_id")
-    .eq("game_id", gameId)
-    .eq("user_id", toPlayerId)
-    .single();
+  // Use safe RPC to read opponent data (SELECT restricted to own rows)
+  const { data: safePlayers } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+  const toPlayer = ((safePlayers as any[]) ?? []).find((p: any) => p.user_id === toPlayerId) ?? null;
 
   const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis"));
 
@@ -930,12 +890,8 @@ export async function sendSocialItem(
         espiaResult = "🤷 El rival encara no s'ha mogut!";
       }
     } else if (itemType === "robar_tornavis") {
-      const { data: rivalPlayer } = await supabase
-        .from("game_players")
-        .select("id, tools")
-        .eq("game_id", gameId)
-        .eq("user_id", toPlayerId)
-        .single();
+      // Use already-fetched safe players data for rival tools
+      const rivalPlayer = toPlayer;
       if (rivalPlayer) {
         const rivalTools = parseTools(rivalPlayer.tools);
         if (rivalTools.tornavis > 0) {
