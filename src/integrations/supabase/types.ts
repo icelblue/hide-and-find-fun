@@ -915,6 +915,28 @@ export type Database = {
         Args: { _game_id: string; _winner_id: string }
         Returns: undefined
       }
+      get_safe_game_players: {
+        Args: { _game_id: string }
+        Returns: {
+          bonus_tokens_added: number
+          created_at: string
+          current_scenario_id: string
+          game_id: string
+          has_hidden: boolean
+          hidden_item_id: string
+          hidden_object_id: string
+          hidden_position: Database["public"]["Enums"]["position_type"]
+          id: string
+          shield_active: boolean
+          smoke_bomb_used: boolean
+          social_item_used_today: boolean
+          special_data: Json
+          tokens_last_reset: string
+          tokens_remaining: number
+          tools: Json
+          user_id: string
+        }[]
+      }
       insert_cpu_move: {
         Args: {
           _action: Database["public"]["Enums"]["action_type"]
