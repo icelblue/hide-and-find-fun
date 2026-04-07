@@ -542,8 +542,12 @@ export default function GamePage() {
               });
             }
           }
-          // Roll for random health event (25% chance)
-          const healthEvent = await rollHealthEvent(user.id);
+          // Roll for random health event ONLY when consumables are available (all accessories collected)
+          let healthEvent = null;
+          const currentAccs = await getMyAccessories(user.id);
+          if (hasAllAccessories(currentAccs)) {
+            healthEvent = await rollHealthEvent(user.id);
+          }
           setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
           toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
           if (healthEvent) {
