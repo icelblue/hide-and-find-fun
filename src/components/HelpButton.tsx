@@ -3,7 +3,7 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { TOKEN_COSTS } from "@/lib/supabase-helpers";
+import { TOKEN_COSTS, getScenarios, getConnectedScenarios } from "@/lib/supabase-helpers";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 
 const RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"] as const;
@@ -65,6 +65,7 @@ const RULES = [
 export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const [open, setOpen] = useState(false);
   const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
+  const [scenarioMap, setScenarioMap] = useState<{ name: string; icon: string; connections: string[] }[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -72,8 +73,16 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.style.top = `-${window.scrollY}px`;
-      // Load reward catalog
+      // Load reward catalog + scenario connections
       getRewardCatalog().then(setRewardCatalog).catch(() => {});
+      getScenarios().then(async (scenarios) => {
+        const result: { name: string; icon: string; connections: string[] }[] = [];
+        for (const s of scenarios) {
+          const connected = await getConnectedScenarios(s.id);
+          result.push({ name: s.name, icon: s.icon, connections: connected.map((c: any) => `${c.icon} ${c.name}`) });
+        }
+        setScenarioMap(result);
+      }).catch(() => {});
     } else {
       const scrollY = document.body.style.top;
       document.body.style.overflow = "";
