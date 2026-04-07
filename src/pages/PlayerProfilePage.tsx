@@ -84,7 +84,17 @@ export default function PlayerProfilePage() {
       }
     }
     setMessages(wallMsgs);
-  }, [userId]);
+
+    // Load visitor's own unused consumables (for gifting)
+    if (user && user.id !== userId) {
+      const { data: myCons } = await supabase
+        .from("pet_consumables")
+        .select("*")
+        .eq("user_id", user.id)
+        .is("used_at", null);
+      setMyConsumables(myCons ?? []);
+    }
+  }, [userId, user]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
