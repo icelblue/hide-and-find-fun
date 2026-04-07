@@ -217,10 +217,37 @@ export default function PlayerProfilePage() {
         );
       })()}
 
-      {/* Pet health events */}
-      {petEvents.length > 0 && (
+      {/* Pet health events + gift consumables */}
+      {pet && !isOwnProfile && user && (
         <div className="mb-4 relative z-10">
-          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} compact />
+          {petEvents.length > 0 && (
+            <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
+          )}
+          {/* Gift consumable buttons */}
+          {myConsumables.length > 0 && (
+            <Card className="glass border-accent/30 mt-2">
+              <CardContent className="py-3">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                  💊 Regalar consumible a {pet.pet_name}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {PET_CONSUMABLES.map(c => {
+                    const count = myConsumables.filter(mc => mc.consumable_name === c.name).length;
+                    if (count === 0) return null;
+                    return (
+                      <Button key={c.name} size="sm" variant="outline"
+                        disabled={giftingConsumable}
+                        onClick={() => handleGiftConsumable(c.name)}
+                        className="text-xs">
+                        {c.icon} {c.name} ({count})
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">Gastes un consumible teu per curar la seva mascota</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
