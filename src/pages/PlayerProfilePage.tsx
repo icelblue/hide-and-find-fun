@@ -98,6 +98,25 @@ export default function PlayerProfilePage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const handleGiftConsumable = async (consumableName: string) => {
+    if (!user || !userId) return;
+    setGiftingConsumable(true);
+    try {
+      const { data, error } = await supabase.rpc("gift_consumable", {
+        _to_user_id: userId,
+        _consumable_name: consumableName,
+      });
+      if (error) throw error;
+      const result = data as any;
+      toast.success(`Has curat ${result.pet_name}! -${result.healed} XP 💊`);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setGiftingConsumable(false);
+    }
+  };
+
   const handleSend = async () => {
     if (!user || !userId || !newMsg.trim()) return;
     setSending(true);
