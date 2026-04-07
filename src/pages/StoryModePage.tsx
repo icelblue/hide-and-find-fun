@@ -144,13 +144,14 @@ export default function StoryModePage() {
     <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-muted/10 blur-[100px] pointer-events-none" />
       <div className="text-center relative z-10 animate-fade-in">
-        <div className="text-7xl mb-4 opacity-50">{pet?.pet_icon}</div>
+        <div className="text-7xl mb-4">🪦</div>
+        <p className="text-sm text-muted-foreground mb-1">{pet?.pet_icon}</p>
         <h2 className="text-2xl font-bold mb-2">{pet?.pet_name} ha viscut una vida plena</h2>
         <p className="text-sm text-muted-foreground mb-2">
           Ha arribat a {MAX_PET_XP} XP — el màxim possible.
         </p>
         <p className="text-xs text-muted-foreground mb-6">
-          Gràcies per cuidar-lo. Ara pots adoptar una nova mascota!
+          Descansa en pau, petit amic. Ara pots adoptar una nova mascota!
         </p>
         <Button onClick={handleRebirth} size="lg" className="w-full max-w-xs">
           🥚 Nova mascota

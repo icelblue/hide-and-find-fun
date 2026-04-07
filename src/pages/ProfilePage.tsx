@@ -75,7 +75,8 @@ export default function ProfilePage() {
     setPet(petData);
     setPetAccessories(accs);
 
-    // Find top rival
+    // Find top rival (exclude CPU and anonymous)
+    const CPU_ID = "00000000-0000-0000-0000-000000000001";
     const { data: myGames } = await supabase
       .from("game_players").select("game_id").eq("user_id", user.id);
     if (myGames && myGames.length > 0) {
@@ -85,13 +86,22 @@ export default function ProfilePage() {
       if (allPlayers && allPlayers.length > 0) {
         const counts: Record<string, number> = {};
         for (const p of allPlayers) {
+          // Skip CPU player
+          if (p.user_id === CPU_ID) continue;
           counts[p.user_id] = (counts[p.user_id] || 0) + 1;
         }
-        const topId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+        const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        const topId = entries[0];
         if (topId) {
           const { data: rivalProf } = await supabase
             .from("profiles").select("display_name").eq("user_id", topId[0]).single();
-          setTopRival({ name: rivalProf?.display_name ?? "Anònim", count: topId[1], userId: topId[0] });
+          const rivalName = rivalProf?.display_name;
+          // Only show if we have a real name (not null/empty/Anònim)
+          if (rivalName && rivalName !== "Anònim" && rivalName.trim()) {
+            setTopRival({ name: rivalName, count: topId[1], userId: topId[0] });
+          } else {
+            setTopRival(null);
+          }
         }
       }
     }
