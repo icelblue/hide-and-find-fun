@@ -83,13 +83,15 @@ export async function logError(
 ) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    // Only log if user is authenticated (anon insert policy removed for security)
+    if (!user) return;
     await (supabase as any).from("error_logs").insert({
-      user_id: user?.id ?? null,
+      user_id: user.id,
       error_message: message.slice(0, 1000),
-      error_stack: stack?.slice(0, 5000) ?? null,
+      error_stack: stack?.slice(0, 2000) ?? null,
       component: component?.slice(0, 200) ?? null,
-      url: window.location.href,
-      user_agent: navigator.userAgent.slice(0, 500),
+      url: window.location.pathname,
+      user_agent: navigator.userAgent.slice(0, 300),
       metadata: metadata ?? {},
     });
   } catch {
