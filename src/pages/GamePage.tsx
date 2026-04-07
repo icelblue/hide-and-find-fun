@@ -539,7 +539,7 @@ export default function GamePage() {
           toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
           if (healthEvent) {
             setTimeout(() => {
-              toast.warning(`${healthEvent.icon} ${pet?.pet_name ?? "La mascota"} ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
+              toast.warning(`${healthEvent.icon} La mascota ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
             }, 2000);
           }
         } else {
