@@ -1209,9 +1209,11 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 | `scenario_connections` | ✅ Tots auth | ❌ | ❌ | ❌ |
 | `reward_items` | ✅ Tots auth | ❌ | ❌ | ❌ |
 | `error_logs` | ✅ Propi | ✅ Només auth | ❌ | ❌ |
-| `story_progress` | ✅ Propi | ✅ Propi | ✅ Propi | ❌ |
-| `player_pets` | ✅ Tots auth | ✅ Propi | ✅ Propi | ❌ |
-| `pet_accessories` | ✅ Propi | ✅ Propi | ❌ | ❌ |
+| `story_progress` | ✅ Propi | ✅ Propi | ✅ Propi | ✅ Propi |
+| `player_pets` | ✅ Tots auth | ✅ Propi | ✅ Propi | ✅ Propi |
+| `pet_accessories` | ✅ Tots auth | ✅ Propi | ✅ Propi | ✅ Propi |
+| `pet_consumables` | ✅ Propi | ✅ Propi | ✅ Propi | ✅ Propi |
+| `pet_events` | ✅ Tots auth | ✅ Propi | ✅ Propi | ✅ Propi |
 
 <br/>
 
