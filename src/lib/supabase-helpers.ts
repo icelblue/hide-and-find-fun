@@ -326,63 +326,20 @@ export async function toggleLight(
   turnOff: boolean,
   scenarioName?: string,
 ) {
-  const { data: player } = await supabase
-    .from("game_players")
-    .select("*")
-    .eq("game_id", gameId)
-    .eq("user_id", playerId)
-    .single();
-  if (!player) throw new Error("Jugador no trobat");
-
-  const isOutdoor = scenarioName ? OUTDOOR_SCENARIOS.includes(scenarioName) : false;
-
-  // Outdoor: turning ON requires llanterna
-  if (isOutdoor && !turnOff) {
-    const tools = parseTools(player.tools);
-    if (tools.llanterna <= 0) throw new Error("Necessites una 🔦 Llanterna!");
-  }
-
-  const cost = 0.2;
-  let tokensRemaining = await ensureTokensReset(player);
-  if (tokensRemaining < cost) throw new Error(`No tens prou tokens! Necessites ${cost}`);
-
-  const { count } = await supabase
-    .from("game_moves")
-    .select("*", { count: "exact", head: true })
-    .eq("game_id", gameId)
-    .eq("player_id", playerId);
-  const turnNumber = (count ?? 0) + 1;
-
-  const newTokens = tokensRemaining - cost;
-  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
-
-  await supabase.from("game_moves").insert({
-    game_id: gameId,
-    player_id: playerId,
-    turn_number: turnNumber,
-    action: "look" as const,
-    token_cost: cost,
-    target_scenario_id: scenarioId,
-    target_position: "sobre" as const,
-    bonus_value: `tag:light_${turnOff ? "off" : "on"}:${scenarioId}`,
-  } as any);
-
-  // Bonus roll on light toggle
-  let toolFound: ToolType | null = null;
-  const tool = await rollForTool(gameId);
-  if (tool) {
-    const tools = parseTools(player.tools);
-    tools[tool] = (tools[tool] ?? 0) + 1;
-    await supabase.from("game_players").update({ tools }).eq("id", player.id);
-    toolFound = tool;
-  }
-
-  return { toolFound };
+  const { data, error } = await supabase.rpc("execute_toggle_light" as any, {
+    _game_id: gameId,
+    _scenario_id: scenarioId,
+    _turn_off: turnOff,
+    _scenario_name: scenarioName ?? null,
+  });
+  if (error) throw new Error(error.message);
+  const result = data as any;
+  return { toolFound: result?.tool_found ?? null };
 }
 
 // useLlanterna removed — unified into toggleLight with isOutdoor detection
 
-/** Execute a tag-based action */
+/** Execute a tag-based action (server-side via RPC) */
 export async function performTagAction(
   gameId: string,
   playerId: string,
@@ -390,98 +347,20 @@ export async function performTagAction(
   actionKey: string,
   playerTools: Record<string, number>,
 ) {
-  const { data: player } = await supabase
-    .from("game_players")
-    .select("*")
-    .eq("game_id", gameId)
-    .eq("user_id", playerId)
-    .single();
-  if (!player) throw new Error("Jugador no trobat");
-
-  const [actionType, _itemId] = actionKey.split(":");
-  const cfg =
-    actionType === "clean" ? TAG_ACTIONS.dirty : actionType === "break" ? TAG_ACTIONS.breakable : TAG_ACTIONS.broken;
-
-  let tokensRemaining = await ensureTokensReset(player);
-  if (tokensRemaining < cfg.cost) throw new Error(`No tens prou tokens! Necessites ${cfg.cost}`);
-
-  const toolNeeded = cfg.requiresTool;
-  if (toolNeeded && (playerTools[toolNeeded] ?? 0) <= 0) {
-    const toolName = toolNeeded === "drap" ? "🧹 Drap" : toolNeeded === "martell" ? "🔨 Martell" : "🔧 Tornavís";
-    throw new Error(`Necessites un ${toolName} per fer això!`);
-  }
-
-  const { count } = await supabase
-    .from("game_moves")
-    .select("*", { count: "exact", head: true })
-    .eq("game_id", gameId)
-    .eq("player_id", playerId);
-  const turnNumber = (count ?? 0) + 1;
-
-  const newTokens = tokensRemaining - cfg.cost;
-
-  let tornavisSpawned = false;
-  if (actionType === "break") {
-    tornavisSpawned = true;
-  }
-
-  await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
-
-  await supabase.from("game_moves").insert({
-    game_id: gameId,
-    player_id: playerId,
-    turn_number: turnNumber,
-    action: "look" as const,
-    token_cost: cfg.cost,
-    target_item_id: itemId,
-    target_position: "sobre" as const,
-    bonus_value: `tag:${actionKey}`,
-  } as any);
-
-  // Mini bonus roll
-  let bonusResult: { amount: number } | null = null;
-  const bonusChance = actionType === "clean" ? 0.5 : actionType === "break" ? 0.3 : 0.4;
-  if (Math.random() < bonusChance) {
-    const bonusAmount = Math.random() < 0.3 ? 0.5 : 0.3;
-    await supabase
-      .from("game_players")
-      .update({ tokens_remaining: newTokens + bonusAmount })
-      .eq("id", player.id);
-    bonusResult = { amount: bonusAmount };
-  }
-
-  // If breaking: notify rival
-  if (actionType === "break") {
-    const { data: rival } = await supabase
-      .from("game_players")
-      .select("user_id, tools")
-      .eq("game_id", gameId)
-      .neq("user_id", playerId)
-      .single();
-    if (rival) {
-      const { data: item } = await supabase.from("items").select("name, icon").eq("id", itemId).single();
-      await supabase.from("game_social_items").insert({
-        game_id: gameId,
-        from_player_id: playerId,
-        to_player_id: rival.user_id,
-        item_type: "message" as const,
-        message_text: `💥 El rival ha trencat ${item?.icon} ${item?.name}!`,
-      });
-    }
-  }
-
-  // Tool finding on clean/fix
-  let toolFound: ToolType | null = null;
-  if (actionType === "clean" || actionType === "fix") {
-    toolFound = await rollForTool(gameId);
-    if (toolFound) {
-      const currentTools = parseTools(player.tools);
-      currentTools[toolFound] = (currentTools[toolFound] ?? 0) + 1;
-      await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
-    }
-  }
-
-  return { bonusResult, tornavisSpawned, toolFound, actionType };
+  const { data, error } = await supabase.rpc("execute_tag_action" as any, {
+    _game_id: gameId,
+    _item_id: itemId,
+    _action_key: actionKey,
+    _player_tools: playerTools,
+  });
+  if (error) throw new Error(error.message);
+  const result = data as any;
+  return {
+    bonusResult: result?.bonus_result ?? null,
+    tornavisSpawned: result?.tornavis_spawned ?? false,
+    toolFound: result?.tool_found ?? null,
+    actionType: result?.action_type ?? actionKey.split(":")[0],
+  };
 }
 
 export async function getObjects() {
@@ -899,153 +778,24 @@ export async function performMove(
   targetPosition?: "sobre" | "sota" | "dins",
   isStory?: boolean,
 ) {
-  const { data: player, error: playerError } = await supabase
-    .from("game_players")
-    .select("*")
-    .eq("game_id", gameId)
-    .eq("user_id", playerId)
-    .single();
-  if (playerError) throw playerError;
-
-  let tokensRemaining = player.tokens_remaining;
-  const cost = isStory ? 0 : TOKEN_COSTS[action];
-  if (!isStory) {
-    tokensRemaining = await ensureTokensReset(player);
-    if (tokensRemaining < cost) {
-      throw new Error(`No tens prou tokens! Necessites ${cost}, tens ${tokensRemaining}`);
-    }
-  }
-
-  const { count } = await supabase
-    .from("game_moves")
-    .select("*", { count: "exact", head: true })
-    .eq("game_id", gameId)
-    .eq("player_id", playerId);
-  const turnNumber = (count ?? 0) + 1;
-
-  let foundObject = false;
-  let foundBonus: string | null = null;
-  let bonusValue: string | null = null;
-  let bonusTokens = 0;
-  let hintLevel: number | null = null;
-
-  const { data: rival } = await supabase
-    .from("game_players")
-    .select("hidden_item_id, hidden_position")
-    .eq("game_id", gameId)
-    .neq("user_id", playerId)
-    .single();
-
-  if (action === "look" && targetItemId && targetPosition && rival) {
-    const { data: rivalHiddenItem } = await supabase
-      .from("items")
-      .select("scenario_id")
-      .eq("id", rival.hidden_item_id!)
-      .single();
-    const { data: targetItem } = await supabase.from("items").select("scenario_id").eq("id", targetItemId).single();
-
-    if (rivalHiddenItem && targetItem) {
-      if (targetItem.scenario_id !== rivalHiddenItem.scenario_id) {
-        hintLevel = 0;
-      } else if (targetItemId !== rival.hidden_item_id) {
-        hintLevel = 1;
-      } else if (targetPosition !== rival.hidden_position) {
-        hintLevel = 2;
-      } else {
-        foundObject = true;
-        hintLevel = 3;
-      }
-    }
-  }
-
-  // Random bonus — SKIP in story mode
-  if (!isStory && (action === "look" || action === "confirm") && targetItemId && targetPosition) {
-    const roll = Math.random();
-    if (roll < 0.15) {
-      const bonusAmount = roll < 0.05 ? "1" : "0.5";
-      foundBonus = "extra_token";
-      bonusValue = bonusAmount;
-      bonusTokens = parseFloat(bonusAmount);
-
-      await supabase.from("player_inventory").insert({
-        user_id: playerId,
-        game_id: gameId,
-        item_type: "extra_token",
-        item_value: bonusAmount,
-      });
-    }
-
-    const toolRoll = await rollForTool(gameId);
-    if (toolRoll) {
-      const currentTools = parseTools(player.tools);
-      currentTools[toolRoll] = (currentTools[toolRoll] ?? 0) + 1;
-      await supabase.from("game_players").update({ tools: currentTools }).eq("id", player.id);
-      if (!foundBonus) {
-        foundBonus = "extra_token";
-        bonusValue = `tool:${toolRoll}`;
-      }
-    }
-  }
-
-  if (action === "move" && targetScenarioId) {
-    if (!isStory) {
-      const [{ data: fwd }, { data: rev }] = await Promise.all([
-        supabase
-          .from("scenario_connections")
-          .select("id")
-          .eq("scenario_a", player.current_scenario_id)
-          .eq("scenario_b", targetScenarioId)
-          .maybeSingle(),
-        supabase
-          .from("scenario_connections")
-          .select("id")
-          .eq("scenario_a", targetScenarioId)
-          .eq("scenario_b", player.current_scenario_id)
-          .maybeSingle(),
-      ]);
-      if (!fwd && !rev) throw new Error("No pots anar a aquesta habitació des d'aquí!");
-    }
-
-    await supabase.from("game_players").update({ current_scenario_id: targetScenarioId }).eq("id", player.id);
-  }
-
-  const newTokens = tokensRemaining - cost + bonusTokens;
-  if (!isStory) {
-    await supabase.from("game_players").update({ tokens_remaining: newTokens }).eq("id", player.id);
-  }
-
-  const { data: move, error: moveError } = await supabase
-    .from("game_moves")
-    .insert({
-      game_id: gameId,
-      player_id: playerId,
-      turn_number: turnNumber,
-      action,
-      token_cost: cost,
-      target_scenario_id: targetScenarioId,
-      target_item_id: targetItemId,
-      target_position: targetPosition,
-      found_object: foundObject,
-      found_bonus: foundBonus as any,
-      bonus_value: bonusValue,
-      hint_level: hintLevel,
-    } as any)
-    .select()
-    .single();
-  if (moveError) throw moveError;
-
-  if (foundObject) {
-    if (isStory) {
-      await supabase.rpc("finish_story_game", { _game_id: gameId, _winner_id: playerId });
-    } else {
-      await supabase
-        .from("games")
-        .update({ status: "finished" as const, winner_id: playerId })
-        .eq("id", gameId);
-    }
-  }
-
-  return { move, foundObject, foundBonus, bonusValue, tokensRemaining: newTokens, hintLevel };
+  const { data, error } = await supabase.rpc("execute_game_move" as any, {
+    _game_id: gameId,
+    _action: action,
+    _target_scenario_id: targetScenarioId ?? null,
+    _target_item_id: targetItemId ?? null,
+    _target_position: targetPosition ?? null,
+    _is_story: isStory ?? false,
+  });
+  if (error) throw new Error(error.message);
+  const result = data as any;
+  return {
+    move: { id: result.move_id },
+    foundObject: result.found_object ?? false,
+    foundBonus: result.found_bonus ?? null,
+    bonusValue: result.bonus_value ?? null,
+    tokensRemaining: result.tokens_remaining ?? 0,
+    hintLevel: result.hint_level ?? null,
+  };
 }
 
 // ============================================

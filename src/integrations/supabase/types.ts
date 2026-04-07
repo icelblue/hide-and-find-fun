@@ -911,6 +911,35 @@ export type Database = {
         Args: { _chapter: number; _user_id: string }
         Returns: string
       }
+      execute_game_move: {
+        Args: {
+          _action: Database["public"]["Enums"]["action_type"]
+          _game_id: string
+          _is_story?: boolean
+          _target_item_id?: string
+          _target_position?: Database["public"]["Enums"]["position_type"]
+          _target_scenario_id?: string
+        }
+        Returns: Json
+      }
+      execute_tag_action: {
+        Args: {
+          _action_key: string
+          _game_id: string
+          _item_id: string
+          _player_tools: Json
+        }
+        Returns: Json
+      }
+      execute_toggle_light: {
+        Args: {
+          _game_id: string
+          _scenario_id: string
+          _scenario_name?: string
+          _turn_off: boolean
+        }
+        Returns: Json
+      }
       finish_story_game: {
         Args: { _game_id: string; _winner_id: string }
         Returns: undefined
