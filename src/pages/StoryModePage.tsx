@@ -32,6 +32,8 @@ export default function StoryModePage() {
   const [pet, setPet] = useState<any>(null);
   const [progress, setProgress] = useState<any[]>([]);
   const [accessories, setAccessories] = useState<any[]>([]);
+  const [activeEvents, setActiveEvents] = useState<any[]>([]);
+  const [consumables, setConsumables] = useState<any[]>([]);
   const [playerName, setPlayerName] = useState("aventurer");
 
   // Intro animation states
@@ -46,15 +48,19 @@ export default function StoryModePage() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [petData, prog, accs, profileRes] = await Promise.all([
+    const [petData, prog, accs, profileRes, events, consumablesRes] = await Promise.all([
       getMyPet(user.id),
       getStoryProgress(user.id),
       getMyAccessories(user.id),
       supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+      getActiveEvents(user.id),
+      supabase.from("pet_consumables").select("*").eq("user_id", user.id).is("used_at", null).order("obtained_at"),
     ]);
     setPet(petData);
     setProgress(prog);
     setAccessories(accs);
+    setActiveEvents(events);
+    setConsumables(consumablesRes.data ?? []);
     if (profileRes.data?.display_name) setPlayerName(profileRes.data.display_name);
 
     if (!petData) {
