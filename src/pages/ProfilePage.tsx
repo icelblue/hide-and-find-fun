@@ -154,7 +154,7 @@ export default function ProfilePage() {
           rivalNameMap = new Map((rivalProfs ?? []).map(p => [p.user_id, p.display_name ?? "Anònim"]));
         }
         const gameRivalMap = new Map<string, string>();
-        for (const rp of rivalPlayers ?? []) {
+        for (const rp of rivalPlayers) {
           gameRivalMap.set(rp.game_id, rivalNameMap.get(rp.user_id) ?? "Anònim");
         }
 
