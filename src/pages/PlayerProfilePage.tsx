@@ -194,6 +194,16 @@ export default function PlayerProfilePage() {
         );
       })()}
 
+      {/* Pet health events */}
+      {petEvents.length > 0 && (
+        <div className="mb-4 relative z-10">
+          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} compact />
+        </div>
+      )}
+
+      {/* Vitrina (reward collection) */}
+      <PlayerVitrina userId={userId!} />
+
       {/* Trophies */}
       <div className="mb-5 relative z-10">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
