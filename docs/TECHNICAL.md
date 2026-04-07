@@ -864,6 +864,7 @@ Via RPC execute_game_move(_action='look'):
 | 🛡️ **Escut** | Protegeix del pròxim plàtan o intercanvi. Es desactiva després. | 1/dia | — |
 | 🔄 **Intercanvi** | Intercanvia `current_scenario_id` amb el rival | 1/dia | ✅ Sí |
 | 🕵️ **Espia** | Revela l'escenari actual del rival (auto-orientat, sense notificació) | 1/dia | ❌ No |
+| 💬 **Missatge** | Envia text lliure al rival (bluff, provocació) | 1/dia | ❌ No |
 | 🔧 **Robar tornavís** | Roba 1 tornavís del rival | 1/dia | ✅ Sí |
 
 > ⚠️ `false_clue` (pista falsa) està ELIMINADA del joc. L'enum existeix a la DB per retrocompatibilitat però no s'usa.
