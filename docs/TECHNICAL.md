@@ -377,6 +377,18 @@
                               │ error_stack      │
                               │ component, url   │
                               └─────────────────┘
+
+  ┌─────────────────┐         ┌─────────────────┐
+  │   pet_events     │         │ pet_consumables  │
+  │─────────────────│         │─────────────────│
+  │ user_id         │         │ user_id         │
+  │ event_type      │         │ consumable_name │
+  │ event_icon      │         │ consumable_icon │
+  │ event_name      │         │ used_at (null=  │
+  │ xp_change       │         │   disponible)   │
+  │ resolved (bool) │         └─────────────────┘
+  │ resolved_at     │
+  └─────────────────┘
 ```
 
 <br/>
