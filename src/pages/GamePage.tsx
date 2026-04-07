@@ -532,7 +532,14 @@ export default function GamePage() {
             }
             const allAccs = await getMyAccessories(user.id);
             if (hasAllAccessories(allAccs)) {
-              wonConsumable = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
+              const c = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
+              wonConsumable = c;
+              // Actually save the consumable to the database!
+              await supabase.from("pet_consumables").insert({
+                user_id: user.id,
+                consumable_name: c.name,
+                consumable_icon: c.icon,
+              });
             }
           }
           // Roll for random health event (25% chance)
