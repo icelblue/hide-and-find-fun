@@ -131,9 +131,10 @@ export default function ProfilePage() {
     if (myGamePlayers && myGamePlayers.length > 0) {
       const gpGameIds = myGamePlayers.map(gp => gp.game_id);
       const { data: activeGameData } = await supabase
-        .from("games").select("id, code, status, created_at")
+        .from("games").select("id, code, status, created_at, is_story")
         .in("id", gpGameIds)
         .in("status", ["waiting", "hiding", "playing"])
+        .eq("is_story", false)
         .order("created_at", { ascending: false });
       if (activeGameData && activeGameData.length > 0) {
         const activeGameIds = activeGameData.map(g => g.id);
