@@ -87,9 +87,9 @@ export default function ProfilePage() {
       const gameIds = myGames.map(g => g.game_id);
       const { data: allPlayers } = await supabase.rpc("get_game_participants" as any, { _game_ids: gameIds });
       const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== user.id);
-      if (allPlayers && allPlayers.length > 0) {
+      if (filteredPlayers && filteredPlayers.length > 0) {
         const counts: Record<string, number> = {};
-        for (const p of allPlayers) {
+        for (const p of filteredPlayers) {
           // Skip CPU player
           if (p.user_id === CPU_ID) continue;
           counts[p.user_id] = (counts[p.user_id] || 0) + 1;
