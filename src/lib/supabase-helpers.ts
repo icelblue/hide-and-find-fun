@@ -548,14 +548,14 @@ export async function getMyGames(userId: string) {
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase.rpc("get_game_participants" as any, { _game_ids: allGameIds });
     const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== userId);
-    const rivalUserIds = [...new Set((allPlayers ?? []).map((p) => p.user_id))];
+    const rivalUserIds = [...new Set(filteredPlayers.map((p: any) => p.user_id as string))];
     if (rivalUserIds.length > 0) {
       const { data: rivalProfiles } = await supabase
         .from("profiles")
         .select("user_id, display_name")
         .in("user_id", rivalUserIds);
       const rpMap = new Map(rivalProfiles?.map((p) => [p.user_id, p.display_name]) ?? []);
-      for (const p of allPlayers ?? []) {
+      for (const p of filteredPlayers) {
         rivalMap.set(p.game_id, rpMap.get(p.user_id) ?? "Anònim");
       }
     }
