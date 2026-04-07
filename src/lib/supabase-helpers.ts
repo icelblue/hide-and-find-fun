@@ -1,18 +1,28 @@
 // ============================================================
 // supabase-helpers.ts — Lògica de negoci completa del joc
 // ============================================================
-// Aquest fitxer conté TOTA la lògica client-side:
-//   - Validació material↔entorn
+// v1.8.1 — Arquitectura RPC + RLS
+//
+// ACCIONS CRÍTIQUES (via RPC SECURITY DEFINER al servidor):
+//   - execute_game_move → moviments, hints, bonus, eines
+//   - execute_toggle_light → visibilitat indoor/outdoor
+//   - execute_tag_action → netejar, trencar, arreglar
+//   - get_safe_game_players → emmascara dades sensibles
+//
+// LÒGICA CLIENT (aquest fitxer):
+//   - Validació material↔entorn (UI feedback)
 //   - Fetch de dades (escenaris, ítems, objectes, connexions)
-//   - Sistema de tags i eines (netejar, trencar, arreglar)
-//   - Sistema de visibilitat unificat (indoor/outdoor)
-//   - Cicle de vida de partida (crear, unir, amagar, jugar)
-//   - Moviments i pistes progressives (fred/calent/molt calent)
+//   - Definicions de tags i eines (constants)
+//   - Sistema de visibilitat (lectura d'estat des de moves)
+//   - Cicle de vida de partida (crear, unir, amagar)
 //   - Ítems socials (plàtan, bomba, escut, espia, missatge)
 //   - Inventari i regals
 //
-// NOTA: No hi ha API custom — tot passa via Supabase SDK.
-// La seguretat la garanteixen les polítiques RLS a PostgreSQL.
+// SEGURETAT:
+//   - RLS complet a totes les taules
+//   - Moviments només via RPC (client NO pot INSERT game_moves)
+//   - Dades oponent emmascadades (hidden_* = null mentre playing)
+//   - Perfils: només display_name/avatar_url editables
 // ============================================================
 import { supabase } from "@/integrations/supabase/client";
 import { parseTools, type PlayerTools, type ToolType } from "@/lib/game-types";

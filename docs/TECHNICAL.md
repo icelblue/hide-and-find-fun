@@ -110,14 +110,16 @@
 │      │                                                        │
 │      ├── /auth ──────────── AuthPage.tsx                       │
 │      ├── / ──────────────── LobbyPage.tsx                     │
-│      ├── /game/:id ──────── GamePage.tsx        ⭐ ~1550 línies│
+│      ├── /game/:id ──────── GamePage.tsx        ⭐ ~1190 línies│
+│      ├── /story ─────────── StoryModePage.tsx                 │
 │      ├── /profile ────────── ProfilePage.tsx                  │
 │      ├── /player/:id ────── PlayerProfilePage.tsx             │
 │      └── /reset-password ── ResetPasswordPage.tsx             │
 │                                                               │
 │   Lògica de negoci:                                           │
-│      ├── lib/supabase-helpers.ts    ⭐ ~1250 línies           │
-│      └── lib/reward-helpers.ts         93 línies              │
+│      ├── lib/supabase-helpers.ts    ⭐ RPC calls + helpers    │
+│      ├── lib/game-types.ts             Tipus centralitzats    │
+│      └── lib/reward-helpers.ts         Recompenses via RPC    │
 │                                                               │
 │   Comunicació:                                                │
 │      └── @supabase/supabase-js (client auto-generat)          │
@@ -130,15 +132,22 @@
 │                                                               │
 │   ┌───────────────┐   ┌──────────────────┐                   │
 │   │  PostgreSQL    │   │   Auth Service    │                   │
-│   │  15 taules     │   │  email + password │                   │
-│   │  6 funcions    │   │  handle_new_user  │                   │
+│   │  19 taules     │   │  email + password │                   │
+│   │  10+ funcions  │   │  handle_new_user  │                   │
 │   │  RLS complet   │   └──────────────────┘                   │
 │   └───────────────┘                                           │
 │                                                               │
 │   ┌───────────────┐   ┌──────────────────┐                   │
-│   │   Realtime     │   │  Edge Functions   │                   │
-│   │  3 canals per  │   │  cleanup-old-     │                   │
-│   │  partida       │   │  games (cron)     │                   │
+│   │  RPC Functions │   │  Edge Functions   │                   │
+│   │  execute_*     │   │  cleanup-old-     │                   │
+│   │  (SECURITY     │   │  games (cron)     │                   │
+│   │   DEFINER)     │   │  backup-database  │                   │
+│   └───────────────┘   └──────────────────┘                   │
+│                                                               │
+│   ┌───────────────┐   ┌──────────────────┐                   │
+│   │   Triggers     │   │   Realtime        │                   │
+│   │  validate_*    │   │  games +          │                   │
+│   │  handle_*      │   │  game_social_items│                   │
 │   └───────────────┘   └──────────────────┘                   │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -149,10 +158,11 @@
 
 | Principi | Descripció |
 |:---------|:-----------|
-| **Client-side first** | Tota la lògica de joc viu al client (`supabase-helpers.ts`). No hi ha API custom — tot via Supabase SDK. |
+| **Server-side security** | Moviments, bonus i hints calculats al servidor via RPC SECURITY DEFINER. El client NO pot inserir `game_moves` directament. |
 | **Seguretat per RLS** | Polítiques de fila garanteixen que cada jugador només veu i modifica les seves dades. |
-| **Realtime reactiu** | `GamePage` es re-renderitza automàticament quan qualsevol taula rellevant canvia. |
-| **Triggers per integritat** | Elo, lligues, recompenses i perfils s'actualitzen via triggers PostgreSQL. |
+| **Dades emmascadades** | `get_safe_game_players()` oculta `hidden_*` dels oponents mentre la partida està en curs. |
+| **Realtime reactiu** | `GamePage` es re-renderitza quan `games` o `game_social_items` canvien (game_players exclòs de realtime per seguretat). |
+| **Triggers per integritat** | Elo, lligues, recompenses, validació d'amagar i validació de moviments via triggers PostgreSQL. |
 
 <br/>
 
@@ -187,8 +197,8 @@
 │   │   │     · Crear partida / rival aleatori / buscar jugador
 │   │   │     · Unir-se per codi / partides obertes
 │   │   │     · Les meves partides + swipe-to-dismiss
-│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1650 línies)
-│   │   │     · Fase amagar (4 passos) + missatge secret (has_hide_message)
+│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1190 línies)
+│   │   │     · Fase amagar (4 passos) + missatge secret
 │   │   │     · Ítems socials + pistes progressives
 │   │   │     · Eines, llum, llanterna, mobles bruts
 │   │   │     · Mode Història: tokens il·limitats, sense bonus/inventari
@@ -207,10 +217,10 @@
 │   │   └── 📄 use-mobile.tsx        ← Hook per detectar mòbil
 │   │
 │   ├── 📁 lib/
-│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica PvP (~1250 línies)
+│   │   ├── 📄 supabase-helpers.ts   ← ⭐ RPC calls + lògica client
+│   │   │     · RPC: execute_game_move, toggle_light, tag_action
 │   │   │     · DATA: scenarios, items, objects, connections
 │   │   │     · LIFECYCLE: create, join, delete, available, myGames
-│   │   │     · MATCHMAKING: findRandom, search, challenge
 │   │   │     · HIDING: hideObject, checkBothHidden, startGame
 │   │   │     · TAGS: getTagActions, performTagAction, rollForTool
 │   │   │     · LIGHT: toggleLight, isLightOff, useLlanterna
@@ -457,10 +467,10 @@ CREATE TYPE game_status     AS ENUM ('waiting', 'hiding', 'playing', 'finished')
 CREATE TYPE action_type     AS ENUM ('move', 'look', 'confirm');
 CREATE TYPE position_type   AS ENUM ('sobre', 'sota', 'dins');
 CREATE TYPE bonus_type      AS ENUM ('extra_token', 'hint_yes', 'hint_no');
-CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message', 'espia', 'swap');
+CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message', 'espia', 'swap', 'robar_tornavis');
 CREATE TYPE league_tier     AS ENUM ('bronze', 'silver', 'gold', 'platinum', 'diamond');
 CREATE TYPE item_rarity     AS ENUM ('common', 'uncommon', 'rare', 'epic', 'legendary');
-CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric', 'wood', 'cardboard', 'rubber', 'ceramic', 'electronic', 'leather', 'stone');
+CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric', 'wood', 'cardboard', 'rubber', 'ceramic', 'electronic', 'leather', 'stone', 'food');
 CREATE TYPE item_environment AS ENUM ('generic', 'wet', 'hot', 'dirty', 'outdoor', 'frozen', 'sorrenc', 'ventós', 'submergit', 'químic');
 ```
 
@@ -548,6 +558,92 @@ INSERT player_rewards amb reward_item aleatori d'aquesta rarity
 4. INSERT nou item a l'escenari (display_order automàtic)
 5. UPDATE reward_items SET placed_in_scenario_id, placed_by, placed_at
 6. UPDATE player_rewards SET status = 'placed'
+```
+
+</details>
+
+<details>
+<summary>🎮 <strong>execute_game_move()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+Executa un moviment de joc al servidor. El client NO pot inserir `game_moves` directament.
+
+```
+Paràmetres: _game_id, _action, _target_scenario_id, _target_item_id, _target_position, _is_story
+1. Identifica el jugador (auth.uid()) i el rival
+2. Valida tokens suficients
+3. Per 'move': valida connexió d'escenaris, actualitza current_scenario_id
+4. Per 'look': calcula hint_level comparant amb hidden_* del rival
+   ├── hint 0 = fred (escenari incorrecte)
+   ├── hint 1 = calent (escenari correcte, moble incorrecte)
+   ├── hint 2 = molt calent (moble correcte, posició incorrecta)
+   └── hint 3 = trobat! → UPDATE games SET status='finished', winner_id
+5. Bonus roll (15%): tokens extra
+6. Tool roll (20%): eina aleatòria del pool compartit
+7. INSERT game_moves amb totes les dades calculades
+8. Retorna: { hint_level, found_object, bonus, tool_found }
+```
+
+</details>
+
+<details>
+<summary>💡 <strong>execute_toggle_light()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+```
+1. Valida que el jugador té tokens (0.2)
+2. Per exteriors: requereix llanterna al inventari
+3. INSERT game_moves amb tag:light_on/light_off
+4. Dedueix tokens
+5. Tool roll (20%)
+```
+
+</details>
+
+<details>
+<summary>🏷️ <strong>execute_tag_action()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+```
+1. Valida eina requerida (drap/martell/tornavís)
+2. Valida tokens suficients (0.2-0.3)
+3. Executa acció (clean/break/fix)
+4. Bonus roll per acció
+5. INSERT game_moves amb bonus_value = 'tag:{action}:{itemId}'
+```
+
+</details>
+
+<details>
+<summary>👁️ <strong>get_safe_game_players()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+```
+Retorna game_players amb camps sensibles emmascadats:
+- Si la partida està 'playing' i user_id ≠ auth.uid():
+  hidden_object_id = NULL
+  hidden_item_id = NULL
+  hidden_position = NULL
+```
+
+</details>
+
+<details>
+<summary>🔒 <strong>validate_hide_object_trigger</strong> — BEFORE UPDATE ON game_players (v1.8.0)</summary>
+
+```
+Quan has_hidden canvia de false a true:
+1. Valida existència objecte i moble
+2. Valida mida vs inner_capacity (posició "dins")
+3. Valida material vs entorn
+```
+
+</details>
+
+<details>
+<summary>✅ <strong>validate_game_move_trigger</strong> — BEFORE INSERT ON game_moves (v1.8.1)</summary>
+
+```
+1. Jugador pertany a la partida
+2. Cost tokens vàlid (0.1 - 2.0)
+3. Tokens suficients
+4. found_object només en accions 'look'
 ```
 
 </details>
@@ -708,16 +804,19 @@ El camp `has_hide_message` a `object_specials` permet que un objecte tingui miss
 #### 🚶 MOVE — 0.5 tokens
 
 ```
+Via RPC execute_game_move(_action='move'):
 1. Validar connexió bidireccional: scenario_connections(current ↔ target)
 2. UPDATE game_players.current_scenario_id = target
 3. Deduir 0.5 tokens
 4. INSERT game_moves
+5. Tool roll (20%)
 ```
 
 #### 👀 LOOK — 0.3 tokens (troba l'objecte si encerta!)
 
 ```
-1. Obtenir hidden_item_id i hidden_position del rival
+Via RPC execute_game_move(_action='look'):
+1. Obtenir hidden_item_id i hidden_position del rival (al servidor, mai al client)
 2. Obtenir scenario_id del moble investigat vs moble del rival
 3. Calcular hintLevel:
    ├── rivalScenario ≠ targetScenario → 0 (fred ❄️)
@@ -737,9 +836,10 @@ El camp `has_hide_message` a `object_specials` permet que un objecte tingui miss
    ├── 5% → 🧹 Drap
    └── 5% → 🔦 Llanterna
 7. INSERT game_moves (amb hint_level)
+8. RETURN { hint_level, found_object, bonus, tool_found }
 ```
 
-> ⚠️ L'acció **Confirmar** (1.5🪙) va ser **ELIMINADA** a la v1.5.0. Observar ara troba l'objecte directament.
+> ⚠️ Tot el càlcul és al servidor. El client rep el resultat via RPC i NO accedeix a les dades del rival.
 
 <br/>
 
@@ -764,7 +864,8 @@ El camp `has_hide_message` a `object_specials` permet que un objecte tingui miss
 | 🛡️ **Escut** | Protegeix del pròxim plàtan o intercanvi. Es desactiva després. | 1/dia | — |
 | 🔄 **Intercanvi** | Intercanvia `current_scenario_id` amb el rival | 1/dia | ✅ Sí |
 | 🕵️ **Espia** | Revela l'escenari actual del rival (auto-orientat, sense notificació) | 1/dia | ❌ No |
-| 💡 **Missatge** | Envia text lliure al rival (bluff, provocació) | 1/dia | ❌ No |
+| 💬 **Missatge** | Envia text lliure al rival (bluff, provocació) | 1/dia | ❌ No |
+| 🔧 **Robar tornavís** | Roba 1 tornavís del rival | 1/dia | ✅ Sí |
 
 > ⚠️ `false_clue` (pista falsa) està ELIMINADA del joc. L'enum existeix a la DB per retrocompatibilitat però no s'usa.
 
@@ -1054,10 +1155,10 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 
 | Taula | SELECT | INSERT | UPDATE | DELETE |
 |:------|:-------|:-------|:-------|:-------|
-| `profiles` | ✅ Tots auth | ✅ Propi | ✅ Propi | ❌ |
+| `profiles` | ✅ Tots auth | ✅ Propi | ⚠️ Només `display_name`, `avatar_url` | ❌ |
 | `games` | ✅ Tots auth | ✅ Propi (`created_by`) | ✅ Creador OR jugador | ✅ `waiting` AND creador/convidat |
-| `game_players` | 🔐 `is_player_in_game()` | ✅ Propi | ✅ Propi | ✅ Propi OR creador (`waiting`) |
-| `game_moves` | 🔐 `is_player_in_game()` | ✅ Propi | ❌ | ❌ |
+| `game_players` | 🔐 `get_safe_game_players()` | ✅ Propi | ✅ Propi | ✅ Propi OR creador (`waiting`) |
+| `game_moves` | 🔐 `is_player_in_game()` | 🔐 Només via RPC `execute_game_move` | ❌ | ❌ |
 | `game_social_items` | ✅ Emissor OR receptor | ✅ Propi (`from`) | ✅ Receptor | ❌ |
 | `player_inventory` | ✅ Propi/regalat/trophy | ✅ Propi | ✅ Propi | ❌ |
 | `player_rewards` | ✅ Propi | ❌ (via trigger) | ✅ Propi | ❌ |
@@ -1070,7 +1171,10 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 | `scenario_bonuses` | ✅ Tots auth | ❌ | ❌ | ❌ |
 | `scenario_connections` | ✅ Tots auth | ❌ | ❌ | ❌ |
 | `reward_items` | ✅ Tots auth | ❌ | ❌ | ❌ |
-| `error_logs` | ✅ Propi | ✅ Propi/anon | ❌ | ❌ |
+| `error_logs` | ✅ Propi | ✅ Només auth | ❌ | ❌ |
+| `story_progress` | ✅ Propi | ✅ Propi | ✅ Propi | ❌ |
+| `player_pets` | ✅ Tots auth | ✅ Propi | ✅ Propi | ❌ |
+| `pet_accessories` | ✅ Propi | ✅ Propi | ❌ | ❌ |
 
 <br/>
 
@@ -1078,8 +1182,14 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 
 - **`is_player_in_game()`** → `SECURITY DEFINER` per evitar recursió RLS
 - **`handle_game_finished()`** → `SECURITY DEFINER` per modificar perfils d'altres
+- **`execute_game_move/toggle_light/tag_action`** → `SECURITY DEFINER`, única via per crear moviments
+- **`get_safe_game_players()`** → emmascara `hidden_*` dels oponents
+- **`validate_hide_object_trigger`** → valida objecte/moble/material al servidor
+- **`validate_game_move_trigger`** → valida tokens i pertinència a partida
+- **Realtime**: `game_players` exclòs de publication (evita leak de `hidden_*`)
 - Taules de contingut (`scenarios`, `items`, `objects`...) → **read-only** per usuaris
 - `invited_user_id` controla la privacitat de partides a nivell de consulta
+- Perfils: estadístiques (elo, games_won, bonus_tokens) només modificables via SECURITY DEFINER
 
 <br/>
 
