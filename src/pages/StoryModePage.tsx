@@ -109,8 +109,7 @@ export default function StoryModePage() {
       await resetPetAndProgress(user.id);
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
       setRandomPet(rp);
-      // Skip typewriter for returning players — go straight to gift
-      setIntroStep(1);
+      setIntroStep(0);
       setGiftOpened(false);
       setPhase("intro");
       toast("La teva mascota ha viscut una vida plena 💫");
