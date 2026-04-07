@@ -45,6 +45,14 @@ describe("Story Mode helpers", () => {
     });
   });
 
+  describe("PET_CONSUMABLES", () => {
+    it("all consumables have maxXpBoost", () => {
+      for (const c of PET_CONSUMABLES) {
+        expect(c.maxXpBoost).toBeGreaterThan(0);
+      }
+    });
+  });
+
   describe("PET_EVOLUTION_TIERS", () => {
     it("should have 5 tiers", () => {
       expect(PET_EVOLUTION_TIERS).toHaveLength(5);
