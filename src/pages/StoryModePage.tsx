@@ -14,10 +14,10 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
 import {
-  PET_OPTIONS, PET_ACCESSORIES, MAX_PET_XP,
+  PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, MAX_PET_XP,
   getPetEvolution, hasAllAccessories,
   getMyPet, createPet, getStoryProgress, initChapter,
-  getMyAccessories, resetPetAndProgress,
+  getMyAccessories, resetPetAndProgress, getActiveEvents, useConsumable,
 } from "@/lib/story-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
