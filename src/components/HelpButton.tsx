@@ -60,6 +60,22 @@ const RULES = [
     title: "📈 Elo i Lligues",
     text: "Guanyar: +25 Elo · Perdre: -20 Elo.\n🥉 Bronze → 🥈 Silver → 🥇 Gold → 💎 Platinum → 👑 Diamond.",
   },
+  {
+    title: "🐾 Mode Història",
+    text: "Juga sol contra la CPU per aprendre el joc. Adopta una mascota virtual que evoluciona amb XP!\n🥚 Bebè → 🌱 Jove → ⭐ Adult → 🔥 Veterà → 👑 Llegendari\nSi l'XP arriba a 5000, la mascota mor (🪦) i cal reiniciar.",
+  },
+  {
+    title: "🤒 Salut de la mascota",
+    text: "Al completar capítols hi ha un 25% de probabilitat d'un event de salut:\n🤒 Virus: +200 XP | 🤕 Caiguda: +150 XP | 🫠 Febre: +100 XP\nEls events pugen l'XP ràpidament! Usa consumibles per curar:\n🍖 Menjar: -100 XP | 💧 Aigua: -50 XP | 💉 Vacuna: -200 XP\nEls consumibles es desbloquegen després d'obtenir tots els accesoris.",
+  },
+  {
+    title: "💊 Regalar consumibles",
+    text: "Pots regalar consumibles a les mascotes d'altres jugadors! Ves al seu perfil → si tens consumibles disponibles, apareixerà un botó per curar la seva mascota.",
+  },
+  {
+    title: "🏆 Vitrina pública",
+    text: "Al perfil de cada jugador pots veure la seva col·lecció de mobles guanyats (vitrina). Els mobles no obtinguts apareixen en gris.",
+  },
 ];
 
 export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
