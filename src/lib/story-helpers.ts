@@ -115,6 +115,19 @@ export async function addPetXP(userId: string, xp: number) {
   return { newXp, isDead: newXp >= MAX_PET_XP };
 }
 
+// Reduce pet XP (healing via consumable)
+export async function healPetXP(userId: string, xpReduce: number) {
+  const pet = await getMyPet(userId);
+  if (!pet) return null;
+  const newXp = Math.max(0, (pet.xp ?? 0) - xpReduce);
+  const { error } = await supabase
+    .from("player_pets")
+    .update({ xp: newXp })
+    .eq("user_id", userId);
+  if (error) throw error;
+  return { newXp };
+}
+
 // Delete pet + progress + accessories for rebirth
 export async function resetPetAndProgress(userId: string) {
   await Promise.all([
