@@ -243,13 +243,10 @@ export const TOOLS_PER_GAME: Record<ToolType, number> = {
 
 /** Get how many of each tool have been found in this game (both players combined) */
 async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, number>> {
-  const { data: players } = await supabase
-    .from("game_players")
-    .select("tools")
-    .eq("game_id", gameId);
+  const { data: players } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
 
   const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0 };
-  for (const p of players ?? []) {
+  for (const p of (players as any[]) ?? []) {
     const t = parseTools(p.tools);
     totals.martell += t.martell;
     totals.drap += t.drap;
