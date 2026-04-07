@@ -15,11 +15,18 @@ import { supabase } from "@/integrations/supabase/client";
 // ============================================
 
 export const PET_OPTIONS = [
-  { type: "dog", icon: "🐕", name: "Gos" },
+  { type: "dog", icon: "🐶", name: "Gos" },
+  { type: "Lion", icon: "🦁", name: "Lleó" },
   { type: "cat", icon: "🐱", name: "Gat" },
   { type: "rabbit", icon: "🐰", name: "Conill" },
+  { type: "Cow", icon: "🐮", name: "Vaca" },
   { type: "hamster", icon: "🐹", name: "Hàmster" },
+  { type: "hem", icon: "🐔", name: "Gallina" },
   { type: "turtle", icon: "🐢", name: "Tortuga" },
+  { type: "Koala", icon: "🐨", name: "Koala" },
+  { type: "Pig", icon: "🐷", name: "Porc" },
+  { type: "Wolf", icon: "🐺", name: "Llop" },
+  { type: "Monky", icon: "🐵", name: "Mico" },
 ] as const;
 
 export const PET_ACCESSORIES = [
@@ -51,12 +58,24 @@ export const PET_HEALTH_EVENTS = [
 export const MAX_PET_XP = 5000;
 
 // Evolution tiers
-export const PET_EVOLUTION_TIERS: readonly { minXp: number; label: string; badge: string; glow: string; ring: string }[] = [
+export const PET_EVOLUTION_TIERS: readonly {
+  minXp: number;
+  label: string;
+  badge: string;
+  glow: string;
+  ring: string;
+}[] = [
   { minXp: 0, label: "Bebè", badge: "🥚", glow: "from-gray-400/20 to-gray-300/10", ring: "ring-muted-foreground/30" },
   { minXp: 500, label: "Jove", badge: "🌱", glow: "from-green-400/30 to-emerald-300/15", ring: "ring-green-500/40" },
   { minXp: 1500, label: "Adult", badge: "⭐", glow: "from-blue-400/30 to-cyan-300/15", ring: "ring-blue-500/40" },
   { minXp: 3000, label: "Veterà", badge: "🔥", glow: "from-orange-400/30 to-amber-300/15", ring: "ring-orange-500/50" },
-  { minXp: 4500, label: "Llegendari", badge: "👑", glow: "from-purple-400/40 to-pink-300/20", ring: "ring-purple-500/60" },
+  {
+    minXp: 4500,
+    label: "Llegendari",
+    badge: "👑",
+    glow: "from-purple-400/40 to-pink-300/20",
+    ring: "ring-purple-500/60",
+  },
 ];
 
 export function getPetEvolution(xp: number, maxXp?: number) {
@@ -65,14 +84,14 @@ export function getPetEvolution(xp: number, maxXp?: number) {
   for (const t of PET_EVOLUTION_TIERS) {
     if (xp >= t.minXp) tier = t;
   }
-  const nextTier = PET_EVOLUTION_TIERS.find(t => t.minXp > xp);
+  const nextTier = PET_EVOLUTION_TIERS.find((t) => t.minXp > xp);
   const isDead = xp >= effectiveMax;
   return { ...tier, nextTier, isDead, xp, maxXp: effectiveMax };
 }
 
 export function hasAllAccessories(accessories: any[]): boolean {
-  const owned = new Set(accessories.map(a => a.accessory_name));
-  return PET_ACCESSORIES.every(a => owned.has(a.name));
+  const owned = new Set(accessories.map((a) => a.accessory_name));
+  return PET_ACCESSORIES.every((a) => owned.has(a.name));
 }
 
 // XP rewards per chapter
@@ -88,11 +107,7 @@ export function calculateXP(chapter: number, movesUsed: number): number {
 // ============================================
 
 export async function getMyPet(userId: string) {
-  const { data } = await supabase
-    .from("player_pets")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data } = await supabase.from("player_pets").select("*").eq("user_id", userId).maybeSingle();
   return data;
 }
 
@@ -111,10 +126,7 @@ export async function addPetXP(userId: string, xp: number) {
   if (!pet) return null;
   const effectiveMax = pet.max_xp ?? MAX_PET_XP;
   const newXp = Math.min((pet.xp ?? 0) + xp, effectiveMax);
-  const { error } = await supabase
-    .from("player_pets")
-    .update({ xp: newXp })
-    .eq("user_id", userId);
+  const { error } = await supabase.from("player_pets").update({ xp: newXp }).eq("user_id", userId);
   if (error) throw error;
   return { newXp, isDead: newXp >= effectiveMax };
 }
@@ -124,10 +136,7 @@ export async function healPetXP(userId: string, xpReduce: number) {
   const pet = await getMyPet(userId);
   if (!pet) return null;
   const newXp = Math.max(0, (pet.xp ?? 0) - xpReduce);
-  const { error } = await supabase
-    .from("player_pets")
-    .update({ xp: newXp })
-    .eq("user_id", userId);
+  const { error } = await supabase.from("player_pets").update({ xp: newXp }).eq("user_id", userId);
   if (error) throw error;
   return { newXp };
 }
@@ -148,11 +157,7 @@ export async function resetPetAndProgress(userId: string) {
 // ============================================
 
 export async function getStoryProgress(userId: string) {
-  const { data } = await supabase
-    .from("story_progress")
-    .select("*")
-    .eq("user_id", userId)
-    .order("chapter");
+  const { data } = await supabase.from("story_progress").select("*").eq("user_id", userId).order("chapter");
   return data ?? [];
 }
 
@@ -164,10 +169,7 @@ export async function initChapter(userId: string, chapter: number) {
     .eq("chapter", chapter)
     .maybeSingle();
   if (existing) {
-    await supabase
-      .from("story_progress")
-      .update({ status: "active", moves_used: 0 })
-      .eq("id", existing.id);
+    await supabase.from("story_progress").update({ status: "active", moves_used: 0 }).eq("id", existing.id);
   } else {
     await supabase.from("story_progress").insert({
       user_id: userId,
@@ -184,9 +186,9 @@ export async function completeChapter(userId: string, chapter: number, movesUsed
     .eq("user_id", userId)
     .eq("chapter", chapter)
     .single();
-  
+
   const bestMoves = existing?.best_moves ? Math.min(existing.best_moves, movesUsed) : movesUsed;
-  
+
   await supabase
     .from("story_progress")
     .update({
@@ -227,11 +229,7 @@ export async function completeChapter(userId: string, chapter: number, movesUsed
 // ============================================
 
 export async function getMyAccessories(userId: string) {
-  const { data } = await supabase
-    .from("pet_accessories")
-    .select("*")
-    .eq("user_id", userId)
-    .order("obtained_at");
+  const { data } = await supabase.from("pet_accessories").select("*").eq("user_id", userId).order("obtained_at");
   return data ?? [];
 }
 
@@ -257,7 +255,7 @@ export async function getActiveEvents(userId: string) {
 }
 
 /** Roll for a random health event after completing a chapter (25% chance) */
-export async function rollHealthEvent(userId: string): Promise<typeof PET_HEALTH_EVENTS[number] | null> {
+export async function rollHealthEvent(userId: string): Promise<(typeof PET_HEALTH_EVENTS)[number] | null> {
   if (Math.random() > 0.25) return null; // 75% nothing happens
   const event = PET_HEALTH_EVENTS[Math.floor(Math.random() * PET_HEALTH_EVENTS.length)];
   // Apply XP damage
@@ -275,7 +273,7 @@ export async function rollHealthEvent(userId: string): Promise<typeof PET_HEALTH
 
 /** Use a consumable to heal the pet and extend its max life */
 export async function useConsumable(userId: string, consumableName: string) {
-  const consumable = PET_CONSUMABLES.find(c => c.name === consumableName);
+  const consumable = PET_CONSUMABLES.find((c) => c.name === consumableName);
   if (!consumable) throw new Error("Consumible no vàlid");
 
   // Check user has an unused consumable
@@ -290,10 +288,7 @@ export async function useConsumable(userId: string, consumableName: string) {
   if (!owned || owned.length === 0) throw new Error(`No tens ${consumable.icon} ${consumable.name}!`);
 
   // Mark consumable as used
-  await supabase
-    .from("pet_consumables")
-    .update({ used_at: new Date().toISOString() })
-    .eq("id", owned[0].id);
+  await supabase.from("pet_consumables").update({ used_at: new Date().toISOString() }).eq("id", owned[0].id);
 
   // Heal pet
   const result = await healPetXP(userId, consumable.xpHeal);
@@ -303,10 +298,7 @@ export async function useConsumable(userId: string, consumableName: string) {
     const pet = await getMyPet(userId);
     if (pet) {
       const newMaxXp = (pet.max_xp ?? MAX_PET_XP) + consumable.maxXpBoost;
-      await supabase
-        .from("player_pets")
-        .update({ max_xp: newMaxXp })
-        .eq("user_id", userId);
+      await supabase.from("player_pets").update({ max_xp: newMaxXp }).eq("user_id", userId);
     }
   }
 
