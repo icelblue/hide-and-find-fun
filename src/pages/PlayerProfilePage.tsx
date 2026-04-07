@@ -23,7 +23,9 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP } from "@/lib/story-helpers";
+import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
+import { PetHealthBadge } from "@/components/PetHealthBadge";
+import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
@@ -39,12 +41,13 @@ export default function PlayerProfilePage() {
   const [trophies, setTrophies] = useState<any[]>([]);
   const [pet, setPet] = useState<any>(null);
   const [petAccessories, setPetAccessories] = useState<any[]>([]);
+  const [petEvents, setPetEvents] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
-    const [{ data: prof }, { data: msgs }, { data: trophyData }, petData, accs] = await Promise.all([
+    const [{ data: prof }, { data: msgs }, { data: trophyData }, petData, accs, events] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).single(),
       supabase.from("wall_messages")
         .select("*")
@@ -59,11 +62,13 @@ export default function PlayerProfilePage() {
         .order("collected_at", { ascending: false }),
       getMyPet(userId).catch(() => null),
       getMyAccessories(userId).catch(() => []),
+      getActiveEvents(userId).catch(() => []),
     ]);
     setProfile(prof);
     setTrophies(trophyData ?? []);
     setPet(petData);
     setPetAccessories(accs);
+    setPetEvents(events);
 
     // Fetch author names
     const wallMsgs: any[] = msgs ?? [];
@@ -165,15 +170,21 @@ export default function PlayerProfilePage() {
       {pet && (() => {
         const evo = getPetEvolution(pet.xp ?? 0);
         return (
-          <Card className="mb-4 glass border-accent/30 relative z-10">
+          <Card className={`mb-4 glass relative z-10 ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
             <CardContent className="py-3 flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring} flex items-center justify-center`}>
-                <span className="text-2xl">{pet.pet_icon}</span>
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${petEvents.length > 0 ? "ring-destructive/50" : evo.ring} flex items-center justify-center relative`}>
+                <span className="text-2xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
+                {petEvents.length > 0 && (
+                  <span className="absolute -top-1 -right-1 text-sm animate-pulse">🤒</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">{pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span></p>
+                <p className="font-bold text-sm">
+                  {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
+                  {petEvents.length > 0 && <span className="text-xs text-destructive font-semibold ml-1">· Malalt!</span>}
+                </p>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                  <div className="h-1.5 rounded-full bg-accent transition-all" style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
+                  <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
                 </div>
                 <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
               </div>
@@ -188,6 +199,16 @@ export default function PlayerProfilePage() {
           </Card>
         );
       })()}
+
+      {/* Pet health events */}
+      {petEvents.length > 0 && (
+        <div className="mb-4 relative z-10">
+          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} compact />
+        </div>
+      )}
+
+      {/* Vitrina (reward collection) */}
+      <PlayerVitrina userId={userId!} />
 
       {/* Trophies */}
       <div className="mb-5 relative z-10">
@@ -298,6 +319,66 @@ export default function PlayerProfilePage() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Vitrina — shows which reward items this player has collected */
+function PlayerVitrina({ userId }: { userId: string }) {
+  const [catalog, setCatalog] = useState<any[]>([]);
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [items, { data: owned }] = await Promise.all([
+        getRewardCatalog(),
+        supabase.from("player_rewards")
+          .select("reward_item_id")
+          .eq("user_id", userId)
+          .eq("status", "owned"),
+      ]);
+      setCatalog(items);
+      setOwnedIds(new Set((owned ?? []).map((r: any) => r.reward_item_id)));
+      setLoading(false);
+    })();
+  }, [userId]);
+
+  if (loading || catalog.length === 0) return null;
+
+  const ownedCount = catalog.filter(i => ownedIds.has(i.id)).length;
+
+  const RARITY_BORDER_MAP: Record<string, string> = {
+    common: "border-muted-foreground/20",
+    uncommon: "border-green-500/30",
+    rare: "border-blue-500/30",
+    epic: "border-purple-500/40",
+    legendary: "border-amber-400/50",
+  };
+
+  return (
+    <div className="mb-5 relative z-10">
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        🏆 Vitrina ({ownedCount}/{catalog.length})
+      </h2>
+      <div className="flex flex-wrap gap-2">
+        {catalog.map((item: any) => {
+          const has = ownedIds.has(item.id);
+          const rarity = RARITY_CONFIG[item.rarity];
+          const border = RARITY_BORDER_MAP[item.rarity] ?? "";
+          return (
+            <div key={item.id}
+              className={`flex flex-col items-center gap-0.5 rounded-xl border p-2 min-w-[60px] transition-all ${
+                has ? `${border} bg-muted/30` : "border-border/20 opacity-30 grayscale"
+              }`}
+              title={`${item.name} — ${rarity?.emoji} ${rarity?.label}`}>
+              <span className="text-2xl">{item.icon}</span>
+              <span className="text-[9px] font-medium leading-tight text-center">{item.name}</span>
+              <span className="text-[8px] text-muted-foreground">{rarity?.emoji}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

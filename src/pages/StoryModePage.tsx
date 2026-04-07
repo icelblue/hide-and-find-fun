@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
+import { PetHealthBadge } from "@/components/PetHealthBadge";
 import {
   PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, MAX_PET_XP,
   getPetEvolution, hasAllAccessories,
@@ -264,18 +265,9 @@ export default function StoryModePage() {
 
         {/* Active health events alert */}
         {activeEvents.length > 0 && (
-          <Card className="mb-4 glass border-destructive/40 relative z-10 animate-fade-in">
-            <CardContent className="py-3">
-              <p className="text-sm font-bold text-destructive mb-2">⚠️ {pet?.pet_name} està malalt!</p>
-              {activeEvents.map((ev: any) => (
-                <div key={ev.id} className="flex items-center gap-2 text-sm mb-1">
-                  <span className="text-lg">{ev.event_icon}</span>
-                  <span>{ev.event_name}: <span className="text-destructive font-semibold">+{ev.xp_change} XP</span></span>
-                </div>
-              ))}
-              <p className="text-[10px] text-muted-foreground mt-2">Usa consumibles per curar-lo i reduir XP!</p>
-            </CardContent>
-          </Card>
+          <div className="mb-4 relative z-10">
+            <PetHealthBadge activeEvents={activeEvents} petName={pet?.pet_name} />
+          </div>
         )}
 
         {/* Consumables section */}

@@ -16,7 +16,8 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
-import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP } from "@/lib/story-helpers";
+import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
+import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,12 +53,13 @@ export default function ProfilePage() {
   const [trophies, setTrophies] = useState<any[]>([]);
   const [pet, setPet] = useState<any>(null);
   const [petAccessories, setPetAccessories] = useState<any[]>([]);
+  const [petEvents, setPetEvents] = useState<any[]>([]);
 
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [prof, rew, scen, { data: msgs }, petData, accs] = await Promise.all([
+    const [prof, rew, scen, { data: msgs }, petData, accs, events] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
       getMyRewards(user.id).catch(() => []),
       getScenarios().catch(() => []),
@@ -68,12 +70,14 @@ export default function ProfilePage() {
         .order("created_at", { ascending: false }),
       getMyPet(user.id).catch(() => null),
       getMyAccessories(user.id).catch(() => []),
+      getActiveEvents(user.id).catch(() => []),
     ]);
     setProfile(prof);
     setRewards(rew);
     setScenarios(scen);
     setPet(petData);
     setPetAccessories(accs);
+    setPetEvents(events);
 
     // Find top rival (exclude CPU and anonymous)
     const CPU_ID = "00000000-0000-0000-0000-000000000001";
@@ -321,15 +325,21 @@ export default function ProfilePage() {
       {pet && (() => {
         const evo = getPetEvolution(pet.xp ?? 0);
         return (
-          <Card className="mb-4 glass border-accent/30">
+          <Card className={`mb-4 glass ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
             <CardContent className="py-3 flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring} flex items-center justify-center`}>
-                <span className="text-2xl">{pet.pet_icon}</span>
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${petEvents.length > 0 ? "ring-destructive/50" : evo.ring} flex items-center justify-center relative`}>
+                <span className="text-2xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
+                {petEvents.length > 0 && (
+                  <span className="absolute -top-1 -right-1 text-sm animate-pulse">🤒</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">{pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span></p>
+                <p className="font-bold text-sm">
+                  {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
+                  {petEvents.length > 0 && <span className="text-xs text-destructive font-semibold ml-1">· Malalt!</span>}
+                </p>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                  <div className="h-1.5 rounded-full bg-accent transition-all" style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
+                  <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
                 </div>
                 <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
               </div>
@@ -344,6 +354,13 @@ export default function ProfilePage() {
           </Card>
         );
       })()}
+
+      {/* Pet health events */}
+      {petEvents.length > 0 && (
+        <div className="mb-4">
+          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
+        </div>
+      )}
 
       {/* Top rival */}
       {topRival && (
