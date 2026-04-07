@@ -1150,10 +1150,10 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 
 | Taula | SELECT | INSERT | UPDATE | DELETE |
 |:------|:-------|:-------|:-------|:-------|
-| `profiles` | ✅ Tots auth | ✅ Propi | ✅ Propi | ❌ |
+| `profiles` | ✅ Tots auth | ✅ Propi | ⚠️ Només `display_name`, `avatar_url` | ❌ |
 | `games` | ✅ Tots auth | ✅ Propi (`created_by`) | ✅ Creador OR jugador | ✅ `waiting` AND creador/convidat |
-| `game_players` | 🔐 `is_player_in_game()` | ✅ Propi | ✅ Propi | ✅ Propi OR creador (`waiting`) |
-| `game_moves` | 🔐 `is_player_in_game()` | ✅ Propi | ❌ | ❌ |
+| `game_players` | 🔐 `get_safe_game_players()` | ✅ Propi | ✅ Propi | ✅ Propi OR creador (`waiting`) |
+| `game_moves` | 🔐 `is_player_in_game()` | 🔐 Només via RPC `execute_game_move` | ❌ | ❌ |
 | `game_social_items` | ✅ Emissor OR receptor | ✅ Propi (`from`) | ✅ Receptor | ❌ |
 | `player_inventory` | ✅ Propi/regalat/trophy | ✅ Propi | ✅ Propi | ❌ |
 | `player_rewards` | ✅ Propi | ❌ (via trigger) | ✅ Propi | ❌ |
@@ -1166,7 +1166,10 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 | `scenario_bonuses` | ✅ Tots auth | ❌ | ❌ | ❌ |
 | `scenario_connections` | ✅ Tots auth | ❌ | ❌ | ❌ |
 | `reward_items` | ✅ Tots auth | ❌ | ❌ | ❌ |
-| `error_logs` | ✅ Propi | ✅ Propi/anon | ❌ | ❌ |
+| `error_logs` | ✅ Propi | ✅ Només auth | ❌ | ❌ |
+| `story_progress` | ✅ Propi | ✅ Propi | ✅ Propi | ❌ |
+| `player_pets` | ✅ Tots auth | ✅ Propi | ✅ Propi | ❌ |
+| `pet_accessories` | ✅ Propi | ✅ Propi | ❌ | ❌ |
 
 <br/>
 
@@ -1174,8 +1177,14 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 
 - **`is_player_in_game()`** → `SECURITY DEFINER` per evitar recursió RLS
 - **`handle_game_finished()`** → `SECURITY DEFINER` per modificar perfils d'altres
+- **`execute_game_move/toggle_light/tag_action`** → `SECURITY DEFINER`, única via per crear moviments
+- **`get_safe_game_players()`** → emmascara `hidden_*` dels oponents
+- **`validate_hide_object_trigger`** → valida objecte/moble/material al servidor
+- **`validate_game_move_trigger`** → valida tokens i pertinència a partida
+- **Realtime**: `game_players` exclòs de publication (evita leak de `hidden_*`)
 - Taules de contingut (`scenarios`, `items`, `objects`...) → **read-only** per usuaris
 - `invited_user_id` controla la privacitat de partides a nivell de consulta
+- Perfils: estadístiques (elo, games_won, bonus_tokens) només modificables via SECURITY DEFINER
 
 <br/>
 
