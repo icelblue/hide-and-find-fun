@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
+import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents, PET_CONSUMABLES } from "@/lib/story-helpers";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 
@@ -42,6 +42,8 @@ export default function PlayerProfilePage() {
   const [pet, setPet] = useState<any>(null);
   const [petAccessories, setPetAccessories] = useState<any[]>([]);
   const [petEvents, setPetEvents] = useState<any[]>([]);
+  const [myConsumables, setMyConsumables] = useState<any[]>([]);
+  const [giftingConsumable, setGiftingConsumable] = useState(false);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -82,9 +84,38 @@ export default function PlayerProfilePage() {
       }
     }
     setMessages(wallMsgs);
-  }, [userId]);
+
+    // Load visitor's own unused consumables (for gifting)
+    if (user && user.id !== userId) {
+      const { data: myCons } = await supabase
+        .from("pet_consumables")
+        .select("*")
+        .eq("user_id", user.id)
+        .is("used_at", null);
+      setMyConsumables(myCons ?? []);
+    }
+  }, [userId, user]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  const handleGiftConsumable = async (consumableName: string) => {
+    if (!user || !userId) return;
+    setGiftingConsumable(true);
+    try {
+      const { data, error } = await supabase.rpc("gift_consumable", {
+        _to_user_id: userId,
+        _consumable_name: consumableName,
+      });
+      if (error) throw error;
+      const result = data as any;
+      toast.success(`Has curat ${result.pet_name}! -${result.healed} XP 💊`);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setGiftingConsumable(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!user || !userId || !newMsg.trim()) return;
@@ -181,7 +212,12 @@ export default function PlayerProfilePage() {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm">
                   {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
-                  {petEvents.length > 0 && <span className="text-xs text-destructive font-semibold ml-1">· Malalt!</span>}
+                  {evo.isDead
+                    ? <span className="text-xs text-destructive font-semibold ml-1">· Mort 🪦</span>
+                    : petEvents.length > 0
+                      ? <span className="text-xs text-destructive font-semibold ml-1">· Malalt! 🤒</span>
+                      : <span className="text-xs text-green-500 font-semibold ml-1">· Saludable ✅</span>
+                  }
                 </p>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                   <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
@@ -200,10 +236,37 @@ export default function PlayerProfilePage() {
         );
       })()}
 
-      {/* Pet health events */}
-      {petEvents.length > 0 && (
+      {/* Pet health events + gift consumables */}
+      {pet && !isOwnProfile && user && (
         <div className="mb-4 relative z-10">
-          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} compact />
+          {petEvents.length > 0 && (
+            <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
+          )}
+          {/* Gift consumable buttons */}
+          {myConsumables.length > 0 && (
+            <Card className="glass border-accent/30 mt-2">
+              <CardContent className="py-3">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                  💊 Regalar consumible a {pet.pet_name}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {PET_CONSUMABLES.map(c => {
+                    const count = myConsumables.filter(mc => mc.consumable_name === c.name).length;
+                    if (count === 0) return null;
+                    return (
+                      <Button key={c.name} size="sm" variant="outline"
+                        disabled={giftingConsumable}
+                        onClick={() => handleGiftConsumable(c.name)}
+                        className="text-xs">
+                        {c.icon} {c.name} ({count})
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">Gastes un consumible teu per curar la seva mascota</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
