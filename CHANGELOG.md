@@ -7,6 +7,40 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.8.1] — 2026-04-07 — Seguretat Avançada & RPC 🔒🛡️ (PATCH)
+
+### 🔒 Moviments via RPC (Server-Side)
+- **`execute_game_move`**: Calcul de hints, tokens, bonus i eines 100% al servidor (SECURITY DEFINER)
+- **`execute_toggle_light`**: Validació d'eines i tokens al servidor
+- **`execute_tag_action`**: Accions de tags (netejar/trencar/arreglar) amb bonus rolls al servidor
+- Client ja NO pot inserir `game_moves` directament — només via RPC
+- Dades del rival (hidden_object, hidden_item, hidden_position) mai arriben al client
+
+### 🛡️ Protecció de Perfils
+- Política `UPDATE` restringida: només `display_name` i `avatar_url` editables pel client
+- Estadístiques (elo, victòries, tokens) només modificables via funcions SECURITY DEFINER
+
+### 📡 Realtime Segur
+- `game_players` eliminat de `supabase_realtime` publication
+- Funció `get_safe_game_players(_game_id)` emmascara dades sensibles dels oponents
+
+### ✅ Validació de Moviments (Trigger)
+- `validate_game_move_trigger` (BEFORE INSERT ON game_moves):
+  - Jugador pertany a la partida
+  - Cost de tokens vàlid (0.1 - 2.0)
+  - Tokens suficients
+  - `found_object` només permès en accions `look`
+
+### 🔧 Robar Tornavís
+- Nou ítem social `robar_tornavis`: roba 1 tornavís del rival
+- Bloquejable amb escut
+
+### 🧹 Neteja
+- Error logs: eliminada inserció anònima, stack trace limitat
+- Storage backups: RLS restringit a `service_role`
+
+---
+
 ## [1.8.0] — 2026-04-06 — Refactorització & Seguretat 🏗️🔒 (MINOR)
 
 ### 🏗️ Modularització de GamePage.tsx
