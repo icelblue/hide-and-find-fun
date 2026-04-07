@@ -109,11 +109,13 @@ export default function GamePage() {
   const loadGame = useCallback(async () => {
     if (!gameId || !user) return;
 
-    const [{ data: gameData }, { data: playerData }, { data: rivalData }] = await Promise.all([
+    const [{ data: gameData }, { data: playerData }, { data: safePlayers }] = await Promise.all([
       supabase.from("games").select("*").eq("id", gameId).single(),
       supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
-      supabase.from("game_players").select("*").eq("game_id", gameId).neq("user_id", user.id).maybeSingle(),
+      supabase.rpc("get_safe_game_players" as any, { _game_id: gameId }),
     ]);
+    const safePlayersList = (safePlayers as any[]) ?? [];
+    const rivalData = safePlayersList.find((p: any) => p.user_id !== user.id) ?? null;
 
     setGame(gameData);
     setPhase((gameData?.status as Phase) ?? "waiting");
