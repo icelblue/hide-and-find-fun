@@ -357,103 +357,130 @@ export default function LobbyPage() {
               const canSwipeDelete = isOwner && (game.status === "waiting" || game.status === "finished");
               const isFinished = game.status === "finished";
 
+              const [swiped, setSwipedState] = useState(false);
+
               return (
-                <div key={gp.game_id} className="relative overflow-hidden rounded-xl"
-                  onTouchStart={(e) => {
-                    if (!canSwipeDelete && !isFinished) return;
-                    const startX = e.touches[0].clientX;
-                    const el = e.currentTarget;
-                    const card = el.firstElementChild as HTMLElement;
-                    const deleteIndicator = el.querySelector('[data-delete-bg]') as HTMLElement;
-                    const onMove = (ev: TouchEvent) => {
-                      const dx = ev.touches[0].clientX - startX;
-                      if (dx > 0) {
-                        card.style.transform = `translateX(${dx}px)`;
-                        card.style.opacity = `${Math.max(0, 1 - dx / 200)}`;
-                        if (deleteIndicator) deleteIndicator.style.opacity = `${Math.min(1, dx / 100)}`;
-                      }
-                    };
-                    const onEnd = async (ev: TouchEvent) => {
-                      const dx = ev.changedTouches[0].clientX - startX;
-                      if (dx > 100) {
-                        if (canSwipeDelete) {
-                          if (game.status === "waiting") {
-                            // Confirm before deleting open games
-                            if (confirm("Segur que vols eliminar aquesta partida oberta?")) {
-                              try {
-                                await deleteGame(game.id);
-                                toast.success("Partida eliminada");
-                                invalidateLobby();
-                              } catch (err: any) { toast.error(err.message); }
-                            } else {
-                              card.style.transform = ""; card.style.opacity = "";
-                              if (deleteIndicator) deleteIndicator.style.opacity = "0";
-                            }
-                          } else {
-                            // Finished: delete directly
-                            try {
-                              await deleteGame(game.id);
-                              toast.success("Partida eliminada");
-                              invalidateLobby();
-                            } catch (err: any) {
-                              toast.error(err.message);
-                              card.style.transform = ""; card.style.opacity = "";
-                            }
-                          }
-                        } else if (isFinished) {
-                          dismissGame(game.id);
+                <div key={gp.game_id} className="relative overflow-hidden rounded-xl">
+                  {/* Delete background — always visible behind card */}
+                  {(canSwipeDelete || isFinished) && (
+                    <div data-delete-bg className="absolute inset-0 bg-destructive/20 rounded-xl flex items-center pl-4 opacity-0 transition-opacity pointer-events-none z-0">
+                      <span className="text-destructive text-sm font-semibold flex items-center gap-1">
+                        🗑️ {canSwipeDelete ? "Eliminar" : "Amagar"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Swipeable card */}
+                  <Card
+                    className={`glass transition-transform ${isPending ? "border-accent/40 glow-accent" : "cursor-pointer hover:border-primary/40 hover:glow-primary"} relative z-10`}
+                    style={{ touchAction: (canSwipeDelete || isFinished) ? "pan-y" : undefined }}
+                    onClick={() => !isPending && !swiped && navigate(`/game/${game.id}`)}
+                    onTouchStart={(e) => {
+                      if (!canSwipeDelete && !isFinished) return;
+                      const startX = e.touches[0].clientX;
+                      const card = e.currentTarget;
+                      const parent = card.parentElement!;
+                      const deleteIndicator = parent.querySelector('[data-delete-bg]') as HTMLElement;
+                      let currentDx = 0;
+
+                      const onMove = (ev: TouchEvent) => {
+                        const dx = ev.touches[0].clientX - startX;
+                        currentDx = Math.max(0, dx); // Only allow right swipe
+                        card.style.transform = `translateX(${currentDx}px)`;
+                        card.style.transition = 'none';
+                        if (deleteIndicator) {
+                          deleteIndicator.style.opacity = `${Math.min(1, currentDx / 80)}`;
                         }
-                      } else {
-                        card.style.transform = ""; card.style.opacity = "";
-                        if (deleteIndicator) deleteIndicator.style.opacity = "0";
-                      }
-                      el.removeEventListener("touchmove", onMove);
-                      el.removeEventListener("touchend", onEnd);
-                    };
-                    el.addEventListener("touchmove", onMove, { passive: true });
-                    el.addEventListener("touchend", onEnd);
-                  }}>
-                {(canSwipeDelete || isFinished) && (
-                  <div data-delete-bg className="absolute inset-0 bg-destructive/20 rounded-xl flex items-center justify-end pr-4 opacity-0 transition-opacity pointer-events-none">
-                    <span className="text-destructive text-sm font-semibold">{canSwipeDelete ? "🗑️ Eliminar" : "→ Amagar"}</span>
-                  </div>
-                )}
-                <Card
-                  className={`glass transition-all ${isPending ? "border-accent/40 glow-accent" : "cursor-pointer hover:border-primary/40 hover:glow-primary"}`}
-                  onClick={() => !isPending && navigate(`/game/${game.id}`)}>
-                  <CardContent className="py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{s.icon}</span>
-                      <div>
-                        {isPending && (
-                          <p className="text-sm font-bold text-accent">{creatorName} et reta!</p>
-                        )}
-                        <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
-                        {!isPending && gp._rival_name && (
-                          <span className="ml-2 text-[11px] text-muted-foreground">vs <span className="text-foreground/70 font-medium">{gp._rival_name}</span></span>
-                        )}
-                        <p className={`text-[11px] ${s.color}`}>{s.label}</p>
+                      };
+
+                      const onEnd = () => {
+                        card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                        if (currentDx > 100) {
+                          // Snap open — show confirm state
+                          card.style.transform = `translateX(80px)`;
+                          if (deleteIndicator) deleteIndicator.style.opacity = '1';
+                          setSwipedState(true);
+                          // Show confirm toast
+                          const actionLabel = canSwipeDelete ? "Eliminar partida?" : "Amagar partida?";
+                          toast(actionLabel, {
+                            action: {
+                              label: "✓ Confirmar",
+                              onClick: async () => {
+                                card.style.transform = `translateX(400px)`;
+                                card.style.opacity = '0';
+                                setTimeout(async () => {
+                                  if (canSwipeDelete) {
+                                    try {
+                                      await deleteGame(game.id);
+                                      toast.success("Partida eliminada");
+                                      invalidateLobby();
+                                    } catch (err: any) { toast.error(err.message); }
+                                  } else {
+                                    dismissGame(game.id);
+                                  }
+                                }, 300);
+                              },
+                            },
+                            cancel: {
+                              label: "Desfer",
+                              onClick: () => {
+                                card.style.transform = '';
+                                if (deleteIndicator) deleteIndicator.style.opacity = '0';
+                                setSwipedState(false);
+                              },
+                            },
+                            duration: 5000,
+                            onDismiss: () => {
+                              card.style.transform = '';
+                              if (deleteIndicator) deleteIndicator.style.opacity = '0';
+                              setSwipedState(false);
+                            },
+                          });
+                        } else {
+                          // Snap back
+                          card.style.transform = '';
+                          if (deleteIndicator) deleteIndicator.style.opacity = '0';
+                        }
+                        document.removeEventListener("touchmove", onMove);
+                        document.removeEventListener("touchend", onEnd);
+                      };
+
+                      document.addEventListener("touchmove", onMove, { passive: true });
+                      document.addEventListener("touchend", onEnd, { once: true });
+                    }}>
+                    <CardContent className="py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{s.icon}</span>
+                        <div>
+                          {isPending && (
+                            <p className="text-sm font-bold text-accent">{creatorName} et reta!</p>
+                          )}
+                          <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
+                          {!isPending && gp._rival_name && (
+                            <span className="ml-2 text-[11px] text-muted-foreground">vs <span className="text-foreground/70 font-medium">{gp._rival_name}</span></span>
+                          )}
+                          <p className={`text-[11px] ${s.color}`}>{s.label}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isPending && (
-                        <>
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); handleJoinGame(game.id); }} disabled={loading}>
-                            Acceptar
-                          </Button>
-                          <Button size="sm" variant="ghost"
-                            className="text-destructive hover:bg-destructive/10"
-                            onClick={(e) => { e.stopPropagation(); handleDeclineGame(game.id); }}
-                            disabled={loading}>
-                            ✕
-                          </Button>
-                        </>
-                      )}
-                      {!isPending && <span className="text-muted-foreground text-xs">→</span>}
-                    </div>
-                  </CardContent>
-                </Card>
-                {(canSwipeDelete || isFinished) && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none">← llisca</div>}
+                      <div className="flex items-center gap-2">
+                        {isPending && (
+                          <>
+                            <Button size="sm" onClick={(e) => { e.stopPropagation(); handleJoinGame(game.id); }} disabled={loading}>
+                              Acceptar
+                            </Button>
+                            <Button size="sm" variant="ghost"
+                              className="text-destructive hover:bg-destructive/10"
+                              onClick={(e) => { e.stopPropagation(); handleDeclineGame(game.id); }}
+                              disabled={loading}>
+                              ✕
+                            </Button>
+                          </>
+                        )}
+                        {!isPending && <span className="text-muted-foreground text-xs">→</span>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  {(canSwipeDelete || isFinished) && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none z-0">→ llisca</div>}
                 </div>
               );
             })}
