@@ -533,8 +533,15 @@ export default function GamePage() {
               wonConsumable = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
             }
           }
+          // Roll for random health event (25% chance)
+          const healthEvent = await rollHealthEvent(user.id);
           setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
           toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
+          if (healthEvent) {
+            setTimeout(() => {
+              toast.warning(`${healthEvent.icon} ${pet?.pet_name ?? "La mascota"} ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
+            }, 2000);
+          }
         } else {
           toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
         }
