@@ -245,10 +245,10 @@ export default function StoryModePage() {
               <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                 <div
                   className="h-2 rounded-full bg-accent transition-all duration-500"
-                  style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }}
+                  style={{ width: `${Math.min(((pet.xp ?? 0) / (pet.max_xp ?? MAX_PET_XP)) * 100, 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] text-accent font-semibold mt-1">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
+              <p className="text-[10px] text-accent font-semibold mt-1">⭐ {pet.xp ?? 0} / {pet.max_xp ?? MAX_PET_XP} XP</p>
             </div>
             {accessories.length > 0 && (
               <div className="flex justify-center gap-1.5 mt-2">
