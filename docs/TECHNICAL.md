@@ -687,6 +687,8 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 | `player_pets` | Mascota del jugador: tipus, nom, icona, XP |
 | `story_progress` | Progrés per capítol: status, moves, best_moves |
 | `pet_accessories` | Accesoris obtinguts per la mascota |
+| `pet_consumables` | Consumibles per curar (Menjar, Aigua, Vacuna) — `used_at` NULL = disponible |
+| `pet_events` | Events de salut actius (Virus, Caiguda, Febre) — `resolved` = false = actiu |
 
 ### Aïllament PvP ↔ Història
 
@@ -718,7 +720,29 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 | Adult | 1500 | ⭐ |
 | Veterà | 3000 | 🔥 |
 | Llegendari | 4500 | 👑 |
-| Mort (renaixement) | 5000 | 💀 |
+| Mort (renaixement) | 5000 | 🪦 |
+
+### 🤒 Salut de la mascota (v1.9)
+
+Al completar un capítol, hi ha un **25% de probabilitat** d'un event de salut:
+
+| Event | Icona | XP dany | Descripció |
+|:------|:-----:|:-------:|:-----------|
+| Virus | 🤒 | +200 | Ha agafat un virus! |
+| Caiguda | 🤕 | +150 | Ha caigut i s'ha fet mal! |
+| Febre | 🫠 | +100 | Té febre alta! |
+
+**Consumibles** (redueixen XP, desbloquejats post-accesoris):
+
+| Consumible | Icona | XP cura |
+|:-----------|:-----:|:-------:|
+| Menjar | 🍖 | -100 |
+| Aigua | 💧 | -50 |
+| Vacuna | 💉 | -200 |
+
+**Visibilitat**: L'estat de salut és visible al perfil propi, al Mode Història i al perfil públic d'altres jugadors. Component `PetHealthBadge` centralitza la UI.
+
+**Regalar consumibles** (`gift_consumable` RPC): Un jugador pot gastar un consumible propi per curar la mascota d'un altre jugador des del seu perfil públic.
 
 ### CPU Rival
 
@@ -733,6 +757,7 @@ Usat dins polítiques RLS per restringir accés a dades de partida.
 | `create_story_game` | Crea partida amb CPU, escenari random, objecte random |
 | `finish_story_game` | Marca partida com finished (SECURITY DEFINER) |
 | `insert_cpu_move` | Insereix moviment del CPU (verificat per RLS) |
+| `gift_consumable` | Usa consumible propi per curar mascota d'un altre (SECURITY DEFINER) |
 
 <br/>
 
