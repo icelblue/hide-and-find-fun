@@ -269,7 +269,7 @@ export async function rollHealthEvent(userId: string): Promise<typeof PET_HEALTH
   return event;
 }
 
-/** Use a consumable to heal the pet */
+/** Use a consumable to heal the pet and extend its max life */
 export async function useConsumable(userId: string, consumableName: string) {
   const consumable = PET_CONSUMABLES.find(c => c.name === consumableName);
   if (!consumable) throw new Error("Consumible no vàlid");
@@ -294,6 +294,18 @@ export async function useConsumable(userId: string, consumableName: string) {
   // Heal pet
   const result = await healPetXP(userId, consumable.xpHeal);
 
+  // Extend max life
+  if (consumable.maxXpBoost > 0) {
+    const pet = await getMyPet(userId);
+    if (pet) {
+      const newMaxXp = (pet.max_xp ?? MAX_PET_XP) + consumable.maxXpBoost;
+      await supabase
+        .from("player_pets")
+        .update({ max_xp: newMaxXp })
+        .eq("user_id", userId);
+    }
+  }
+
   // Resolve any active events of matching type
   await supabase
     .from("pet_events")
@@ -301,7 +313,7 @@ export async function useConsumable(userId: string, consumableName: string) {
     .eq("user_id", userId)
     .eq("resolved", false);
 
-  return { healed: consumable.xpHeal, newXp: result?.newXp ?? 0 };
+  return { healed: consumable.xpHeal, maxXpBoost: consumable.maxXpBoost, newXp: result?.newXp ?? 0 };
 }
 
 // ============================================
