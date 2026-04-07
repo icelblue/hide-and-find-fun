@@ -104,18 +104,24 @@ export default function ItemActions({
               const spotKey = `${item.id}:${pos.value}`;
               const alreadyLooked = lookedSpots.has(spotKey);
               const isBananaBlocked = bananaBlockedSpot === spotKey;
+              // Dirty blocks "dins", Broken blocks "sobre" + "dins"
+              const blockedByDirty = isDirty && pos.value === "dins";
+              const blockedByBroken = isBroken && (pos.value === "sobre" || pos.value === "dins");
+              const isBlocked = blockedByDirty || blockedByBroken;
+              const blockLabel = blockedByBroken ? "💥 Arregla primer" : blockedByDirty ? "🧹 Neteja primer" : "";
               return (
                 <button key={pos.value}
                   onClick={() => onLook(item.id, pos.value)}
-                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked}
+                  disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked || isBlocked}
                   className={`w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${
+                    isBlocked ? "bg-muted/20 opacity-50 border border-accent/30" :
                     isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
                     alreadyLooked ? "bg-muted/20 opacity-40 line-through" :
                     "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
                   }`}>
-                  {isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
+                  {isBlocked ? blockLabel : isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
                   <span className="block text-[9px] text-muted-foreground mt-0.5">
-                    {isBananaBlocked ? "bloquejat" : alreadyLooked ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                    {isBlocked ? "bloquejat" : isBananaBlocked ? "bloquejat" : alreadyLooked ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
                   </span>
                 </button>
               );
