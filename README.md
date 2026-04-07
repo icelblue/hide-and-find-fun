@@ -55,7 +55,7 @@ No és un joc de sort. **És un puzle mental contra un rival humà.**
 | 🪙 **Economia de tokens** | 5/dia, costos de 0.2 a 0.5 — cada acció compta |
 | 🧹 **Mobles interactius** | Netejar, trencar, arreglar — amb eines il·limitades |
 | 💡 **Sistema de llum** | Apaga la llum per cegar el rival, usa la llanterna a l'exterior |
-| ⚡ **Ítems socials** | Plàtan, bomba de fum, escuts, espia, intercanvi, missatges |
+| ⚡ **Ítems socials** | Plàtan, bomba de fum, escuts, espia, intercanvi, robar tornavís |
 | 🏆 **Sistema ranked** | Elo + 5 lligues visuals (Bronze → Diamond) |
 | 🎁 **Loot de mobles** | Guanya mobiliari rar que amplia el joc per a tothom |
 | 🐾 **Mode Història** | Tutorial single-player amb mascota virtual i capítols progressius |
@@ -169,6 +169,7 @@ Cada jugador pot usar **1 ítem per dia**. Afegeixen caos estratègic:
 | 🔄 **Intercanvi** | Intercanvia la teva ubicació amb la del rival | 🛡️ Sí |
 | 🕵️ **Espia** | Descobreix en quina habitació és el rival | — |
 | 💬 **Missatge** | Envia text curt al rival (bluff, provocació) | — |
+| 🔧 **Robar tornavís** | Roba 1 tornavís del rival | 🛡️ Sí |
 
 > L'escut es consumeix en bloquejar. **Timing és tot**: activar-lo massa aviat és malgastar-lo.
 
@@ -255,6 +256,7 @@ Cada victòria atorga un moble aleatori:
 | **Build** | Vite 5 | HMR sub-segon, tree-shaking, code-splitting |
 | **Estils** | Tailwind CSS 3.4 + shadcn/ui | Design system semàntic amb glassmorphism |
 | **Backend** | Supabase (Lovable Cloud) | Auth, PostgreSQL, Realtime, RPC, RLS |
+| **Seguretat** | RPC SECURITY DEFINER + RLS | Moviments, perfils i dades sensibles al servidor |
 | **Realtime** | Postgres Changes (WebSocket) | Subscripcions filtrades per `game_id` |
 | **Routing** | React Router v6 | Rutes protegides amb `AuthProvider` |
 | **State** | TanStack Query + `useState` | Cache del servidor + estat UI local |
@@ -294,7 +296,7 @@ src/
 ├── pages/
 │   ├── AuthPage.tsx              ← Login / registre amb email
 │   ├── LobbyPage.tsx             ← Matchmaking: aleatori, codi, reptes, cerca
-│   ├── GamePage.tsx              ← Motor de joc complet (~1650 línies)
+│   ├── GamePage.tsx              ← Motor de joc (~1190 línies, modularitzat)
 │   ├── StoryModePage.tsx         ← 🐾 Mode Història (mascota + capítols)
 │   ├── ProfilePage.tsx           ← Perfil: stats, Elo, inventari, mur
 │   ├── PlayerProfilePage.tsx     ← Perfil públic amb mur interactiu
@@ -305,15 +307,16 @@ src/
 │   ├── ErrorBoundary.tsx         ← Error boundary + log a DB
 │   ├── HelpButton.tsx            ← Panel flotant amb regles
 │   ├── TypewriterText.tsx        ← Animació text màquina d'escriure
-│   └── ui/                       ← 40+ components shadcn/ui
+│   ├── game/                     ← Components extraïts de GamePage
 │
 ├── hooks/
 │   └── useAuth.tsx               ← AuthProvider amb Context API
 │
 ├── lib/
-│   ├── supabase-helpers.ts       ← ⭐ Lògica core del joc (~1250 línies)
-│   ├── story-helpers.ts          ← 🐾 Lògica Mode Història (~230 línies)
-│   ├── reward-helpers.ts         ← Recompenses via RPC (~93 línies)
+│   ├── supabase-helpers.ts       ← ⭐ Lògica core (RPC calls + helpers)
+│   ├── game-types.ts             ← Tipus centralitzats (tools, phases)
+│   ├── story-helpers.ts          ← 🐾 Lògica Mode Història
+│   ├── reward-helpers.ts         ← Recompenses via RPC
 │   └── constants.ts              ← APP_VERSION i constants globals
 │
 └── integrations/supabase/        ← Client + tipus auto-generats
@@ -339,7 +342,8 @@ Per a una guia detallada d'arquitectura, base de dades, debugging, instal·laci�
 
 Inclou:
 - 📊 Diagrama ER complet amb 19 taules (inclou story_progress, player_pets, pet_accessories)
-- 🔒 Matriu RLS de 19 taules
+- 🔒 Matriu RLS de 19 taules + funcions SECURITY DEFINER
+- 🔐 Arquitectura RPC: moviments, llum i accions de tags al servidor
 - 🎮 Mecàniques detallades (amagar, buscar, eines, llum, ítems socials)
 - 🐾 Mode Història: mascota, capítols, XP, evolucions, CPU
 - 💻 Guia d'instal·lació local pas a pas (amb entorn aïllat)
