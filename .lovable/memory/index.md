@@ -1,11 +1,11 @@
 # Project Memory
 
 ## Core
-Deduction Duel — joc PvP puzzle de deducció. Català/Castellà UI. Mobile-first (390px).
-Escenari→Zona→Spot→Amagatall (arbre decisió). 5 tokens/dia, 7 dies límit.
+Deduction Duel v1.8.1 — joc PvP puzzle de deducció. Català/Castellà UI. Mobile-first (390px).
+Moviments via RPC SECURITY DEFINER (execute_game_move, toggle_light, tag_action).
 Simultani: amagar + buscar alhora. Elo + Lligues visuals. Pistes: icona + tooltip.
-Accions amb cost variable: 0.3 (observar) / 0.5 (explorar) / 1.0 (investigar) / 1.5 (confirmar).
-Camins 100% predefinits per escenari. 3 escenaris inicials: Cuina, Biblioteca, Garatge.
+Accions: 0.3 (observar) / 0.5 (moure). Eines il·limitades. Pool compartit.
+game_players fora de realtime. get_safe_game_players emmascara hidden_*.
 
 ## Memories
 - [Game architecture](mem://features/game-architecture) — Regles completes, flux, tokens, condicions
