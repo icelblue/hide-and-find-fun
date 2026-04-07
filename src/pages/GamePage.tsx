@@ -273,10 +273,15 @@ export default function GamePage() {
     const scenarioIsDark = isOutdoor ? !litScenarios.has(scenarioId) : indoorLightOff;
     setScenarioIsDarkState(scenarioIsDark);
 
-    const visibleItems = scenarioIsDark ? [] : loadedItems.filter((i: any) => {
+    const visibleItems = loadedItems.filter((i: any) => {
+      if (scenarioIsDark) {
+        // In the dark: only show non-hidden items (big/obvious furniture)
+        return !i.hidden;
+      }
+      // Lit: show everything
       if (!i.hidden) return true;
       if (revealed.has(i.id)) return true;
-      // For outdoor: if illuminated, show hidden items too
+      // Outdoor illuminated: reveal hidden items
       if (isOutdoor && litScenarios.has(scenarioId)) return true;
       return false;
     });
