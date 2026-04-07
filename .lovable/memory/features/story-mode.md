@@ -1,33 +1,31 @@
 ---
 name: Story Mode
-description: Single-player tutorial using real game engine with CPU opponent, pet companion, evolution, death/rebirth, health events, consumables that heal AND extend max life, progressive chapters, accessories
+description: Single-player tutorial with pet companion. Consumables heal specific events AND extend max life. Event↔Consumable mapping: Virus→Vacuna, Caiguda→Menjar, Febre→Aigua.
 type: feature
 ---
 
-## Mode Història (v2.2 — Consumibles amplien vida)
-
-### Arquitectura
-- Partides de història utilitzen el **motor real de GamePage**
-- CPU virtual amb UUID fix: `00000000-0000-0000-0000-000000000001`
-- `is_story=true` a la taula `games`
+## Mode Història (v2.3 — Consumible↔Event matching)
 
 ### Mascota
-- 5 animals: 🐕 Gos, 🐱 Gat, 🐰 Conill, 🐹 Hàmster, 🐢 Tortuga
-- MAX_PET_XP = 5000 (base, pot créixer amb consumibles)
-- `max_xp` dinàmic a `player_pets` — cada consumible l'amplia
+- 5 animals: 🐕🐱🐰🐹🐢
+- `max_xp` dinàmic (base 5000, creix amb consumibles)
 - Evolució: Bebè→Jove→Adult→Veterà→Llegendari
 
-### Events de salut
-- 25% probabilitat al completar capítol
-- 🤒 Virus: +200 XP | 🤕 Caiguda: +150 XP | 🫠 Febre: +100 XP
+### Events de salut (25% post-capítol)
+| Event | Dany | Cura correcta |
+|-------|------|----------------|
+| 🤒 Virus | +200 XP | 💉 Vacuna |
+| 🤕 Caiguda | +150 XP | 🍖 Menjar |
+| 🫠 Febre | +100 XP | 💧 Aigua |
 
-### Consumibles (curen + amplien límit de vida)
-- 🍖 Menjar: -100 XP, +50 max_xp
-- 💧 Aigua: -50 XP, +25 max_xp
-- 💉 Vacuna: -200 XP, +100 max_xp
-- Desbloquejats després de tenir tots els accesoris
-- `useConsumable()` marca consumible usat + resol events + amplia max_xp
-- `gift_consumable` RPC fa el mateix quan es regala
+### Consumibles (desbloquejats post-accesoris)
+| Consumible | XP Heal | Max XP Boost | Cura event |
+|------------|---------|--------------|------------|
+| 🍖 Menjar | -100 | +50 | caiguda |
+| 💧 Aigua | -50 | +25 | febre |
+| 💉 Vacuna | -200 | +100 | virus |
+
+**Comportament**: El consumible SEMPRE cura XP i amplia max_xp. Però NOMÉS resol l'event si coincideix (Vacuna→Virus, etc.). Si uses el consumible incorrecte, la mascota segueix malalta però recupera XP.
 
 ### Capítols
 1-2: Tutorial | 3-8: Accesoris | Repetibles per XP + consumibles

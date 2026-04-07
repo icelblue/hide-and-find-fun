@@ -32,17 +32,19 @@ export const PET_ACCESSORIES = [
 ] as const;
 
 // Consumables unlocked after all accessories — they HEAL (reduce XP) and EXTEND max life
+// Each consumable cures a SPECIFIC health event type
 export const PET_CONSUMABLES = [
-  { name: "Menjar", icon: "🍖", xpHeal: 100, maxXpBoost: 50 },
-  { name: "Aigua", icon: "💧", xpHeal: 50, maxXpBoost: 25 },
-  { name: "Vacuna", icon: "💉", xpHeal: 200, maxXpBoost: 100 },
+  { name: "Menjar", icon: "🍖", xpHeal: 100, maxXpBoost: 50, curesEvent: "caiguda" },
+  { name: "Aigua", icon: "💧", xpHeal: 50, maxXpBoost: 25, curesEvent: "febre" },
+  { name: "Vacuna", icon: "💉", xpHeal: 200, maxXpBoost: 100, curesEvent: "virus" },
 ] as const;
 
 // Random health events that DAMAGE (increase XP rapidly)
+// Each event is cured by a specific consumable (see PET_CONSUMABLES.curesEvent)
 export const PET_HEALTH_EVENTS = [
-  { type: "virus", icon: "🤒", name: "Virus", xpDamage: 200, desc: "Ha agafat un virus!" },
-  { type: "caiguda", icon: "🤕", name: "Caiguda", xpDamage: 150, desc: "Ha caigut i s'ha fet mal!" },
-  { type: "febre", icon: "🫠", name: "Febre", xpDamage: 100, desc: "Té febre alta!" },
+  { type: "virus", icon: "🤒", name: "Virus", xpDamage: 200, desc: "Ha agafat un virus!", cure: "Vacuna" },
+  { type: "caiguda", icon: "🤕", name: "Caiguda", xpDamage: 150, desc: "Ha caigut i s'ha fet mal!", cure: "Menjar" },
+  { type: "febre", icon: "🫠", name: "Febre", xpDamage: 100, desc: "Té febre alta!", cure: "Aigua" },
 ] as const;
 
 // Max XP before pet dies
@@ -308,14 +310,25 @@ export async function useConsumable(userId: string, consumableName: string) {
     }
   }
 
-  // Resolve any active events of matching type
-  await supabase
+  // Only resolve events that THIS consumable actually cures
+  const curedEvents = consumable.curesEvent;
+  const { data: resolvedCount } = await supabase
     .from("pet_events")
     .update({ resolved: true, resolved_at: new Date().toISOString() })
     .eq("user_id", userId)
-    .eq("resolved", false);
+    .eq("resolved", false)
+    .eq("event_type", curedEvents)
+    .select("id");
 
-  return { healed: consumable.xpHeal, maxXpBoost: consumable.maxXpBoost, newXp: result?.newXp ?? 0 };
+  const didCureEvent = (resolvedCount?.length ?? 0) > 0;
+
+  return {
+    healed: consumable.xpHeal,
+    maxXpBoost: consumable.maxXpBoost,
+    newXp: result?.newXp ?? 0,
+    didCureEvent,
+    curesEvent: curedEvents,
+  };
 }
 
 // ============================================

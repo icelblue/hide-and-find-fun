@@ -245,10 +245,10 @@ export default function StoryModePage() {
               <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                 <div
                   className="h-2 rounded-full bg-accent transition-all duration-500"
-                  style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }}
+                  style={{ width: `${Math.min(((pet.xp ?? 0) / (pet.max_xp ?? MAX_PET_XP)) * 100, 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] text-accent font-semibold mt-1">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
+              <p className="text-[10px] text-accent font-semibold mt-1">⭐ {pet.xp ?? 0} / {pet.max_xp ?? MAX_PET_XP} XP</p>
             </div>
             {accessories.length > 0 && (
               <div className="flex justify-center gap-1.5 mt-2">
@@ -279,6 +279,8 @@ export default function StoryModePage() {
                 {PET_CONSUMABLES.map(c => {
                   const count = consumables.filter((x: any) => x.consumable_name === c.name).length;
                   if (count === 0) return null;
+                  const matchingEvent = activeEvents.find((e: any) => e.event_type === c.curesEvent);
+                  const cureLabel = { caiguda: "🤕 Caiguda", febre: "🫠 Febre", virus: "🤒 Virus" }[c.curesEvent] ?? "";
                   return (
                     <button
                       key={c.name}
@@ -286,16 +288,23 @@ export default function StoryModePage() {
                         if (!user) return;
                         try {
                           const result = await useConsumable(user.id, c.name);
-                          toast.success(`${c.icon} ${c.name} usat! -${c.xpHeal} XP → ${result.newXp} XP`);
+                          if (result.didCureEvent) {
+                            toast.success(`${c.icon} ${c.name} usat! Ha curat ${cureLabel}! -${c.xpHeal} XP`);
+                          } else if (activeEvents.length > 0) {
+                            toast(`${c.icon} ${c.name} usat! -${c.xpHeal} XP, però no cura ${activeEvents[0].event_icon} ${activeEvents[0].event_name}. Necessites ${cureLabel.split(" ")[0]} per curar-ho!`);
+                          } else {
+                            toast.success(`${c.icon} ${c.name} usat! -${c.xpHeal} XP → ${result.newXp} XP`);
+                          }
                           loadData();
                         } catch (err: any) { toast.error(err.message); }
                       }}
-                      className="flex items-center gap-1.5 bg-muted/50 rounded-xl px-3 py-2 border border-border/30 hover:bg-accent/10 transition-all active:scale-95"
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-2 border transition-all active:scale-95 ${matchingEvent ? "bg-accent/15 border-accent/40 ring-1 ring-accent/30" : "bg-muted/50 border-border/30 hover:bg-accent/10"}`}
                     >
                       <span className="text-lg">{c.icon}</span>
                       <div className="text-left">
                         <span className="text-xs font-semibold">{c.name} ×{count}</span>
-                        <p className="text-[9px] text-accent">-{c.xpHeal} XP</p>
+                        <p className="text-[9px] text-muted-foreground">Cura {cureLabel}</p>
+                        {matchingEvent && <p className="text-[9px] text-accent font-bold">✨ Recomanat!</p>}
                       </div>
                     </button>
                   );
