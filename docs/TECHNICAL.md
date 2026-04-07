@@ -110,14 +110,16 @@
 │      │                                                        │
 │      ├── /auth ──────────── AuthPage.tsx                       │
 │      ├── / ──────────────── LobbyPage.tsx                     │
-│      ├── /game/:id ──────── GamePage.tsx        ⭐ ~1550 línies│
+│      ├── /game/:id ──────── GamePage.tsx        ⭐ ~1190 línies│
+│      ├── /story ─────────── StoryModePage.tsx                 │
 │      ├── /profile ────────── ProfilePage.tsx                  │
 │      ├── /player/:id ────── PlayerProfilePage.tsx             │
 │      └── /reset-password ── ResetPasswordPage.tsx             │
 │                                                               │
 │   Lògica de negoci:                                           │
-│      ├── lib/supabase-helpers.ts    ⭐ ~1250 línies           │
-│      └── lib/reward-helpers.ts         93 línies              │
+│      ├── lib/supabase-helpers.ts    ⭐ RPC calls + helpers    │
+│      ├── lib/game-types.ts             Tipus centralitzats    │
+│      └── lib/reward-helpers.ts         Recompenses via RPC    │
 │                                                               │
 │   Comunicació:                                                │
 │      └── @supabase/supabase-js (client auto-generat)          │
@@ -130,15 +132,22 @@
 │                                                               │
 │   ┌───────────────┐   ┌──────────────────┐                   │
 │   │  PostgreSQL    │   │   Auth Service    │                   │
-│   │  15 taules     │   │  email + password │                   │
-│   │  6 funcions    │   │  handle_new_user  │                   │
+│   │  19 taules     │   │  email + password │                   │
+│   │  10+ funcions  │   │  handle_new_user  │                   │
 │   │  RLS complet   │   └──────────────────┘                   │
 │   └───────────────┘                                           │
 │                                                               │
 │   ┌───────────────┐   ┌──────────────────┐                   │
-│   │   Realtime     │   │  Edge Functions   │                   │
-│   │  3 canals per  │   │  cleanup-old-     │                   │
-│   │  partida       │   │  games (cron)     │                   │
+│   │  RPC Functions │   │  Edge Functions   │                   │
+│   │  execute_*     │   │  cleanup-old-     │                   │
+│   │  (SECURITY     │   │  games (cron)     │                   │
+│   │   DEFINER)     │   │  backup-database  │                   │
+│   └───────────────┘   └──────────────────┘                   │
+│                                                               │
+│   ┌───────────────┐   ┌──────────────────┐                   │
+│   │   Triggers     │   │   Realtime        │                   │
+│   │  validate_*    │   │  games +          │                   │
+│   │  handle_*      │   │  game_social_items│                   │
 │   └───────────────┘   └──────────────────┘                   │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -149,10 +158,11 @@
 
 | Principi | Descripció |
 |:---------|:-----------|
-| **Client-side first** | Tota la lògica de joc viu al client (`supabase-helpers.ts`). No hi ha API custom — tot via Supabase SDK. |
+| **Server-side security** | Moviments, bonus i hints calculats al servidor via RPC SECURITY DEFINER. El client NO pot inserir `game_moves` directament. |
 | **Seguretat per RLS** | Polítiques de fila garanteixen que cada jugador només veu i modifica les seves dades. |
-| **Realtime reactiu** | `GamePage` es re-renderitza automàticament quan qualsevol taula rellevant canvia. |
-| **Triggers per integritat** | Elo, lligues, recompenses i perfils s'actualitzen via triggers PostgreSQL. |
+| **Dades emmascadades** | `get_safe_game_players()` oculta `hidden_*` dels oponents mentre la partida està en curs. |
+| **Realtime reactiu** | `GamePage` es re-renderitza quan `games` o `game_social_items` canvien (game_players exclòs de realtime per seguretat). |
+| **Triggers per integritat** | Elo, lligues, recompenses, validació d'amagar i validació de moviments via triggers PostgreSQL. |
 
 <br/>
 
@@ -187,8 +197,8 @@
 │   │   │     · Crear partida / rival aleatori / buscar jugador
 │   │   │     · Unir-se per codi / partides obertes
 │   │   │     · Les meves partides + swipe-to-dismiss
-│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1650 línies)
-│   │   │     · Fase amagar (4 passos) + missatge secret (has_hide_message)
+│   │   ├── 📄 GamePage.tsx          ← 🎮 Motor de joc (~1190 línies)
+│   │   │     · Fase amagar (4 passos) + missatge secret
 │   │   │     · Ítems socials + pistes progressives
 │   │   │     · Eines, llum, llanterna, mobles bruts
 │   │   │     · Mode Història: tokens il·limitats, sense bonus/inventari
@@ -207,10 +217,10 @@
 │   │   └── 📄 use-mobile.tsx        ← Hook per detectar mòbil
 │   │
 │   ├── 📁 lib/
-│   │   ├── 📄 supabase-helpers.ts   ← ⭐ TOTA la lògica PvP (~1250 línies)
+│   │   ├── 📄 supabase-helpers.ts   ← ⭐ RPC calls + lògica client
+│   │   │     · RPC: execute_game_move, toggle_light, tag_action
 │   │   │     · DATA: scenarios, items, objects, connections
 │   │   │     · LIFECYCLE: create, join, delete, available, myGames
-│   │   │     · MATCHMAKING: findRandom, search, challenge
 │   │   │     · HIDING: hideObject, checkBothHidden, startGame
 │   │   │     · TAGS: getTagActions, performTagAction, rollForTool
 │   │   │     · LIGHT: toggleLight, isLightOff, useLlanterna
