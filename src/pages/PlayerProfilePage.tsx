@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
+import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents, PET_CONSUMABLES } from "@/lib/story-helpers";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 
@@ -42,6 +42,8 @@ export default function PlayerProfilePage() {
   const [pet, setPet] = useState<any>(null);
   const [petAccessories, setPetAccessories] = useState<any[]>([]);
   const [petEvents, setPetEvents] = useState<any[]>([]);
+  const [myConsumables, setMyConsumables] = useState<any[]>([]);
+  const [giftingConsumable, setGiftingConsumable] = useState(false);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
