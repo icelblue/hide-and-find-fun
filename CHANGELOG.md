@@ -7,6 +7,22 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.9.1] — 2026-04-07 — Vitrina, Salut i Regal 💊🏆 (PATCH)
+
+### Afegit
+- **Vitrina pública**: Els jugadors poden veure la col·lecció de mobles d'altres jugadors al perfil
+- **Estat de salut visible**: Saludable ✅ / Malalt 🤒 / Mort 🪦 a perfil propi i d'altres
+- **Regalar consumibles**: Usa un consumible propi per curar la mascota d'un altre jugador (`gift_consumable` RPC)
+- **PetHealthBadge**: Component centralitzat per mostrar l'estat de salut (compact + full)
+- **Regles Mode Història** al panell "Com jugar": virus, consumibles, evolucions, regal
+
+### Canviat
+- **player_rewards RLS**: SELECT obert a tots els autenticats (vitrina pública)
+- **pet_events RLS**: SELECT obert per veure si mascotes d'altres estan malaltes
+- Documentació completa actualitzada (README, TECHNICAL, CHANGELOG)
+
+---
+
 ## [1.9.0] — 2026-04-07 — UX & Mascota Health 🐾🩺 (MINOR)
 
 ### Afegit

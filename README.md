@@ -58,7 +58,10 @@ No és un joc de sort. **És un puzle mental contra un rival humà.**
 | ⚡ **Ítems socials** | Plàtan, bomba de fum, escuts, espia, intercanvi, robar tornavís |
 | 🏆 **Sistema ranked** | Elo + 5 lligues visuals (Bronze → Diamond) |
 | 🎁 **Loot de mobles** | Guanya mobiliari rar que amplia el joc per a tothom |
-| 🐾 **Mode Història** | Tutorial single-player amb mascota virtual i capítols progressius |
+| 🐾 **Mode Història** | Tutorial single-player amb mascota virtual, evolucions i capítols progressius |
+| 🤒 **Salut mascota** | Virus, caigudes i febres pugen XP; consumibles la curen |
+| 💊 **Regalar consumibles** | Cura la mascota d'un altre jugador des del seu perfil |
+| 🏆 **Vitrina pública** | Veu la col·lecció de mobles de qualsevol jugador |
 | 💬 **Murs efímers** | Deixa missatges al perfil del rival — desapareixen en 22h |
 | 📱 **Juga des de qualsevol lloc** | Mobile-first, compatible amb tots els navegadors |
 
@@ -200,8 +203,11 @@ Cada jugador pot usar **1 ítem per dia**. Afegeixen caos estratègic:
 Cada jugador té un **perfil públic** amb:
 
 - 📊 Partides, victòries, win rate, millor ratxa
-- ⚔️ **Rival favorit** — amb qui has jugat més
-- 🎒 **Inventari** — mobles obtinguts per col·locar o vendre
+- ⚔️ **Rival favorit** — amb qui has jugat més (exclou CPU i anònims)
+- 🐾 **Mascota** — estat visible (Saludable ✅ / Malalt 🤒 / Mort 🪦)
+- 🏆 **Vitrina** — col·lecció de mobles guanyats (visible per tothom)
+- 🎒 **Inventari** — mobles per col·locar o vendre
+- 💊 **Regalar consumibles** — cura la mascota d'un altre jugador
 - 💬 **Mur** — missatges efímers d'altres jugadors (TTL 22h)
 
 <br/>
@@ -305,7 +311,8 @@ src/
 │
 ├── components/
 │   ├── ErrorBoundary.tsx         ← Error boundary + log a DB
-│   ├── HelpButton.tsx            ← Panel flotant amb regles
+│   ├── HelpButton.tsx            ← Panel flotant amb regles completes
+│   ├── PetHealthBadge.tsx        ← Estat salut mascota (malalt/sa/mort)
 │   ├── TypewriterText.tsx        ← Animació text màquina d'escriure
 │   ├── game/                     ← Components extraïts de GamePage
 │
@@ -341,11 +348,13 @@ Per a una guia detallada d'arquitectura, base de dades, debugging, instal·laci�
 ### **→ [docs/TECHNICAL.md](docs/TECHNICAL.md)**
 
 Inclou:
-- 📊 Diagrama ER complet amb 19 taules (inclou story_progress, player_pets, pet_accessories)
-- 🔒 Matriu RLS de 19 taules + funcions SECURITY DEFINER
-- 🔐 Arquitectura RPC: moviments, llum i accions de tags al servidor
+- 📊 Diagrama ER complet amb 21 taules (inclou pet_events, pet_consumables, pet_accessories)
+- 🔒 Matriu RLS de 21 taules + funcions SECURITY DEFINER
+- 🔐 Arquitectura RPC: moviments, llum, accions de tags, gift_consumable
 - 🎮 Mecàniques detallades (amagar, buscar, eines, llum, ítems socials)
-- 🐾 Mode Història: mascota, capítols, XP, evolucions, CPU
+- 🐾 Mode Història: mascota, capítols, XP, evolucions, salut, consumibles, CPU
+- 💊 Sistema de regal de consumibles entre jugadors
+- 🏆 Vitrina pública de col·leccionables
 - 💻 Guia d'instal·lació local pas a pas (amb entorn aïllat)
 - 🐳 Desplegament Docker (Dockerfile + docker-compose)
 - 🛠️ Com afegir escenaris, objectes, ítems socials
