@@ -181,7 +181,12 @@ export default function PlayerProfilePage() {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm">
                   {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
-                  {petEvents.length > 0 && <span className="text-xs text-destructive font-semibold ml-1">· Malalt!</span>}
+                  {evo.isDead
+                    ? <span className="text-xs text-destructive font-semibold ml-1">· Mort 🪦</span>
+                    : petEvents.length > 0
+                      ? <span className="text-xs text-destructive font-semibold ml-1">· Malalt! 🤒</span>
+                      : <span className="text-xs text-green-500 font-semibold ml-1">· Saludable ✅</span>
+                  }
                 </p>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                   <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
