@@ -170,15 +170,21 @@ export default function PlayerProfilePage() {
       {pet && (() => {
         const evo = getPetEvolution(pet.xp ?? 0);
         return (
-          <Card className="mb-4 glass border-accent/30 relative z-10">
+          <Card className={`mb-4 glass relative z-10 ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
             <CardContent className="py-3 flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring} flex items-center justify-center`}>
-                <span className="text-2xl">{pet.pet_icon}</span>
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${petEvents.length > 0 ? "ring-destructive/50" : evo.ring} flex items-center justify-center relative`}>
+                <span className="text-2xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
+                {petEvents.length > 0 && (
+                  <span className="absolute -top-1 -right-1 text-sm animate-pulse">🤒</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">{pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span></p>
+                <p className="font-bold text-sm">
+                  {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
+                  {petEvents.length > 0 && <span className="text-xs text-destructive font-semibold ml-1">· Malalt!</span>}
+                </p>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                  <div className="h-1.5 rounded-full bg-accent transition-all" style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
+                  <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
                 </div>
                 <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
               </div>
