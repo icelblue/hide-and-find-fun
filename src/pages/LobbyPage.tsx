@@ -353,30 +353,71 @@ export default function LobbyPage() {
                 ? { icon: "⚔️", label: `Repte pendent`, color: "text-accent" }
                 : (statusMap[game.status] ?? statusMap.waiting);
 
+              const isOwner = game.created_by === user?.id;
+              const canSwipeDelete = isOwner && (game.status === "waiting" || game.status === "finished");
               const isFinished = game.status === "finished";
 
               return (
                 <div key={gp.game_id} className="relative overflow-hidden rounded-xl"
                   onTouchStart={(e) => {
-                    if (!isFinished) return;
+                    if (!canSwipeDelete && !isFinished) return;
                     const startX = e.touches[0].clientX;
                     const el = e.currentTarget;
                     const card = el.firstElementChild as HTMLElement;
+                    const deleteIndicator = el.querySelector('[data-delete-bg]') as HTMLElement;
                     const onMove = (ev: TouchEvent) => {
                       const dx = ev.touches[0].clientX - startX;
-                      if (dx > 0) card.style.transform = `translateX(${dx}px)`;
-                      card.style.opacity = `${Math.max(0, 1 - dx / 200)}`;
+                      if (dx > 0) {
+                        card.style.transform = `translateX(${dx}px)`;
+                        card.style.opacity = `${Math.max(0, 1 - dx / 200)}`;
+                        if (deleteIndicator) deleteIndicator.style.opacity = `${Math.min(1, dx / 100)}`;
+                      }
                     };
-                    const onEnd = (ev: TouchEvent) => {
+                    const onEnd = async (ev: TouchEvent) => {
                       const dx = ev.changedTouches[0].clientX - startX;
-                      if (dx > 100) { dismissGame(game.id); }
-                      else { card.style.transform = ""; card.style.opacity = ""; }
+                      if (dx > 100) {
+                        if (canSwipeDelete) {
+                          if (game.status === "waiting") {
+                            // Confirm before deleting open games
+                            if (confirm("Segur que vols eliminar aquesta partida oberta?")) {
+                              try {
+                                await deleteGame(game.id);
+                                toast.success("Partida eliminada");
+                                invalidateLobby();
+                              } catch (err: any) { toast.error(err.message); }
+                            } else {
+                              card.style.transform = ""; card.style.opacity = "";
+                              if (deleteIndicator) deleteIndicator.style.opacity = "0";
+                            }
+                          } else {
+                            // Finished: delete directly
+                            try {
+                              await deleteGame(game.id);
+                              toast.success("Partida eliminada");
+                              invalidateLobby();
+                            } catch (err: any) {
+                              toast.error(err.message);
+                              card.style.transform = ""; card.style.opacity = "";
+                            }
+                          }
+                        } else if (isFinished) {
+                          dismissGame(game.id);
+                        }
+                      } else {
+                        card.style.transform = ""; card.style.opacity = "";
+                        if (deleteIndicator) deleteIndicator.style.opacity = "0";
+                      }
                       el.removeEventListener("touchmove", onMove);
                       el.removeEventListener("touchend", onEnd);
                     };
                     el.addEventListener("touchmove", onMove, { passive: true });
                     el.addEventListener("touchend", onEnd);
                   }}>
+                {(canSwipeDelete || isFinished) && (
+                  <div data-delete-bg className="absolute inset-0 bg-destructive/20 rounded-xl flex items-center justify-end pr-4 opacity-0 transition-opacity pointer-events-none">
+                    <span className="text-destructive text-sm font-semibold">{canSwipeDelete ? "🗑️ Eliminar" : "→ Amagar"}</span>
+                  </div>
+                )}
                 <Card
                   className={`glass transition-all ${isPending ? "border-accent/40 glow-accent" : "cursor-pointer hover:border-primary/40 hover:glow-primary"}`}
                   onClick={() => !isPending && navigate(`/game/${game.id}`)}>
@@ -408,23 +449,11 @@ export default function LobbyPage() {
                           </Button>
                         </>
                       )}
-                      {!isPending && game.status === "waiting" && game.created_by === user?.id && (
-                        <Button variant="ghost" size="icon"
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-xl"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              await deleteGame(game.id);
-                              toast.success("Partida eliminada");
-                              invalidateLobby();
-                            } catch (err: any) { toast.error(err.message); }
-                          }}>🗑️</Button>
-                      )}
                       {!isPending && <span className="text-muted-foreground text-xs">→</span>}
                     </div>
                   </CardContent>
                 </Card>
-                {isFinished && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none">→ llisca</div>}
+                {(canSwipeDelete || isFinished) && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none">← llisca</div>}
                 </div>
               );
             })}
