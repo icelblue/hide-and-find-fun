@@ -1956,5 +1956,5 @@ LIMIT 10;
 <br/>
 
 <div align="center">
-<sub>📘 Última actualització: 2026-04-03 · Generat amb 💜 per <a href="https://lovable.dev">Lovable</a></sub>
+<sub>📘 Última actualització: 2026-04-07 · v1.9.1 · Generat amb 💜 per <a href="https://lovable.dev">Lovable</a></sub>
 </div>
