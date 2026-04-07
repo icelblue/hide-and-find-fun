@@ -17,7 +17,7 @@ import { PetHealthBadge } from "@/components/PetHealthBadge";
 import {
   PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, MAX_PET_XP,
   getPetEvolution, hasAllAccessories,
-  getMyPet, createPet, getStoryProgress, initChapter,
+  getMyPet, createPet, getStoryProgress, initChapter, completeChapter,
   getMyAccessories, resetPetAndProgress, getActiveEvents, useConsumable,
 } from "@/lib/story-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +44,7 @@ export default function StoryModePage() {
   const [petNameInput, setPetNameInput] = useState("");
   const [namingPet, setNamingPet] = useState(false);
   const [startingChapter, setStartingChapter] = useState(false);
+  const [isRebirth, setIsRebirth] = useState(false);
 
   const allAccsCollected = useMemo(() => hasAllAccessories(accessories), [accessories]);
 
@@ -93,11 +94,21 @@ export default function StoryModePage() {
     try {
       const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
       setPet(p);
-      await initChapter(user.id, 1);
+      if (isRebirth) {
+        // Returning player: skip tutorial chapters 1-2, mark as completed, start at chapter 3
+        await initChapter(user.id, 1);
+        await completeChapter(user.id, 1, 1);
+        await initChapter(user.id, 2);
+        await completeChapter(user.id, 2, 1);
+        // initChapter(3) is called inside completeChapter(2) automatically
+      } else {
+        await initChapter(user.id, 1);
+      }
       const prog = await getStoryProgress(user.id);
       setProgress(prog);
       setPhase("hub");
-      toast.success(`${randomPet.icon} ${trimmed} és el teu company!`);
+      toast.success(`${randomPet.icon} ${trimmed} és el teu company!${isRebirth ? " Capítols 1-2 superats automàticament!" : ""}`);
+      setIsRebirth(false);
     } catch (err: any) { toast.error(err.message); }
     finally { setNamingPet(false); }
   };
@@ -109,9 +120,9 @@ export default function StoryModePage() {
       await resetPetAndProgress(user.id);
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
       setRandomPet(rp);
-      // Skip typewriter for returning players — go straight to gift
-      setIntroStep(1);
+      setIntroStep(0);
       setGiftOpened(false);
+      setIsRebirth(true);
       setPhase("intro");
       toast("La teva mascota ha viscut una vida plena 💫");
     } catch (err: any) { toast.error(err.message); }
