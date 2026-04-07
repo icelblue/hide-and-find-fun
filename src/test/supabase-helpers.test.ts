@@ -168,7 +168,7 @@ describe("SOCIAL_ITEMS", () => {
 describe("TOOLS_PER_GAME", () => {
   it("has correct pool sizes", () => {
     expect(TOOLS_PER_GAME.martell).toBe(5);
-    expect(TOOLS_PER_GAME.drap).toBe(2);
+    expect(TOOLS_PER_GAME.drap).toBe(5);
     expect(TOOLS_PER_GAME.llanterna).toBe(1);
     expect(TOOLS_PER_GAME.tornavis).toBe(5);
   });

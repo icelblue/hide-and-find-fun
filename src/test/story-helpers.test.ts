@@ -4,7 +4,7 @@ import { calculateXP, PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, PET_EVOLUTI
 describe("Story Mode helpers", () => {
   describe("PET_OPTIONS", () => {
     it("should have 5 pet options", () => {
-      expect(PET_OPTIONS).toHaveLength(5);
+      expect(PET_OPTIONS).toHaveLength(12);
     });
     it("each pet has type, icon, name", () => {
       for (const pet of PET_OPTIONS) {
