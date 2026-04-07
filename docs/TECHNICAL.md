@@ -467,10 +467,10 @@ CREATE TYPE game_status     AS ENUM ('waiting', 'hiding', 'playing', 'finished')
 CREATE TYPE action_type     AS ENUM ('move', 'look', 'confirm');
 CREATE TYPE position_type   AS ENUM ('sobre', 'sota', 'dins');
 CREATE TYPE bonus_type      AS ENUM ('extra_token', 'hint_yes', 'hint_no');
-CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message', 'espia', 'swap');
+CREATE TYPE social_item_type AS ENUM ('banana', 'smoke_bomb', 'false_clue', 'shield', 'message', 'espia', 'swap', 'robar_tornavis');
 CREATE TYPE league_tier     AS ENUM ('bronze', 'silver', 'gold', 'platinum', 'diamond');
 CREATE TYPE item_rarity     AS ENUM ('common', 'uncommon', 'rare', 'epic', 'legendary');
-CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric', 'wood', 'cardboard', 'rubber', 'ceramic', 'electronic', 'leather', 'stone');
+CREATE TYPE object_material AS ENUM ('generic', 'paper', 'glass', 'metal', 'plastic', 'fabric', 'wood', 'cardboard', 'rubber', 'ceramic', 'electronic', 'leather', 'stone', 'food');
 CREATE TYPE item_environment AS ENUM ('generic', 'wet', 'hot', 'dirty', 'outdoor', 'frozen', 'sorrenc', 'ventós', 'submergit', 'químic');
 ```
 
@@ -558,6 +558,92 @@ INSERT player_rewards amb reward_item aleatori d'aquesta rarity
 4. INSERT nou item a l'escenari (display_order automàtic)
 5. UPDATE reward_items SET placed_in_scenario_id, placed_by, placed_at
 6. UPDATE player_rewards SET status = 'placed'
+```
+
+</details>
+
+<details>
+<summary>🎮 <strong>execute_game_move()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+Executa un moviment de joc al servidor. El client NO pot inserir `game_moves` directament.
+
+```
+Paràmetres: _game_id, _action, _target_scenario_id, _target_item_id, _target_position, _is_story
+1. Identifica el jugador (auth.uid()) i el rival
+2. Valida tokens suficients
+3. Per 'move': valida connexió d'escenaris, actualitza current_scenario_id
+4. Per 'look': calcula hint_level comparant amb hidden_* del rival
+   ├── hint 0 = fred (escenari incorrecte)
+   ├── hint 1 = calent (escenari correcte, moble incorrecte)
+   ├── hint 2 = molt calent (moble correcte, posició incorrecta)
+   └── hint 3 = trobat! → UPDATE games SET status='finished', winner_id
+5. Bonus roll (15%): tokens extra
+6. Tool roll (20%): eina aleatòria del pool compartit
+7. INSERT game_moves amb totes les dades calculades
+8. Retorna: { hint_level, found_object, bonus, tool_found }
+```
+
+</details>
+
+<details>
+<summary>💡 <strong>execute_toggle_light()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+```
+1. Valida que el jugador té tokens (0.2)
+2. Per exteriors: requereix llanterna al inventari
+3. INSERT game_moves amb tag:light_on/light_off
+4. Dedueix tokens
+5. Tool roll (20%)
+```
+
+</details>
+
+<details>
+<summary>🏷️ <strong>execute_tag_action()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+```
+1. Valida eina requerida (drap/martell/tornavís)
+2. Valida tokens suficients (0.2-0.3)
+3. Executa acció (clean/break/fix)
+4. Bonus roll per acció
+5. INSERT game_moves amb bonus_value = 'tag:{action}:{itemId}'
+```
+
+</details>
+
+<details>
+<summary>👁️ <strong>get_safe_game_players()</strong> — RPC SECURITY DEFINER (v1.8.1)</summary>
+
+```
+Retorna game_players amb camps sensibles emmascadats:
+- Si la partida està 'playing' i user_id ≠ auth.uid():
+  hidden_object_id = NULL
+  hidden_item_id = NULL
+  hidden_position = NULL
+```
+
+</details>
+
+<details>
+<summary>🔒 <strong>validate_hide_object_trigger</strong> — BEFORE UPDATE ON game_players (v1.8.0)</summary>
+
+```
+Quan has_hidden canvia de false a true:
+1. Valida existència objecte i moble
+2. Valida mida vs inner_capacity (posició "dins")
+3. Valida material vs entorn
+```
+
+</details>
+
+<details>
+<summary>✅ <strong>validate_game_move_trigger</strong> — BEFORE INSERT ON game_moves (v1.8.1)</summary>
+
+```
+1. Jugador pertany a la partida
+2. Cost tokens vàlid (0.1 - 2.0)
+3. Tokens suficients
+4. found_object només en accions 'look'
 ```
 
 </details>
