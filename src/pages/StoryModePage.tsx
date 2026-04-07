@@ -17,7 +17,7 @@ import { PetHealthBadge } from "@/components/PetHealthBadge";
 import {
   PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, MAX_PET_XP,
   getPetEvolution, hasAllAccessories,
-  getMyPet, createPet, getStoryProgress, initChapter,
+  getMyPet, createPet, getStoryProgress, initChapter, completeChapter,
   getMyAccessories, resetPetAndProgress, getActiveEvents, useConsumable,
 } from "@/lib/story-helpers";
 import { supabase } from "@/integrations/supabase/client";
