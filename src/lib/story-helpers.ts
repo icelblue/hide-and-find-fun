@@ -31,11 +31,11 @@ export const PET_ACCESSORIES = [
   { name: "Joguina", icon: "🧸" },
 ] as const;
 
-// Consumables unlocked after all accessories — they HEAL (reduce XP)
+// Consumables unlocked after all accessories — they HEAL (reduce XP) and EXTEND max life
 export const PET_CONSUMABLES = [
-  { name: "Menjar", icon: "🍖", xpHeal: 100 },
-  { name: "Aigua", icon: "💧", xpHeal: 50 },
-  { name: "Vacuna", icon: "💉", xpHeal: 200 },
+  { name: "Menjar", icon: "🍖", xpHeal: 100, maxXpBoost: 50 },
+  { name: "Aigua", icon: "💧", xpHeal: 50, maxXpBoost: 25 },
+  { name: "Vacuna", icon: "💉", xpHeal: 200, maxXpBoost: 100 },
 ] as const;
 
 // Random health events that DAMAGE (increase XP rapidly)
