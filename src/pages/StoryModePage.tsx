@@ -262,6 +262,57 @@ export default function StoryModePage() {
           </div>
         )}
 
+        {/* Active health events alert */}
+        {activeEvents.length > 0 && (
+          <Card className="mb-4 glass border-destructive/40 relative z-10 animate-fade-in">
+            <CardContent className="py-3">
+              <p className="text-sm font-bold text-destructive mb-2">⚠️ {pet?.pet_name} està malalt!</p>
+              {activeEvents.map((ev: any) => (
+                <div key={ev.id} className="flex items-center gap-2 text-sm mb-1">
+                  <span className="text-lg">{ev.event_icon}</span>
+                  <span>{ev.event_name}: <span className="text-destructive font-semibold">+{ev.xp_change} XP</span></span>
+                </div>
+              ))}
+              <p className="text-[10px] text-muted-foreground mt-2">Usa consumibles per curar-lo i reduir XP!</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Consumables section */}
+        {consumables.length > 0 && (
+          <Card className="mb-4 glass border-accent/30 relative z-10">
+            <CardContent className="py-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">💊 Consumibles</p>
+              <div className="flex gap-2 flex-wrap">
+                {PET_CONSUMABLES.map(c => {
+                  const count = consumables.filter((x: any) => x.consumable_name === c.name).length;
+                  if (count === 0) return null;
+                  return (
+                    <button
+                      key={c.name}
+                      onClick={async () => {
+                        if (!user) return;
+                        try {
+                          const result = await useConsumable(user.id, c.name);
+                          toast.success(`${c.icon} ${c.name} usat! -${c.xpHeal} XP → ${result.newXp} XP`);
+                          loadData();
+                        } catch (err: any) { toast.error(err.message); }
+                      }}
+                      className="flex items-center gap-1.5 bg-muted/50 rounded-xl px-3 py-2 border border-border/30 hover:bg-accent/10 transition-all active:scale-95"
+                    >
+                      <span className="text-lg">{c.icon}</span>
+                      <div className="text-left">
+                        <span className="text-xs font-semibold">{c.name} ×{count}</span>
+                        <p className="text-[9px] text-accent">-{c.xpHeal} XP</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex items-center justify-between mb-3 relative z-10">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             📖 Capítols ({completedCount}/{totalChapters})
