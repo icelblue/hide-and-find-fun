@@ -807,12 +807,9 @@ export async function sendSocialItem(
     throw new Error("Ja has usat el teu ítem social avui! 😉");
   }
 
-  const { data: toPlayer } = await supabase
-    .from("game_players")
-    .select("shield_active, id, current_scenario_id")
-    .eq("game_id", gameId)
-    .eq("user_id", toPlayerId)
-    .single();
+  // Use safe RPC to read opponent data (SELECT restricted to own rows)
+  const { data: safePlayers } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+  const toPlayer = ((safePlayers as any[]) ?? []).find((p: any) => p.user_id === toPlayerId) ?? null;
 
   const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis"));
 
