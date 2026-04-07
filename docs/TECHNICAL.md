@@ -804,16 +804,19 @@ El camp `has_hide_message` a `object_specials` permet que un objecte tingui miss
 #### 🚶 MOVE — 0.5 tokens
 
 ```
+Via RPC execute_game_move(_action='move'):
 1. Validar connexió bidireccional: scenario_connections(current ↔ target)
 2. UPDATE game_players.current_scenario_id = target
 3. Deduir 0.5 tokens
 4. INSERT game_moves
+5. Tool roll (20%)
 ```
 
 #### 👀 LOOK — 0.3 tokens (troba l'objecte si encerta!)
 
 ```
-1. Obtenir hidden_item_id i hidden_position del rival
+Via RPC execute_game_move(_action='look'):
+1. Obtenir hidden_item_id i hidden_position del rival (al servidor, mai al client)
 2. Obtenir scenario_id del moble investigat vs moble del rival
 3. Calcular hintLevel:
    ├── rivalScenario ≠ targetScenario → 0 (fred ❄️)
@@ -833,9 +836,10 @@ El camp `has_hide_message` a `object_specials` permet que un objecte tingui miss
    ├── 5% → 🧹 Drap
    └── 5% → 🔦 Llanterna
 7. INSERT game_moves (amb hint_level)
+8. RETURN { hint_level, found_object, bonus, tool_found }
 ```
 
-> ⚠️ L'acció **Confirmar** (1.5🪙) va ser **ELIMINADA** a la v1.5.0. Observar ara troba l'objecte directament.
+> ⚠️ Tot el càlcul és al servidor. El client rep el resultat via RPC i NO accedeix a les dades del rival.
 
 <br/>
 
@@ -860,7 +864,7 @@ El camp `has_hide_message` a `object_specials` permet que un objecte tingui miss
 | 🛡️ **Escut** | Protegeix del pròxim plàtan o intercanvi. Es desactiva després. | 1/dia | — |
 | 🔄 **Intercanvi** | Intercanvia `current_scenario_id` amb el rival | 1/dia | ✅ Sí |
 | 🕵️ **Espia** | Revela l'escenari actual del rival (auto-orientat, sense notificació) | 1/dia | ❌ No |
-| 💡 **Missatge** | Envia text lliure al rival (bluff, provocació) | 1/dia | ❌ No |
+| 🔧 **Robar tornavís** | Roba 1 tornavís del rival | 1/dia | ✅ Sí |
 
 > ⚠️ `false_clue` (pista falsa) està ELIMINADA del joc. L'enum existeix a la DB per retrocompatibilitat però no s'usa.
 
