@@ -28,6 +28,7 @@ import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
   completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
+  rollHealthEvent,
 } from "@/lib/story-helpers";
 import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
