@@ -838,11 +838,13 @@ export async function sendSocialItem(
         const { data: currentItem } = await supabase
           .from("items").select("scenario_id").eq("id", self.hidden_item_id).single();
         const allScenarios = await getScenarios();
+        // ALWAYS move to a DIFFERENT scenario
         const otherScenarios = allScenarios.filter(s => s.id !== currentItem?.scenario_id);
         if (otherScenarios.length === 0) throw new Error("No hi ha altres escenaris disponibles!");
         const newScenario = otherScenarios[Math.floor(Math.random() * otherScenarios.length)];
         const newItems = await getItemsByScenario(newScenario.id);
         if (newItems.length === 0) throw new Error("L'escenari destí no té mobles!");
+        // ALWAYS pick a DIFFERENT item (different scenario guarantees it)
         const newItem = newItems[Math.floor(Math.random() * newItems.length)];
         const allPos: ("sobre" | "sota" | "dins")[] = ["sobre", "sota", "dins"];
         const validPos = allPos.filter(p => p !== "dins" || (newItem.inner_capacity ?? 2) >= 2);

@@ -31,11 +31,11 @@ export const PET_ACCESSORIES = [
   { name: "Joguina", icon: "🧸" },
 ] as const;
 
-// Consumables unlocked after all accessories — they HEAL (reduce XP)
+// Consumables unlocked after all accessories — they HEAL (reduce XP) and EXTEND max life
 export const PET_CONSUMABLES = [
-  { name: "Menjar", icon: "🍖", xpHeal: 100 },
-  { name: "Aigua", icon: "💧", xpHeal: 50 },
-  { name: "Vacuna", icon: "💉", xpHeal: 200 },
+  { name: "Menjar", icon: "🍖", xpHeal: 100, maxXpBoost: 50 },
+  { name: "Aigua", icon: "💧", xpHeal: 50, maxXpBoost: 25 },
+  { name: "Vacuna", icon: "💉", xpHeal: 200, maxXpBoost: 100 },
 ] as const;
 
 // Random health events that DAMAGE (increase XP rapidly)
@@ -57,14 +57,15 @@ export const PET_EVOLUTION_TIERS: readonly { minXp: number; label: string; badge
   { minXp: 4500, label: "Llegendari", badge: "👑", glow: "from-purple-400/40 to-pink-300/20", ring: "ring-purple-500/60" },
 ];
 
-export function getPetEvolution(xp: number) {
+export function getPetEvolution(xp: number, maxXp?: number) {
+  const effectiveMax = maxXp ?? MAX_PET_XP;
   let tier = PET_EVOLUTION_TIERS[0];
   for (const t of PET_EVOLUTION_TIERS) {
     if (xp >= t.minXp) tier = t;
   }
   const nextTier = PET_EVOLUTION_TIERS.find(t => t.minXp > xp);
-  const isDead = xp >= MAX_PET_XP;
-  return { ...tier, nextTier, isDead, xp, maxXp: MAX_PET_XP };
+  const isDead = xp >= effectiveMax;
+  return { ...tier, nextTier, isDead, xp, maxXp: effectiveMax };
 }
 
 export function hasAllAccessories(accessories: any[]): boolean {
@@ -106,13 +107,14 @@ export async function createPet(userId: string, petType: string, petName: string
 export async function addPetXP(userId: string, xp: number) {
   const pet = await getMyPet(userId);
   if (!pet) return null;
-  const newXp = Math.min((pet.xp ?? 0) + xp, MAX_PET_XP);
+  const effectiveMax = pet.max_xp ?? MAX_PET_XP;
+  const newXp = Math.min((pet.xp ?? 0) + xp, effectiveMax);
   const { error } = await supabase
     .from("player_pets")
     .update({ xp: newXp })
     .eq("user_id", userId);
   if (error) throw error;
-  return { newXp, isDead: newXp >= MAX_PET_XP };
+  return { newXp, isDead: newXp >= effectiveMax };
 }
 
 // Reduce pet XP (healing via consumable)
@@ -269,7 +271,7 @@ export async function rollHealthEvent(userId: string): Promise<typeof PET_HEALTH
   return event;
 }
 
-/** Use a consumable to heal the pet */
+/** Use a consumable to heal the pet and extend its max life */
 export async function useConsumable(userId: string, consumableName: string) {
   const consumable = PET_CONSUMABLES.find(c => c.name === consumableName);
   if (!consumable) throw new Error("Consumible no vàlid");
@@ -294,6 +296,18 @@ export async function useConsumable(userId: string, consumableName: string) {
   // Heal pet
   const result = await healPetXP(userId, consumable.xpHeal);
 
+  // Extend max life
+  if (consumable.maxXpBoost > 0) {
+    const pet = await getMyPet(userId);
+    if (pet) {
+      const newMaxXp = (pet.max_xp ?? MAX_PET_XP) + consumable.maxXpBoost;
+      await supabase
+        .from("player_pets")
+        .update({ max_xp: newMaxXp })
+        .eq("user_id", userId);
+    }
+  }
+
   // Resolve any active events of matching type
   await supabase
     .from("pet_events")
@@ -301,7 +315,7 @@ export async function useConsumable(userId: string, consumableName: string) {
     .eq("user_id", userId)
     .eq("resolved", false);
 
-  return { healed: consumable.xpHeal, newXp: result?.newXp ?? 0 };
+  return { healed: consumable.xpHeal, maxXpBoost: consumable.maxXpBoost, newXp: result?.newXp ?? 0 };
 }
 
 // ============================================
