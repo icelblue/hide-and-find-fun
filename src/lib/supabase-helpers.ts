@@ -890,12 +890,8 @@ export async function sendSocialItem(
         espiaResult = "🤷 El rival encara no s'ha mogut!";
       }
     } else if (itemType === "robar_tornavis") {
-      const { data: rivalPlayer } = await supabase
-        .from("game_players")
-        .select("id, tools")
-        .eq("game_id", gameId)
-        .eq("user_id", toPlayerId)
-        .single();
+      // Use already-fetched safe players data for rival tools
+      const rivalPlayer = toPlayer;
       if (rivalPlayer) {
         const rivalTools = parseTools(rivalPlayer.tools);
         if (rivalTools.tornavis > 0) {
