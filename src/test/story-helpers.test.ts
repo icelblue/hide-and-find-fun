@@ -192,8 +192,16 @@ describe("Story Mode helpers", () => {
       expect(getPetEvolution(4499).label).toBe("Veterà");
       expect(getPetEvolution(4500).label).toBe("Llegendari");
     });
-    it("returns maxXp property", () => {
+    it("returns maxXp property (default)", () => {
       expect(getPetEvolution(0).maxXp).toBe(5000);
+    });
+    it("custom maxXp overrides default", () => {
+      expect(getPetEvolution(0, 7000).maxXp).toBe(7000);
+    });
+    it("isDead uses custom maxXp", () => {
+      // With default 5000, 5500 is dead. With custom 7000, it's alive.
+      expect(getPetEvolution(5500).isDead).toBe(true);
+      expect(getPetEvolution(5500, 7000).isDead).toBe(false);
     });
     it("xp beyond MAX is still dead", () => {
       expect(getPetEvolution(9999).isDead).toBe(true);
