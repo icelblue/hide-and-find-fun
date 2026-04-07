@@ -1198,7 +1198,7 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 | `game_moves` | 🔐 `is_player_in_game()` | 🔐 Només via RPC `execute_game_move` | ❌ | ❌ |
 | `game_social_items` | ✅ Emissor OR receptor | ✅ Propi (`from`) | ✅ Receptor | ❌ |
 | `player_inventory` | ✅ Propi/regalat/trophy | ✅ Propi | ✅ Propi | ❌ |
-| `player_rewards` | ✅ Propi | ❌ (via trigger) | ✅ Propi | ❌ |
+| `player_rewards` | ✅ Tots auth (vitrina) | ❌ (via trigger) | ✅ Propi | ❌ |
 | `wall_messages` | ✅ Tots auth | ✅ Propi (no auto-msg) | ❌ | ✅ Autor |
 | `scenarios` | ✅ Tots auth | ❌ | ❌ | ❌ |
 | `items` | ✅ Tots auth | ❌ | ❌ | ❌ |
@@ -1222,6 +1222,7 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 - **`is_player_in_game()`** → `SECURITY DEFINER` per evitar recursió RLS
 - **`handle_game_finished()`** → `SECURITY DEFINER` per modificar perfils d'altres
 - **`execute_game_move/toggle_light/tag_action`** → `SECURITY DEFINER`, única via per crear moviments
+- **`gift_consumable`** → `SECURITY DEFINER`, valida consumible i cura mascota d'un altre jugador
 - **`get_safe_game_players()`** → emmascara `hidden_*` dels oponents
 - **`validate_hide_object_trigger`** → valida objecte/moble/material al servidor
 - **`validate_game_move_trigger`** → valida tokens i pertinència a partida
@@ -1229,6 +1230,8 @@ Quan trobes un objecte amb object_specials (prompt_on = 'find'):
 - Taules de contingut (`scenarios`, `items`, `objects`...) → **read-only** per usuaris
 - `invited_user_id` controla la privacitat de partides a nivell de consulta
 - Perfils: estadístiques (elo, games_won, bonus_tokens) només modificables via SECURITY DEFINER
+- `pet_events` i `player_pets`: SELECT públic per permetre veure salut de mascotes d'altres
+- `player_rewards`: SELECT públic per permetre la vitrina pública de col·leccionables
 
 <br/>
 
