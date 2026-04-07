@@ -944,6 +944,7 @@ export type Database = {
     }
     Functions: {
       check_both_hidden: { Args: { _game_id: string }; Returns: boolean }
+      count_game_players: { Args: { _game_id: string }; Returns: number }
       create_story_game: {
         Args: { _chapter: number; _user_id: string }
         Returns: string
