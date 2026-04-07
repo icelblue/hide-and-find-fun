@@ -140,13 +140,14 @@ export default function ProfilePage() {
         // Get object and item names + rival players
         const objIds = myGamePlayers.filter(gp => gp.hidden_object_id).map(gp => gp.hidden_object_id!);
         const itmIds = myGamePlayers.filter(gp => gp.hidden_item_id).map(gp => gp.hidden_item_id!);
-        const [{ data: objs }, { data: itms }, { data: rivalPlayers }] = await Promise.all([
+        const [{ data: objs }, { data: itms }, rivalParticipants] = await Promise.all([
           objIds.length > 0 ? supabase.from("objects").select("id, name, icon").in("id", objIds) : { data: [] },
           itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
-          supabase.from("game_players").select("game_id, user_id").in("game_id", activeGameIds).neq("user_id", user.id),
+          supabase.rpc("get_game_participants" as any, { _game_ids: activeGameIds }),
         ]);
+        const rivalPlayers = ((rivalParticipants.data as any[]) ?? []).filter((rp: any) => rp.user_id !== user.id);
         // Resolve rival display names
-        const rivalUserIds = [...new Set((rivalPlayers ?? []).map(rp => rp.user_id))];
+        const rivalUserIds = [...new Set(rivalPlayers.map((rp: any) => rp.user_id as string))];
         let rivalNameMap = new Map<string, string>();
         if (rivalUserIds.length > 0) {
           const { data: rivalProfs } = await supabase.from("profiles").select("user_id, display_name").in("user_id", rivalUserIds);
