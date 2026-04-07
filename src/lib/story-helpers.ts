@@ -57,14 +57,15 @@ export const PET_EVOLUTION_TIERS: readonly { minXp: number; label: string; badge
   { minXp: 4500, label: "Llegendari", badge: "👑", glow: "from-purple-400/40 to-pink-300/20", ring: "ring-purple-500/60" },
 ];
 
-export function getPetEvolution(xp: number) {
+export function getPetEvolution(xp: number, maxXp?: number) {
+  const effectiveMax = maxXp ?? MAX_PET_XP;
   let tier = PET_EVOLUTION_TIERS[0];
   for (const t of PET_EVOLUTION_TIERS) {
     if (xp >= t.minXp) tier = t;
   }
   const nextTier = PET_EVOLUTION_TIERS.find(t => t.minXp > xp);
-  const isDead = xp >= MAX_PET_XP;
-  return { ...tier, nextTier, isDead, xp, maxXp: MAX_PET_XP };
+  const isDead = xp >= effectiveMax;
+  return { ...tier, nextTier, isDead, xp, maxXp: effectiveMax };
 }
 
 export function hasAllAccessories(accessories: any[]): boolean {
@@ -106,13 +107,14 @@ export async function createPet(userId: string, petType: string, petName: string
 export async function addPetXP(userId: string, xp: number) {
   const pet = await getMyPet(userId);
   if (!pet) return null;
-  const newXp = Math.min((pet.xp ?? 0) + xp, MAX_PET_XP);
+  const effectiveMax = pet.max_xp ?? MAX_PET_XP;
+  const newXp = Math.min((pet.xp ?? 0) + xp, effectiveMax);
   const { error } = await supabase
     .from("player_pets")
     .update({ xp: newXp })
     .eq("user_id", userId);
   if (error) throw error;
-  return { newXp, isDead: newXp >= MAX_PET_XP };
+  return { newXp, isDead: newXp >= effectiveMax };
 }
 
 // Reduce pet XP (healing via consumable)
