@@ -1002,6 +1002,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      gift_consumable: {
+        Args: { _consumable_name: string; _to_user_id: string }
+        Returns: Json
+      }
       insert_cpu_move: {
         Args: {
           _action: Database["public"]["Enums"]["action_type"]
