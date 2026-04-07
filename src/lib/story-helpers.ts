@@ -31,11 +31,18 @@ export const PET_ACCESSORIES = [
   { name: "Joguina", icon: "🧸" },
 ] as const;
 
-// Consumables unlocked after all accessories
+// Consumables unlocked after all accessories — they HEAL (reduce XP)
 export const PET_CONSUMABLES = [
-  { name: "Menjar", icon: "🍖" },
-  { name: "Aigua", icon: "💧" },
-  { name: "Vacuna", icon: "💉" },
+  { name: "Menjar", icon: "🍖", xpHeal: 100 },
+  { name: "Aigua", icon: "💧", xpHeal: 50 },
+  { name: "Vacuna", icon: "💉", xpHeal: 200 },
+] as const;
+
+// Random health events that DAMAGE (increase XP rapidly)
+export const PET_HEALTH_EVENTS = [
+  { type: "virus", icon: "🤒", name: "Virus", xpDamage: 200, desc: "Ha agafat un virus!" },
+  { type: "caiguda", icon: "🤕", name: "Caiguda", xpDamage: 150, desc: "Ha caigut i s'ha fet mal!" },
+  { type: "febre", icon: "🫠", name: "Febre", xpDamage: 100, desc: "Té febre alta!" },
 ] as const;
 
 // Max XP before pet dies
@@ -108,10 +115,25 @@ export async function addPetXP(userId: string, xp: number) {
   return { newXp, isDead: newXp >= MAX_PET_XP };
 }
 
-// Delete pet + progress + accessories for rebirth
+// Reduce pet XP (healing via consumable)
+export async function healPetXP(userId: string, xpReduce: number) {
+  const pet = await getMyPet(userId);
+  if (!pet) return null;
+  const newXp = Math.max(0, (pet.xp ?? 0) - xpReduce);
+  const { error } = await supabase
+    .from("player_pets")
+    .update({ xp: newXp })
+    .eq("user_id", userId);
+  if (error) throw error;
+  return { newXp };
+}
+
+// Delete pet + progress + accessories + events for rebirth
 export async function resetPetAndProgress(userId: string) {
   await Promise.all([
     supabase.from("pet_accessories").delete().eq("user_id", userId),
+    supabase.from("pet_consumables").delete().eq("user_id", userId),
+    supabase.from("pet_events").delete().eq("user_id", userId),
     supabase.from("story_progress").delete().eq("user_id", userId),
     supabase.from("player_pets").delete().eq("user_id", userId),
   ]);
@@ -214,6 +236,72 @@ export async function awardAccessory(userId: string, name: string, icon: string)
     .from("pet_accessories")
     .upsert({ user_id: userId, accessory_name: name, accessory_icon: icon }, { onConflict: "user_id,accessory_name" });
   if (error) throw error;
+}
+
+// ============================================
+// PET HEALTH EVENTS
+// ============================================
+
+export async function getActiveEvents(userId: string) {
+  const { data } = await supabase
+    .from("pet_events")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("resolved", false)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+/** Roll for a random health event after completing a chapter (25% chance) */
+export async function rollHealthEvent(userId: string): Promise<typeof PET_HEALTH_EVENTS[number] | null> {
+  if (Math.random() > 0.25) return null; // 75% nothing happens
+  const event = PET_HEALTH_EVENTS[Math.floor(Math.random() * PET_HEALTH_EVENTS.length)];
+  // Apply XP damage
+  const result = await addPetXP(userId, event.xpDamage);
+  // Record the event
+  await supabase.from("pet_events").insert({
+    user_id: userId,
+    event_type: event.type,
+    event_icon: event.icon,
+    event_name: event.name,
+    xp_change: event.xpDamage,
+  });
+  return event;
+}
+
+/** Use a consumable to heal the pet */
+export async function useConsumable(userId: string, consumableName: string) {
+  const consumable = PET_CONSUMABLES.find(c => c.name === consumableName);
+  if (!consumable) throw new Error("Consumible no vàlid");
+
+  // Check user has an unused consumable
+  const { data: owned } = await supabase
+    .from("pet_consumables")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("consumable_name", consumableName)
+    .is("used_at", null)
+    .limit(1);
+
+  if (!owned || owned.length === 0) throw new Error(`No tens ${consumable.icon} ${consumable.name}!`);
+
+  // Mark consumable as used
+  await supabase
+    .from("pet_consumables")
+    .update({ used_at: new Date().toISOString() })
+    .eq("id", owned[0].id);
+
+  // Heal pet
+  const result = await healPetXP(userId, consumable.xpHeal);
+
+  // Resolve any active events of matching type
+  await supabase
+    .from("pet_events")
+    .update({ resolved: true, resolved_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("resolved", false);
+
+  return { healed: consumable.xpHeal, newXp: result?.newXp ?? 0 };
 }
 
 // ============================================

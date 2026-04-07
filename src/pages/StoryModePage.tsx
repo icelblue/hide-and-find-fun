@@ -14,10 +14,10 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
 import {
-  PET_OPTIONS, PET_ACCESSORIES, MAX_PET_XP,
+  PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, MAX_PET_XP,
   getPetEvolution, hasAllAccessories,
   getMyPet, createPet, getStoryProgress, initChapter,
-  getMyAccessories, resetPetAndProgress,
+  getMyAccessories, resetPetAndProgress, getActiveEvents, useConsumable,
 } from "@/lib/story-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +32,8 @@ export default function StoryModePage() {
   const [pet, setPet] = useState<any>(null);
   const [progress, setProgress] = useState<any[]>([]);
   const [accessories, setAccessories] = useState<any[]>([]);
+  const [activeEvents, setActiveEvents] = useState<any[]>([]);
+  const [consumables, setConsumables] = useState<any[]>([]);
   const [playerName, setPlayerName] = useState("aventurer");
 
   // Intro animation states
@@ -46,15 +48,19 @@ export default function StoryModePage() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [petData, prog, accs, profileRes] = await Promise.all([
+    const [petData, prog, accs, profileRes, events, consumablesRes] = await Promise.all([
       getMyPet(user.id),
       getStoryProgress(user.id),
       getMyAccessories(user.id),
       supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+      getActiveEvents(user.id),
+      supabase.from("pet_consumables").select("*").eq("user_id", user.id).is("used_at", null).order("obtained_at"),
     ]);
     setPet(petData);
     setProgress(prog);
     setAccessories(accs);
+    setActiveEvents(events);
+    setConsumables(consumablesRes.data ?? []);
     if (profileRes.data?.display_name) setPlayerName(profileRes.data.display_name);
 
     if (!petData) {
@@ -144,13 +150,14 @@ export default function StoryModePage() {
     <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-muted/10 blur-[100px] pointer-events-none" />
       <div className="text-center relative z-10 animate-fade-in">
-        <div className="text-7xl mb-4 opacity-50">{pet?.pet_icon}</div>
+        <div className="text-7xl mb-4">🪦</div>
+        <p className="text-sm text-muted-foreground mb-1">{pet?.pet_icon}</p>
         <h2 className="text-2xl font-bold mb-2">{pet?.pet_name} ha viscut una vida plena</h2>
         <p className="text-sm text-muted-foreground mb-2">
           Ha arribat a {MAX_PET_XP} XP — el màxim possible.
         </p>
         <p className="text-xs text-muted-foreground mb-6">
-          Gràcies per cuidar-lo. Ara pots adoptar una nova mascota!
+          Descansa en pau, petit amic. Ara pots adoptar una nova mascota!
         </p>
         <Button onClick={handleRebirth} size="lg" className="w-full max-w-xs">
           🥚 Nova mascota
@@ -253,6 +260,57 @@ export default function StoryModePage() {
               <p className="text-[10px] text-green-500 mt-1">✅ Tots els accesoris! Ara guanyes consumibles + XP</p>
             )}
           </div>
+        )}
+
+        {/* Active health events alert */}
+        {activeEvents.length > 0 && (
+          <Card className="mb-4 glass border-destructive/40 relative z-10 animate-fade-in">
+            <CardContent className="py-3">
+              <p className="text-sm font-bold text-destructive mb-2">⚠️ {pet?.pet_name} està malalt!</p>
+              {activeEvents.map((ev: any) => (
+                <div key={ev.id} className="flex items-center gap-2 text-sm mb-1">
+                  <span className="text-lg">{ev.event_icon}</span>
+                  <span>{ev.event_name}: <span className="text-destructive font-semibold">+{ev.xp_change} XP</span></span>
+                </div>
+              ))}
+              <p className="text-[10px] text-muted-foreground mt-2">Usa consumibles per curar-lo i reduir XP!</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Consumables section */}
+        {consumables.length > 0 && (
+          <Card className="mb-4 glass border-accent/30 relative z-10">
+            <CardContent className="py-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">💊 Consumibles</p>
+              <div className="flex gap-2 flex-wrap">
+                {PET_CONSUMABLES.map(c => {
+                  const count = consumables.filter((x: any) => x.consumable_name === c.name).length;
+                  if (count === 0) return null;
+                  return (
+                    <button
+                      key={c.name}
+                      onClick={async () => {
+                        if (!user) return;
+                        try {
+                          const result = await useConsumable(user.id, c.name);
+                          toast.success(`${c.icon} ${c.name} usat! -${c.xpHeal} XP → ${result.newXp} XP`);
+                          loadData();
+                        } catch (err: any) { toast.error(err.message); }
+                      }}
+                      className="flex items-center gap-1.5 bg-muted/50 rounded-xl px-3 py-2 border border-border/30 hover:bg-accent/10 transition-all active:scale-95"
+                    >
+                      <span className="text-lg">{c.icon}</span>
+                      <div className="text-left">
+                        <span className="text-xs font-semibold">{c.name} ×{count}</span>
+                        <p className="text-[9px] text-accent">-{c.xpHeal} XP</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <div className="flex items-center justify-between mb-3 relative z-10">

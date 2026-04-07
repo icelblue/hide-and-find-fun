@@ -545,6 +545,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_events: {
+        Row: {
+          created_at: string
+          event_icon: string
+          event_name: string
+          event_type: string
+          id: string
+          resolved: boolean
+          resolved_at: string | null
+          user_id: string
+          xp_change: number
+        }
+        Insert: {
+          created_at?: string
+          event_icon?: string
+          event_name: string
+          event_type: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          user_id: string
+          xp_change: number
+        }
+        Update: {
+          created_at?: string
+          event_icon?: string
+          event_name?: string
+          event_type?: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          user_id?: string
+          xp_change?: number
+        }
+        Relationships: []
+      }
       player_inventory: {
         Row: {
           collected_at: string

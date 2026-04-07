@@ -3,7 +3,7 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { TOKEN_COSTS } from "@/lib/supabase-helpers";
+import { TOKEN_COSTS, getScenarios, getConnectedScenarios } from "@/lib/supabase-helpers";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 
 const RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"] as const;
@@ -65,6 +65,7 @@ const RULES = [
 export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const [open, setOpen] = useState(false);
   const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
+  const [scenarioMap, setScenarioMap] = useState<{ name: string; icon: string; connections: string[] }[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -72,8 +73,16 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.style.top = `-${window.scrollY}px`;
-      // Load reward catalog
+      // Load reward catalog + scenario connections
       getRewardCatalog().then(setRewardCatalog).catch(() => {});
+      getScenarios().then(async (scenarios) => {
+        const result: { name: string; icon: string; connections: string[] }[] = [];
+        for (const s of scenarios) {
+          const connected = await getConnectedScenarios(s.id);
+          result.push({ name: s.name, icon: s.icon, connections: connected.map((c: any) => `${c.icon} ${c.name}`) });
+        }
+        setScenarioMap(result);
+      }).catch(() => {});
     } else {
       const scrollY = document.body.style.top;
       document.body.style.overflow = "";
@@ -151,6 +160,28 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
                   <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
                 </div>
               ))}
+
+              {/* Scenario connections map */}
+              {scenarioMap.length > 0 && (
+                <div className="border-t border-border/40 pt-4">
+                  <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
+                  <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
+                  <div className="space-y-2">
+                    {scenarioMap.map((s, i) => (
+                      <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
+                        <span className="text-sm font-semibold">{s.icon} {s.name}</span>
+                        {s.connections.length > 0 ? (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            → {s.connections.join(" · ")}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Reward catalog */}
               <div className="border-t border-border/40 pt-4">

@@ -28,6 +28,7 @@ import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
   completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
+  rollHealthEvent,
 } from "@/lib/story-helpers";
 import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
@@ -532,8 +533,15 @@ export default function GamePage() {
               wonConsumable = PET_CONSUMABLES[Math.floor(Math.random() * PET_CONSUMABLES.length)];
             }
           }
+          // Roll for random health event (25% chance)
+          const healthEvent = await rollHealthEvent(user.id);
           setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
           toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
+          if (healthEvent) {
+            setTimeout(() => {
+              toast.warning(`${healthEvent.icon} La mascota ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
+            }, 2000);
+          }
         } else {
           toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
         }
