@@ -16,7 +16,8 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
-import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP } from "@/lib/story-helpers";
+import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
+import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,12 +53,13 @@ export default function ProfilePage() {
   const [trophies, setTrophies] = useState<any[]>([]);
   const [pet, setPet] = useState<any>(null);
   const [petAccessories, setPetAccessories] = useState<any[]>([]);
+  const [petEvents, setPetEvents] = useState<any[]>([]);
 
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    const [prof, rew, scen, { data: msgs }, petData, accs] = await Promise.all([
+    const [prof, rew, scen, { data: msgs }, petData, accs, events] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
       getMyRewards(user.id).catch(() => []),
       getScenarios().catch(() => []),
@@ -68,12 +70,14 @@ export default function ProfilePage() {
         .order("created_at", { ascending: false }),
       getMyPet(user.id).catch(() => null),
       getMyAccessories(user.id).catch(() => []),
+      getActiveEvents(user.id).catch(() => []),
     ]);
     setProfile(prof);
     setRewards(rew);
     setScenarios(scen);
     setPet(petData);
     setPetAccessories(accs);
+    setPetEvents(events);
 
     // Find top rival (exclude CPU and anonymous)
     const CPU_ID = "00000000-0000-0000-0000-000000000001";
