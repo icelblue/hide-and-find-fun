@@ -2,6 +2,7 @@
 // HelpButton.tsx — Panell flotant de regles del joc + catàleg recompenses
 // ============================================================
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { TOKEN_COSTS, getScenarios, getConnectedScenarios } from "@/lib/supabase-helpers";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
@@ -122,6 +123,106 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
     if (groupedRewards[item.rarity]) groupedRewards[item.rarity].push(item);
   }
 
+  const modal = open ? createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/30 backdrop-blur-sm"
+      onClick={() => setOpen(false)}
+      style={{
+        touchAction: "none",
+        paddingTop: "max(16px, env(safe-area-inset-top, 16px))",
+        paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))",
+        paddingLeft: "8px",
+        paddingRight: "8px",
+      }}
+    >
+      <div
+        className="max-w-md w-full bg-card border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden"
+        style={{ maxHeight: "min(85vh, calc(100dvh - 32px))" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
+          <h2 className="text-lg font-bold">📖 Com jugar</h2>
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            ✕
+          </Button>
+        </div>
+        <div
+          className="px-5 pb-5 space-y-4 overflow-y-auto flex-1 overscroll-contain"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+          }}
+        >
+          {RULES.map((r, i) => (
+            <div key={i} className="border-b border-border/20 pb-3 last:border-0">
+              <p className="text-sm font-semibold mb-1">{r.title}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
+            </div>
+          ))}
+
+          {/* Scenario connections map */}
+          {scenarioMap.length > 0 && (
+            <div className="border-t border-border/40 pt-4">
+              <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
+              <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
+              <div className="space-y-2">
+                {scenarioMap.map((s, i) => (
+                  <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
+                    <span className="text-sm font-semibold">{s.icon} {s.name}</span>
+                    {s.connections.length > 0 ? (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        → {s.connections.join(" · ")}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reward catalog */}
+          <div className="border-t border-border/40 pt-4">
+            <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
+            </p>
+            {RARITY_ORDER.map(rarity => {
+              const items = groupedRewards[rarity] ?? [];
+              const cfg = RARITY_CONFIG[rarity];
+              const drop = DROP_RATES[rarity];
+              if (items.length === 0) return null;
+              return (
+                <div key={rarity} className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold">
+                      {cfg?.emoji} {drop?.label} ({items.length})
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {drop?.pct} · {cfg?.sell}🪙
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {items.map((item: any) => (
+                      <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
+                        {item.icon} {item.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <>
       {variant === "menu" ? (
@@ -140,104 +241,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
         </Button>
       )}
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/30 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-          style={{
-            touchAction: "none",
-            paddingTop: "max(16px, env(safe-area-inset-top, 16px))",
-            paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))",
-            paddingLeft: "8px",
-            paddingRight: "8px",
-          }}
-        >
-          <div
-            className="max-w-md w-full bg-card border border-border rounded-2xl shadow-xl flex flex-col"
-            style={{ maxHeight: "min(85vh, calc(100dvh - 32px))" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
-              <h2 className="text-lg font-bold">📖 Com jugar</h2>
-              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                ✕
-              </Button>
-            </div>
-            <div
-              className="px-5 pb-5 space-y-4 overflow-y-auto flex-1 overscroll-contain"
-              style={{
-                WebkitOverflowScrolling: "touch",
-                overscrollBehavior: "contain",
-              }}
-            >
-              {RULES.map((r, i) => (
-                <div key={i} className="border-b border-border/20 pb-3 last:border-0">
-                  <p className="text-sm font-semibold mb-1">{r.title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
-                </div>
-              ))}
-
-              {/* Scenario connections map */}
-              {scenarioMap.length > 0 && (
-                <div className="border-t border-border/40 pt-4">
-                  <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
-                  <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
-                  <div className="space-y-2">
-                    {scenarioMap.map((s, i) => (
-                      <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold">{s.icon} {s.name}</span>
-                        {s.connections.length > 0 ? (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            → {s.connections.join(" · ")}
-                          </p>
-                        ) : (
-                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Reward catalog */}
-              <div className="border-t border-border/40 pt-4">
-                <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
-                </p>
-                {RARITY_ORDER.map(rarity => {
-                  const items = groupedRewards[rarity] ?? [];
-                  const cfg = RARITY_CONFIG[rarity];
-                  const drop = DROP_RATES[rarity];
-                  if (items.length === 0) return null;
-                  return (
-                    <div key={rarity} className="mb-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold">
-                          {cfg?.emoji} {drop?.label} ({items.length})
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {drop?.pct} · {cfg?.sell}🪙
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {items.map((item: any) => (
-                          <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
-                            {item.icon} {item.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-                <p className="text-[10px] text-muted-foreground mt-2">
-                  Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {modal}
     </>
   );
 }
