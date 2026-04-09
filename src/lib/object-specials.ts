@@ -1,0 +1,58 @@
+export interface TrophySpecialData {
+  object_name: string | null;
+  object_icon: string | null;
+  custom_name: string | null;
+  variant_value: string | null;
+  variant_label: string | null;
+  variant_icon: string | null;
+  special_type: string | null;
+  custom_message: string | null;
+  effect: string | null;
+}
+
+export function getHideMessage(specialData: any): string | null {
+  if (!specialData) return null;
+  return specialData.hide_message || (specialData.type === "custom_message" ? specialData.message : null);
+}
+
+export function buildTrophySpecialData(args: {
+  special: any;
+  objectRecord: any;
+  inputName?: string;
+  variant?: any;
+  hideMessage?: string | null;
+}): TrophySpecialData {
+  const { special, objectRecord, inputName, variant, hideMessage } = args;
+  const effect = (special?.variants as any)?.effect ?? variant?.effect ?? null;
+
+  return {
+    object_name: objectRecord?.name ?? null,
+    object_icon: objectRecord?.icon ?? null,
+    custom_name: special?.special_type === "custom_name" ? inputName?.trim() || null : null,
+    variant_value: special?.special_type === "choose_variant" ? variant?.value ?? null : null,
+    variant_label: special?.special_type === "choose_variant" ? variant?.label ?? null : null,
+    variant_icon: special?.special_type === "choose_variant" ? variant?.icon ?? null : null,
+    special_type: special?.special_type ?? null,
+    custom_message: hideMessage ?? null,
+    effect,
+  };
+}
+
+export function getTrophyDisplayName(specialData: any): string {
+  if (specialData?.custom_name) return `"${specialData.custom_name}"`;
+  if (specialData?.variant_label) return `${specialData.variant_label}`;
+  return specialData?.object_name ?? "Trofeu";
+}
+
+export function getTrophyDisplayIcon(specialData: any): string {
+  return specialData?.variant_icon ?? specialData?.object_icon ?? "⭐";
+}
+
+export function getSpecialEffectDescriptor(special: any) {
+  const variants = special?.variants as any;
+  return {
+    emoji: variants?.emoji ?? "😈",
+    animation: variants?.animation ?? "shake",
+    effect: variants?.effect ?? null,
+  };
+}

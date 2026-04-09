@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SpecialFoundPopup } from "@/components/game/GamePopups";
+import { buildTrophySpecialData, getHideMessage, getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 
 describe("SpecialFoundPopup", () => {
   const baseProps = {
@@ -76,5 +77,41 @@ describe("SpecialFoundPopup", () => {
     );
 
     expect(screen.getByRole("button", { name: /desar trofeu/i })).toBeEnabled();
+  });
+});
+
+describe("object specials helpers", () => {
+  it("construeix trofeu de custom_name amb missatge ocult", () => {
+    const specialData = buildTrophySpecialData({
+      special: { special_type: "custom_name" },
+      objectRecord: { name: "Foto", icon: "🖼️" },
+      inputName: "Estiu 2026",
+      hideMessage: "T'ha costat!",
+    });
+
+    expect(specialData.custom_name).toBe("Estiu 2026");
+    expect(specialData.object_name).toBe("Foto");
+    expect(specialData.custom_message).toBe("T'ha costat!");
+    expect(getTrophyDisplayName(specialData)).toBe('"Estiu 2026"');
+    expect(getTrophyDisplayIcon(specialData)).toBe("🖼️");
+  });
+
+  it("construeix trofeu de variant i prioritza la seva icona", () => {
+    const specialData = buildTrophySpecialData({
+      special: { special_type: "choose_variant" },
+      objectRecord: { name: "Pilota", icon: "⚽" },
+      variant: { value: "basket", label: "Bàsquet", icon: "🏀" },
+      hideMessage: null,
+    });
+
+    expect(specialData.variant_value).toBe("basket");
+    expect(getTrophyDisplayName(specialData)).toBe("Bàsquet");
+    expect(getTrophyDisplayIcon(specialData)).toBe("🏀");
+  });
+
+  it("recupera el missatge ocult de formats antics i nous", () => {
+    expect(getHideMessage({ hide_message: "Hola" })).toBe("Hola");
+    expect(getHideMessage({ type: "custom_message", message: "Pista" })).toBe("Pista");
+    expect(getHideMessage(null)).toBeNull();
   });
 });

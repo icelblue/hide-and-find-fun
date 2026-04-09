@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 import { getScenarios } from "@/lib/supabase-helpers";
 import { getMyRewards, placeRewardItem, sellRewardItem, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { toast } from "sonner";
@@ -470,11 +471,9 @@ export default function ProfilePage() {
               return (
                 <Card key={t.id} className="glass border-accent/30">
                   <CardContent className="py-2.5 flex items-center gap-3">
-                    <span className="text-2xl">{sd?.object_icon ?? "⭐"}</span>
+                    <span className="text-2xl">{getTrophyDisplayIcon(sd)}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm">
-                        {sd?.custom_name ? `"${sd.custom_name}"` : sd?.variant_label ? `${sd.variant_label}` : sd?.object_name ?? "Trofeu"}
-                      </div>
+                      <div className="font-semibold text-sm">{getTrophyDisplayName(sd)}</div>
                       <div className="text-[11px] text-muted-foreground">
                         {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
                       </div>

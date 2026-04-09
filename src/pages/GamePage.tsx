@@ -31,6 +31,7 @@ import {
   rollHealthEvent,
 } from "@/lib/story-helpers";
 import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
+import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
@@ -635,8 +636,8 @@ export default function GamePage() {
 
           if (rivalSpecial) {
             if (rivalSpecial.special_type === "troll_effect") {
-              const variants = rivalSpecial.variants as any;
-              setTrollEffect({ message: rivalSpecial.prompt_text, emoji: variants?.emoji ?? "😈", animation: variants?.animation ?? "shake" });
+              const effect = getSpecialEffectDescriptor(rivalSpecial);
+              setTrollEffect({ message: rivalSpecial.prompt_text, emoji: effect.emoji, animation: effect.animation });
               setTimeout(() => setTrollEffect(null), 6000);
             } else {
               setSpecialFoundInput("");
@@ -645,8 +646,7 @@ export default function GamePage() {
             }
           }
 
-          const sd = resolvedRival?.special_data as any;
-          const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+          const hideMsg = getHideMessage(resolvedRival?.special_data);
           if (hideMsg) toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
         }
       } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
@@ -670,41 +670,20 @@ export default function GamePage() {
     if (!gameId || !user || !showSpecialFoundPopup) return;
     const { special, rivalPlayer, objectId } = showSpecialFoundPopup;
     const rivalObj = objects.find((o: any) => o.id === objectId);
-    const rivalSd = rivalPlayer?.special_data as any;
-    const hideMsg = rivalSd?.hide_message || (rivalSd?.type === "custom_message" ? rivalSd.message : null);
-
-    const trophyData = special.special_type === "choose_variant"
-      ? {
-          item_value: specialFoundVariant?.value ?? null,
-          special_data: {
-            object_name: rivalObj?.name,
-            object_icon: rivalObj?.icon,
-            custom_name: null,
-            variant_value: specialFoundVariant?.value ?? null,
-            variant_label: specialFoundVariant?.label ?? null,
-            variant_icon: specialFoundVariant?.icon ?? null,
-            special_type: special.special_type,
-            custom_message: hideMsg,
-          },
-        }
-      : {
-          item_value: specialFoundInput.trim() || null,
-          special_data: {
-            object_name: rivalObj?.name,
-            object_icon: rivalObj?.icon,
-            custom_name: specialFoundInput.trim() || null,
-            variant_value: null,
-            variant_label: null,
-            variant_icon: null,
-            special_type: special.special_type,
-            custom_message: hideMsg,
-          },
-        };
+    const hideMsg = getHideMessage(rivalPlayer?.special_data);
+    const specialData = buildTrophySpecialData({
+      special,
+      objectRecord: rivalObj,
+      inputName: specialFoundInput,
+      variant: specialFoundVariant,
+      hideMessage: hideMsg,
+    });
 
     await supabase.from("player_inventory").insert({
       user_id: user.id, game_id: gameId,
       item_type: "special_trophy",
-      ...trophyData,
+      item_value: special.special_type === "choose_variant" ? specialFoundVariant?.value ?? null : specialFoundInput.trim() || null,
+      special_data: specialData,
     });
     toast.success(`🏆 Trofeu desat!`);
     setShowSpecialFoundPopup(null);
