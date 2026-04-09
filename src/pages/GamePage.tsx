@@ -313,6 +313,9 @@ export default function GamePage() {
             const randomItem = loadedItems[Math.floor(Math.random() * loadedItems.length)];
             setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
             setBananaEffect(true);
+            toast.warning("🍌 El rival t'ha enviat un plàtan podrit! Una posició està bloquejada!", { duration: 5000 });
+            setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
+            setTimeout(() => setTrollEffect(null), 4000);
           }
         } else if (item.item_type === "smoke_bomb") {
           toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
@@ -565,7 +568,7 @@ export default function GamePage() {
         }
         if (!isStory && rival?.hidden_object_id) {
           const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
-          if (rivalSpecial && rivalSpecial.prompt_on === "find") {
+          if (rivalSpecial) {
             if (rivalSpecial.special_type === "troll_effect") {
               const variants = rivalSpecial.variants as any;
               setTrollEffect({ message: rivalSpecial.prompt_text, emoji: variants?.emoji ?? "😈", animation: variants?.animation ?? "shake" });
@@ -1025,12 +1028,16 @@ export default function GamePage() {
             <p className="text-[10px] text-center text-muted-foreground">💡 Pista de l'objecte rival al torn 2</p>
           )}
 
-          {/* Move */}
+          {/* Move — hidden in story chapter 1 (tutorial: search in same room) */}
+          {!(isStory && storyChapter === 1) && (
           <div>
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               🚶 Moure's {!isStory && `· ${TOKEN_COSTS.move}🪙`}
             </h3>
             <Tip>Ves a una habitació adjacent (cada sala té 2 portes)</Tip>
+            {isStory && storyChapter === 2 && moveHistory.length === 0 && (
+              <p className="text-[11px] text-accent mb-1">💡 Ara aprèn a moure't entre habitacions!</p>
+            )}
             <div className="grid grid-cols-2 gap-1.5 mt-2">
               {connectedScenarios.map(s => (
                 <button key={s.id} onClick={() => handleMove(s.id)}
@@ -1043,6 +1050,10 @@ export default function GamePage() {
               ))}
             </div>
           </div>
+          )}
+          {isStory && storyChapter === 1 && (
+            <p className="text-[11px] text-muted-foreground text-center py-2">📍 Capítol 1: Busca l'objecte en aquesta habitació!</p>
+          )}
 
           {/* Unified Light/Illumination toggle */}
           <div>
