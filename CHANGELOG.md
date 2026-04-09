@@ -7,6 +7,21 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.9.2] — 2026-04-09 — Correccions objectes especials & ítems socials (PATCH)
+
+### Corregit
+- **Carta**: ja no mostra el camp "Missatge secret" redundant al pas de posició — es gestiona al seu propi pas especial
+- **Carta**: ja no es guarda com a trofeu quan es troba — només objectes amb `prompt_on=find` generen popup de trofeu
+- **Objectes especials (foto, anell, cor de vidre, pilota, joguina, mitjó, rellotge)**: restaurat popup de trofeu al trobar-los
+- **Troll effects (petardo, plàtan podrit, nas pallasso, mitjó pudent)**: restaurat efecte visual animat
+- **Plàtan (ítem social)**: efecte instantani via Realtime
+- **Swap**: corregit amb RPC `execute_swap` per evitar errors RLS
+- **Robar tornavís**: corregit amb RPC `execute_robar_tornavis` — resta correctament del rival
+- **Mode Història cap. 1**: bloquejat moviment entre habitacions
+- **Rendiment**: `loadGame` optimitzat amb `Promise.all`
+
+---
+
 ## [1.9.1] — 2026-04-07 — Vitrina, Salut i Regal 💊🏆 (PATCH)
 
 ### Afegit
