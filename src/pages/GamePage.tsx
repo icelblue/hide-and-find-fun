@@ -639,7 +639,8 @@ export default function GamePage() {
               const effect = getSpecialEffectDescriptor(rivalSpecial);
               setTrollEffect({ message: rivalSpecial.prompt_text, emoji: effect.emoji, animation: effect.animation });
               setTimeout(() => setTrollEffect(null), 6000);
-            } else {
+            } else if (rivalSpecial.prompt_on === "find") {
+              // Only show trophy popup for specials triggered on find (not carta/hide-only)
               setSpecialFoundInput("");
               setSpecialFoundVariant(null);
               setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
@@ -923,7 +924,7 @@ export default function GamePage() {
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
 
-              {objectSpecial && (objectSpecial.prompt_on === "hide" || (objectSpecial as any).has_hide_message) && (
+              {objectSpecial && objectSpecial.prompt_on !== "hide" && (objectSpecial as any).has_hide_message && (
               <Card className="mb-4 glass border-accent/30 glow-accent">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-2 mb-2">
