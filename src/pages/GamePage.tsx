@@ -134,6 +134,8 @@ export default function GamePage() {
     setPlayer(playerData);
     setPlayerTools(parseTools(playerData?.tools));
 
+    if (playerData?.has_hidden) setHideStep(4);
+
     // Batch secondary queries in parallel
     const isStoryGame = !!(gameData as any)?.is_story;
     const isPlaying = gameData?.status === "playing";
