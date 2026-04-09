@@ -143,18 +143,18 @@ export default function GamePage() {
     const promiseKeys: string[] = [];
 
     if (isPlaying) {
-      parallelPromises.push(supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single());
+      parallelPromises.push(supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single().then(r => r));
       promiseKeys.push("profile");
     }
 
     if (!isStoryGame && isPlaying && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
-      parallelPromises.push(supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single());
+      parallelPromises.push(supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single().then(r => r));
       promiseKeys.push("hiddenItem");
     }
 
     if (!isStoryGame && isPlaying && rivalData?.hidden_object_id) {
       parallelPromises.push(
-        supabase.from("game_moves").select("*", { count: "exact", head: true }).eq("game_id", gameId).eq("player_id", user.id)
+        supabase.from("game_moves").select("*", { count: "exact", head: true }).eq("game_id", gameId).eq("player_id", user.id).then(r => r)
       );
       promiseKeys.push("moveCount");
     }
