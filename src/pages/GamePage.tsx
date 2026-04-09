@@ -139,7 +139,7 @@ export default function GamePage() {
     const isPlaying = gameData?.status === "playing";
 
     // Prepare all parallel promises
-    const parallelPromises: Promise<any>[] = [];
+    const parallelPromises: Array<Promise<any>> = [];
     const promiseKeys: string[] = [];
 
     if (isPlaying) {
