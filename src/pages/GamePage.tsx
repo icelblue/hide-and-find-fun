@@ -679,12 +679,12 @@ export default function GamePage() {
       hideMessage: hideMsg,
     });
 
-    await supabase.from("player_inventory").insert({
+    await supabase.from("player_inventory").insert([{
       user_id: user.id, game_id: gameId,
       item_type: "special_trophy",
       item_value: special.special_type === "choose_variant" ? specialFoundVariant?.value ?? null : specialFoundInput.trim() || null,
       special_data: specialData,
-    });
+    }]);
     toast.success(`🏆 Trofeu desat!`);
     setShowSpecialFoundPopup(null);
     setSpecialFoundInput("");
