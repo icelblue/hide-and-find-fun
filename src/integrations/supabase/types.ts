@@ -960,6 +960,8 @@ export type Database = {
         }
         Returns: Json
       }
+      execute_robar_tornavis: { Args: { _game_id: string }; Returns: Json }
+      execute_swap: { Args: { _game_id: string }; Returns: Json }
       execute_tag_action: {
         Args: {
           _action_key: string
