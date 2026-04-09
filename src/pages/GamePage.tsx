@@ -134,35 +134,50 @@ export default function GamePage() {
     setPlayer(playerData);
     setPlayerTools(parseTools(playerData?.tools));
 
-    if (gameData?.status === "playing") {
-      const { data: prof } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
-      setBonusAvailable(prof?.bonus_tokens ?? 0);
+    // Batch secondary queries in parallel
+    const isStoryGame = !!(gameData as any)?.is_story;
+    const isPlaying = gameData?.status === "playing";
+
+    // Prepare all parallel promises
+    const parallelPromises: Promise<any>[] = [];
+    const promiseKeys: string[] = [];
+
+    if (isPlaying) {
+      parallelPromises.push(supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single());
+      promiseKeys.push("profile");
     }
 
-    if (playerData?.has_hidden) setHideStep(4);
+    if (!isStoryGame && isPlaying && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
+      parallelPromises.push(supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single());
+      promiseKeys.push("hiddenItem");
+    }
 
-    // Proximity alert (PvP only)
-    const isStoryGame = !!(gameData as any)?.is_story;
-    if (!isStoryGame && gameData?.status === "playing" && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
-      const { data: hiddenItem } = await supabase
-        .from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
-      setRivalNearby(hiddenItem?.scenario_id === rivalData.current_scenario_id);
+    if (!isStoryGame && isPlaying && rivalData?.hidden_object_id) {
+      parallelPromises.push(
+        supabase.from("game_moves").select("*", { count: "exact", head: true }).eq("game_id", gameId).eq("player_id", user.id)
+      );
+      promiseKeys.push("moveCount");
+    }
+
+    const parallelResults = await Promise.all(parallelPromises);
+    const resultMap: Record<string, any> = {};
+    promiseKeys.forEach((key, i) => { resultMap[key] = parallelResults[i]; });
+
+    if (resultMap.profile) setBonusAvailable(resultMap.profile.data?.bonus_tokens ?? 0);
+    
+    if (resultMap.hiddenItem) {
+      setRivalNearby(resultMap.hiddenItem.data?.scenario_id === rivalData?.current_scenario_id);
     } else {
       setRivalNearby(false);
     }
 
-    // Load rival's object traits
-    if (!isStoryGame && gameData?.status === "playing" && rivalData?.hidden_object_id) {
-      const { count: myMoves } = await supabase
-        .from("game_moves").select("*", { count: "exact", head: true })
-        .eq("game_id", gameId).eq("player_id", user.id);
-      const totalMoves = myMoves ?? 0;
-
+    // Rival traits (secondary query only if needed)
+    if (resultMap.moveCount && rivalData?.hidden_object_id) {
+      const totalMoves = resultMap.moveCount.count ?? 0;
       if (totalMoves >= 2) {
         const { data: traits } = await supabase
           .from("object_traits").select("trait_number, trait_text")
-          .eq("object_id", rivalData.hidden_object_id)
-          .order("trait_number");
+          .eq("object_id", rivalData.hidden_object_id).order("trait_number");
         const t1 = traits?.find((t: any) => t.trait_number === 1)?.trait_text ?? null;
         const t2 = totalMoves >= 5 ? (traits?.find((t: any) => t.trait_number === 2)?.trait_text ?? null) : null;
         setRivalTraits({ trait1: t1, trait2: t2 });
