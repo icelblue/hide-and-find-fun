@@ -1,4 +1,5 @@
 export interface TrophySpecialData {
+  [key: string]: string | null;
   object_name: string | null;
   object_icon: string | null;
   custom_name: string | null;
