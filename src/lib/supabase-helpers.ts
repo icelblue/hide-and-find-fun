@@ -862,22 +862,9 @@ export async function sendSocialItem(
         });
       }
     } else if (itemType === "swap") {
-      const { data: sender } = await supabase
-        .from("game_players")
-        .select("id, current_scenario_id")
-        .eq("game_id", gameId)
-        .eq("user_id", fromPlayerId)
-        .single();
-      if (sender && toPlayer) {
-        await Promise.all([
-          supabase.from("game_players")
-            .update({ current_scenario_id: toPlayer.current_scenario_id })
-            .eq("id", sender.id),
-          supabase.from("game_players")
-            .update({ current_scenario_id: sender.current_scenario_id })
-            .eq("id", toPlayer.id),
-        ]);
-      }
+      // Use RPC to swap scenarios (RLS blocks updating rival rows)
+      const { error: swapErr } = await supabase.rpc("execute_swap" as any, { _game_id: gameId });
+      if (swapErr) throw new Error(swapErr.message);
     } else if (itemType === "espia") {
       const rivalScenarioId = toPlayer?.current_scenario_id;
       if (rivalScenarioId) {
@@ -892,28 +879,9 @@ export async function sendSocialItem(
         espiaResult = "🤷 El rival encara no s'ha mogut!";
       }
     } else if (itemType === "robar_tornavis") {
-      // Use already-fetched safe players data for rival tools
-      const rivalPlayer = toPlayer;
-      if (rivalPlayer) {
-        const rivalTools = parseTools(rivalPlayer.tools);
-        if (rivalTools.tornavis > 0) {
-          rivalTools.tornavis -= 1;
-          await supabase.from("game_players").update({ tools: rivalTools }).eq("id", rivalPlayer.id);
-          const { data: selfPlayer } = await supabase
-            .from("game_players")
-            .select("id, tools")
-            .eq("game_id", gameId)
-            .eq("user_id", fromPlayerId)
-            .single();
-          if (selfPlayer) {
-            const selfTools = parseTools(selfPlayer.tools);
-            selfTools.tornavis += 1;
-            await supabase.from("game_players").update({ tools: selfTools }).eq("id", selfPlayer.id);
-          }
-        } else {
-          throw new Error("El rival no té cap tornavís per robar! 🔧");
-        }
-      }
+      // Use RPC to steal screwdriver (RLS blocks updating rival rows)
+      const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
+      if (robarErr) throw new Error(robarErr.message);
     }
   }
 
