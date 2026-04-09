@@ -93,6 +93,7 @@ export default function GamePage() {
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
+  const [specialFoundVariant, setSpecialFoundVariant] = useState<any>(null);
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
   const [bonusAvailable, setBonusAvailable] = useState(0);
   const [bonusAmount, setBonusAmount] = useState(1);
@@ -346,6 +347,45 @@ export default function GamePage() {
     }
   }, [gameId, user]);
 
+  const handleRealtimeSocialItem = useCallback(async (item: any) => {
+    if (!user || item?.to_player_id !== user.id || item?.processed) return;
+
+    if (item.blocked_by_shield) return;
+
+    if (item.item_type === "banana") {
+      const scenarioItems = currentScenarioItems.length > 0
+        ? currentScenarioItems
+        : player?.current_scenario_id
+          ? await getItemsByScenario(player.current_scenario_id)
+          : [];
+
+      if (scenarioItems.length > 0) {
+        const allPositions = ["sobre", "sota", "dins"] as const;
+        const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
+        const randomItem = scenarioItems[Math.floor(Math.random() * scenarioItems.length)];
+        setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
+      }
+
+      setBananaEffect(true);
+      toast.warning("🍌 El rival t'ha enviat un plàtan podrit! Una posició està bloquejada!", { duration: 5000 });
+      setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
+      setTimeout(() => setTrollEffect(null), 4000);
+      await markSocialItemProcessed(item.id);
+      return;
+    }
+
+    if (item.item_type === "message" && item.message_text) {
+      setReceivedMessage(item.message_text);
+      await markSocialItemProcessed(item.id);
+      return;
+    }
+
+    if (item.item_type === "smoke_bomb") {
+      toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+      await markSocialItemProcessed(item.id);
+    }
+  }, [currentScenarioItems, player?.current_scenario_id, user]);
+
   // ============================================
   // EFFECTS
   // ============================================
@@ -361,10 +401,12 @@ export default function GamePage() {
       .channel(`game-${gameId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => loadGame())
       .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${gameId}` }, () => loadGame())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, () => loadGame())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload: any) => {
+        void handleRealtimeSocialItem(payload.new);
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [gameId, user, loadGame, isStory]);
+  }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem]);
 
   // ============================================
   // HIDING HANDLERS
@@ -583,20 +625,27 @@ export default function GamePage() {
         } else {
           toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
         }
-        if (!isStory && rival?.hidden_object_id) {
-          const rivalSpecial = await getObjectSpecial(rival.hidden_object_id);
+        if (!isStory) {
+          const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+          const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p: any) => p.user_id !== user.id) ?? rival;
+          setRival(resolvedRival);
+
+          const foundObjectId = resolvedRival?.hidden_object_id;
+          const rivalSpecial = foundObjectId ? await getObjectSpecial(foundObjectId) : null;
+
           if (rivalSpecial) {
             if (rivalSpecial.special_type === "troll_effect") {
               const variants = rivalSpecial.variants as any;
               setTrollEffect({ message: rivalSpecial.prompt_text, emoji: variants?.emoji ?? "😈", animation: variants?.animation ?? "shake" });
               setTimeout(() => setTrollEffect(null), 6000);
             } else {
-              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: rival });
+              setSpecialFoundInput("");
+              setSpecialFoundVariant(null);
+              setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
             }
           }
-        }
-        if (!isStory && rival?.special_data) {
-          const sd = rival.special_data as any;
+
+          const sd = resolvedRival?.special_data as any;
           const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
           if (hideMsg) toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
         }
@@ -619,23 +668,48 @@ export default function GamePage() {
 
   const handleSpecialFoundSubmit = async () => {
     if (!gameId || !user || !showSpecialFoundPopup) return;
-    const { special } = showSpecialFoundPopup;
-    const rivalObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
-    const rivalSd = rival?.special_data as any;
+    const { special, rivalPlayer, objectId } = showSpecialFoundPopup;
+    const rivalObj = objects.find((o: any) => o.id === objectId);
+    const rivalSd = rivalPlayer?.special_data as any;
     const hideMsg = rivalSd?.hide_message || (rivalSd?.type === "custom_message" ? rivalSd.message : null);
+
+    const trophyData = special.special_type === "choose_variant"
+      ? {
+          item_value: specialFoundVariant?.value ?? null,
+          special_data: {
+            object_name: rivalObj?.name,
+            object_icon: rivalObj?.icon,
+            custom_name: null,
+            variant_value: specialFoundVariant?.value ?? null,
+            variant_label: specialFoundVariant?.label ?? null,
+            variant_icon: specialFoundVariant?.icon ?? null,
+            special_type: special.special_type,
+            custom_message: hideMsg,
+          },
+        }
+      : {
+          item_value: specialFoundInput.trim() || null,
+          special_data: {
+            object_name: rivalObj?.name,
+            object_icon: rivalObj?.icon,
+            custom_name: specialFoundInput.trim() || null,
+            variant_value: null,
+            variant_label: null,
+            variant_icon: null,
+            special_type: special.special_type,
+            custom_message: hideMsg,
+          },
+        };
+
     await supabase.from("player_inventory").insert({
       user_id: user.id, game_id: gameId,
       item_type: "special_trophy",
-      item_value: special.special_type === "custom_name" ? specialFoundInput.trim() : null,
-      special_data: {
-        object_name: rivalObj?.name, object_icon: rivalObj?.icon,
-        custom_name: specialFoundInput.trim() || null,
-        special_type: special.special_type, custom_message: hideMsg,
-      },
+      ...trophyData,
     });
     toast.success(`🏆 Trofeu desat!`);
     setShowSpecialFoundPopup(null);
     setSpecialFoundInput("");
+    setSpecialFoundVariant(null);
   };
 
   const handleSendSocial = async (type: SocialItemType) => {
@@ -706,8 +780,10 @@ export default function GamePage() {
 
       {/* Popups */}
       <SpecialFoundPopup show={showSpecialFoundPopup} rival={rival} objects={objects}
-        specialFoundInput={specialFoundInput} onInputChange={setSpecialFoundInput}
-        onSubmit={handleSpecialFoundSubmit} onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); }} />
+        specialFoundInput={specialFoundInput} specialFoundVariant={specialFoundVariant}
+        onInputChange={setSpecialFoundInput} onVariantChange={setSpecialFoundVariant}
+        onSubmit={handleSpecialFoundSubmit}
+        onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); setSpecialFoundVariant(null); }} />
       <MessagePopup message={receivedMessage} onClose={() => setReceivedMessage(null)} />
       <TrollEffect effect={trollEffect} onClose={() => setTrollEffect(null)} />
 

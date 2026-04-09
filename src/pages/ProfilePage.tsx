@@ -473,11 +473,14 @@ export default function ProfilePage() {
                     <span className="text-2xl">{sd?.object_icon ?? "⭐"}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm">
-                        {sd?.custom_name ? `"${sd.custom_name}"` : sd?.object_name ?? "Trofeu"}
+                        {sd?.custom_name ? `"${sd.custom_name}"` : sd?.variant_label ? `${sd.variant_label}` : sd?.object_name ?? "Trofeu"}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
                         {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
                       </div>
+                      {sd?.custom_message && (
+                        <div className="text-[11px] italic text-primary/80 mt-0.5">💌 "{sd.custom_message}"</div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

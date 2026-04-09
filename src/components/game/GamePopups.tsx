@@ -10,13 +10,30 @@ interface SpecialFoundPopupProps {
   rival: any;
   objects: any[];
   specialFoundInput: string;
+  specialFoundVariant: any;
   onInputChange: (value: string) => void;
+  onVariantChange: (variant: any) => void;
   onSubmit: () => void;
   onClose: () => void;
 }
 
-export function SpecialFoundPopup({ show, rival, objects, specialFoundInput, onInputChange, onSubmit, onClose }: SpecialFoundPopupProps) {
+export function SpecialFoundPopup({
+  show,
+  rival,
+  objects,
+  specialFoundInput,
+  specialFoundVariant,
+  onInputChange,
+  onVariantChange,
+  onSubmit,
+  onClose,
+}: SpecialFoundPopupProps) {
   if (!show) return null;
+
+  const isChooseVariant = show.special.special_type === "choose_variant";
+  const variants = Array.isArray(show.special.variants) ? show.special.variants : [];
+  const canSubmit = isChooseVariant ? !!specialFoundVariant : !!specialFoundInput.trim();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md">
       <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
@@ -34,11 +51,34 @@ export function SpecialFoundPopup({ show, rival, objects, specialFoundInput, onI
             ) : null;
           })()}
           <p className="text-sm text-muted-foreground mb-4">{show.special.prompt_text}</p>
-          <Input value={specialFoundInput} onChange={e => onInputChange(e.target.value)}
-            placeholder="Escriu un nom..." maxLength={40} className="text-center bg-muted/50 mb-3" />
+
+          {isChooseVariant ? (
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {variants.map((variant: any) => {
+                const active = specialFoundVariant?.value === variant.value;
+                return (
+                  <button
+                    key={variant.value}
+                    type="button"
+                    onClick={() => onVariantChange(variant)}
+                    className={`rounded-xl border p-3 text-center transition-all active:scale-[0.98] ${
+                      active ? "border-primary bg-primary/10" : "border-border/40 bg-muted/40 hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="text-3xl mb-1">{variant.icon ?? "⚽"}</div>
+                    <div className="text-xs font-semibold">{variant.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <Input value={specialFoundInput} onChange={e => onInputChange(e.target.value)}
+              placeholder="Escriu un nom..." maxLength={40} className="text-center bg-muted/50 mb-3" />
+          )}
+
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={onClose}>Saltar</Button>
-            <Button className="flex-1" disabled={!specialFoundInput.trim()} onClick={onSubmit}>
+            <Button className="flex-1" disabled={!canSubmit} onClick={onSubmit}>
               Desar trofeu 🏆
             </Button>
           </div>
