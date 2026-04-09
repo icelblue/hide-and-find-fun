@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 import { toast } from "sonner";
 import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents, PET_CONSUMABLES } from "@/lib/story-helpers";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
@@ -295,11 +296,9 @@ export default function PlayerProfilePage() {
               return (
                 <Card key={t.id} className="glass border-accent/30">
                   <CardContent className="py-2.5 flex items-center gap-3">
-                    <span className="text-2xl">{sd?.object_icon ?? "⭐"}</span>
+                    <span className="text-2xl">{getTrophyDisplayIcon(sd)}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm">
-                        {sd?.custom_name ? `"${sd.custom_name}"` : sd?.variant_label ? `${sd.variant_label}` : sd?.object_name ?? "Trofeu"}
-                      </div>
+                      <div className="font-semibold text-sm">{getTrophyDisplayName(sd)}</div>
                       <div className="text-[11px] text-muted-foreground">
                         {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
                       </div>

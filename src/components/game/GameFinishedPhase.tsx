@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MATERIAL_LABELS } from "@/lib/supabase-helpers";
+import { getHideMessage } from "@/lib/object-specials";
 import { RARITY_CONFIG } from "@/lib/reward-helpers";
 import { POS_LABELS } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,8 +45,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       if (itm?.scenario_id) {
         scn = scenarios.find((s: any) => s.id === itm.scenario_id) ?? null;
       }
-      const sd = rival.special_data as any;
-      const hideMsg = sd?.hide_message || (sd?.type === "custom_message" ? sd.message : null);
+      const hideMsg = getHideMessage(rival.special_data);
 
       let traits: string[] = [];
       let specialType: string | null = null;
