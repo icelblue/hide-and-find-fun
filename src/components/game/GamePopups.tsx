@@ -35,7 +35,7 @@ export function SpecialFoundPopup({
   const canSubmit = isChooseVariant ? !!specialFoundVariant : !!specialFoundInput.trim();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Objecte especial trobat">
       <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
         <CardContent className="py-6 text-center">
           <div className="text-5xl mb-3">{objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon ?? "⭐"}</div>
@@ -96,7 +96,7 @@ interface MessagePopupProps {
 export function MessagePopup({ message, onClose }: MessagePopupProps) {
   if (!message) return null;
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Pista del rival" onClick={onClose}>
       <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
         <CardContent className="py-6 text-center">
           <div className="text-4xl mb-2">💡</div>
@@ -118,7 +118,7 @@ interface TrollEffectProps {
 export function TrollEffect({ effect, onClose }: TrollEffectProps) {
   if (!effect) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" role="alert" aria-live="assertive">
       <div className={`text-center space-y-4 p-8 rounded-2xl glass max-w-sm mx-4 ${
         effect.animation === "shake" ? "animate-troll-shake" :
         effect.animation === "flash" ? "animate-troll-flash" :
@@ -145,18 +145,18 @@ interface BonusTokenPickerProps {
 
 export function BonusTokenPicker({ bonusAvailable, bonusAmount, setBonusAmount, onRedeem, onClose, actionLoading }: BonusTokenPickerProps) {
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-background/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-background/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Afegir bonus tokens" onClick={onClose}>
       <Card className="mx-4 mb-8 max-w-xs w-full glass glow-accent shadow-2xl" onClick={e => e.stopPropagation()}>
         <CardContent className="py-5">
           <p className="text-sm font-bold mb-1 text-center">💰 Afegir bonus tokens</p>
           <p className="text-[10px] text-muted-foreground text-center mb-4">Quants tokens vols gastar? (Tens {bonusAvailable} disponibles)</p>
           <div className="flex items-center justify-center gap-4 mb-4">
             <button onClick={() => setBonusAmount(Math.max(0.1, Math.round((bonusAmount - 0.1) * 10) / 10))}
-              disabled={bonusAmount <= 0.1}
+              disabled={bonusAmount <= 0.1} aria-label="Reduir tokens"
               className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">−</button>
             <span className="text-3xl font-bold min-w-[70px] text-center text-gradient">{bonusAmount}🪙</span>
             <button onClick={() => setBonusAmount(Math.min(bonusAvailable, Math.round((bonusAmount + 0.1) * 10) / 10))}
-              disabled={bonusAmount >= bonusAvailable}
+              disabled={bonusAmount >= bonusAvailable} aria-label="Augmentar tokens"
               className="w-10 h-10 rounded-full bg-muted/50 border border-border/40 text-lg font-bold hover:bg-muted transition-colors disabled:opacity-30">+</button>
           </div>
           <div className="flex justify-center gap-2 mb-4 flex-wrap">
