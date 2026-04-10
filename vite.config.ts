@@ -5,6 +5,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 
 const PUBLIC_SUPABASE_URL = "https://wqbjvceezgokqhrqckcg.supabase.co";
 const PUBLIC_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxYmp2Y2Vlemdva3FocnFja2NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjMzMjgsImV4cCI6MjA5MDI5OTMyOH0.Dk1OiEj5sX9CXnSsgDf9UTlbM9dI4xaWSPdlYTQ_aQc";
@@ -19,10 +20,16 @@ export default defineConfig(({ mode }) => {
       port: 8080,
       hmr: { overlay: false },
     },
-    plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+    plugins: [
+      react(),
+      mode === "development" && componentTagger(),
+      // Inject CSS via JS to eliminate render-blocking stylesheet
+      mode === "production" && cssInjectedByJsPlugin(),
+    ].filter(Boolean),
     build: {
       target: "es2020",
       cssMinify: true,
+      reportCompressedSize: false,
       rollupOptions: {
         output: {
           manualChunks(id) {
