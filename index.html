@@ -2,23 +2,16 @@
 <html lang="ca">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Deduction Duel — Joc PvP de deducció</title>
     <meta name="description" content="Joc 1v1 de deducció estratègica. Amaga un objecte, dedueix on l'ha amagat el rival, i guanya la partida." />
     <meta name="author" content="Lovable" />
     <meta name="theme-color" content="#181b2e" />
 
-    <!-- Preconnect to font origins -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Preload critical font files to eliminate CSS→font chain -->
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2" />
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU.woff2" />
-
-    <!-- Non-render-blocking font CSS via media=print trick -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" /></noscript>
+    <!-- Self-hosted fonts to remove render-blocking external font CSS -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/space-grotesk-latin.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/orbitron-latin.woff2" crossorigin />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Deduction Duel — Joc PvP de deducció" />

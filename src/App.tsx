@@ -3,13 +3,11 @@
 // ============================================================
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-// Lazy-loaded toasters (not needed for FCP)
+// Lazy-loaded toaster (not needed for FCP)
 const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
-const ToasterComponent = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
 
 // Lazy-loaded pages for code splitting
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -46,26 +44,23 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <ErrorBoundary>
     <AuthProvider>
-      <TooltipProvider>
-        <Suspense fallback={null}>
-          <ToasterComponent />
-          <Sonner />
+      <Suspense fallback={null}>
+        <Sonner />
+      </Suspense>
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/" element={<ProtectedRoute><LobbyPage /></ProtectedRoute>} />
+            <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
+            <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </Suspense>
-        <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/" element={<ProtectedRoute><LobbyPage /></ProtectedRoute>} />
-              <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-              <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
-              <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
+      </BrowserRouter>
     </AuthProvider>
   </ErrorBoundary>
 );
