@@ -8,13 +8,17 @@
     <meta name="author" content="Lovable" />
     <meta name="theme-color" content="#181b2e" />
 
-    <!-- Preconnect to Google Fonts for faster font loading -->
+    <!-- Preconnect to font origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Non-render-blocking font loading via JS injection -->
-    <script>
-      (function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap';document.head.appendChild(l)})();
-    </script>
+
+    <!-- Preload critical font files to eliminate CSS→font chain -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU.woff2" />
+
+    <!-- Non-render-blocking font CSS via media=print trick -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" /></noscript>
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Deduction Duel — Joc PvP de deducció" />
@@ -26,10 +30,18 @@
     <meta name="twitter:title" content="Deduction Duel — Joc PvP de deducció" />
     <meta name="twitter:description" content="Joc 1v1 de deducció estratègica. Amaga un objecte, dedueix on l'ha amagat el rival, i guanya la partida." />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c9b2bb03-1cef-4ba7-914e-fecb1ee7ed0f?Expires=1774734558&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=yOmTpsJlQdB8t1haGveXxIRS7kogHEaXO50PFBvmjYvz9OM%2FP4BwjsP7Of0rONkh8zIcH7o8dKYbaBRKZJuPDvk2AG%2BJNGmHHi3ndFdh1V%2FGk5l1V8dfFpEM1IR%2BMIjBQPYhRLUCFIStZUASy0vdKsmd1aXXHLhewoq625lC%2FOARZqtHH%2FmwoORSwDeD9f6Q8BCpejxFfInbWQvXeMoVu%2FR5i6Kv71owe75vrzwCXPqqdooP2AHJl87bH5CflAnW8r8XS92jReAGPX2XwI7wrilxidGq0ff4pOi0ZAcDlyX7hb7YiOtOfYMbtDyvfmw%2BabWthZUHr43gAY0Mf%2BdJ1Q%3D%3D" />
+
+    <!-- Inline critical above-the-fold styles for instant FCP -->
+    <style>
+      body{margin:0;background:#181b2e;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}
+      #root{min-height:100vh;display:flex;align-items:center;justify-content:center}
+      .app-loader{color:#8b8fa3;font-size:14px;animation:pulse 1.5s ease-in-out infinite}
+      @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root"><p class="app-loader">Carregant...</p></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
