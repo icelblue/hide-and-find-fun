@@ -1294,6 +1294,6 @@ export default function GamePage() {
         <GameFinishedPhase game={game} user={user} rival={rival} reward={reward}
           navigate={navigate} objects={objects} scenarios={scenarios} gameId={gameId!} />
       )}
-    </div>
+    </main>
   );
 }
