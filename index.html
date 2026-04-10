@@ -8,10 +8,9 @@
     <meta name="author" content="Lovable" />
     <meta name="theme-color" content="#181b2e" />
 
-    <!-- Self-hosted fonts to remove render-blocking external font CSS -->
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/space-grotesk-latin.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/orbitron-latin.woff2" crossorigin />
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://wqbjvceezgokqhrqckcg.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://wqbjvceezgokqhrqckcg.supabase.co" />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Deduction Duel — Joc PvP de deducció" />
@@ -30,6 +29,7 @@
       #root{min-height:100vh;display:flex;align-items:center;justify-content:center}
       .app-loader{color:#8b8fa3;font-size:14px;animation:pulse 1.5s ease-in-out infinite}
       @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+      @font-face{font-family:'Inter';src:url('/fonts/inter-latin.woff2') format('woff2');font-weight:100 900;font-display:swap}
     </style>
   </head>
 
