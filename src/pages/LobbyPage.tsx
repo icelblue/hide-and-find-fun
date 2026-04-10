@@ -543,6 +543,6 @@ export default function LobbyPage() {
           </Card>
         </div>
       )}
-    </div>
+    </main>
   );
 }
