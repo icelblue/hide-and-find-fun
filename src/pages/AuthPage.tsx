@@ -130,7 +130,7 @@ export default function AuthPage() {
         {/* Formulari d'autenticació */}
         <Card className="glass glow-primary">
           <CardContent className="pt-5 pb-4">
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3" aria-label={isLogin ? "Formulari d'inici de sessió" : "Formulari de registre"}>
               {/* Camp nom de jugador (només registre) */}
               {!isLogin && (
                 <Input
@@ -138,6 +138,7 @@ export default function AuthPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
+                  aria-label="Nom de jugador"
                   className="bg-muted/50 border-border/50 h-11"
                 />
               )}
@@ -147,6 +148,8 @@ export default function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                aria-label="Adreça de correu electrònic"
+                autoComplete="email"
                 className="bg-muted/50 border-border/50 h-11"
               />
               <Input
@@ -156,6 +159,8 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                aria-label="Contrasenya"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 className="bg-muted/50 border-border/50 h-11"
               />
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
