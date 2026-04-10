@@ -7,6 +7,19 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.9.4] — 2026-04-10 — Mobile speed & accessibility hardening (PATCH)
+
+### Millorat
+- **Fonts self-hosted**: eliminades les peticions externes a Google Fonts i la cadena crítica CSS→fonts; ara es preloadegen des de `/public/fonts`
+- **JS inicial més lleuger**: eliminat el toaster Radix no utilitzat del bootstrap i simplificat el toaster actiu perquè no carregui `next-themes`
+- **Accessibility mobile**: restaurat el zoom natiu eliminant `maximum-scale=1` i `user-scalable=no` del viewport
+
+### Validat
+- Build de producció correcte després dels canvis
+- Cap canvi de lògica de joc ni de flux funcional
+
+---
+
 ## [1.9.3] — 2026-04-10 — Performance, accessibility & bug fixes (PATCH)
 
 ### Millorat
