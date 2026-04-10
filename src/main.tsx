@@ -1,9 +1,6 @@
 // ============================================================
 // main.tsx — Bootstrap de l'aplicació
 // ============================================================
-// Configura TanStack Query amb cache de 30s i retry 1x.
-// Renderitza <App> dins del root DOM element (#root a index.html).
-// ============================================================
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App.tsx";
@@ -12,8 +9,8 @@ import "./index.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,       // 30s — dades "fresques" sense refetch
-      gcTime: 5 * 60_000,     // 5min — cache en memòria
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
       refetchOnWindowFocus: true,
       retry: 1,
     },
