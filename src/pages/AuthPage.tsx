@@ -215,6 +215,6 @@ export default function AuthPage() {
           </Card>
         </div>
       )}
-    </div>
+    </main>
   );
 }
