@@ -1,15 +1,15 @@
 // ============================================================
 // App.tsx — Punt d'entrada de l'aplicació React
 // ============================================================
-// Rutes amb lazy loading per reduir bundle inicial.
-// ============================================================
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Lazy-loaded toasters (not needed for FCP)
+const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+const ToasterComponent = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
 
 // Lazy-loaded pages for code splitting
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -23,7 +23,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Carregant pàgina">
       <p className="text-muted-foreground animate-pulse">Carregant...</p>
     </div>
   );
@@ -47,8 +47,10 @@ const App = () => (
   <ErrorBoundary>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
+        <Suspense fallback={null}>
+          <ToasterComponent />
+          <Sonner />
+        </Suspense>
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
