@@ -755,8 +755,8 @@ export default function GamePage() {
   // RENDER
   // ============================================
   return (
-    <div className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative">
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
+    <main className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative" role="main">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" aria-hidden="true" />
 
       {/* Popups */}
       <SpecialFoundPopup show={showSpecialFoundPopup} rival={rival} objects={objects}
@@ -1294,6 +1294,6 @@ export default function GamePage() {
         <GameFinishedPhase game={game} user={user} rival={rival} reward={reward}
           navigate={navigate} objects={objects} scenarios={scenarios} gameId={gameId!} />
       )}
-    </div>
+    </main>
   );
 }

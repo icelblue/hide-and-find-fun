@@ -35,7 +35,7 @@ export default function ItemActions({
 
   return (
     <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : isDirty ? "border-accent/20" : ""}`}>
-      <button onClick={() => setExpanded(!expanded)}
+      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-label={`${item.icon} ${item.name} - ${expanded ? 'tancar' : 'obrir'} accions`}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
         <span className="font-semibold text-sm">
           {item.icon} {item.name}
@@ -111,7 +111,7 @@ export default function ItemActions({
               const blockLabel = blockedByBroken ? "💥 Arregla primer" : blockedByDirty ? "🧹 Neteja primer" : "";
               return (
                 <button key={pos.value}
-                  onClick={() => onLook(item.id, pos.value)}
+                  onClick={() => onLook(item.id, pos.value)} aria-label={`${pos.label} ${item.name}`}
                   disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked || isBlocked}
                   className={`w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${
                     isBlocked ? "bg-muted/20 opacity-50 border border-accent/30" :

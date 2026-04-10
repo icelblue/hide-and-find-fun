@@ -334,8 +334,8 @@ export default function LobbyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative">
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
+    <main className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative" role="main">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" aria-hidden="true" />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
@@ -543,6 +543,6 @@ export default function LobbyPage() {
           </Card>
         </div>
       )}
-    </div>
+    </main>
   );
 }
