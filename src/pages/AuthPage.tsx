@@ -82,9 +82,9 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <main className="min-h-screen bg-background relative overflow-hidden" role="main">
       {/* Efectes de fons decoratius (blur radial) */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/8 blur-[120px]" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-secondary/8 blur-[120px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-accent/3 blur-[150px]" />
@@ -92,8 +92,8 @@ export default function AuthPage() {
 
       <div className="relative z-10 max-w-md mx-auto px-4 py-8 space-y-6">
         {/* Hero — Logo + títol */}
-        <div className="text-center pt-4">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-xl glow-primary">
+        <header className="text-center pt-4">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-xl glow-primary" aria-hidden="true">
             <span className="text-4xl">🔍</span>
           </div>
           <h1 className="text-2xl text-neon mb-2">DEDUCTION DUEL</h1>
@@ -101,14 +101,14 @@ export default function AuthPage() {
             El joc de deducció PvP on la lògica guanya a la sort. 
             Amaga, investiga i dedueix! 🧠
           </p>
-        </div>
+        </header>
 
         {/* Com funciona — 3 passos visuals */}
         <div className="space-y-2">
           <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Com funciona?</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="list">
             {HOW_IT_WORKS.map(h => (
-              <div key={h.step} className="flex-1 glass rounded-xl p-3 text-center">
+              <div key={h.step} className="flex-1 glass rounded-xl p-3 text-center" role="listitem">
                 <div className="text-2xl mb-1">{h.icon}</div>
                 <p className="text-[10px] text-muted-foreground leading-tight">{h.text}</p>
               </div>
