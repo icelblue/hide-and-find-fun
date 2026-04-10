@@ -195,7 +195,7 @@ export default function AuthPage() {
 
       {/* Modal recuperar contrasenya */}
       {showForgot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowForgot(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Recuperar contrasenya" onClick={() => setShowForgot(false)}>
           <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-6">
               <h3 className="text-lg font-bold mb-2">Recuperar contrasenya</h3>
@@ -205,6 +205,7 @@ export default function AuthPage() {
                 placeholder="Email"
                 value={forgotEmail}
                 onChange={e => setForgotEmail(e.target.value)}
+                aria-label="Email per recuperar contrasenya"
                 className="mb-3 bg-muted/50 border-border/50 h-11"
               />
               <div className="flex gap-2">
