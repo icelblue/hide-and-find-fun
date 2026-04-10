@@ -817,8 +817,7 @@ export async function sendSocialItem(
 
   let espiaResult: string | null = null;
 
-  await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
-
+  // Execute the action FIRST, before marking as used (so if it fails, the user can retry)
   if (blocked) {
     await supabase.from("game_players").update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
@@ -844,7 +843,6 @@ export async function sendSocialItem(
         const newScenario = otherScenarios[Math.floor(Math.random() * otherScenarios.length)];
         const newItems = await getItemsByScenario(newScenario.id);
         if (newItems.length === 0) throw new Error("L'escenari destí no té mobles!");
-        // ALWAYS pick a DIFFERENT item (different scenario guarantees it)
         const newItem = newItems[Math.floor(Math.random() * newItems.length)];
         const allPos: ("sobre" | "sota" | "dins")[] = ["sobre", "sota", "dins"];
         const validPos = allPos.filter(p => p !== "dins" || (newItem.inner_capacity ?? 2) >= 2);
@@ -862,7 +860,6 @@ export async function sendSocialItem(
         });
       }
     } else if (itemType === "swap") {
-      // Use RPC to swap scenarios (RLS blocks updating rival rows)
       const { error: swapErr } = await supabase.rpc("execute_swap" as any, { _game_id: gameId });
       if (swapErr) throw new Error(swapErr.message);
     } else if (itemType === "espia") {
@@ -879,11 +876,13 @@ export async function sendSocialItem(
         espiaResult = "🤷 El rival encara no s'ha mogut!";
       }
     } else if (itemType === "robar_tornavis") {
-      // Use RPC to steal screwdriver (RLS blocks updating rival rows)
       const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
     }
   }
+
+  // Mark as used AFTER successful action
+  await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
 
   await supabase.from("game_social_items").insert({
     game_id: gameId,
