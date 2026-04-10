@@ -7,6 +7,22 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.9.3] — 2026-04-10 — Performance, accessibility & bug fixes (PATCH)
+
+### Millorat
+- **Performance (FCP -1.1s)**: Google Fonts carregat via `<link>` amb `preconnect` i `media=print` → eliminat render blocking CSS
+- **Performance (JS -67%)**: Code splitting amb `React.lazy` — cada pàgina és un chunk separat (GamePage 52KB, LobbyPage 25KB, AuthPage 6KB)
+- **Performance**: Manual chunks per vendor (React 160KB), Supabase (194KB), UI (90KB) — millor cache a llarg termini
+- **Accessibility**: Afegit `aria-label` als inputs de login/registre, `autoComplete` per email/password, `aria-label` al formulari
+
+### Corregit
+- **BUG CRÍTIC — Ítems socials**: `social_item_used_today` es marcava ABANS d'executar l'acció → si l'acció fallava (p.ex. rival sense tornavís), l'usuari perdia el seu ítem diari sense efecte. Ara es marca DESPRÉS de l'acció exitosa
+- **Robar tornavís**: validat que el RPC `execute_robar_tornavis` resta correctament 1 unitat del rival i la suma al jugador. Si el rival té 0, llença error i l'ítem diari NO es consumeix
+- **Swap**: validat que `execute_swap` intercanvia correctament `current_scenario_id` entre ambdós jugadors
+- **QueryClient duplicat**: eliminat el duplicat a App.tsx (ja existia a main.tsx)
+
+---
+
 ## [1.9.2] — 2026-04-09 — Correccions objectes especials & ítems socials (PATCH)
 
 ### Corregit
