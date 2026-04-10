@@ -521,7 +521,7 @@ export default function LobbyPage() {
 
       {/* Bug Report Modal */}
       {showBugReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" onClick={() => setShowBugReport(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Reportar un bug" onClick={() => setShowBugReport(false)}>
           <Card className="mx-4 max-w-sm w-full glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-5">
               <h3 className="text-lg font-bold mb-1">🐛 Reportar un bug</h3>

@@ -1,23 +1,15 @@
 // ============================================================
 // vite.config.ts — Configuració de build i dev server
 // ============================================================
-// IMPORTANT per a desplegaments externs:
-//   - Les variables VITE_SUPABASE_* es llegeixen de .env
-//   - Si no existeix .env, usa els valors per defecte (Lovable Cloud)
-//   - Per connectar a un altre Supabase, crea un .env amb les claus
-//   - El port per defecte és 8080 (canviable a server.port)
-// ============================================================
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// Valors per defecte (Lovable Cloud) — s'usen si no hi ha .env
 const PUBLIC_SUPABASE_URL = "https://wqbjvceezgokqhrqckcg.supabase.co";
 const PUBLIC_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxYmp2Y2Vlemdva3FocnFja2NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjMzMjgsImV4cCI6MjA5MDI5OTMyOH0.Dk1OiEj5sX9CXnSsgDf9UTlbM9dI4xaWSPdlYTQ_aQc";
 const PUBLIC_SUPABASE_PROJECT_ID = "wqbjvceezgokqhrqckcg";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
@@ -25,9 +17,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
-      hmr: {
-        overlay: false,
-      },
+      hmr: { overlay: false },
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
     build: {
@@ -35,11 +25,18 @@ export default defineConfig(({ mode }) => {
       cssMinify: true,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ["react", "react-dom", "react-router-dom"],
-            supabase: ["@supabase/supabase-js"],
-            ui: ["sonner", "@radix-ui/react-tooltip", "@radix-ui/react-toast"],
-            query: ["@tanstack/react-query"],
+          manualChunks(id) {
+            // Supabase in its own chunk
+            if (id.includes("@supabase")) return "supabase";
+            // React core
+            if (id.includes("react-dom")) return "react-dom";
+            if (id.includes("react-router")) return "router";
+            // TanStack Query
+            if (id.includes("@tanstack")) return "query";
+            // Radix UI components
+            if (id.includes("@radix-ui")) return "radix";
+            // Sonner toast
+            if (id.includes("sonner")) return "sonner";
           },
         },
       },
