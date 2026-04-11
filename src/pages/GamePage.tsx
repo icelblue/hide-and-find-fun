@@ -1232,7 +1232,8 @@ export default function GamePage() {
           {!isStory && (
             <SocialItemsPanel showPanel={showSocialPanel} setShowPanel={setShowSocialPanel}
               player={player} onSendSocial={handleSendSocial}
-              messageInput={messageInput} setMessageInput={setMessageInput} />
+              messageInput={messageInput} setMessageInput={setMessageInput}
+              actionLoading={actionLoading} />
           )}
 
           {/* History */}
