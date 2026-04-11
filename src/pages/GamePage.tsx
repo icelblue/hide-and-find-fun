@@ -438,11 +438,20 @@ export default function GamePage() {
 
   const handleSelectObject = async (objId: string) => {
     setSelectedObject(objId);
-    const special = await getObjectSpecial(objId);
-    setObjectSpecial(special);
-    setSpecialInput("");
-    setSelectedVariant(null);
-    setHideStep(1);
+    setActionLoading(true);
+    try {
+      const special = await getObjectSpecial(objId);
+      setObjectSpecial(special);
+      setSpecialInput("");
+      setSelectedVariant(null);
+      setHideMessage("");
+      setHideStep(1);
+    } catch (err: any) {
+      toast.error("Error carregant objecte especial");
+      logError(err.message, err.stack, "GamePage:handleSelectObject");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
