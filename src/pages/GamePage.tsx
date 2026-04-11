@@ -915,7 +915,7 @@ export default function GamePage() {
               <div className="h-3" />
               <div className="grid grid-cols-3 gap-2">
                 {objects.map(o => (
-                  <Card key={o.id} className="cursor-pointer glass hover:border-secondary/40 transition-all active:scale-[0.97] relative" onClick={() => handleSelectObject(o.id)}>
+                  <Card key={o.id} className={`glass transition-all active:scale-[0.97] relative ${actionLoading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-secondary/40"}`} onClick={() => !actionLoading && handleSelectObject(o.id)}>
                     <CardContent className="py-3 text-center">
                       <div className="text-2xl mb-1">{o.icon}</div>
                       <div className="text-[11px] font-medium">{o.name}</div>
