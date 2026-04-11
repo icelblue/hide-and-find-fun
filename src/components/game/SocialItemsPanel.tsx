@@ -16,7 +16,7 @@ interface SocialItemsPanelProps {
 }
 
 export default function SocialItemsPanel({
-  showPanel, setShowPanel, player, onSendSocial, messageInput, setMessageInput,
+  showPanel, setShowPanel, player, onSendSocial, messageInput, setMessageInput, actionLoading,
 }: SocialItemsPanelProps) {
   return (
     <div>
@@ -32,8 +32,8 @@ export default function SocialItemsPanel({
             const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
             return (
               <button key={item.type}
-                onClick={() => !isBombUsed && onSendSocial(item.type)}
-                disabled={isBombUsed}
+                onClick={() => !isBombUsed && !actionLoading && onSendSocial(item.type)}
+                disabled={isBombUsed || actionLoading}
                 className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isBombUsed ? "opacity-30" : ""}`}>
                 <span className="text-3xl block mb-1.5">{item.icon}</span>
                 <span className="text-[11px] font-semibold block leading-tight">{item.name}</span>
@@ -52,7 +52,7 @@ export default function SocialItemsPanel({
             <span className="text-xl pl-1">💡</span>
             <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
               placeholder="Pista o farol pel rival..." maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
-            <Button size="sm" disabled={!messageInput.trim()} onClick={() => onSendSocial("message")} className="shrink-0">
+            <Button size="sm" disabled={!messageInput.trim() || actionLoading} onClick={() => onSendSocial("message")} className="shrink-0">
               Enviar
             </Button>
           </div>
