@@ -14,4 +14,5 @@ Camins 100% predefinits per escenari. 3 escenaris inicials: Cuina, Biblioteca, G
 - [Ranking system](mem://features/ranking) — Elo intern + Lligues Bronze→Diamant
 - [Object validation](mem://features/objects) — Regex, diccionari, propietats booleanes
 - [Story Mode](mem://features/story-mode) — Mode Història, mascota, accesoris, consumibles, events salut
-- [Tools system](mem://features/tools-system) — Eines estratègiques: dirty bloqueja dins, broken bloqueja sobre+dins. Pools i probabilitats
+- [Tools system](mem://features/tools-system) — Eines estratègiques: dirty bloqueja dins, broken bloqueja sobre+dins
+- [Regressions](mem://features/regressions) — Tests de regressió REG-001..006 a regressions.test.ts
