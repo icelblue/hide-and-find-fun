@@ -91,6 +91,7 @@ export default function GamePage() {
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
+  const [rivalSmokeBombAt, setRivalSmokeBombAt] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
@@ -748,20 +749,11 @@ export default function GamePage() {
   const isOutdoor = OUTDOOR_SCENARIOS.includes(currentScenario?.name ?? "");
   const scenarioIsDark = scenarioIsDarkState;
 
-  // Compute looked spots, but reset if rival used smoke bomb after a look
-  // (smoke bomb moves the rival's object, so all previous hints are invalid)
   const lookedSpots = new Set<string>();
-  const rivalSmokeBombTime = (() => {
-    // Find the latest smoke bomb notification received (rival moved their object)
-    // These are stored as game_social_items with item_type='smoke_bomb' TO us
-    // We detect from moveHistory or social items — simplest: check game state
-    // Actually we track via game_social_items. For now, check if rival.smoke_bomb_used
-    // and find the timestamp from social items loaded in state.
-    return null; // Will be populated below
-  })();
-
   for (const m of moveHistory) {
     if (m.target_item_id && m.target_position && m.action === "look") {
+      // Skip looks that happened before the rival's smoke bomb (object moved, hints invalid)
+      if (rivalSmokeBombAt && m.created_at < rivalSmokeBombAt) continue;
       lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
     }
   }
