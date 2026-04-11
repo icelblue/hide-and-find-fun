@@ -99,6 +99,7 @@ export default function GamePage() {
   const [bonusAvailable, setBonusAvailable] = useState(0);
   const [bonusAmount, setBonusAmount] = useState(1);
   const [showBonusPicker, setShowBonusPicker] = useState(false);
+  const [savingTrophy, setSavingTrophy] = useState(false);
 
   // Story mode
   const isStory = !!(game as any)?.is_story;
