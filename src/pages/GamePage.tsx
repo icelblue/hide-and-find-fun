@@ -676,10 +676,15 @@ export default function GamePage() {
               setTrollEffect({ message: rivalSpecial.prompt_text, emoji: effect.emoji, animation: effect.animation });
               setTimeout(() => setTrollEffect(null), 6000);
             } else if (rivalSpecial.prompt_on === "find") {
-              // Only show trophy popup for specials triggered on find (not carta/hide-only)
               setSpecialFoundInput("");
               setSpecialFoundVariant(null);
               setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
+            } else if (rivalSpecial.find_special_type) {
+              // Dual-behavior objects (e.g. Foto): hide popup already done, now show find popup
+              const findSpecial = { ...rivalSpecial, special_type: rivalSpecial.find_special_type, prompt_text: rivalSpecial.find_prompt_text || rivalSpecial.prompt_text };
+              setSpecialFoundInput("");
+              setSpecialFoundVariant(null);
+              setShowSpecialFoundPopup({ special: findSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
             }
           }
 
