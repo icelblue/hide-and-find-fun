@@ -668,7 +668,6 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const [savingTrophy, setSavingTrophy] = useState(false);
   const handleSpecialFoundSubmit = async () => {
     if (!gameId || !user || !showSpecialFoundPopup || savingTrophy) return;
     setSavingTrophy(true);
