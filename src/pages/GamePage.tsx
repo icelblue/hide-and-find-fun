@@ -667,29 +667,47 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
+  const [savingTrophy, setSavingTrophy] = useState(false);
   const handleSpecialFoundSubmit = async () => {
-    if (!gameId || !user || !showSpecialFoundPopup) return;
-    const { special, rivalPlayer, objectId } = showSpecialFoundPopup;
-    const rivalObj = objects.find((o: any) => o.id === objectId);
-    const hideMsg = getHideMessage(rivalPlayer?.special_data);
-    const specialData = buildTrophySpecialData({
-      special,
-      objectRecord: rivalObj,
-      inputName: specialFoundInput,
-      variant: specialFoundVariant,
-      hideMessage: hideMsg,
-    });
+    if (!gameId || !user || !showSpecialFoundPopup || savingTrophy) return;
+    setSavingTrophy(true);
+    try {
+      const { special, rivalPlayer, objectId } = showSpecialFoundPopup;
+      const rivalObj = objects.find((o: any) => o.id === objectId);
+      const hideMsg = getHideMessage(rivalPlayer?.special_data);
+      const specialData = buildTrophySpecialData({
+        special,
+        objectRecord: rivalObj,
+        inputName: specialFoundInput,
+        variant: specialFoundVariant,
+        hideMessage: hideMsg,
+      });
 
-    await supabase.from("player_inventory").insert([{
-      user_id: user.id, game_id: gameId,
-      item_type: "special_trophy",
-      item_value: special.special_type === "choose_variant" ? specialFoundVariant?.value ?? null : specialFoundInput.trim() || null,
-      special_data: specialData,
-    }]);
-    toast.success(`🏆 Trofeu desat!`);
-    setShowSpecialFoundPopup(null);
-    setSpecialFoundInput("");
-    setSpecialFoundVariant(null);
+      // Check if trophy already saved for this game
+      const { data: existing } = await supabase.from("player_inventory")
+        .select("id").eq("user_id", user.id).eq("game_id", gameId)
+        .eq("item_type", "special_trophy").limit(1);
+      if (existing && existing.length > 0) {
+        toast.info("🏆 Ja tens el trofeu d'aquesta partida!");
+        setShowSpecialFoundPopup(null);
+        setSpecialFoundInput("");
+        setSpecialFoundVariant(null);
+        return;
+      }
+
+      await supabase.from("player_inventory").insert([{
+        user_id: user.id, game_id: gameId,
+        item_type: "special_trophy",
+        item_value: special.special_type === "choose_variant" ? specialFoundVariant?.value ?? null : specialFoundInput.trim() || null,
+        special_data: specialData,
+      }]);
+      toast.success(`🏆 Trofeu desat!`);
+      setShowSpecialFoundPopup(null);
+      setSpecialFoundInput("");
+      setSpecialFoundVariant(null);
+    } finally {
+      setSavingTrophy(false);
+    }
   };
 
   const handleSendSocial = async (type: SocialItemType) => {
