@@ -1039,6 +1039,10 @@ export type Database = {
         Args: { _player_reward_id: string; _scenario_id: string }
         Returns: undefined
       }
+      redeem_bonus_tokens: {
+        Args: { _amount: number; _game_id: string }
+        Returns: number
+      }
       sell_reward_item: { Args: { _player_reward_id: string }; Returns: number }
       start_game_setup: { Args: { _game_id: string }; Returns: undefined }
     }
