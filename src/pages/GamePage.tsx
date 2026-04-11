@@ -91,6 +91,7 @@ export default function GamePage() {
   const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
+  const [rivalSmokeBombAt, setRivalSmokeBombAt] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
@@ -310,6 +311,22 @@ export default function GamePage() {
     if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
       const r = await getGameReward(gameId, user.id);
       setReward(r);
+    }
+
+    // Check if rival used smoke bomb (resets our looked spots)
+    if (gameData?.status === "playing" && !isStoryGame && rivalData) {
+      const { data: smokeBombs } = await supabase
+        .from("game_social_items")
+        .select("created_at")
+        .eq("game_id", gameId)
+        .eq("from_player_id", rivalData.user_id)
+        .eq("item_type", "smoke_bomb")
+        .eq("blocked_by_shield", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      setRivalSmokeBombAt(smokeBombs?.[0]?.created_at ?? null);
+    } else {
+      setRivalSmokeBombAt(null);
     }
 
     // Process social items (PvP only)
@@ -751,6 +768,8 @@ export default function GamePage() {
   const lookedSpots = new Set<string>();
   for (const m of moveHistory) {
     if (m.target_item_id && m.target_position && m.action === "look") {
+      // Skip looks that happened before the rival's smoke bomb (object moved, hints invalid)
+      if (rivalSmokeBombAt && m.created_at < rivalSmokeBombAt) continue;
       lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
     }
   }
@@ -1232,7 +1251,8 @@ export default function GamePage() {
           {!isStory && (
             <SocialItemsPanel showPanel={showSocialPanel} setShowPanel={setShowSocialPanel}
               player={player} onSendSocial={handleSendSocial}
-              messageInput={messageInput} setMessageInput={setMessageInput} />
+              messageInput={messageInput} setMessageInput={setMessageInput}
+              actionLoading={actionLoading} />
           )}
 
           {/* History */}

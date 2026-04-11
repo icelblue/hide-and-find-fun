@@ -481,6 +481,18 @@ export default function ProfilePage() {
                         <div className="text-[11px] italic text-primary/80 mt-0.5">💌 "{sd.custom_message}"</div>
                       )}
                     </div>
+                    <button
+                      onClick={async () => {
+                        if (!confirm("Segur que vols eliminar aquest trofeu?")) return;
+                        await supabase.from("player_inventory").delete().eq("id", t.id);
+                        toast.success("Trofeu eliminat");
+                        loadData();
+                      }}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10"
+                      title="Eliminar trofeu"
+                    >
+                      🗑️
+                    </button>
                   </CardContent>
                 </Card>
               );

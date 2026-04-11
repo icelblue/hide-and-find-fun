@@ -1,6 +1,6 @@
 ---
-name: Social Items v2.0
-description: Daily social interactions - banana, smoke bomb (changes scenario+item), shield, swap (exchanges current scenarios), espia, message, robar_tornavis
+name: Social Items v2.1
+description: Daily social interactions - banana, smoke bomb (changes scenario+item), shield, swap (exchanges current scenarios), espia, message, robar_tornavis. Double-click protected via actionLoading.
 type: feature
 ---
 
@@ -21,7 +21,12 @@ type: feature
 - Selecciona moble aleatori dins del nou escenari
 - Posició (sobre/sota/dins) aleatòria dins del nou moble
 - MAI es queda al mateix escenari o moble
+- **Quan el rival usa bomba de fum, els llocs mirats prèviament es reinicien** (lookedSpots reset basat en timestamp)
 
 ### Swap — intercanvi de sales
 - Agafa `current_scenario_id` de cada jugador
 - Intercanvia: jugador A → sala de B, jugador B → sala de A
+
+### Protecció doble-clic
+- `actionLoading` es passa a SocialItemsPanel per desactivar tots els botons durant l'acció
+- Evita enviar múltiples ítems socials amb clics ràpids

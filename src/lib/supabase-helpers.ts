@@ -711,35 +711,13 @@ export async function ensureTokensReset(player: any) {
 }
 
 export async function redeemBonusTokens(gameId: string, userId: string, amount: number) {
-  if (amount <= 0) throw new Error("Has de triar almenys 1 token!");
-
-  const { data: profile } = await supabase.from("profiles").select("bonus_tokens").eq("user_id", userId).single();
-  const available = profile?.bonus_tokens ?? 0;
-  if (available <= 0) throw new Error("No tens bonus tokens disponibles!");
-  if (amount > available) throw new Error(`Només tens ${available} bonus tokens!`);
-
-  const { data: player } = await supabase
-    .from("game_players")
-    .select("id, tokens_remaining, bonus_tokens_added")
-    .eq("game_id", gameId)
-    .eq("user_id", userId)
-    .single();
-  if (!player) throw new Error("No ets a aquesta partida!");
-
-  await supabase
-    .from("game_players")
-    .update({
-      tokens_remaining: player.tokens_remaining + amount,
-      bonus_tokens_added: (player as any).bonus_tokens_added + amount,
-    })
-    .eq("id", player.id);
-
-  await supabase
-    .from("profiles")
-    .update({ bonus_tokens: available - amount })
-    .eq("user_id", userId);
-
-  return amount;
+  if (amount <= 0) throw new Error("Has de triar almenys 0.5 tokens!");
+  const { data, error } = await supabase.rpc("redeem_bonus_tokens" as any, {
+    _game_id: gameId,
+    _amount: amount,
+  });
+  if (error) throw new Error(error.message);
+  return data as number;
 }
 
 export async function performMove(
