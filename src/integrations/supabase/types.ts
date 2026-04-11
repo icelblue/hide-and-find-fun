@@ -402,6 +402,8 @@ export type Database = {
       }
       object_specials: {
         Row: {
+          find_prompt_text: string | null
+          find_special_type: string | null
           has_hide_message: boolean
           id: string
           object_id: string
@@ -411,6 +413,8 @@ export type Database = {
           variants: Json | null
         }
         Insert: {
+          find_prompt_text?: string | null
+          find_special_type?: string | null
           has_hide_message?: boolean
           id?: string
           object_id: string
@@ -420,6 +424,8 @@ export type Database = {
           variants?: Json | null
         }
         Update: {
+          find_prompt_text?: string | null
+          find_special_type?: string | null
           has_hide_message?: boolean
           id?: string
           object_id?: string
