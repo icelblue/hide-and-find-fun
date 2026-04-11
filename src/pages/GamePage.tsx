@@ -313,6 +313,22 @@ export default function GamePage() {
       setReward(r);
     }
 
+    // Check if rival used smoke bomb (resets our looked spots)
+    if (gameData?.status === "playing" && !isStoryGame && rivalData) {
+      const { data: smokeBombs } = await supabase
+        .from("game_social_items")
+        .select("created_at")
+        .eq("game_id", gameId)
+        .eq("from_player_id", rivalData.user_id)
+        .eq("item_type", "smoke_bomb")
+        .eq("blocked_by_shield", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      setRivalSmokeBombAt(smokeBombs?.[0]?.created_at ?? null);
+    } else {
+      setRivalSmokeBombAt(null);
+    }
+
     // Process social items (PvP only)
     if (gameData?.status === "playing" && !isStoryGame) {
       const { data: blockedItems } = await supabase
