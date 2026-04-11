@@ -12,6 +12,7 @@ interface SocialItemsPanelProps {
   onSendSocial: (type: SocialItemType) => void;
   messageInput: string;
   setMessageInput: (msg: string) => void;
+  actionLoading?: boolean;
 }
 
 export default function SocialItemsPanel({
