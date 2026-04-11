@@ -474,7 +474,16 @@ export default function GamePage() {
     }
     setSelectedPosition(pos);
 
-    if (objectSpecial && objectSpecial.prompt_on === "hide") {
+    // Re-fetch objectSpecial if lost (robustness against race conditions)
+    let special = objectSpecial;
+    if (!special && selectedObject) {
+      try {
+        special = await getObjectSpecial(selectedObject);
+        if (special) setObjectSpecial(special);
+      } catch { /* proceed without special */ }
+    }
+
+    if (special && special.prompt_on === "hide") {
       setHideStep(5);
       return;
     }
