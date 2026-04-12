@@ -21,6 +21,16 @@ interface FinishedPhaseProps {
   gameId: string;
 }
 
+interface ActionLogEntry {
+  id: string;
+  playerName: string;
+  turnNumber: number;
+  action: string;
+  description: string;
+  createdAt: string;
+  isOwn: boolean;
+}
+
 export default function GameFinishedPhase({ game, user, rival, reward, navigate, objects, scenarios, gameId }: FinishedPhaseProps) {
   const [rivalInfo, setRivalInfo] = useState<{
     obj: any; item: any; scenario: any; position: string;
@@ -28,8 +38,105 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
     specialType: string | null; traits: string[];
   } | null>(null);
   const [showRivalInfo, setShowRivalInfo] = useState(false);
+  const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
+  const [showActionLog, setShowActionLog] = useState(false);
 
   useEffect(() => {
+    if (!gameId || !user) return;
+
+    // Fetch action log for both players
+    (async () => {
+      // Get all moves + profiles in parallel
+      const [{ data: allMoves }, { data: profiles }] = await Promise.all([
+        supabase
+          .from("game_moves")
+          .select("id, player_id, turn_number, action, target_scenario_id, target_item_id, target_position, found_object, found_bonus, bonus_value, hint_level, token_cost, created_at")
+          .eq("game_id", gameId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("profiles")
+          .select("user_id, display_name"),
+      ]);
+
+      if (!allMoves || allMoves.length === 0) return;
+
+      // Get unique scenario/item IDs to batch-fetch names
+      const scenarioIds = [...new Set(allMoves.filter(m => m.target_scenario_id).map(m => m.target_scenario_id!))];
+      const itemIds = [...new Set(allMoves.filter(m => m.target_item_id).map(m => m.target_item_id!))];
+
+      const [{ data: scenarioData }, { data: itemData }] = await Promise.all([
+        scenarioIds.length > 0
+          ? supabase.from("scenarios").select("id, name, icon").in("id", scenarioIds)
+          : { data: [] as any[] },
+        itemIds.length > 0
+          ? supabase.from("items").select("id, name, icon").in("id", itemIds)
+          : { data: [] as any[] },
+      ]);
+
+      const scenarioMap = new Map((scenarioData ?? []).map(s => [s.id, s]));
+      const itemMap = new Map((itemData ?? []).map(i => [i.id, i]));
+      const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? "Jugador"]));
+
+      const log: ActionLogEntry[] = allMoves.map(m => {
+        const playerName = profileMap.get(m.player_id) ?? "Jugador";
+        const isOwn = m.player_id === user.id;
+        let description = "";
+
+        const bonusVal = (m.bonus_value as string) ?? "";
+
+        // Tag actions (light, break, clean, fix)
+        if (bonusVal.startsWith("tag:light_off:")) {
+          const scnId = bonusVal.replace("tag:light_off:", "");
+          const scn = scenarioMap.get(scnId);
+          description = `🌑 Apaga el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+        } else if (bonusVal.startsWith("tag:light_on:")) {
+          const scnId = bonusVal.replace("tag:light_on:", "");
+          const scn = scenarioMap.get(scnId);
+          description = `💡 Encén el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+        } else if (bonusVal.startsWith("tag:break:")) {
+          const itm = itemMap.get(m.target_item_id ?? "");
+          description = `💥 Trenca ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+        } else if (bonusVal.startsWith("tag:clean:")) {
+          const itm = itemMap.get(m.target_item_id ?? "");
+          description = `🧹 Neteja ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+        } else if (bonusVal.startsWith("tag:fix:")) {
+          const itm = itemMap.get(m.target_item_id ?? "");
+          description = `🔧 Arregla ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+        } else if (m.action === "move") {
+          const scn = scenarioMap.get(m.target_scenario_id ?? "");
+          description = `🚶 Es mou a ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+        } else if (m.action === "look" && m.target_item_id) {
+          const itm = itemMap.get(m.target_item_id);
+          const posLabel = m.target_position ? POS_LABELS[m.target_position] ?? m.target_position : "";
+          const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥", 3: "🏆" };
+          const hint = m.hint_level != null ? ` ${hintIcons[m.hint_level] ?? ""}` : "";
+          if (m.found_object) {
+            description = `🏆 TROBA l'objecte a ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}!`;
+          } else {
+            description = `👀 Observa ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}${hint}`;
+          }
+        } else if (m.action === "confirm") {
+          const itm = itemMap.get(m.target_item_id ?? "");
+          description = `🎯 Confirma ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+        } else {
+          description = `${m.action}`;
+        }
+
+        return {
+          id: m.id,
+          playerName,
+          turnNumber: m.turn_number,
+          action: m.action,
+          description: description.trim(),
+          createdAt: m.created_at,
+          isOwn,
+        };
+      });
+
+      setActionLog(log);
+    })();
+
+    // Rival info (loser only)
     if (game.winner_id === user?.id || !rival) return;
     (async () => {
       const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
@@ -67,7 +174,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         traits,
       });
     })();
-  }, [game.winner_id, user?.id, rival, scenarios]);
+  }, [game.winner_id, user?.id, rival, scenarios, gameId]);
 
   const isWinner = game.winner_id === user?.id;
 
@@ -150,6 +257,43 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                     <p className="text-sm italic text-foreground/80">"{rivalInfo.hideMessage}"</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Action Log */}
+      {actionLog.length > 0 && (
+        <div className="mb-6">
+          {!showActionLog ? (
+            <Button variant="outline" onClick={() => setShowActionLog(true)} className="mb-2">
+              📋 Veure historial d'accions ({actionLog.length})
+            </Button>
+          ) : (
+            <Card className="mx-auto max-w-sm glass border-border/30">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                    📋 Historial de la partida
+                  </p>
+                  <button onClick={() => setShowActionLog(false)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
+                </div>
+                <div className="space-y-0.5 max-h-60 overflow-y-auto text-left" style={{ WebkitOverflowScrolling: "touch" }}>
+                  {actionLog.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className={`text-[10px] rounded-md px-2 py-1.5 border border-border/15 ${
+                        entry.isOwn ? "bg-primary/5 border-primary/20" : "bg-secondary/5 border-secondary/20"
+                      }`}
+                    >
+                      <span className={`font-semibold ${entry.isOwn ? "text-primary" : "text-secondary"}`}>
+                        {entry.playerName}
+                      </span>
+                      <span className="text-muted-foreground ml-1">{entry.description}</span>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
