@@ -25,14 +25,17 @@ Deno.serve(async () => {
     };
 
     // ─────────────────────────────────────────────
-    // 1. FINISHED games — only clean moves & social items
+    // 1. FINISHED games > 7 days — clean moves & social items
+    //    (keep recent finished games so players can see the action log)
     //    KEEP: games, game_players (stats), player_inventory (trophies), player_rewards
     // ─────────────────────────────────────────────
-    const { data: finishedGames } = await supabase
+    const finishedCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: oldFinishedGames } = await supabase
       .from("games").select("id")
-      .eq("status", "finished");
+      .eq("status", "finished")
+      .lt("updated_at", finishedCutoff);
 
-    const finishedIds = (finishedGames ?? []).map(g => g.id);
+    const finishedIds = (oldFinishedGames ?? []).map(g => g.id);
 
     if (finishedIds.length > 0) {
       for (let i = 0; i < finishedIds.length; i += 100) {
