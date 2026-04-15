@@ -12,7 +12,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const DISMISS_KEY = "dd_install_banner_dismissed";
-const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 dies
 
 type Platform = "android" | "ios" | "desktop";
 
