@@ -43,12 +43,8 @@ function isInIframe(): boolean {
 
 function isDismissed(): boolean {
   try {
-    const val = localStorage.getItem(DISMISS_KEY);
-    if (!val) return false;
-    const ts = parseInt(val, 10);
-    if (Date.now() - ts < DISMISS_DURATION_MS) return true;
-    localStorage.removeItem(DISMISS_KEY);
-    return false;
+    // Dismiss is per-session: uses sessionStorage instead of localStorage
+    return sessionStorage.getItem(DISMISS_KEY) === "1";
   } catch {
     return false;
   }
