@@ -10,4 +10,4 @@
  * Seguim Semantic Versioning (MAJOR.MINOR.PATCH).
  * Actualitzeu-la a cada release i sincronitzeu amb CHANGELOG.md.
  */
-export const APP_VERSION = "1.9.1";
+export const APP_VERSION = "1.10.0";
