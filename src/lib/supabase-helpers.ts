@@ -438,7 +438,7 @@ export async function joinGame(gameId: string, userId: string) {
     .maybeSingle();
   if (existing) throw new Error("Ja ets a aquesta partida!");
 
-  const { data: game } = await supabase.from("games").select("id, status, invited_user_id").eq("id", gameId).single();
+  const { data: game } = await supabase.from("games").select("id, status, invited_user_id, created_by").eq("id", gameId).single();
   if (!game) throw new Error("Partida no trobada");
   if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
 
