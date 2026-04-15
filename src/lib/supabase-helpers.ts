@@ -410,6 +410,22 @@ export async function createGame(userId: string, invitedUserId?: string) {
 
   const { error: playerError } = await supabase.from("game_players").insert({ game_id: game.id, user_id: userId });
   if (playerError) throw playerError;
+
+  // Send push notification to invited player (fire & forget)
+  if (invitedUserId) {
+    const { data: profile } = await supabase.from("profiles").select("display_name").eq("user_id", userId).single();
+    const name = profile?.display_name ?? "Algú";
+    supabase.functions.invoke("send-push", {
+      body: {
+        user_ids: [invitedUserId],
+        title: "🎯 Repte rebut!",
+        body: `${name} t'ha reptat a una partida!`,
+        url: `/game/${game.id}`,
+        tag: `challenge-${game.id}`,
+      },
+    }).catch(() => {});
+  }
+
   return game;
 }
 
