@@ -456,6 +456,21 @@ export async function joinGame(gameId: string, userId: string) {
     .from("games")
     .update({ status: "hiding" as const })
     .eq("id", gameId);
+
+  // Notify the game creator that someone joined (fire & forget)
+  if (game) {
+    const { data: profile } = await supabase.from("profiles").select("display_name").eq("user_id", userId).single();
+    const name = profile?.display_name ?? "Algú";
+    supabase.functions.invoke("send-push", {
+      body: {
+        user_ids: [game.created_by],
+        title: "🎮 Partida iniciada!",
+        body: `${name} s'ha unit a la teva partida!`,
+        url: `/game/${gameId}`,
+        tag: `join-${gameId}`,
+      },
+    }).catch(() => {});
+  }
 }
 
 export async function getAvailableGames(currentUserId: string) {
