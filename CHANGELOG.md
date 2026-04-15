@@ -7,6 +7,27 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.10.0] — 2026-04-15 — PWA instal·lable amb banner intel·ligent (MINOR)
+
+### Afegit
+- **PWA manifest**: `public/manifest.json` amb icones 192x512, standalone, portrait
+- **Banner d'instal·lació intel·ligent** (`InstallBanner`):
+  - Detecta automàticament Android / iOS / Desktop
+  - Android: intercepta `beforeinstallprompt` → instal·lació en 1 clic
+  - iOS: guia visual pas a pas (Compartir → Afegir a pantalla d'inici)
+  - No apareix si ja està instal·lada, en desktop, o en iframe (preview)
+  - Es pot descartar — no torna en 7 dies (localStorage)
+- **Meta tags iOS**: `apple-mobile-web-app-capable`, `apple-touch-icon`, `status-bar-style`
+- **Icones PWA**: 192px i 512px amb temàtica del joc (lupa + interrogant)
+- **Tests**: 6 tests nous per la lògica de detecció del banner
+
+### Validat
+- 112 tests ✅ (tots passen, cap regressió)
+- Cap service worker — zero risc de cache antiga
+- L'app funciona exactament igual que abans
+
+---
+
 ## [1.9.4] — 2026-04-10 — Mobile speed & accessibility hardening (PATCH)
 
 ### Millorat
