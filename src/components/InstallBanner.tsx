@@ -102,7 +102,7 @@ export function InstallBanner() {
   const dismiss = useCallback(() => {
     setVisible(false);
     try {
-      localStorage.setItem(DISMISS_KEY, Date.now().toString());
+      sessionStorage.setItem(DISMISS_KEY, "1");
     } catch { /* ignore */ }
   }, []);
 
