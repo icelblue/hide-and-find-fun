@@ -4,7 +4,7 @@
 // Detecta plataforma (Android/iOS/Desktop) i si ja està instal·lada.
 // Android: usa beforeinstallprompt per instal·lació en 1 clic.
 // iOS: mostra guia visual pas a pas (Compartir → Afegir).
-// Un cop descartat, no torna a aparèixer (localStorage).
+// Descartat per sessió (sessionStorage).
 // ============================================================
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -22,7 +22,9 @@ interface BeforeInstallPromptEvent extends Event {
 
 function getPlatform(): Platform {
   const ua = navigator.userAgent || "";
+  // iOS: iPhone, iPad, iPod — iPadOS 13+ reports as Mac but has touch
   if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) return "ios";
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return "ios"; // iPadOS 13+
   if (/Android/i.test(ua)) return "android";
   return "desktop";
 }
@@ -43,17 +45,26 @@ function isInIframe(): boolean {
 
 function isDismissed(): boolean {
   try {
-    // Dismiss is per-session: uses sessionStorage instead of localStorage
     return sessionStorage.getItem(DISMISS_KEY) === "1";
   } catch {
     return false;
   }
 }
 
+/** Detect browser for Android fallback instructions */
+function getAndroidBrowser(): "chrome" | "firefox" | "samsung" | "other" {
+  const ua = navigator.userAgent || "";
+  if (/SamsungBrowser/i.test(ua)) return "samsung";
+  if (/Firefox/i.test(ua)) return "firefox";
+  if (/Chrome/i.test(ua) && !/Edge|Edg/i.test(ua)) return "chrome";
+  return "other";
+}
+
 export function InstallBanner() {
   const [visible, setVisible] = useState(false);
   const [platform, setPlatform] = useState<Platform>("desktop");
-  const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [hasNativePrompt, setHasNativePrompt] = useState(false);
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -76,12 +87,13 @@ export function InstallBanner() {
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
+      setHasNativePrompt(true);
       setVisible(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // Fallback: si no arriba l'event en 3s, mostrar igualment (Chrome pot no enviar-lo)
+    // Fallback: si no arriba l'event en 3s, mostrar igualment amb instruccions manuals
     const fallbackTimer = setTimeout(() => {
       if (!deferredPrompt.current) setVisible(true);
     }, 3000);
@@ -114,14 +126,20 @@ export function InstallBanner() {
         setVisible(false);
       }
       deferredPrompt.current = null;
+    } else {
+      // No native prompt available — show manual instructions
+      setShowGuide(true);
     }
   }, []);
 
   if (!visible) return null;
 
+  const androidBrowser = getAndroidBrowser();
+
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 p-3 animate-in slide-in-from-bottom duration-300"
+      className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-300"
+      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))", paddingLeft: "0.75rem", paddingRight: "0.75rem", paddingTop: "0.75rem" }}
       role="banner"
       aria-label="Instal·lar aplicació"
     >
@@ -150,7 +168,8 @@ export function InstallBanner() {
               </button>
             </div>
 
-            {platform === "android" && !showIOSGuide && (
+            {/* Android with native prompt */}
+            {platform === "android" && !showGuide && hasNativePrompt && (
               <>
                 <p className="text-xs text-muted-foreground mt-1">
                   Afegeix-la a la pantalla d'inici per accés ràpid 🎮
@@ -165,7 +184,8 @@ export function InstallBanner() {
               </>
             )}
 
-            {platform === "ios" && !showIOSGuide && (
+            {/* Android without native prompt — show instructions */}
+            {platform === "android" && !showGuide && !hasNativePrompt && (
               <>
                 <p className="text-xs text-muted-foreground mt-1">
                   Afegeix-la a la pantalla d'inici per jugar com una app real
@@ -174,14 +194,32 @@ export function InstallBanner() {
                   size="sm"
                   variant="secondary"
                   className="mt-2 w-full text-xs h-8"
-                  onClick={() => setShowIOSGuide(true)}
+                  onClick={() => setShowGuide(true)}
+                >
+                  Com s'instal·la? 📱
+                </Button>
+              </>
+            )}
+
+            {/* iOS initial */}
+            {platform === "ios" && !showGuide && (
+              <>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Afegeix-la a la pantalla d'inici per jugar com una app real
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="mt-2 w-full text-xs h-8"
+                  onClick={() => setShowGuide(true)}
                 >
                   Com s'instal·la? 👆
                 </Button>
               </>
             )}
 
-            {showIOSGuide && (
+            {/* iOS guide */}
+            {showGuide && platform === "ios" && (
               <div className="mt-2 space-y-2">
                 <div className="flex items-center gap-2 text-xs text-foreground">
                   <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">1</span>
@@ -194,6 +232,58 @@ export function InstallBanner() {
                 <div className="flex items-center gap-2 text-xs text-foreground">
                   <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">3</span>
                   <span>Toca <strong>"Afegir"</strong> — ja la tens! 🎉</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs h-7 mt-1"
+                  onClick={dismiss}
+                >
+                  Entès!
+                </Button>
+              </div>
+            )}
+
+            {/* Android guide (Firefox, Samsung, etc.) */}
+            {showGuide && platform === "android" && (
+              <div className="mt-2 space-y-2">
+                {androidBrowser === "firefox" ? (
+                  <>
+                    <div className="flex items-center gap-2 text-xs text-foreground">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">1</span>
+                      <span>Toca <strong>⋮</strong> (menú) a dalt a la dreta</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-foreground">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">2</span>
+                      <span>Selecciona <strong>"Instal·lar"</strong> 📥</span>
+                    </div>
+                  </>
+                ) : androidBrowser === "samsung" ? (
+                  <>
+                    <div className="flex items-center gap-2 text-xs text-foreground">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">1</span>
+                      <span>Toca <strong>☰</strong> (menú) a baix a la dreta</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-foreground">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">2</span>
+                      <span>Selecciona <strong>"Afegir a pantalla d'inici"</strong> ➕</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 text-xs text-foreground">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">1</span>
+                      <span>Toca <strong>⋮</strong> (menú) a dalt a la dreta</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-foreground">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">2</span>
+                      <span>Selecciona <strong>"Afegir a pantalla d'inici"</strong> ➕</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex items-center gap-2 text-xs text-foreground">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">✓</span>
+                  <span>Confirma — ja la tens! 🎉</span>
                 </div>
                 <Button
                   size="sm"
