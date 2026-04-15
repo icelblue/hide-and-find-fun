@@ -13,7 +13,4 @@ Camins 100% predefinits per escenari. 3 escenaris inicials: Cuina, Biblioteca, G
 - [Social items](mem://features/social-items) — Plàtan, bomba fum, pista falsa, escut, missatge
 - [Ranking system](mem://features/ranking) — Elo intern + Lligues Bronze→Diamant
 - [Object validation](mem://features/objects) — Regex, diccionari, propietats booleanes
-- [Story Mode](mem://features/story-mode) — Mode Història, mascota, accesoris, consumibles, events salut
-- [Tools system](mem://features/tools-system) — Eines estratègiques: dirty bloqueja dins, broken bloqueja sobre+dins
-- [Regressions](mem://features/regressions) — Tests de regressió REG-001..006 a regressions.test.ts
-- [PWA + Notifications](mem://features/pwa-notifications) — Pla PWA instal·lable + push notifications Android/iOS
+- [PWA + Push Notifications](mem://features/pwa-notifications) — PWA instal·lable + push VAPID complet amb triggers

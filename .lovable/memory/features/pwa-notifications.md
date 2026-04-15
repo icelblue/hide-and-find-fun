@@ -1,31 +1,37 @@
 ---
-name: PWA Install Banner
-description: PWA instal·lable amb banner intel·ligent Android/iOS, sense service worker
+name: PWA + Push Notifications
+description: PWA instal·lable + notificacions push completes (VAPID, SW, edge function)
 type: feature
 ---
 
-## Estat actual (v1.10.0)
+## Estat actual (v1.11.0)
 
-### Implementat ✅
-- `public/manifest.json` — standalone, portrait, icones 192+512 (separades `any` i `maskable`)
-- `src/components/InstallBanner.tsx` — banner intel·ligent
-- Meta tags iOS a `index.html` (apple-touch-icon, apple-mobile-web-app-capable, status-bar-style)
-- Tests a `InstallBanner.test.tsx` (8 tests)
-- CSS safe-area en standalone mode (notch, home indicator)
+### PWA Instal·lable ✅
+- `public/manifest.json` — standalone, portrait, icones 192+512
+- `src/components/InstallBanner.tsx` — banner intel·ligent Android/iOS/iPadOS
+- Meta tags iOS a `index.html`
+- CSS safe-area en standalone mode
+- Tests a `InstallBanner.test.tsx`
 
-### Com funciona
-- **Android (Chrome)**: intercepta `beforeinstallprompt` → botó "Instal·lar" → 1 clic
-- **Android (Firefox/Samsung)**: guia visual manual per navegador específic
-- **iOS (Safari)**: guia visual 3 passos (Compartir → Afegir a pantalla d'inici)
-- **iPadOS 13+**: detectat via `navigator.maxTouchPoints` (reporta com Mac)
-- **Desktop**: no mostra banner
-- **Ja instal·lada**: no mostra (detecta `display-mode: standalone` + `navigator.standalone`)
-- **Iframe/preview**: no mostra (detecta `window.self !== window.top`)
-- **Descartat**: no torna fins sessió nova (`sessionStorage`)
+### Push Notifications ✅
+- **Service Worker**: `public/sw.js` — rep push, mostra notificació, gestiona clic
+- **Client**: `src/lib/push-notifications.ts` — registra SW, subscriu, gestiona permisos
+- **Edge function**: `supabase/functions/send-push/index.ts` — envia via web-push + VAPID
+- **Taula**: `push_subscriptions` (user_id, endpoint, p256dh, auth_key, platform) amb RLS
+- **Auto-subscribe**: `useAuth.tsx` registra SW i subscriu 3s després del login
+- **Neteja automàtica**: endpoint expirats (404/410) eliminats automàticament
 
-### Pendent (fase futura)
-- Notificacions push amb VAPID keys
-- Taula `push_subscriptions` (user_id, endpoint, keys, platform)
-- Edge function `send-push` per disparar alertes
-- Triggers: inici partida, ítems socials, invitacions
-- iOS requereix PWA instal·lada per notificacions (Safari 16.4+)
+### Triggers de notificació
+- 🎯 **Repte rebut** — quan et repten a una partida (`createGame` amb invitedUserId)
+- 🎮 **Partida iniciada** — quan algú s'uneix a la teva partida (`joinGame`)
+- 📦 **Ítem social rebut** — banana, bomba fum, pista falsa, missatge, swap, robatori (`sendSocialItem`)
+
+### Claus VAPID
+- Pública: hardcoded al client (`BGyv-wk...`)
+- Privada: secret `VAPID_PRIVATE_KEY`
+- Subject: `mailto:maricel11alsina@gmail.com`
+
+### Notes iOS
+- iOS 16.4+ suporta push NOMÉS amb PWA instal·lada (standalone)
+- Cal que l'usuari accepti el permís de notificació
+- El banner guia l'usuari a instal·lar primer

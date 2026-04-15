@@ -410,6 +410,22 @@ export async function createGame(userId: string, invitedUserId?: string) {
 
   const { error: playerError } = await supabase.from("game_players").insert({ game_id: game.id, user_id: userId });
   if (playerError) throw playerError;
+
+  // Send push notification to invited player (fire & forget)
+  if (invitedUserId) {
+    const { data: profile } = await supabase.from("profiles").select("display_name").eq("user_id", userId).single();
+    const name = profile?.display_name ?? "Algú";
+    supabase.functions.invoke("send-push", {
+      body: {
+        user_ids: [invitedUserId],
+        title: "🎯 Repte rebut!",
+        body: `${name} t'ha reptat a una partida!`,
+        url: `/game/${game.id}`,
+        tag: `challenge-${game.id}`,
+      },
+    }).catch(() => {});
+  }
+
   return game;
 }
 
@@ -422,7 +438,7 @@ export async function joinGame(gameId: string, userId: string) {
     .maybeSingle();
   if (existing) throw new Error("Ja ets a aquesta partida!");
 
-  const { data: game } = await supabase.from("games").select("id, status, invited_user_id").eq("id", gameId).single();
+  const { data: game } = await supabase.from("games").select("id, status, invited_user_id, created_by").eq("id", gameId).single();
   if (!game) throw new Error("Partida no trobada");
   if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
 
@@ -440,6 +456,21 @@ export async function joinGame(gameId: string, userId: string) {
     .from("games")
     .update({ status: "hiding" as const })
     .eq("id", gameId);
+
+  // Notify the game creator that someone joined (fire & forget)
+  if (game) {
+    const { data: profile } = await supabase.from("profiles").select("display_name").eq("user_id", userId).single();
+    const name = profile?.display_name ?? "Algú";
+    supabase.functions.invoke("send-push", {
+      body: {
+        user_ids: [game.created_by],
+        title: "🎮 Partida iniciada!",
+        body: `${name} s'ha unit a la teva partida!`,
+        url: `/game/${gameId}`,
+        tag: `join-${gameId}`,
+      },
+    }).catch(() => {});
+  }
 }
 
 export async function getAvailableGames(currentUserId: string) {
@@ -870,6 +901,25 @@ export async function sendSocialItem(
     message_text: messageText,
     blocked_by_shield: blocked,
   });
+
+  // Send push notification for social items (fire & forget)
+  if (itemType !== "espia" && itemType !== "shield" && toPlayerId !== fromPlayerId) {
+    const itemLabels: Record<string, string> = {
+      banana: "🍌 Plàtan", smoke_bomb: "💨 Bomba de fum", false_clue: "🃏 Pista falsa",
+      message: "💬 Missatge", swap: "🔄 Intercanvi", robar_tornavis: "🔧 Robatori",
+    };
+    supabase.functions.invoke("send-push", {
+      body: {
+        user_ids: [toPlayerId],
+        title: blocked ? "🛡️ Escut activat!" : (itemLabels[itemType] ?? "📦 Ítem social"),
+        body: blocked
+          ? "Un ítem social ha estat bloquejat pel teu escut!"
+          : `Has rebut ${itemLabels[itemType] ?? "un ítem social"}${messageText ? `: ${messageText}` : ""}`,
+        url: `/game/${gameId}`,
+        tag: `social-${gameId}`,
+      },
+    }).catch(() => {});
+  }
 
   return { blocked, espiaResult };
 }
