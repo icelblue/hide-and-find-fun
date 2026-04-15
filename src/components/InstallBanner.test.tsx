@@ -18,20 +18,16 @@ describe("InstallBanner — lògica de detecció", () => {
     expect(matchMediaMock("(display-mode: standalone)").matches).toBe(true);
   });
 
-  it("localStorage dismiss funciona 7 dies", () => {
+  it("sessionStorage dismiss dura només la sessió", () => {
     const DISMISS_KEY = "dd_install_banner_dismissed";
-    const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
-    // Set dismissed just now
-    localStorage.setItem(DISMISS_KEY, Date.now().toString());
-    const val = localStorage.getItem(DISMISS_KEY);
-    expect(val).toBeTruthy();
-    expect(Date.now() - parseInt(val!, 10) < DISMISS_DURATION_MS).toBe(true);
+    // Dismiss sets sessionStorage
+    sessionStorage.setItem(DISMISS_KEY, "1");
+    expect(sessionStorage.getItem(DISMISS_KEY)).toBe("1");
 
-    // Set dismissed 8 days ago = expired
-    localStorage.setItem(DISMISS_KEY, (Date.now() - 8 * 24 * 60 * 60 * 1000).toString());
-    const old = localStorage.getItem(DISMISS_KEY);
-    expect(Date.now() - parseInt(old!, 10) < DISMISS_DURATION_MS).toBe(false);
+    // Clearing simulates new session
+    sessionStorage.clear();
+    expect(sessionStorage.getItem(DISMISS_KEY)).toBeNull();
   });
 
   it("no mostra en iframe (preview Lovable)", () => {

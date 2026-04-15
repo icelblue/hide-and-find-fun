@@ -12,7 +12,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const DISMISS_KEY = "dd_install_banner_dismissed";
-const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 dies
 
 type Platform = "android" | "ios" | "desktop";
 
@@ -44,12 +43,8 @@ function isInIframe(): boolean {
 
 function isDismissed(): boolean {
   try {
-    const val = localStorage.getItem(DISMISS_KEY);
-    if (!val) return false;
-    const ts = parseInt(val, 10);
-    if (Date.now() - ts < DISMISS_DURATION_MS) return true;
-    localStorage.removeItem(DISMISS_KEY);
-    return false;
+    // Dismiss is per-session: uses sessionStorage instead of localStorage
+    return sessionStorage.getItem(DISMISS_KEY) === "1";
   } catch {
     return false;
   }
@@ -107,7 +102,7 @@ export function InstallBanner() {
   const dismiss = useCallback(() => {
     setVisible(false);
     try {
-      localStorage.setItem(DISMISS_KEY, Date.now().toString());
+      sessionStorage.setItem(DISMISS_KEY, "1");
     } catch { /* ignore */ }
   }, []);
 
