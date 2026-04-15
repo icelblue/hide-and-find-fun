@@ -70,6 +70,7 @@ export default function GamePage() {
   const [specialInput, setSpecialInput] = useState("");
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [hideMessage, setHideMessage] = useState("");
+  const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
 
   // Playing state
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
