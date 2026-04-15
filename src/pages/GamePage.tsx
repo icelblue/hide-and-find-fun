@@ -484,14 +484,14 @@ export default function GamePage() {
       } catch { /* proceed without special */ }
     }
 
-    if (special && special.prompt_on === "hide") {
-      setHideStep(5);
+    // Show hide message popup if object supports it
+    if (special && (special as any).has_hide_message) {
+      setShowHideMessagePopup(true);
       return;
     }
 
-    // Show hide message popup if object supports it
-    if (special && special.prompt_on !== "hide" && (special as any).has_hide_message) {
-      setShowHideMessagePopup(true);
+    if (special && special.prompt_on === "hide") {
+      setHideStep(5);
       return;
     }
 
