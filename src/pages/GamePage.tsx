@@ -40,7 +40,7 @@ import { HelpButton, Tip } from "@/components/HelpButton";
 import ItemActions from "@/components/game/ItemActions";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
-import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker } from "@/components/game/GamePopups";
+import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup } from "@/components/game/GamePopups";
 
 const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -70,6 +70,7 @@ export default function GamePage() {
   const [specialInput, setSpecialInput] = useState("");
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [hideMessage, setHideMessage] = useState("");
+  const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
 
   // Playing state
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
@@ -487,6 +488,13 @@ export default function GamePage() {
       setHideStep(5);
       return;
     }
+
+    // Show hide message popup if object supports it
+    if (special && special.prompt_on !== "hide" && (special as any).has_hide_message) {
+      setShowHideMessagePopup(true);
+      return;
+    }
+
     await doHide(pos);
   };
 
@@ -826,6 +834,10 @@ export default function GamePage() {
         onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); setSpecialFoundVariant(null); }} />
       <MessagePopup message={receivedMessage} onClose={() => setReceivedMessage(null)} />
       <TrollEffect effect={trollEffect} onClose={() => setTrollEffect(null)} />
+      <HideMessagePopup show={showHideMessagePopup} hideMessage={hideMessage}
+        onMessageChange={setHideMessage} loading={actionLoading}
+        onConfirm={async () => { setShowHideMessagePopup(false); await doHide(); }}
+        onSkip={async () => { setHideMessage(""); setShowHideMessagePopup(false); await doHide(); }} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
@@ -984,23 +996,6 @@ export default function GamePage() {
               <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
               <div className="h-3" />
 
-              {objectSpecial && objectSpecial.prompt_on !== "hide" && (objectSpecial as any).has_hide_message && (
-              <Card className="mb-4 glass border-accent/30 glow-accent">
-                <CardContent className="py-3 px-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">💌</span>
-                    <div>
-                      <p className="text-sm font-semibold">Missatge secret</p>
-                      <p className="text-[10px] text-muted-foreground">El rival el veurà quan trobi l'objecte!</p>
-                    </div>
-                  </div>
-                  <Input value={hideMessage} onChange={e => setHideMessage(e.target.value)}
-                    placeholder="Ex: T'ha costat eh! 😏" maxLength={100}
-                    className="text-sm bg-accent/10 border-accent/30 placeholder:text-muted-foreground/50" />
-                  <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{hideMessage.length}/100</p>
-                </CardContent>
-              </Card>
-              )}
 
               <div className="grid grid-cols-3 gap-3">
                 {POSITIONS.map(pos => {

@@ -88,6 +88,42 @@ export function SpecialFoundPopup({
   );
 }
 
+interface HideMessagePopupProps {
+  show: boolean;
+  hideMessage: string;
+  onMessageChange: (value: string) => void;
+  onConfirm: () => void;
+  onSkip: () => void;
+  loading?: boolean;
+}
+
+export function HideMessagePopup({ show, hideMessage, onMessageChange, onConfirm, onSkip, loading }: HideMessagePopupProps) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Missatge secret">
+      <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
+        <CardContent className="py-6">
+          <div className="text-center mb-4">
+            <div className="text-5xl mb-2">💌</div>
+            <p className="font-bold text-lg">Missatge secret</p>
+            <p className="text-xs text-muted-foreground">El rival el veurà quan trobi l'objecte!</p>
+          </div>
+          <Input value={hideMessage} onChange={e => onMessageChange(e.target.value)}
+            placeholder="Ex: T'ha costat eh! 😏" maxLength={100}
+            className="text-sm bg-accent/10 border-accent/30 placeholder:text-muted-foreground/50 mb-1" />
+          <p className="text-[9px] text-muted-foreground/50 text-right mb-4">{hideMessage.length}/100</p>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={onSkip} disabled={loading}>Sense missatge</Button>
+            <Button className="flex-1" onClick={onConfirm} disabled={loading}>
+              {loading ? "Amagant..." : "Amagar 🫣"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 interface MessagePopupProps {
   message: string | null;
   onClose: () => void;
