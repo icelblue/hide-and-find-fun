@@ -488,6 +488,13 @@ export default function GamePage() {
       setHideStep(5);
       return;
     }
+
+    // Show hide message popup if object supports it
+    if (special && special.prompt_on !== "hide" && (special as any).has_hide_message) {
+      setShowHideMessagePopup(true);
+      return;
+    }
+
     await doHide(pos);
   };
 
