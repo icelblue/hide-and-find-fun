@@ -887,6 +887,25 @@ export async function sendSocialItem(
     blocked_by_shield: blocked,
   });
 
+  // Send push notification for social items (fire & forget)
+  if (itemType !== "espia" && itemType !== "shield" && toPlayerId !== fromPlayerId) {
+    const itemLabels: Record<string, string> = {
+      banana: "🍌 Plàtan", smoke_bomb: "💨 Bomba de fum", false_clue: "🃏 Pista falsa",
+      message: "💬 Missatge", swap: "🔄 Intercanvi", robar_tornavis: "🔧 Robatori",
+    };
+    supabase.functions.invoke("send-push", {
+      body: {
+        user_ids: [toPlayerId],
+        title: blocked ? "🛡️ Escut activat!" : (itemLabels[itemType] ?? "📦 Ítem social"),
+        body: blocked
+          ? "Un ítem social ha estat bloquejat pel teu escut!"
+          : `Has rebut ${itemLabels[itemType] ?? "un ítem social"}${messageText ? `: ${messageText}` : ""}`,
+        url: `/game/${gameId}`,
+        tag: `social-${gameId}`,
+      },
+    }).catch(() => {});
+  }
+
   return { blocked, espiaResult };
 }
 
