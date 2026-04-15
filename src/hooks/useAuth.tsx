@@ -13,7 +13,8 @@
 // PostgreSQL `handle_new_user()` — no cal fer-ho aquí.
 // ============================================================
 
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
+import { registerServiceWorker, subscribeToPush, isPushSupported } from "@/lib/push-notifications";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -37,6 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const pushInitRef = useRef(false);
+
   useEffect(() => {
     // Subscripció reactiva a canvis d'autenticació
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -50,8 +53,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
+    // Register service worker on mount
+    registerServiceWorker();
+
     return () => subscription.unsubscribe();
   }, []);
+
+  // Auto-subscribe to push when user logs in
+  useEffect(() => {
+    if (user && !pushInitRef.current && isPushSupported()) {
+      pushInitRef.current = true;
+      // Small delay to not block UI
+      const timer = setTimeout(() => {
+        subscribeToPush().catch(() => {});
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    if (!user) {
+      pushInitRef.current = false;
+    }
+  }, [user]);
 
   /** Registre amb email, password i nom de jugador */
   const signUp = async (email: string, password: string, displayName: string) => {
