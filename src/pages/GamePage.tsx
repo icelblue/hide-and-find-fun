@@ -834,6 +834,10 @@ export default function GamePage() {
         onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); setSpecialFoundVariant(null); }} />
       <MessagePopup message={receivedMessage} onClose={() => setReceivedMessage(null)} />
       <TrollEffect effect={trollEffect} onClose={() => setTrollEffect(null)} />
+      <HideMessagePopup show={showHideMessagePopup} hideMessage={hideMessage}
+        onMessageChange={setHideMessage} loading={actionLoading}
+        onConfirm={async () => { setShowHideMessagePopup(false); await doHide(); }}
+        onSkip={async () => { setHideMessage(""); setShowHideMessagePopup(false); await doHide(); }} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
