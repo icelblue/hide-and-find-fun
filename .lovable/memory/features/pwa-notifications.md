@@ -7,18 +7,21 @@ type: feature
 ## Estat actual (v1.10.0)
 
 ### Implementat ✅
-- `public/manifest.json` — standalone, portrait, icones 192+512
+- `public/manifest.json` — standalone, portrait, icones 192+512 (separades `any` i `maskable`)
 - `src/components/InstallBanner.tsx` — banner intel·ligent
-- Meta tags iOS a `index.html`
-- Tests a `InstallBanner.test.tsx`
+- Meta tags iOS a `index.html` (apple-touch-icon, apple-mobile-web-app-capable, status-bar-style)
+- Tests a `InstallBanner.test.tsx` (8 tests)
+- CSS safe-area en standalone mode (notch, home indicator)
 
 ### Com funciona
-- **Android**: intercepta `beforeinstallprompt` → botó "Instal·lar" → 1 clic
-- **iOS**: guia visual 3 passos (Compartir → Afegir a pantalla d'inici)
+- **Android (Chrome)**: intercepta `beforeinstallprompt` → botó "Instal·lar" → 1 clic
+- **Android (Firefox/Samsung)**: guia visual manual per navegador específic
+- **iOS (Safari)**: guia visual 3 passos (Compartir → Afegir a pantalla d'inici)
+- **iPadOS 13+**: detectat via `navigator.maxTouchPoints` (reporta com Mac)
 - **Desktop**: no mostra banner
-- **Ja instal·lada**: no mostra (detecta `display-mode: standalone`)
+- **Ja instal·lada**: no mostra (detecta `display-mode: standalone` + `navigator.standalone`)
 - **Iframe/preview**: no mostra (detecta `window.self !== window.top`)
-- **Descartat**: no torna en 7 dies (`localStorage`)
+- **Descartat**: no torna fins sessió nova (`sessionStorage`)
 
 ### Pendent (fase futura)
 - Notificacions push amb VAPID keys
