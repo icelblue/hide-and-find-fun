@@ -114,6 +114,7 @@ export default function GamePage() {
   const loadGame = useCallback(async () => {
     if (!gameId || !user) return;
 
+    // ── BATCH 1: Core game state (always needed) ──
     const [{ data: gameData }, { data: playerData }, { data: safePlayers }] = await Promise.all([
       supabase.from("games").select("*").eq("id", gameId).single(),
       supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
@@ -141,124 +142,138 @@ export default function GamePage() {
 
     if (playerData?.has_hidden) setHideStep(4);
 
-    // Batch secondary queries in parallel
     const isStoryGame = !!(gameData as any)?.is_story;
     const isPlaying = gameData?.status === "playing";
+    const isFinished = gameData?.status === "finished";
+    const currentScenId = playerData?.current_scenario_id ?? "";
 
-    // Prepare all parallel promises
-    const parallelPromises: Array<PromiseLike<any>> = [];
-    const promiseKeys: string[] = [];
+    // ── BATCH 2: ALL secondary queries in ONE Promise.all ──
+    // Instead of sequential awaits, fire everything at once
+    type QKey = "profile" | "hiddenItem" | "moveCount" | "items" | "connected" | "moves" | "tagMoves" | "curScen" | "reward" | "smokeBombs" | "blockedSocial" | "unprocessedSocial" | "traits";
+    const batch: Partial<Record<QKey, PromiseLike<any>>> = {};
 
     if (isPlaying) {
-      parallelPromises.push(supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single());
-      promiseKeys.push("profile");
+      batch.profile = supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
     }
-
     if (!isStoryGame && isPlaying && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
-      parallelPromises.push(supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single());
-      promiseKeys.push("hiddenItem");
+      batch.hiddenItem = supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
     }
-
     if (!isStoryGame && isPlaying && rivalData?.hidden_object_id) {
-      parallelPromises.push(
-        supabase.from("game_moves").select("*", { count: "exact", head: true }).eq("game_id", gameId).eq("player_id", user.id)
-      );
-      promiseKeys.push("moveCount");
+      batch.moveCount = supabase.from("game_moves").select("*", { count: "exact", head: true }).eq("game_id", gameId).eq("player_id", user.id);
+      batch.traits = supabase.from("object_traits").select("trait_number, trait_text").eq("object_id", rivalData.hidden_object_id).order("trait_number");
+    }
+    if (isPlaying && currentScenId) {
+      batch.items = getItemsByScenario(currentScenId);
+      batch.connected = getConnectedScenarios(currentScenId);
+      batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
+    }
+    // Always fetch moves (needed for history)
+    batch.moves = supabase.from("game_moves")
+      .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
+      .eq("game_id", gameId).eq("player_id", user.id)
+      .order("turn_number", { ascending: false });
+    batch.tagMoves = supabase.from("game_moves").select("bonus_value, player_id")
+      .eq("game_id", gameId).like("bonus_value", "tag:%")
+      .order("created_at", { ascending: true });
+
+    if (isFinished && gameData?.winner_id === user.id) {
+      batch.reward = getGameReward(gameId, user.id);
+    }
+    if (isPlaying && !isStoryGame && rivalData) {
+      batch.smokeBombs = supabase.from("game_social_items").select("created_at")
+        .eq("game_id", gameId).eq("from_player_id", rivalData.user_id)
+        .eq("item_type", "smoke_bomb").eq("blocked_by_shield", false)
+        .order("created_at", { ascending: false }).limit(1);
+      batch.blockedSocial = supabase.from("game_social_items").select("*")
+        .eq("game_id", gameId).eq("to_player_id", user.id)
+        .eq("blocked_by_shield", true).eq("processed", false);
+      batch.unprocessedSocial = getUnprocessedSocialItems(gameId, user.id);
     }
 
-    const parallelResults = await Promise.all(parallelPromises);
-    const resultMap: Record<string, any> = {};
-    promiseKeys.forEach((key, i) => { resultMap[key] = parallelResults[i]; });
+    // Fire ALL queries at once
+    const keys = Object.keys(batch) as QKey[];
+    const results = await Promise.all(keys.map(k => batch[k]!));
+    const R: Partial<Record<QKey, any>> = {};
+    keys.forEach((k, i) => { R[k] = results[i]; });
 
-    if (resultMap.profile) setBonusAvailable(resultMap.profile.data?.bonus_tokens ?? 0);
-    
-    if (resultMap.hiddenItem) {
-      setRivalNearby(resultMap.hiddenItem.data?.scenario_id === rivalData?.current_scenario_id);
+    // ── Process results ──
+
+    // Profile bonus
+    if (R.profile) setBonusAvailable(R.profile.data?.bonus_tokens ?? 0);
+
+    // Rival nearby
+    if (R.hiddenItem) {
+      setRivalNearby(R.hiddenItem.data?.scenario_id === rivalData?.current_scenario_id);
     } else {
       setRivalNearby(false);
     }
 
-    // Rival traits (secondary query only if needed)
-    if (resultMap.moveCount && rivalData?.hidden_object_id) {
-      const totalMoves = resultMap.moveCount.count ?? 0;
+    // Rival traits
+    if (R.moveCount && rivalData?.hidden_object_id && R.traits) {
+      const totalMoves = R.moveCount.count ?? 0;
       if (totalMoves >= 2) {
-        const { data: traits } = await supabase
-          .from("object_traits").select("trait_number, trait_text")
-          .eq("object_id", rivalData.hidden_object_id).order("trait_number");
-        const t1 = traits?.find((t: any) => t.trait_number === 1)?.trait_text ?? null;
-        const t2 = totalMoves >= 5 ? (traits?.find((t: any) => t.trait_number === 2)?.trait_text ?? null) : null;
+        const traits = R.traits.data ?? [];
+        const t1 = traits.find((t: any) => t.trait_number === 1)?.trait_text ?? null;
+        const t2 = totalMoves >= 5 ? (traits.find((t: any) => t.trait_number === 2)?.trait_text ?? null) : null;
         setRivalTraits({ trait1: t1, trait2: t2 });
       } else {
         setRivalTraits({ trait1: null, trait2: null });
       }
     }
 
+    // Items, connections, interactions (items result is raw array from helper)
     let loadedItems: any[] = [];
     let loadedInteractions: any[] = [];
-    if (gameData?.status === "playing" && playerData?.current_scenario_id) {
-      const [itemsData, connected] = await Promise.all([
-        getItemsByScenario(playerData.current_scenario_id),
-        getConnectedScenarios(playerData.current_scenario_id),
-      ]);
-      loadedItems = itemsData;
-      setConnectedScenarios(connected);
-      const gameDirty = getDirtyItemsForGame(itemsData, gameId);
+    if (isPlaying && currentScenId && R.items) {
+      loadedItems = Array.isArray(R.items) ? R.items : (R.items?.data ?? R.items ?? []);
+      if (R.connected) {
+        const conn = Array.isArray(R.connected) ? R.connected : (R.connected?.data ?? []);
+        setConnectedScenarios(conn);
+      }
+      const gameDirty = getDirtyItemsForGame(loadedItems, gameId);
       setDirtyItems(gameDirty);
 
-      // Auto-give drap if dirty items here
-      const hasDirtyHere = itemsData.some((i: any) => gameDirty.has(i.id));
+      // Auto-give drap if dirty items here (fire-and-forget, don't block)
+      const hasDirtyHere = loadedItems.some((i: any) => gameDirty.has(i.id));
       if (hasDirtyHere && playerData) {
         const tools = parseTools(playerData.tools);
         if (tools.drap === 0) {
           tools.drap = 1;
-          await supabase.from("game_players").update({ tools }).eq("id", playerData.id);
+          supabase.from("game_players").update({ tools }).eq("id", playerData.id).then(() => {});
           playerData.tools = tools;
           setPlayerTools({ ...tools });
           toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
         }
       }
-      loadedInteractions = await getItemInteractions(itemsData.map((i: any) => i.id));
+      loadedInteractions = await getItemInteractions(loadedItems.map((i: any) => i.id));
       setItemInteractions(loadedInteractions);
     }
 
-    const { data: moves } = await supabase
-      .from("game_moves")
-      .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
-      .eq("game_id", gameId).eq("player_id", user.id)
-      .order("turn_number", { ascending: false });
-    const allMoves = moves ?? [];
+    // Move history
+    const allMoves = R.moves?.data ?? [];
     setMoveHistory(allMoves);
 
-    // Compute breaks, illumination from ALL tag moves
-    const { data: allGameMoves } = await supabase
-      .from("game_moves").select("bonus_value, player_id")
-      .eq("game_id", gameId)
-      .like("bonus_value", "tag:%")
-      .order("created_at", { ascending: true });
+    // Breaks & illumination from tag moves
+    const allGameMoves = R.tagMoves?.data ?? [];
     const breaks = new Set<string>();
     const litScenarios = new Set<string>();
-
-    // Start with all known scenario illumination defaults
-    // Indoor = lit by default, outdoor = dark by default
-    // We track which scenarios are currently illuminated
-    for (const m of allGameMoves ?? []) {
+    for (const m of allGameMoves) {
       const val = (m.bonus_value as string) ?? "";
       if (val.startsWith("tag:break:")) breaks.add(val.replace("tag:break:", ""));
       if (val.startsWith("tag:fix:")) breaks.delete(val.replace("tag:fix:", ""));
       if (val.startsWith("tag:clean:")) breaks.add(`clean:${val.replace("tag:clean:", "")}`);
       if (val.startsWith("tag:light_on:")) litScenarios.add(val.replace("tag:light_on:", ""));
       if (val.startsWith("tag:light_off:")) litScenarios.delete(val.replace("tag:light_off:", ""));
-      // Backwards compat: old flashlight moves count as light_on
       if (val.startsWith("tag:flashlight:")) litScenarios.add(val.replace("tag:flashlight:", ""));
     }
     setGameBreaks(breaks);
     setIlluminatedScenarios(litScenarios);
 
-    // Compute revealed items from interactions
+    // Revealed items from interactions
     const revealed = new Set<string>();
     for (const ia of loadedInteractions) {
       if (ia.effect_type === "reveal_items") {
-        const wasUsed = (moves ?? []).some((m: any) => m.target_item_id === ia.item_id);
+        const wasUsed = allMoves.some((m: any) => m.target_item_id === ia.item_id);
         if (wasUsed) {
           const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
           ids.forEach((id: string) => revealed.add(id));
@@ -266,83 +281,54 @@ export default function GamePage() {
       }
     }
 
-    // Determine current scenario illumination
+    // Scenario illumination
     let isOutdoor = false;
-    if (playerData?.current_scenario_id) {
-      const { data: curScen } = await supabase.from("scenarios").select("name").eq("id", playerData.current_scenario_id).single();
-      isOutdoor = OUTDOOR_SCENARIOS.includes(curScen?.name ?? "");
+    if (R.curScen) {
+      isOutdoor = OUTDOOR_SCENARIOS.includes(R.curScen.data?.name ?? "");
     }
-
-    // Unified illumination logic:
-    // Indoor: lit unless explicitly turned off (tag:light_off without subsequent tag:light_on)
-    // Outdoor: dark unless explicitly turned on (tag:light_on or tag:flashlight)
-    const scenarioId = playerData?.current_scenario_id ?? "";
-    const isLit = isOutdoor
-      ? litScenarios.has(scenarioId) // outdoor: need explicit light_on
-      : !litScenarios.has("off:" + scenarioId); // indoor: check if turned off
-
-    // For indoor: we need to check light_off state differently
-    // Re-derive indoor light state from raw moves
     let indoorLightOff = false;
-    if (!isOutdoor) {
-      for (const m of allGameMoves ?? []) {
+    if (!isOutdoor && currentScenId) {
+      for (const m of allGameMoves) {
         const val = (m.bonus_value as string) ?? "";
-        if (val === `tag:light_off:${scenarioId}`) indoorLightOff = true;
-        if (val === `tag:light_on:${scenarioId}`) indoorLightOff = false;
+        if (val === `tag:light_off:${currentScenId}`) indoorLightOff = true;
+        if (val === `tag:light_on:${currentScenId}`) indoorLightOff = false;
       }
     }
-
-    const scenarioIsDark = isOutdoor ? !litScenarios.has(scenarioId) : indoorLightOff;
+    const scenarioIsDark = isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff;
     setScenarioIsDarkState(scenarioIsDark);
 
     const visibleItems = loadedItems.filter((i: any) => {
-      if (scenarioIsDark) {
-        // In the dark: only show non-hidden items (big/obvious furniture)
-        return !i.hidden;
-      }
-      // Lit: show everything
+      if (scenarioIsDark) return !i.hidden;
       if (!i.hidden) return true;
       if (revealed.has(i.id)) return true;
-      // Outdoor illuminated: reveal hidden items
-      if (isOutdoor && litScenarios.has(scenarioId)) return true;
+      if (isOutdoor && litScenarios.has(currentScenId)) return true;
       return false;
     });
     setCurrentScenarioItems(visibleItems);
 
-    if (gameData?.status === "finished" && gameData?.winner_id === user.id) {
-      const r = await getGameReward(gameId, user.id);
-      setReward(r);
-    }
+    // Reward
+    if (R.reward) setReward(R.reward);
 
-    // Check if rival used smoke bomb (resets our looked spots)
-    if (gameData?.status === "playing" && !isStoryGame && rivalData) {
-      const { data: smokeBombs } = await supabase
-        .from("game_social_items")
-        .select("created_at")
-        .eq("game_id", gameId)
-        .eq("from_player_id", rivalData.user_id)
-        .eq("item_type", "smoke_bomb")
-        .eq("blocked_by_shield", false)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      setRivalSmokeBombAt(smokeBombs?.[0]?.created_at ?? null);
+    // Smoke bomb
+    if (R.smokeBombs) {
+      setRivalSmokeBombAt(R.smokeBombs.data?.[0]?.created_at ?? null);
     } else {
       setRivalSmokeBombAt(null);
     }
 
     // Process social items (PvP only)
-    if (gameData?.status === "playing" && !isStoryGame) {
-      const { data: blockedItems } = await supabase
-        .from("game_social_items").select("*")
-        .eq("game_id", gameId).eq("to_player_id", user.id)
-        .eq("blocked_by_shield", true).eq("processed", false);
-      for (const blocked of blockedItems ?? []) {
+    if (isPlaying && !isStoryGame) {
+      // Blocked items
+      const blockedItems = R.blockedSocial?.data ?? [];
+      const markPromises: Promise<any>[] = [];
+      for (const blocked of blockedItems) {
         const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
         toast.success(`🛡️ El teu escut ha bloquejat ${info?.icon} ${info?.name} del rival!`, { duration: 5000 });
-        await markSocialItemProcessed(blocked.id);
+        markPromises.push(markSocialItemProcessed(blocked.id));
       }
 
-      const unprocessed = await getUnprocessedSocialItems(gameId, user.id);
+      // Unprocessed items
+      const unprocessed = R.unprocessedSocial ?? [];
       for (const item of unprocessed) {
         if (item.item_type === "banana") {
           const allPositions = ["sobre", "sota", "dins"] as const;
@@ -362,8 +348,10 @@ export default function GamePage() {
         } else if (item.item_type === "message" && item.message_text) {
           setReceivedMessage(item.message_text);
         }
-        await markSocialItemProcessed(item.id);
+        markPromises.push(markSocialItemProcessed(item.id));
       }
+      // Mark all processed in parallel
+      if (markPromises.length > 0) await Promise.all(markPromises);
     }
   }, [gameId, user]);
 
