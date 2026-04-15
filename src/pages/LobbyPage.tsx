@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_VERSION } from "@/lib/constants";
+import { InstallBanner } from "@/components/InstallBanner";
 
 const DISMISSED_GAMES_KEY = "dd_dismissed_games";
 
@@ -517,7 +518,10 @@ export default function LobbyPage() {
           </div>
         )}
       </div>
-      <p className="text-center text-[10px] text-muted-foreground/50 mt-4 pb-2">v{APP_VERSION}</p>
+      <p className="text-center text-[10px] text-muted-foreground/50 mt-4 pb-8">v{APP_VERSION}</p>
+
+      {/* PWA Install Banner */}
+      <InstallBanner />
 
       {/* Bug Report Modal */}
       {showBugReport && (
