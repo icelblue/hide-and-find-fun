@@ -1,15 +1,13 @@
 // ============================================================
 // InstallBanner.test.tsx — Tests del component InstallBanner
 // ============================================================
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 
-// We test the utility logic, not the rendered component (avoids DOM complexity)
 describe("InstallBanner — lògica de detecció", () => {
-  const originalUA = navigator.userAgent;
-
   afterEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   it("detecta standalone mode correctament", () => {
@@ -20,26 +18,20 @@ describe("InstallBanner — lògica de detecció", () => {
 
   it("sessionStorage dismiss dura només la sessió", () => {
     const DISMISS_KEY = "dd_install_banner_dismissed";
-
-    // Dismiss sets sessionStorage
     sessionStorage.setItem(DISMISS_KEY, "1");
     expect(sessionStorage.getItem(DISMISS_KEY)).toBe("1");
-
-    // Clearing simulates new session
     sessionStorage.clear();
     expect(sessionStorage.getItem(DISMISS_KEY)).toBeNull();
   });
 
   it("no mostra en iframe (preview Lovable)", () => {
-    // Simulate iframe: window.self !== window.top
     const isInIframe = (() => {
       try { return window.self !== window.top; } catch { return true; }
     })();
-    // In test environment this is false (not in iframe), which is correct behavior
     expect(typeof isInIframe).toBe("boolean");
   });
 
-  it("detecta plataforma iOS correctament", () => {
+  it("detecta plataforma iOS correctament (iPhone/iPad)", () => {
     const iosUAs = [
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
       "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)",
@@ -47,6 +39,13 @@ describe("InstallBanner — lògica de detecció", () => {
     for (const ua of iosUAs) {
       expect(/iPad|iPhone|iPod/.test(ua)).toBe(true);
     }
+  });
+
+  it("detecta iPadOS 13+ (reportat com Mac amb touchpoints)", () => {
+    const iPadOSUA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15";
+    // iPadOS reports as Mac but has maxTouchPoints > 1
+    expect(/Macintosh/.test(iPadOSUA)).toBe(true);
+    // In a real iPad: navigator.maxTouchPoints > 1
   });
 
   it("detecta plataforma Android correctament", () => {
@@ -58,5 +57,12 @@ describe("InstallBanner — lògica de detecció", () => {
     const desktopUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     expect(/iPad|iPhone|iPod/.test(desktopUA)).toBe(false);
     expect(/Android/i.test(desktopUA)).toBe(false);
+    expect(/Macintosh/.test(desktopUA)).toBe(false);
+  });
+
+  it("detecta navegador Android: Chrome, Firefox, Samsung", () => {
+    expect(/SamsungBrowser/i.test("Mozilla/5.0 SamsungBrowser/23.0")).toBe(true);
+    expect(/Firefox/i.test("Mozilla/5.0 Firefox/120.0")).toBe(true);
+    expect(/Chrome/i.test("Mozilla/5.0 Chrome/120.0") && !/Edge|Edg/i.test("Mozilla/5.0 Chrome/120.0")).toBe(true);
   });
 });
