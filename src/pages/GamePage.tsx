@@ -40,7 +40,7 @@ import { HelpButton, Tip } from "@/components/HelpButton";
 import ItemActions from "@/components/game/ItemActions";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
-import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker } from "@/components/game/GamePopups";
+import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup } from "@/components/game/GamePopups";
 
 const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
