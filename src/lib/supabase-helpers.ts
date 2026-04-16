@@ -930,8 +930,10 @@ export async function sendSocialItem(
     }
   }
 
-  // Mark as used AFTER successful action
-  await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
+  // Mark as used AFTER successful action (barricada/trampa use their own counter via RPC)
+  if (!isBarricadaOrTrampa) {
+    await supabase.from("game_players").update({ social_item_used_today: true }).eq("id", fromPlayer.id);
+  }
 
   await supabase.from("game_social_items").insert({
     game_id: gameId,
