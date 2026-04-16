@@ -222,6 +222,7 @@ export type Database = {
           item_type: Database["public"]["Enums"]["social_item_type"]
           message_text: string | null
           processed: boolean
+          target_data: Json | null
           to_player_id: string
         }
         Insert: {
@@ -233,6 +234,7 @@ export type Database = {
           item_type: Database["public"]["Enums"]["social_item_type"]
           message_text?: string | null
           processed?: boolean
+          target_data?: Json | null
           to_player_id: string
         }
         Update: {
@@ -244,6 +246,7 @@ export type Database = {
           item_type?: Database["public"]["Enums"]["social_item_type"]
           message_text?: string | null
           processed?: boolean
+          target_data?: Json | null
           to_player_id?: string
         }
         Relationships: [
@@ -985,6 +988,10 @@ export type Database = {
         Args: { _chapter: number; _user_id: string }
         Returns: string
       }
+      execute_barricada: {
+        Args: { _game_id: string; _scenario_from: string; _scenario_to: string }
+        Returns: Json
+      }
       execute_game_move: {
         Args: {
           _action: Database["public"]["Enums"]["action_type"]
@@ -1015,6 +1022,10 @@ export type Database = {
           _scenario_name?: string
           _turn_off: boolean
         }
+        Returns: Json
+      }
+      execute_trampa: {
+        Args: { _game_id: string; _item_id: string }
         Returns: Json
       }
       finish_story_game: {
@@ -1126,6 +1137,8 @@ export type Database = {
         | "espia"
         | "swap"
         | "robar_tornavis"
+        | "barricada"
+        | "trampa"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1296,6 +1309,8 @@ export const Constants = {
         "espia",
         "swap",
         "robar_tornavis",
+        "barricada",
+        "trampa",
       ],
     },
   },
