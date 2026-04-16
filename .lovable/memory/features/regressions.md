@@ -27,6 +27,9 @@ Cada regressió documentada amb:
 | REG-006 | Foto doble comportament | find_special_type + find_prompt_text |
 | REG-007 | Pistes (traits) mai visibles | RPC get_rival_traits (server-side) |
 | REG-008 | Lag bomba de fum (6 queries) | RPC execute_smoke_bomb (1 transacció) |
+| REG-009 | Barricada funcional | RPC execute_barricada + check a execute_game_move |
+| REG-010 | Trampa funcional | RPC execute_trampa + check a execute_game_move |
+| REG-011 | Etiquetes contextuals | getEnvironmentLabel + ENVIRONMENT_LABELS |
 
 ### Protocol per noves regressions
 
