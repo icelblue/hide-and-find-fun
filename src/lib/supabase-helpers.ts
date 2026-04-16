@@ -104,6 +104,25 @@ export const MATERIAL_LABELS: Record<string, string> = {
   food: "Menjar",
 };
 
+/** Contextual label when an object is placed in a specific environment */
+export const ENVIRONMENT_LABELS: Record<string, string> = {
+  wet: "💧 Mullat",
+  hot: "🔥 Cremat",
+  dirty: "🗑️ Brut",
+  frozen: "🧊 Congelat",
+  outdoor: "🌿 A l'exterior",
+  sorrenc: "🏖️ Ple de sorra",
+  submergit: "🌊 Submergit",
+  químic: "☣️ Contaminat",
+  ventós: "💨 Ventós",
+};
+
+/** Get contextual label for an object hidden in a specific item environment */
+export function getEnvironmentLabel(environment: string): string | null {
+  if (environment === "generic") return null;
+  return ENVIRONMENT_LABELS[environment] ?? null;
+}
+
 // ============================================
 // DATA FETCHING
 // ============================================
