@@ -160,8 +160,7 @@ export default function GamePage() {
       const currentScenId = playerData?.current_scenario_id ?? "";
 
       // ── BATCH 2: ALL secondary queries in ONE Promise.all ──
-      // Instead of sequential awaits, fire everything at once
-      type QKey = "profile" | "hiddenItem" | "moveCount" | "items" | "connected" | "moves" | "tagMoves" | "curScen" | "reward" | "smokeBombs" | "blockedSocial" | "unprocessedSocial" | "traits";
+      type QKey = "profile" | "hiddenItem" | "items" | "connected" | "moves" | "tagMoves" | "curScen" | "reward" | "smokeBombs" | "blockedSocial" | "unprocessedSocial" | "traits" | "interactions";
       const batch: Partial<Record<QKey, PromiseLike<any>>> = {};
 
       if (isPlaying) {
@@ -170,16 +169,15 @@ export default function GamePage() {
       if (!isStoryGame && isPlaying && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
         batch.hiddenItem = supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
       }
-      if (!isStoryGame && isPlaying && rivalData?.hidden_object_id) {
-        batch.moveCount = supabase.from("game_moves").select("*", { count: "exact", head: true }).eq("game_id", gameId).eq("player_id", user.id);
-        batch.traits = supabase.from("object_traits").select("trait_number, trait_text").eq("object_id", rivalData.hidden_object_id).order("trait_number");
+      // Use server-side RPC for traits (no longer depends on hidden_object_id)
+      if (!isStoryGame && isPlaying) {
+        batch.traits = supabase.rpc("get_rival_traits" as any, { _game_id: gameId });
       }
       if (isPlaying && currentScenId) {
         batch.items = getItemsByScenario(currentScenId);
         batch.connected = getConnectedScenarios(currentScenId);
         batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
       }
-      // Always fetch moves (needed for history)
       batch.moves = supabase.from("game_moves")
         .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
         .eq("game_id", gameId).eq("player_id", user.id)
@@ -220,14 +218,11 @@ export default function GamePage() {
         setRivalNearby(false);
       }
 
-      // Rival traits
-      if (R.moveCount && rivalData?.hidden_object_id && R.traits) {
-        const totalMoves = R.moveCount.count ?? 0;
-        if (totalMoves >= 2) {
-          const traits = R.traits.data ?? [];
-          const t1 = traits.find((t: any) => t.trait_number === 1)?.trait_text ?? null;
-          const t2 = totalMoves >= 5 ? (traits.find((t: any) => t.trait_number === 2)?.trait_text ?? null) : null;
-          setRivalTraits({ trait1: t1, trait2: t2 });
+      // Rival traits — now from server-side RPC (secure, no hidden_object_id leak)
+      if (R.traits) {
+        const traitsData = R.traits.data as any;
+        if (traitsData) {
+          setRivalTraits({ trait1: traitsData.trait1 ?? null, trait2: traitsData.trait2 ?? null });
         } else {
           setRivalTraits({ trait1: null, trait2: null });
         }
@@ -260,6 +255,7 @@ export default function GamePage() {
             toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
           }
         }
+        // Load interactions now that we have item IDs (single extra query)
         loadedInteractions = await getItemInteractions(loadedItems.map((i: any) => i.id));
         setItemInteractions(loadedInteractions);
       }
@@ -379,7 +375,7 @@ export default function GamePage() {
     }
   }, [gameId, user]);
 
-  const scheduleLoadGame = useCallback((delay = 120) => {
+  const scheduleLoadGame = useCallback((delay = 300) => {
     if (realtimeReloadTimeoutRef.current) {
       clearTimeout(realtimeReloadTimeoutRef.current);
     }
@@ -793,8 +789,12 @@ export default function GamePage() {
       const msg = type === "message" ? messageInput : undefined;
       const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
-      if (result.blocked) toast.error(`🛡️ Bloquejat per l'escut del rival!`);
+      if (result.blocked) toast.error(`🛡️ Bloquejat per l'escort del rival!`);
       else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
+      else if (type === "smoke_bomb" && (result as any).smokeBombResult) {
+        const sb = (result as any).smokeBombResult;
+        toast.success(`💣 Bomba de fum! Objecte mogut a ${sb.new_scenario_name} → ${sb.new_item_name} (${sb.new_position})`, { duration: 6000 });
+      }
       else toast.success(`${info?.icon} ${info?.name} enviat!`);
       setShowSocialPanel(false);
       setMessageInput("");

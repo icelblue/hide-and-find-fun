@@ -833,41 +833,21 @@ export async function sendSocialItem(
     if (itemType === "shield") {
       await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
-      if (fromPlayer.smoke_bomb_used) {
-        throw new Error("Ja has usat la bomba de fum en aquesta partida!");
-      }
-      const { data: self } = await supabase
-        .from("game_players")
-        .select("hidden_item_id, hidden_position, id")
-        .eq("game_id", gameId)
-        .eq("user_id", fromPlayerId)
-        .single();
-      if (self && self.hidden_item_id) {
-        const { data: currentItem } = await supabase
-          .from("items").select("scenario_id").eq("id", self.hidden_item_id).single();
-        const allScenarios = await getScenarios();
-        // ALWAYS move to a DIFFERENT scenario
-        const otherScenarios = allScenarios.filter(s => s.id !== currentItem?.scenario_id);
-        if (otherScenarios.length === 0) throw new Error("No hi ha altres escenaris disponibles!");
-        const newScenario = otherScenarios[Math.floor(Math.random() * otherScenarios.length)];
-        const newItems = await getItemsByScenario(newScenario.id);
-        if (newItems.length === 0) throw new Error("L'escenari destí no té mobles!");
-        const newItem = newItems[Math.floor(Math.random() * newItems.length)];
-        const allPos: ("sobre" | "sota" | "dins")[] = ["sobre", "sota", "dins"];
-        const validPos = allPos.filter(p => p !== "dins" || (newItem.inner_capacity ?? 2) >= 2);
-        const newPos = validPos[Math.floor(Math.random() * validPos.length)];
-        await supabase
-          .from("game_players")
-          .update({ hidden_item_id: newItem.id, hidden_position: newPos, smoke_bomb_used: true })
-          .eq("id", self.id);
-        await supabase.from("game_social_items").insert({
-          game_id: gameId,
-          from_player_id: fromPlayerId,
-          to_player_id: fromPlayerId,
-          item_type: "message" as const,
-          message_text: `💣 Bomba de fum! El teu objecte s'ha mogut a ${newScenario.icon} ${newScenario.name} → ${newItem.icon} ${newItem.name} (${newPos})`,
-        });
-      }
+      // Server-side RPC — single round-trip instead of 6
+      const { data: bombResult, error: bombErr } = await supabase.rpc("execute_smoke_bomb" as any, { _game_id: gameId });
+      if (bombErr) throw new Error(bombErr.message);
+      // RPC already handles: social_item_used_today, smoke_bomb_used, notifications
+      // Push notification to rival (fire & forget)
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_ids: [toPlayerId],
+          title: "💨 Bomba de fum",
+          body: "El rival ha usat una bomba de fum! Ha mogut el seu objecte!",
+          url: `/game/${gameId}`,
+          tag: `social-${gameId}`,
+        },
+      }).catch(() => {});
+      return { blocked: false, espiaResult: null, smokeBombResult: bombResult as any };
     } else if (itemType === "swap") {
       const { error: swapErr } = await supabase.rpc("execute_swap" as any, { _game_id: gameId });
       if (swapErr) throw new Error(swapErr.message);

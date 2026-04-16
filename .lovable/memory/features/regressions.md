@@ -25,6 +25,8 @@ Cada regressió documentada amb:
 | REG-004 | Doble-clic ítems socials | actionLoading prop a SocialItemsPanel |
 | REG-005 | Popup especial desapareix | re-fetch objectSpecial a handleSelectPosition |
 | REG-006 | Foto doble comportament | find_special_type + find_prompt_text |
+| REG-007 | Pistes (traits) mai visibles | RPC get_rival_traits (server-side) |
+| REG-008 | Lag bomba de fum (6 queries) | RPC execute_smoke_bomb (1 transacció) |
 
 ### Protocol per noves regressions
 
