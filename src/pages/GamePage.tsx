@@ -652,6 +652,9 @@ export default function GamePage() {
     try {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
       const item = currentScenarioItems.find(i => i.id === itemId);
+      if (result.trapHit) {
+        toast.warning(`🪤 Trampa! Has perdut ${result.trapPenalty}🪙`, { duration: 4000 });
+      }
       if (result.foundObject) {
         if (isStory && storyChapter) {
           const movesCount = (moveHistory?.length ?? 0) + 1;
