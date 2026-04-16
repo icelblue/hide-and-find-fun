@@ -1304,7 +1304,10 @@ export default function GamePage() {
             <SocialItemsPanel showPanel={showSocialPanel} setShowPanel={setShowSocialPanel}
               player={player} onSendSocial={handleSendSocial}
               messageInput={messageInput} setMessageInput={setMessageInput}
-              actionLoading={actionLoading} />
+              actionLoading={actionLoading}
+              connectedScenarios={connectedScenarios}
+              currentScenarioId={player?.current_scenario_id}
+              currentScenarioItems={currentScenarioItems} />
           )}
 
           {/* History */}
