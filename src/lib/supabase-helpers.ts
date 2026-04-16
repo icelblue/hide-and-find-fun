@@ -804,6 +804,7 @@ export async function sendSocialItem(
   toPlayerId: string,
   itemType: SocialItemType,
   messageText?: string,
+  extraData?: { scenarioFrom?: string; scenarioTo?: string; itemId?: string },
 ) {
   const { data: fromPlayer } = await supabase
     .from("game_players")
@@ -822,7 +823,7 @@ export async function sendSocialItem(
   const { data: safePlayers } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
   const toPlayer = ((safePlayers as any[]) ?? []).find((p: any) => p.user_id === toPlayerId) ?? null;
 
-  const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis"));
+  const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis" || itemType === "barricada"));
 
   const actualToPlayer = itemType === "espia" ? fromPlayerId : toPlayerId;
 
@@ -835,11 +836,8 @@ export async function sendSocialItem(
     if (itemType === "shield") {
       await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
-      // Server-side RPC — single round-trip instead of 6
       const { data: bombResult, error: bombErr } = await supabase.rpc("execute_smoke_bomb" as any, { _game_id: gameId });
       if (bombErr) throw new Error(bombErr.message);
-      // RPC already handles: social_item_used_today, smoke_bomb_used, notifications
-      // Push notification to rival (fire & forget)
       supabase.functions.invoke("send-push", {
         body: {
           user_ids: [toPlayerId],
@@ -869,6 +867,39 @@ export async function sendSocialItem(
     } else if (itemType === "robar_tornavis") {
       const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
+    } else if (itemType === "barricada") {
+      if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error("Has de seleccionar un camí!");
+      const { data: barResult, error: barErr } = await supabase.rpc("execute_barricada" as any, {
+        _game_id: gameId, _scenario_from: extraData.scenarioFrom, _scenario_to: extraData.scenarioTo,
+      });
+      if (barErr) throw new Error(barErr.message);
+      if ((barResult as any)?.blocked) {
+        return { blocked: true, espiaResult: null };
+      }
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_ids: [toPlayerId],
+          title: "🚧 Barricada!",
+          body: "El rival ha barricadat un camí! Costa +1🪙 per forçar el pas.",
+          url: `/game/${gameId}`, tag: `social-${gameId}`,
+        },
+      }).catch(() => {});
+      return { blocked: false, espiaResult: null, barricadaResult: barResult as any };
+    } else if (itemType === "trampa") {
+      if (!extraData?.itemId) throw new Error("Has de seleccionar un moble!");
+      const { data: trapResult, error: trapErr } = await supabase.rpc("execute_trampa" as any, {
+        _game_id: gameId, _item_id: extraData.itemId,
+      });
+      if (trapErr) throw new Error(trapErr.message);
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_ids: [toPlayerId],
+          title: "🪤 Trampa!",
+          body: "El rival ha col·locat una trampa en algun moble...",
+          url: `/game/${gameId}`, tag: `social-${gameId}`,
+        },
+      }).catch(() => {});
+      return { blocked: false, espiaResult: null, trampaResult: trapResult as any };
     }
   }
 
@@ -887,15 +918,16 @@ export async function sendSocialItem(
   // Send push notification for social items (fire & forget)
   if (itemType !== "espia" && itemType !== "shield" && toPlayerId !== fromPlayerId) {
     const itemLabels: Record<string, string> = {
-      banana: "🍌 Plàtan", smoke_bomb: "💨 Bomba de fum", false_clue: "🃏 Pista falsa",
+      banana: "🍌 Plàtan", smoke_bomb: "💨 Bomba de fum",
       message: "💬 Missatge", swap: "🔄 Intercanvi", robar_tornavis: "🔧 Robatori",
+      barricada: "🚧 Barricada", trampa: "🪤 Trampa",
     };
     supabase.functions.invoke("send-push", {
       body: {
         user_ids: [toPlayerId],
         title: blocked ? "🛡️ Escut activat!" : (itemLabels[itemType] ?? "📦 Ítem social"),
         body: blocked
-          ? "Un ítem social ha estat bloquejat pel teu escut!"
+          ? "Un ítem social ha estat bloquejat pel teu escort!"
           : `Has rebut ${itemLabels[itemType] ?? "un ítem social"}${messageText ? `: ${messageText}` : ""}`,
         url: `/game/${gameId}`,
         tag: `social-${gameId}`,
