@@ -55,7 +55,7 @@ const RULES = [
   },
   {
     title: "⚡ Mobles interactius",
-    text: "🧹 Netejar (bruts) — 0.2🪙, cal Drap.\n💥 Trencar (fràgils) — 0.3🪙, cal Martell, notifica el rival!\n🔧 Arreglar (trencats) — 0.2🪙, cal Tornavís.",
+    text: "🧹 Netejar (bruts) — 0.3🪙, cal Drap. Desbloqueja la posició \"dins\".\n💥 Trencar (fràgils) — 0.4🪙, cal Martell, notifica el rival! Bloqueja \"sobre\" + \"dins\".\n🔧 Arreglar (trencats) — 0.3🪙, cal Tornavís. Restaura posicions.\n⚠️ Quasi tots els mobles es poden trencar si tens martell!",
   },
   {
     title: "📈 Elo i Lligues",
