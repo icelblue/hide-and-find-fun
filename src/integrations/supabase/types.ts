@@ -997,6 +997,7 @@ export type Database = {
         Returns: Json
       }
       execute_robar_tornavis: { Args: { _game_id: string }; Returns: Json }
+      execute_smoke_bomb: { Args: { _game_id: string }; Returns: Json }
       execute_swap: { Args: { _game_id: string }; Returns: Json }
       execute_tag_action: {
         Args: {
@@ -1027,6 +1028,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_rival_traits: { Args: { _game_id: string }; Returns: Json }
       get_safe_game_players: {
         Args: { _game_id: string }
         Returns: {
