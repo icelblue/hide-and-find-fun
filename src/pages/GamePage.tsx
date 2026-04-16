@@ -782,18 +782,24 @@ export default function GamePage() {
     }
   };
 
-  const handleSendSocial = async (type: SocialItemType) => {
+  const handleSendSocial = async (type: SocialItemType, extraData?: { scenarioFrom?: string; scenarioTo?: string; itemId?: string }) => {
     if (!gameId || !user || !rival) return;
     setActionLoading(true);
     try {
       const msg = type === "message" ? messageInput : undefined;
-      const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg);
+      const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg, extraData);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
       if (result.blocked) toast.error(`🛡️ Bloquejat per l'escort del rival!`);
       else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
       else if (type === "smoke_bomb" && (result as any).smokeBombResult) {
         const sb = (result as any).smokeBombResult;
         toast.success(`💣 Bomba de fum! Objecte mogut a ${sb.new_scenario_name} → ${sb.new_item_name} (${sb.new_position})`, { duration: 6000 });
+      } else if (type === "barricada" && (result as any).barricadaResult) {
+        const br = (result as any).barricadaResult;
+        toast.success(`🚧 Barricada col·locada: ${br.from_name} ↔ ${br.to_name} (3 torns)`, { duration: 6000 });
+      } else if (type === "trampa" && (result as any).trampaResult) {
+        const tr = (result as any).trampaResult;
+        toast.success(`🪤 Trampa col·locada a ${tr.item_name}!`, { duration: 5000 });
       }
       else toast.success(`${info?.icon} ${info?.name} enviat!`);
       setShowSocialPanel(false);
