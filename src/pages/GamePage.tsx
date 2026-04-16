@@ -789,8 +789,12 @@ export default function GamePage() {
       const msg = type === "message" ? messageInput : undefined;
       const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
-      if (result.blocked) toast.error(`🛡️ Bloquejat per l'escut del rival!`);
+      if (result.blocked) toast.error(`🛡️ Bloquejat per l'escort del rival!`);
       else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
+      else if (type === "smoke_bomb" && (result as any).smokeBombResult) {
+        const sb = (result as any).smokeBombResult;
+        toast.success(`💣 Bomba de fum! Objecte mogut a ${sb.new_scenario_name} → ${sb.new_item_name} (${sb.new_position})`, { duration: 6000 });
+      }
       else toast.success(`${info?.icon} ${info?.name} enviat!`);
       setShowSocialPanel(false);
       setMessageInput("");
