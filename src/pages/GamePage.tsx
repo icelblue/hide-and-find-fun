@@ -255,14 +255,9 @@ export default function GamePage() {
             toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
           }
         }
-        // Interactions were loaded in the batch
-        loadedInteractions = R.interactions ?? [];
-        if (Array.isArray(loadedInteractions)) {
-          setItemInteractions(loadedInteractions);
-        } else {
-          loadedInteractions = [];
-          setItemInteractions([]);
-        }
+        // Load interactions now that we have item IDs (single extra query)
+        loadedInteractions = await getItemInteractions(loadedItems.map((i: any) => i.id));
+        setItemInteractions(loadedInteractions);
       }
 
       // Move history
