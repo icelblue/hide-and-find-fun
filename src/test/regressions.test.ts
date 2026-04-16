@@ -209,8 +209,8 @@ describe("REG-008: Bomba de fum optimitzada", () => {
 // ============================================
 describe("REG-009: Barricada funcional", () => {
   it("barricada està definida com a social item", () => {
-    const { SOCIAL_ITEMS } = require("@/lib/supabase-helpers");
     const barricada = SOCIAL_ITEMS.find((i: any) => i.type === "barricada");
+    expect(barricada).toBeDefined();
     expect(barricada).toBeDefined();
     expect(barricada.icon).toBe("🚧");
   });
