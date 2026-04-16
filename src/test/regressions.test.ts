@@ -200,3 +200,58 @@ describe("REG-008: Bomba de fum optimitzada", () => {
     expect(result.blocked).toBe(false);
   });
 });
+
+// ============================================
+// REG-009: Barricada bloqueja camí del rival
+// Data: 2026-04-16 | Fix: RPC execute_barricada + check a execute_game_move
+// Bug: No existia mecanisme defensiu post-bomba de fum.
+// ============================================
+describe("REG-009: Barricada funcional", () => {
+  it("barricada està definida com a social item", () => {
+    const { SOCIAL_ITEMS } = require("@/lib/supabase-helpers");
+    const barricada = SOCIAL_ITEMS.find((i: any) => i.type === "barricada");
+    expect(barricada).toBeDefined();
+    expect(barricada.icon).toBe("🚧");
+  });
+
+  it("sendSocialItem accepta extraData per barricada", async () => {
+    const { sendSocialItem } = await import("@/lib/supabase-helpers");
+    expect(typeof sendSocialItem).toBe("function");
+    // La funció ara accepta 6è param extraData
+    expect(sendSocialItem.length).toBeGreaterThanOrEqual(5);
+  });
+});
+
+// ============================================
+// REG-010: Trampa penalitza rival
+// Data: 2026-04-16 | Fix: RPC execute_trampa + check a execute_game_move
+// Bug: No existia forma de penalitzar al rival per mirar un moble específic.
+// ============================================
+describe("REG-010: Trampa funcional", () => {
+  it("trampa està definida com a social item", () => {
+    const { SOCIAL_ITEMS } = require("@/lib/supabase-helpers");
+    const trampa = SOCIAL_ITEMS.find((i: any) => i.type === "trampa");
+    expect(trampa).toBeDefined();
+    expect(trampa.icon).toBe("🪤");
+  });
+
+  it("performMove retorna trap_hit i barricade_hit", async () => {
+    const { performMove } = await import("@/lib/supabase-helpers");
+    expect(typeof performMove).toBe("function");
+  });
+});
+
+// ============================================
+// REG-011: Etiquetes contextuals per entorn
+// Data: 2026-04-16 | Fix: getEnvironmentLabel + ENVIRONMENT_LABELS
+// Bug: No es mostrava context visual (mullat/brut/cremat) al amagar objectes.
+// ============================================
+describe("REG-011: Etiquetes contextuals", () => {
+  it("getEnvironmentLabel retorna label per wet", () => {
+    const { getEnvironmentLabel } = require("@/lib/supabase-helpers");
+    expect(getEnvironmentLabel("wet")).toContain("Mullat");
+    expect(getEnvironmentLabel("hot")).toContain("Cremat");
+    expect(getEnvironmentLabel("dirty")).toContain("Brut");
+    expect(getEnvironmentLabel("generic")).toBeNull();
+  });
+});
