@@ -375,7 +375,7 @@ export default function GamePage() {
     }
   }, [gameId, user]);
 
-  const scheduleLoadGame = useCallback((delay = 120) => {
+  const scheduleLoadGame = useCallback((delay = 300) => {
     if (realtimeReloadTimeoutRef.current) {
       clearTimeout(realtimeReloadTimeoutRef.current);
     }
