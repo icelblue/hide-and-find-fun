@@ -1,35 +1,25 @@
 ---
-name: Social Items v3.0
-description: Daily social interactions - banana, smoke bomb, shield, swap, espia, message, robar_tornavis, barricada, trampa. Double-click protected via actionLoading.
+name: Social Items v3.1
+description: Daily social interactions - banana, smoke bomb, shield, swap, espia, message, robar_tornavis, barricada (2/day), trampa (2/day). Double-click protected via actionLoading.
 type: feature
 ---
 
-## Ítems Socials (1/dia)
+## Ítems Socials
 
-| Ítem | Icon | Efecte | Bloq. Escut |
-|------|------|--------|-------------|
-| Plàtan | 🍌 | Bloqueja 1 posició del rival | SÍ |
-| Bomba de fum | 💣 | Mou objecte propi a DIFERENT escenari + moble (1x/partida) | NO |
-| Escut | 🛡️ | Bloqueja pròxim plàtan/swap/robar/barricada (1 ús) | — |
-| Intercanvi | 🔄 | Intercanvia posició actual (sala) entre jugadors | SÍ |
-| Espia | 🕵️ | Descobreix on és el rival ara | NO |
-| Barricada | 🚧 | Bloqueja camí entre 2 escenaris (3 torns rival, +1🪙 forçar) | SÍ |
-| Trampa | 🪤 | Col·loca trampa en moble (-0.2🪙 si rival mira, o resta el que té) | NO |
-| Missatge | 💡 | Envia pista o farol (max 80 chars) | NO |
-| Robar tornavís | 🔧 | Roba 1 tornavís del rival | SÍ |
+| Ítem | Icon | Efecte | Bloq. Escut | Usos/dia |
+|------|------|--------|-------------|----------|
+| Plàtan | 🍌 | Bloqueja 1 posició del rival | SÍ | 1 |
+| Bomba de fum | 💣 | Mou objecte propi a DIFERENT escenari + moble (1x/partida) | NO | 1 |
+| Escut | 🛡️ | Bloqueja pròxim plàtan/swap/robar/barricada (1 ús) | — | 1 |
+| Intercanvi | 🔄 | Intercanvia posició actual (sala) entre jugadors | SÍ | 1 |
+| Espia | 🕵️ | Descobreix on és el rival ara | NO | 1 |
+| Barricada | 🚧 | Bloqueja camí entre 2 escenaris (3 torns rival, +1🪙 forçar) | SÍ | **2** |
+| Trampa | 🪤 | Col·loca trampa en moble (-0.2🪙 si rival mira) | NO | **2** |
+| Missatge | 💡 | Envia pista o farol (max 80 chars) | NO | 1 |
+| Robar tornavís | 🔧 | Roba 1 tornavís del rival | SÍ | 1 |
 
-### Barricada — RPC execute_barricada
-- Jugador selecciona camí des de la seva sala actual
-- Rival paga +1🪙 extra per forçar el pas
-- Dura 3 moviments del rival (countdown a cada move)
-- Bloquejable per escut
-
-### Trampa — RPC execute_trampa
-- Jugador selecciona moble on col·locar trampa
-- Si rival mira aquell moble, perd 0.2🪙 (o el que li quedi)
-- Un sol ús (es desactiva al activar-se)
-- NO bloquejable per escut
-
-### false_clue eliminat
-- Existeix a l'enum DB però mai s'ha usat (0 registres)
-- No apareix a SOCIAL_ITEMS del frontend
+### Comptador 2/dia (Barricada + Trampa)
+- Usen `special_data.barricada_today` / `special_data.trampa_today` (int)
+- Es resetejen automàticament amb el reset diari de tokens
+- NO consumeixen el `social_item_used_today` boolean (els altres sí)
+- RPCs (`execute_barricada`, `execute_trampa`) gestionen el comptador
