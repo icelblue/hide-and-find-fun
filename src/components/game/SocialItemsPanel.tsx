@@ -19,6 +19,16 @@ interface SocialItemsPanelProps {
   currentScenarioItems?: any[];
 }
 
+/** Items with 2 daily uses tracked via special_data */
+const MULTI_USE_ITEMS = new Set<string>(["barricada", "trampa"]);
+
+function getMultiUseCount(player: any, type: string): number {
+  const special = player?.special_data ?? {};
+  const today = new Date().toISOString().split("T")[0];
+  if (player?.tokens_last_reset < today) return 0;
+  return (special as any)?.[`${type}_today`] ?? 0;
+}
+
 export default function SocialItemsPanel({
   showPanel, setShowPanel, player, onSendSocial, messageInput, setMessageInput, actionLoading,
   connectedScenarios, currentScenarioId, currentScenarioItems,
@@ -42,25 +52,40 @@ export default function SocialItemsPanel({
     onSendSocial(type);
   };
 
+  const singleUseDisabled = player.social_item_used_today;
+  const barricadaRemaining = 2 - getMultiUseCount(player, "barricada");
+  const trampaRemaining = 2 - getMultiUseCount(player, "trampa");
+  const allDisabled = singleUseDisabled && barricadaRemaining <= 0 && trampaRemaining <= 0;
+
   return (
     <div>
       <Button variant="outline" className="w-full h-12 text-base" size="lg"
         onClick={() => setShowPanel(!showPanel)}
-        disabled={player.social_item_used_today}>
-        {player.social_item_used_today ? "⏳ Ítem social usat avui" : "⚡ Usar ítem social (1/dia)"}
+        disabled={allDisabled}>
+        {allDisabled ? "⏳ Ítems socials esgotats avui" : "⚡ Usar ítem social"}
       </Button>
 
       {showPanel && (
         <div className="mt-3 grid grid-cols-3 gap-2">
           {SOCIAL_ITEMS.filter(i => i.type !== "message").map(item => {
+            const isMultiUse = MULTI_USE_ITEMS.has(item.type);
             const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
+            const multiRemaining = isMultiUse ? (item.type === "barricada" ? barricadaRemaining : trampaRemaining) : 0;
+            const isDisabled = isBombUsed || actionLoading ||
+              (isMultiUse ? multiRemaining <= 0 : singleUseDisabled);
+
             return (
               <button key={item.type}
-                onClick={() => !isBombUsed && !actionLoading && handleItemClick(item.type)}
-                disabled={isBombUsed || actionLoading}
-                className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isBombUsed ? "opacity-30" : ""}`}>
+                onClick={() => !isDisabled && handleItemClick(item.type)}
+                disabled={isDisabled}
+                className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isDisabled ? "opacity-30" : ""}`}>
                 <span className="text-3xl block mb-1.5">{item.icon}</span>
                 <span className="text-[11px] font-semibold block leading-tight">{item.name}</span>
+                {isMultiUse && (
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                    {multiRemaining}/2
+                  </span>
+                )}
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border text-[10px] text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 max-w-[200px] text-wrap text-center">
                   {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
                 </span>
