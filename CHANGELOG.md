@@ -7,6 +7,34 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.11.0] — 2026-04-16 — Barricada, Trampa, rendiment i mobles trencables (MINOR)
+
+### Afegit
+- **Ítem social: 🚧 Barricada** — Bloqueja un camí entre 2 escenaris durant 3 torns del rival. El rival pot forçar el pas pagant +1🪙 extra. Bloquejable per escut.
+- **Ítem social: 🪤 Trampa** — Col·loca una trampa en un moble concret. Si el rival mira aquell moble, perd 0.2🪙 (o el que li quedi). Un sol ús, NO bloquejable per escut.
+- **Mobles trencables**: Afegit tag `breakable` a ~15 mobles nous (Microones, Nevera, Ordinador, Televisió, Aparador, Estanteria, etc.)
+- **Etiquetes contextuals d'entorn**: Els objectes mostren estat segons el moble (💧 Mullat, 🔥 Cremat, 🧹 Brut, etc.)
+- **RPC `execute_barricada`**: Lògica de barricada 100% al servidor (zero latència extra)
+- **RPC `execute_trampa`**: Lògica de trampa 100% al servidor
+- **Tests de regressió**: REG-009 (barricada), REG-010 (trampa), REG-011 (etiquetes entorn)
+
+### Millorat
+- **Rendiment crític**: Debounce Realtime de 120ms → 300ms, control de càrrega amb `isLoadingGameRef` per evitar tempestes de recàrrega
+- **RPC `execute_smoke_bomb`**: Tota la lògica al servidor en 1 transacció (abans eren 6 crides seqüencials)
+- **RPC `get_rival_traits`**: Corregit bug on les pistes del rival no es mostraven (RLS bloquejava `hidden_object_id`)
+- **Martell més útil**: Més mobles amb tag `breakable` per estratègia defensiva
+
+### Corregit
+- **Pistes (traits) del rival**: Ara es mostren correctament gràcies a la RPC que bypassa RLS
+- **Lag en bomba de fum**: Eliminat completament (1 RPC vs 6 crides)
+- **Botons desactivats massa temps**: Controlat amb semàfor de càrrega
+
+### Validat
+- 17 tests de regressió ✅ (tots passen)
+- Cap regressió detectada
+
+---
+
 ## [1.10.0] — 2026-04-15 — PWA instal·lable amb banner intel·ligent (MINOR)
 
 ### Afegit
