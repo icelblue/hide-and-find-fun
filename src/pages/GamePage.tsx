@@ -556,9 +556,12 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
+      const result = await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
       const s = scenarios.find(s => s.id === scenarioId);
-      toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${TOKEN_COSTS.move}🪙)`}`);
+      if (result.barricade_hit) {
+        toast.warning(`🚧 Camí barricadat! Has pagat ${result.barricade_extra_cost}🪙 extra per forçar el pas.`, { duration: 5000 });
+      }
+      toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move}🪙)`}`);
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
