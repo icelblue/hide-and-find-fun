@@ -230,8 +230,8 @@ describe("REG-009: Barricada funcional", () => {
 // ============================================
 describe("REG-010: Trampa funcional", () => {
   it("trampa està definida com a social item", () => {
-    const { SOCIAL_ITEMS } = require("@/lib/supabase-helpers");
     const trampa = SOCIAL_ITEMS.find((i: any) => i.type === "trampa");
+    expect(trampa).toBeDefined();
     expect(trampa).toBeDefined();
     expect(trampa.icon).toBe("🪤");
   });
@@ -249,8 +249,8 @@ describe("REG-010: Trampa funcional", () => {
 // ============================================
 describe("REG-011: Etiquetes contextuals", () => {
   it("getEnvironmentLabel retorna label per wet", () => {
-    const { getEnvironmentLabel } = require("@/lib/supabase-helpers");
     expect(getEnvironmentLabel("wet")).toContain("Mullat");
+    expect(getEnvironmentLabel("hot")).toContain("Cremat");
     expect(getEnvironmentLabel("hot")).toContain("Cremat");
     expect(getEnvironmentLabel("dirty")).toContain("Brut");
     expect(getEnvironmentLabel("generic")).toBeNull();
