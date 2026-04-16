@@ -6,6 +6,7 @@
 // ============================================================
 import { describe, it, expect, vi } from "vitest";
 import { buildTrophySpecialData, getHideMessage, getTrophyDisplayName, getTrophyDisplayIcon } from "@/lib/object-specials";
+import { SOCIAL_ITEMS, getEnvironmentLabel } from "@/lib/supabase-helpers";
 
 // ============================================
 // REG-001: Trofeus duplicats per clics ràpids
