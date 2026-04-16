@@ -796,6 +796,11 @@ export async function performMove(
     bonusValue: result.bonus_value ?? null,
     tokensRemaining: result.tokens_remaining ?? 0,
     hintLevel: result.hint_level ?? null,
+    toolFound: result.tool_found ?? null,
+    trapHit: result.trap_hit ?? false,
+    trapPenalty: result.trap_penalty ?? 0,
+    barricade_hit: result.barricade_hit ?? false,
+    barricade_extra_cost: result.barricade_extra_cost ?? 0,
   };
 }
 
