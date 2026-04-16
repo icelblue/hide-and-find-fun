@@ -816,8 +816,8 @@ export const SOCIAL_ITEMS = [
   { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim atac (1 ús)" },
   { type: "swap" as const, icon: "🔄", name: "Intercanvi", desc: "Intercanvia la teva sala amb la del rival" },
   { type: "espia" as const, icon: "🕵️", name: "Espia", desc: "Descobreix on és el rival ara" },
-  { type: "barricada" as const, icon: "🚧", name: "Barricada", desc: "Bloqueja un camí al rival (3 torns, +1🪙 per forçar)" },
-  { type: "trampa" as const, icon: "🪤", name: "Trampa", desc: "Col·loca trampa en un moble (-0.2🪙 al rival si mira)" },
+  { type: "barricada" as const, icon: "🚧", name: "Barricada", desc: "Bloqueja un camí al rival (3 torns, +1🪙 per forçar) — 2/dia", multiUse: true },
+  { type: "trampa" as const, icon: "🪤", name: "Trampa", desc: "Col·loca trampa en un moble (-0.2🪙 al rival si mira) — 2/dia", multiUse: true },
   { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
   { type: "robar_tornavis" as const, icon: "🔧", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
 ] as const;
@@ -832,14 +832,17 @@ export async function sendSocialItem(
 ) {
   const { data: fromPlayer } = await supabase
     .from("game_players")
-    .select("social_item_used_today, id, tokens_last_reset, smoke_bomb_used")
+    .select("social_item_used_today, id, tokens_last_reset, smoke_bomb_used, special_data")
     .eq("game_id", gameId)
     .eq("user_id", fromPlayerId)
     .single();
   if (!fromPlayer) throw new Error("Jugador no trobat");
 
   const today = new Date().toISOString().split("T")[0];
-  if (fromPlayer.tokens_last_reset === today && fromPlayer.social_item_used_today) {
+  const isBarricadaOrTrampa = itemType === "barricada" || itemType === "trampa";
+
+  // Barricada/trampa have their own 2x/day limit checked in the RPC
+  if (!isBarricadaOrTrampa && fromPlayer.tokens_last_reset === today && fromPlayer.social_item_used_today) {
     throw new Error("Ja has usat el teu ítem social avui! 😉");
   }
 
