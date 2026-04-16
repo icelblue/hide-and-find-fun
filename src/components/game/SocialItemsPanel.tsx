@@ -1,6 +1,7 @@
 // ============================================================
 // SocialItemsPanel.tsx — Panel d'ítems socials
 // ============================================================
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SOCIAL_ITEMS, type SocialItemType } from "@/lib/supabase-helpers";
@@ -9,15 +10,38 @@ interface SocialItemsPanelProps {
   showPanel: boolean;
   setShowPanel: (show: boolean) => void;
   player: any;
-  onSendSocial: (type: SocialItemType) => void;
+  onSendSocial: (type: SocialItemType, extraData?: { scenarioFrom?: string; scenarioTo?: string; itemId?: string }) => void;
   messageInput: string;
   setMessageInput: (msg: string) => void;
   actionLoading?: boolean;
+  connectedScenarios?: any[];
+  currentScenarioId?: string;
+  currentScenarioItems?: any[];
 }
 
 export default function SocialItemsPanel({
   showPanel, setShowPanel, player, onSendSocial, messageInput, setMessageInput, actionLoading,
+  connectedScenarios, currentScenarioId, currentScenarioItems,
 }: SocialItemsPanelProps) {
+  const [barricadaTarget, setBarricadaTarget] = useState<string>("");
+  const [trampaTarget, setTrampaTarget] = useState<string>("");
+  const [showBarricadaPicker, setShowBarricadaPicker] = useState(false);
+  const [showTrampaPicker, setShowTrampaPicker] = useState(false);
+
+  const handleItemClick = (type: SocialItemType) => {
+    if (type === "barricada") {
+      setShowBarricadaPicker(true);
+      setShowTrampaPicker(false);
+      return;
+    }
+    if (type === "trampa") {
+      setShowTrampaPicker(true);
+      setShowBarricadaPicker(false);
+      return;
+    }
+    onSendSocial(type);
+  };
+
   return (
     <div>
       <Button variant="outline" className="w-full h-12 text-base" size="lg"
@@ -32,7 +56,7 @@ export default function SocialItemsPanel({
             const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
             return (
               <button key={item.type}
-                onClick={() => !isBombUsed && !actionLoading && onSendSocial(item.type)}
+                onClick={() => !isBombUsed && !actionLoading && handleItemClick(item.type)}
                 disabled={isBombUsed || actionLoading}
                 className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isBombUsed ? "opacity-30" : ""}`}>
                 <span className="text-3xl block mb-1.5">{item.icon}</span>
@@ -43,6 +67,54 @@ export default function SocialItemsPanel({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Barricada picker */}
+      {showPanel && showBarricadaPicker && connectedScenarios && connectedScenarios.length > 0 && (
+        <div className="mt-2 glass rounded-xl p-3">
+          <p className="text-xs font-semibold mb-2 text-muted-foreground">🚧 Quin camí vols barricadar?</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {connectedScenarios.map(s => (
+              <button key={s.id}
+                onClick={() => setBarricadaTarget(s.id)}
+                className={`rounded-lg p-2 text-sm text-center transition-all ${barricadaTarget === s.id ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"}`}>
+                {s.icon} {s.name}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" className="w-full mt-2" disabled={!barricadaTarget || actionLoading}
+            onClick={() => {
+              onSendSocial("barricada", { scenarioFrom: currentScenarioId, scenarioTo: barricadaTarget });
+              setShowBarricadaPicker(false);
+              setBarricadaTarget("");
+            }}>
+            Barricadar camí
+          </Button>
+        </div>
+      )}
+
+      {/* Trampa picker */}
+      {showPanel && showTrampaPicker && currentScenarioItems && currentScenarioItems.length > 0 && (
+        <div className="mt-2 glass rounded-xl p-3">
+          <p className="text-xs font-semibold mb-2 text-muted-foreground">🪤 On vols posar la trampa?</p>
+          <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
+            {currentScenarioItems.map(item => (
+              <button key={item.id}
+                onClick={() => setTrampaTarget(item.id)}
+                className={`rounded-lg p-2 text-sm text-center transition-all ${trampaTarget === item.id ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"}`}>
+                {item.icon} {item.name}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" className="w-full mt-2" disabled={!trampaTarget || actionLoading}
+            onClick={() => {
+              onSendSocial("trampa", { itemId: trampaTarget });
+              setShowTrampaPicker(false);
+              setTrampaTarget("");
+            }}>
+            Col·locar trampa
+          </Button>
         </div>
       )}
 
