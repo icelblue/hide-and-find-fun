@@ -183,6 +183,11 @@ export default function AuthPage() {
                 autoComplete={isLogin ? "current-password" : "new-password"}
                 className="bg-muted/50 border-border/50 h-11"
               />
+              {!isLogin && (
+                <p className="text-[10px] text-muted-foreground -mt-1 px-1">
+                  Mínim 6 caràcters. Tria una contrasenya segura.
+                </p>
+              )}
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? "..." : isLogin ? "Entrar 🎮" : "Crear compte 🚀"}
               </Button>
