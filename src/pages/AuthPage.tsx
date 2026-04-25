@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { translateAuthError, validateAuthForm } from "@/lib/auth-errors";
 
 /** Features destacades del joc per la landing */
 const FEATURES = [
@@ -48,16 +49,21 @@ export default function AuthPage() {
 
   /** Envia email de recuperació de contrasenya */
   const handleForgotPassword = async () => {
+    const trimmed = forgotEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error("Introdueix un email vàlid.");
+      return;
+    }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      toast.success("Email enviat! Revisa la safata d'entrada.");
+      toast.success("Email enviat! Revisa la safata d'entrada (i el correu brossa).", { duration: 6000 });
       setShowForgot(false);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(translateAuthError(err), { duration: 6000 });
     } finally {
       setLoading(false);
     }
@@ -66,17 +72,30 @@ export default function AuthPage() {
   /** Gestiona submit del formulari (login o registre) */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validació local primer (evita anar a la xarxa amb dades invàlides)
+    const validationError = validateAuthForm({
+      email,
+      password,
+      displayName,
+      isSignup: !isLogin,
+    });
+    if (validationError) {
+      toast.error(validationError, { duration: 5000 });
+      return;
+    }
+
     setLoading(true);
     try {
       if (isLogin) {
-        await signIn(email, password);
+        await signIn(email.trim(), password);
         toast.success("Benvingut/da!");
       } else {
-        await signUp(email, password, displayName);
-        toast.success("Compte creat! Revisa el teu email.");
+        await signUp(email.trim(), password, displayName.trim());
+        toast.success("Compte creat! Revisa el teu email per confirmar.", { duration: 7000 });
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(translateAuthError(err), { duration: 6000 });
     } finally {
       setLoading(false);
     }
@@ -164,6 +183,11 @@ export default function AuthPage() {
                 autoComplete={isLogin ? "current-password" : "new-password"}
                 className="bg-muted/50 border-border/50 h-11"
               />
+              {!isLogin && (
+                <p className="text-[10px] text-muted-foreground -mt-1 px-1">
+                  Mínim 6 caràcters. Tria una contrasenya segura.
+                </p>
+              )}
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? "..." : isLogin ? "Entrar 🎮" : "Crear compte 🚀"}
               </Button>
