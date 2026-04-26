@@ -788,3 +788,97 @@ function WonObjectsSection({ userId }: { userId: string }) {
     </div>
   );
 }
+
+/** Zona perillosa — Eliminar compte permanentment */
+function DangerZone({ displayName, onDeleted }: { displayName: string; onDeleted: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const expected = displayName.trim();
+  const canDelete = expected.length > 0 && confirmText.trim() === expected;
+
+  const handleDelete = async () => {
+    if (!canDelete || deleting) return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-account");
+      if (error || (data && (data as any).error)) {
+        throw new Error((data as any)?.error || error?.message || "Error desconegut");
+      }
+      toast.success("Compte eliminat. Adéu! 👋");
+      setOpen(false);
+      onDeleted();
+    } catch (e: any) {
+      toast.error(`No s'ha pogut eliminar: ${e.message ?? e}`);
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="mt-8 pt-6 border-t border-destructive/20">
+      <h2 className="text-xs font-semibold text-destructive uppercase tracking-wider mb-2">
+        ⚠️ Zona perillosa
+      </h2>
+      <Tip>Acció irreversible. Totes les teves dades s'esborraran permanentment.</Tip>
+      <div className="h-2" />
+      {!open ? (
+        <Button
+          variant="outline"
+          className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setOpen(true)}
+        >
+          🗑️ Eliminar el meu compte
+        </Button>
+      ) : (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-3">
+          <div className="text-xs space-y-1">
+            <p className="font-semibold text-destructive">S'esborrarà definitivament:</p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
+              <li>Perfil, lliga, Elo i estadístiques</li>
+              <li>Mascota, accessoris i inventari</li>
+              <li>Recompenses i mobles col·locats</li>
+              <li>Progrés del mode història</li>
+              <li>Referrals i partides en curs</li>
+            </ul>
+            <p className="text-muted-foreground pt-1">
+              Les partides finalitzades es mantindran <strong>anonimitzades</strong> per preservar l'històric dels rivals.
+            </p>
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-foreground block mb-1">
+              Escriu <span className="font-mono text-destructive">{expected || "(sense nom)"}</span> per confirmar:
+            </label>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              disabled={deleting}
+              className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-destructive/40"
+              placeholder={expected}
+              autoComplete="off"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => { setOpen(false); setConfirmText(""); }}
+              disabled={deleting}
+            >
+              Cancel·lar
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleDelete}
+              disabled={!canDelete || deleting}
+            >
+              {deleting ? "Eliminant..." : "Eliminar definitivament"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
