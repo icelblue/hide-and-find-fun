@@ -43,7 +43,7 @@ const RULES = [
   },
   {
     title: "⚡ Ítems socials",
-    text: "Un cop al dia pots usar un ítem (excepte barricada i trampa que es poden usar 2 cops/dia):\n🍌 Plàtan — Bloqueja 1 posició del rival.\n💣 Bomba de fum — Mou el TEU objecte a altra habitació (1 ús/partida).\n🛡️ Escut — Protegeix del pròxim atac.\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix on és el rival.\n🚧 Barricada (2/dia) — Bloqueja un camí. El rival pot forçar pagant +1🪙 (peatge d'un sol ús: després cau).\n🪤 Trampa (2/dia) — Col·loca trampa en un moble. Si el rival mira, perd 0.2🪙.\n🔧 Robar tornavís — Roba 1 tornavís al rival.\n💡 Pista — Envia un missatge o farol.",
+    text: "Un cop al dia pots usar un ítem (excepte barricada i trampa que es poden usar 2 cops/dia):\n🍌 Plàtan — Bloqueja 1 posició del rival.\n💣 Bomba de fum — Mou el TEU objecte a altra habitació (1 ús/partida).\n🛡️ Escut — Protegeix del pròxim atac.\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix on és el rival.\n🚧 Barricada (2/dia) — Bloqueja un camí. El rival pot forçar pagant +1🪙 (peatge d'un sol ús: després cau).\n🪤 Trampa (2/dia) — Col·loca trampa en un moble. Si el rival mira, perd 1🪙 (mínim 0).\n🔧 Robar tornavís — Roba 1 tornavís al rival.\n💡 Pista — Envia un missatge o farol.",
   },
   {
     title: "🎁 Bonus i eines",
