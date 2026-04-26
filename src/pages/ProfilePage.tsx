@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 import { getScenarios } from "@/lib/supabase-helpers";
 import { getMyRewards, placeRewardItem, sellRewardItem, RARITY_CONFIG } from "@/lib/reward-helpers";
+import { getMyReferralLink, getMyReferrals } from "@/lib/referral-helpers";
 import { toast } from "sonner";
 import { Tip } from "@/components/HelpButton";
 import { getRewardCatalog } from "@/lib/reward-helpers";
@@ -588,9 +589,135 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* Referrals — convida amics */}
+      <ReferralsSection userId={user!.id} />
+
       <Button variant="outline" className="w-full" onClick={signOut}>
         🚪 Tancar sessió
       </Button>
+    </div>
+  );
+}
+
+/** Secció per convidar amics i veure recompenses progressives */
+function ReferralsSection({ userId }: { userId: string }) {
+  const [link, setLink] = useState<{ code: string; url: string } | null>(null);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [l, r] = await Promise.all([
+        getMyReferralLink(userId),
+        getMyReferrals(userId).catch(() => []),
+      ]);
+      setLink(l);
+      setReferrals(r);
+      setLoading(false);
+    })();
+  }, [userId]);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copiat!`);
+    } catch {
+      toast.error("No s'ha pogut copiar");
+    }
+  };
+
+  const shareViaWhatsApp = () => {
+    if (!link) return;
+    const text = `🕵️ Vine a jugar a Deduction Duel amb mi! Registra't amb el meu codi i guanya 5 tokens de benvinguda: ${link.url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const activeCount = referrals.filter(r => r.active_reward_given).length;
+  const nextEpic = Math.max(0, 3 - activeCount);
+  const nextLegendary = Math.max(0, 5 - activeCount);
+
+  if (loading || !link) return null;
+
+  return (
+    <div className="mb-6">
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+        🎁 Convida amics
+      </h2>
+      <Tip>Comparteix el teu codi. Tots dos guanyeu tokens i ítems especials!</Tip>
+      <div className="h-2" />
+
+      <Card className="glass border-primary/30">
+        <CardContent className="py-3 space-y-3">
+          {/* Codi propi */}
+          <div className="text-center">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">El teu codi</div>
+            <button
+              onClick={() => copyToClipboard(link.code, "Codi")}
+              className="text-lg font-bold text-primary tracking-wider hover:underline"
+            >
+              {link.code}
+            </button>
+          </div>
+
+          {/* Botons compartir */}
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => copyToClipboard(link.url, "Enllaç")}>
+              🔗 Copiar enllaç
+            </Button>
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={shareViaWhatsApp}>
+              💬 WhatsApp
+            </Button>
+          </div>
+
+          {/* Recompenses esglaonades */}
+          <div className="space-y-1 text-[11px] border-t border-border/30 pt-2">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Per cada amic registrat</span>
+              <span className="text-primary font-medium">+3🪙</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Si juga 1a partida</span>
+              <span className="text-primary font-medium">+10🪙</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Si juga 5+ partides</span>
+              <span className="text-primary font-medium">+1 ítem rar 🔵</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>3 amics actius</span>
+              <span className="text-primary font-medium">+1 ítem èpic 🟣</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>5 amics actius</span>
+              <span className="text-primary font-medium">+1 llegendari 🟡</span>
+            </div>
+          </div>
+
+          {/* Progress */}
+          {referrals.length > 0 && (
+            <div className="border-t border-border/30 pt-2 space-y-1.5">
+              <div className="text-[10px] text-muted-foreground">
+                Amics actius: <span className="text-foreground font-bold">{activeCount}</span>
+                {nextEpic > 0 && ` · ${nextEpic} per èpic`}
+                {nextEpic === 0 && nextLegendary > 0 && ` · ${nextLegendary} per llegendari`}
+              </div>
+              <div className="space-y-1">
+                {referrals.slice(0, 5).map((r) => (
+                  <div key={r.id} className="flex items-center justify-between text-[11px] bg-muted/30 rounded px-2 py-1">
+                    <span className="truncate">{r.display_name}</span>
+                    <span className="text-muted-foreground shrink-0">
+                      {r.active_reward_given ? "🔵 actiu" : r.first_game_reward_given ? "🎮 1a partida" : "✋ registrat"}
+                    </span>
+                  </div>
+                ))}
+                {referrals.length > 5 && (
+                  <div className="text-[10px] text-muted-foreground text-center">+{referrals.length - 5} més</div>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

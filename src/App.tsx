@@ -17,6 +17,7 @@ const GamePage = lazy(() => import("./pages/GamePage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const PlayerProfilePage = lazy(() => import("./pages/PlayerProfilePage"));
 const StoryModePage = lazy(() => import("./pages/StoryModePage"));
+const ClaimReminderPage = lazy(() => import("./pages/ClaimReminderPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
             <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
+            <Route path="/claim" element={<ClaimReminderPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
