@@ -13,7 +13,7 @@ type: feature
 | Escut | 🛡️ | Bloqueja pròxim plàtan/swap/robar/barricada (1 ús) | — | 1 |
 | Intercanvi | 🔄 | Intercanvia posició actual (sala) entre jugadors | SÍ | 1 |
 | Espia | 🕵️ | Descobreix on és el rival ara | NO | 1 |
-| Barricada | 🚧 | Bloqueja camí entre 2 escenaris (3 torns rival, +1🪙 forçar) | SÍ | **2** |
+| Barricada | 🚧 | Bloqueja camí entre 2 escenaris. Rival pot forçar pagant +1🪙 (peatge únic, després cau) | SÍ | **2** |
 | Trampa | 🪤 | Col·loca trampa en moble (-0.2🪙 si rival mira) | NO | **2** |
 | Missatge | 💡 | Envia pista o farol (max 80 chars) | NO | 1 |
 | Robar tornavís | 🔧 | Roba 1 tornavís del rival | SÍ | 1 |
