@@ -595,6 +595,11 @@ export default function ProfilePage() {
       <Button variant="outline" className="w-full" onClick={signOut}>
         🚪 Tancar sessió
       </Button>
+
+      {/* Zona perillosa — eliminar compte */}
+      <DangerZone displayName={profile?.display_name ?? ""} onDeleted={() => {
+        signOut().finally(() => navigate("/auth"));
+      }} />
     </div>
   );
 }
