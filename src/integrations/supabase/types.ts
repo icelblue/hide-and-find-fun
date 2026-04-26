@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_reminders_log: {
+        Row: {
+          bonus_reward_rarity: string | null
+          bonus_tokens: number
+          claim_token: string
+          claimed: boolean
+          claimed_at: string | null
+          expires_at: string
+          id: string
+          reminder_type: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_reward_rarity?: string | null
+          bonus_tokens?: number
+          claim_token?: string
+          claimed?: boolean
+          claimed_at?: string | null
+          expires_at?: string
+          id?: string
+          reminder_type: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_reward_rarity?: string | null
+          bonus_tokens?: number
+          claim_token?: string
+          claimed?: boolean
+          claimed_at?: string | null
+          expires_at?: string
+          id?: string
+          reminder_type?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       error_logs: {
         Row: {
           component: string | null
@@ -721,7 +760,10 @@ export type Database = {
           games_played: number
           games_won: number
           id: string
+          last_active_at: string | null
+          last_reminder_sent_at: string | null
           league: Database["public"]["Enums"]["league_tier"]
+          referral_code: string | null
           updated_at: string
           user_id: string
         }
@@ -736,7 +778,10 @@ export type Database = {
           games_played?: number
           games_won?: number
           id?: string
+          last_active_at?: string | null
+          last_reminder_sent_at?: string | null
           league?: Database["public"]["Enums"]["league_tier"]
+          referral_code?: string | null
           updated_at?: string
           user_id: string
         }
@@ -751,7 +796,10 @@ export type Database = {
           games_played?: number
           games_won?: number
           id?: string
+          last_active_at?: string | null
+          last_reminder_sent_at?: string | null
           league?: Database["public"]["Enums"]["league_tier"]
+          referral_code?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -784,6 +832,45 @@ export type Database = {
           p256dh?: string
           platform?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          active_reward_given: boolean
+          created_at: string
+          first_game_reward_given: boolean
+          id: string
+          referral_code: string
+          referred_user_id: string
+          referrer_user_id: string
+          signup_reward_given: boolean
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          active_reward_given?: boolean
+          created_at?: string
+          first_game_reward_given?: boolean
+          id?: string
+          referral_code: string
+          referred_user_id: string
+          referrer_user_id: string
+          signup_reward_given?: boolean
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          active_reward_given?: boolean
+          created_at?: string
+          first_game_reward_given?: boolean
+          id?: string
+          referral_code?: string
+          referred_user_id?: string
+          referrer_user_id?: string
+          signup_reward_given?: boolean
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -983,6 +1070,11 @@ export type Database = {
     }
     Functions: {
       check_both_hidden: { Args: { _game_id: string }; Returns: boolean }
+      check_referral_milestones: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
+      claim_reminder_bonus: { Args: { _claim_token: string }; Returns: Json }
       count_game_players: { Args: { _game_id: string }; Returns: number }
       create_story_game: {
         Args: { _chapter: number; _user_id: string }
@@ -1032,10 +1124,25 @@ export type Database = {
         Args: { _game_id: string; _winner_id: string }
         Returns: undefined
       }
+      generate_referral_code: {
+        Args: { _display_name: string }
+        Returns: string
+      }
       get_game_participants: {
         Args: { _game_ids: string[] }
         Returns: {
           game_id: string
+          user_id: string
+        }[]
+      }
+      get_inactive_users_for_reminder: {
+        Args: never
+        Returns: {
+          bonus_reward_rarity: string
+          bonus_tokens: number
+          days_inactive: number
+          display_name: string
+          reminder_type: string
           user_id: string
         }[]
       }
@@ -1092,6 +1199,7 @@ export type Database = {
         Args: { _amount: number; _game_id: string }
         Returns: number
       }
+      register_referral: { Args: { _referral_code: string }; Returns: Json }
       sell_reward_item: { Args: { _player_reward_id: string }; Returns: number }
       start_game_setup: { Args: { _game_id: string }; Returns: undefined }
     }
