@@ -816,7 +816,7 @@ export const SOCIAL_ITEMS = [
   { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim atac (1 ús)" },
   { type: "swap" as const, icon: "🔄", name: "Intercanvi", desc: "Intercanvia la teva sala amb la del rival" },
   { type: "espia" as const, icon: "🕵️", name: "Espia", desc: "Descobreix on és el rival ara" },
-  { type: "barricada" as const, icon: "🚧", name: "Barricada", desc: "Bloqueja un camí al rival (3 torns, +1🪙 per forçar) — 2/dia", multiUse: true },
+  { type: "barricada" as const, icon: "🚧", name: "Barricada", desc: "Bloqueja un camí al rival. Pot forçar pagant +1🪙 (peatge únic) — 2/dia", multiUse: true },
   { type: "trampa" as const, icon: "🪤", name: "Trampa", desc: "Col·loca trampa en un moble (-0.2🪙 al rival si mira) — 2/dia", multiUse: true },
   { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
   { type: "robar_tornavis" as const, icon: "🔧", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
