@@ -12,6 +12,7 @@ Deno.serve(async () => {
       cleaned_finished_social: 0,
       deleted_stale_waiting: 0,
       deleted_stale_hiding: 0,
+      deleted_stale_playing: 0,
       deleted_stale_moves: 0,
       deleted_stale_social: 0,
       deleted_stale_players: 0,
@@ -69,13 +70,23 @@ Deno.serve(async () => {
       .eq("status", "hiding")
       .lt("updated_at", hidingCutoff);
 
+    // 3b. Stale "playing" games > 7 days — full delete (abandoned matches)
+    const playingCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: stalePlaying } = await supabase
+      .from("games").select("id")
+      .eq("status", "playing")
+      .eq("is_story", false)
+      .lt("updated_at", playingCutoff);
+
     const staleIds = [
       ...(staleWaiting ?? []).map(g => g.id),
       ...(staleHiding ?? []).map(g => g.id),
+      ...(stalePlaying ?? []).map(g => g.id),
     ];
 
     stats.deleted_stale_waiting = staleWaiting?.length ?? 0;
     stats.deleted_stale_hiding = staleHiding?.length ?? 0;
+    stats.deleted_stale_playing = stalePlaying?.length ?? 0;
 
     if (staleIds.length > 0) {
       for (let i = 0; i < staleIds.length; i += 100) {
