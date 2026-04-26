@@ -1080,6 +1080,7 @@ export type Database = {
         Args: { _chapter: number; _user_id: string }
         Returns: string
       }
+      delete_user_account: { Args: never; Returns: Json }
       execute_barricada: {
         Args: { _game_id: string; _scenario_from: string; _scenario_to: string }
         Returns: Json

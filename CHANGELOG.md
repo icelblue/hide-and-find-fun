@@ -7,6 +7,21 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.12.0] — 2026-04-26 — Eliminació de compte (GDPR) (MINOR)
+
+### Afegit
+- **Botó "Eliminar el meu compte"** a `ProfilePage` → secció "⚠️ Zona perillosa"
+- **Confirmació segura**: cal escriure el `display_name` per evitar clics accidentals
+- **RPC `delete_user_account()`** (SECURITY DEFINER): neteja totes les dades de l'usuari en una sola transacció
+- **Edge function `delete-account`**: orquestra neteja de dades + eliminació de `auth.users` (admin API)
+- **Política d'històric**: partides finalitzades i wall messages s'**anonimitzen** (es manté l'històric Elo i estadístiques dels rivals)
+- **Eliminació immediata** (sense període de gràcia): el compte desapareix a l'instant i l'email queda lliure per re-registrar-se
+
+### Esborrat per usuari
+Perfil, mascota, accessoris, consumibles, esdeveniments, inventari, recompenses, mobles col·locats (alliberats), referrals, progrés història, subscripcions push, logs de recordatoris i errors, partides en curs cancel·lades.
+
+---
+
 ## [1.11.0] — 2026-04-16 — Barricada, Trampa, rendiment i mobles trencables (MINOR)
 
 ### Afegit
