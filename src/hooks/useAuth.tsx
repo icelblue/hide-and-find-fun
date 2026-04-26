@@ -15,6 +15,7 @@
 
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { registerServiceWorker, subscribeToPush, isPushSupported } from "@/lib/push-notifications";
+import { applyPendingReferral, getPendingReferralCode } from "@/lib/referral-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Auto-subscribe to push when user logs in
+  // Auto-subscribe to push when user logs in + apply pending referral
   useEffect(() => {
     if (user && !pushInitRef.current && isPushSupported()) {
       pushInitRef.current = true;
@@ -67,6 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const timer = setTimeout(() => {
         subscribeToPush().catch(() => {});
       }, 3000);
+      // Apply pending referral if any (fire-and-forget, no UI block)
+      if (getPendingReferralCode()) {
+        setTimeout(() => { applyPendingReferral().catch(() => {}); }, 1500);
+      }
       return () => clearTimeout(timer);
     }
     if (!user) {

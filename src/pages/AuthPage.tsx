@@ -12,7 +12,7 @@
 // Al registrar-se, el trigger `handle_new_user()` crea el perfil.
 // ============================================================
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { translateAuthError, validateAuthForm } from "@/lib/auth-errors";
+import { savePendingReferralCode, getPendingReferralCode } from "@/lib/referral-helpers";
 
 /** Features destacades del joc per la landing */
 const FEATURES = [
@@ -46,6 +47,21 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);  // Modal recuperar password
   const [forgotEmail, setForgotEmail] = useState("");
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  // Capturar codi de referral de la URL (?ref=XXX) i guardar-lo
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      savePendingReferralCode(ref);
+      setReferralCode(ref.toUpperCase().trim());
+      setIsLogin(false); // Si venen amb codi, mostrem registre per defecte
+    } else {
+      const pending = getPendingReferralCode();
+      if (pending) setReferralCode(pending);
+    }
+  }, []);
 
   /** Envia email de recuperació de contrasenya */
   const handleForgotPassword = async () => {
@@ -121,6 +137,16 @@ export default function AuthPage() {
             El joc de deducció PvP on la lògica guanya a la sort. 
             Amaga, investiga i dedueix! 🧠
           </p>
+          {referralCode && (
+            <div className="mt-3 inline-flex items-center gap-2 glass rounded-full px-3 py-1.5 text-xs">
+              <span>🎁</span>
+              <span className="text-muted-foreground">Codi convidat:</span>
+              <span className="font-bold text-primary">{referralCode}</span>
+            </div>
+          )}
+          {referralCode && (
+            <p className="text-[10px] text-muted-foreground/80 mt-1">+5 tokens benvinguda en registrar-te</p>
+          )}
         </header>
 
         {/* Com funciona — 3 passos visuals */}
