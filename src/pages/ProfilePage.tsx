@@ -358,6 +358,9 @@ export default function ProfilePage() {
         </div>
       )}
 
+      <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-5 block transition-colors relative z-10">
+        ← Lobby
+      </button>
 
       {/* Profile header */}
       <div className="text-center mb-6 relative z-10">
