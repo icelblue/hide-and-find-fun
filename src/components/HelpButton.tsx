@@ -242,73 +242,75 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
 
           {/* TAB: REGLES COMPLETES */}
           {tab === "rules" && (
-            <></>
-          )}
+            <>
+              {RULES.map((r, i) => (
+                <div key={i} className="border-b border-border/20 pb-3 last:border-0">
+                  <p className="text-sm font-semibold mb-1">{r.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
+                </div>
+              ))}
 
-          {RULES.map((r, i) => (
-            <div key={i} className="border-b border-border/20 pb-3 last:border-0">
-              <p className="text-sm font-semibold mb-1">{r.title}</p>
-              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
-            </div>
-          ))}
-
-          {/* Scenario connections map */}
-          {scenarioMap.length > 0 && (
-            <div className="border-t border-border/40 pt-4">
-              <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
-              <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
-              <div className="space-y-2">
-                {scenarioMap.map((s, i) => (
-                  <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
-                    <span className="text-sm font-semibold">{s.icon} {s.name}</span>
-                    {s.connections.length > 0 ? (
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        → {s.connections.join(" · ")}
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Reward catalog */}
-          <div className="border-t border-border/40 pt-4">
-            <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
-            <p className="text-xs text-muted-foreground mb-3">
-              Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
-            </p>
-            {RARITY_ORDER.map(rarity => {
-              const items = groupedRewards[rarity] ?? [];
-              const cfg = RARITY_CONFIG[rarity];
-              const drop = DROP_RATES[rarity];
-              if (items.length === 0) return null;
-              return (
-                <div key={rarity} className="mb-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold">
-                      {cfg?.emoji} {drop?.label} ({items.length})
-                    </span>
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      {drop?.pct} · {cfg?.sell}🪙
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {items.map((item: any) => (
-                      <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
-                        {item.icon} {item.name}
-                      </span>
+              {/* Scenario connections map */}
+              {scenarioMap.length > 0 && (
+                <div className="border-t border-border/40 pt-4">
+                  <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
+                  <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
+                  <div className="space-y-2">
+                    {scenarioMap.map((s, i) => (
+                      <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
+                        <span className="text-sm font-semibold">{s.icon} {s.name}</span>
+                        {s.connections.length > 0 ? (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            → {s.connections.join(" · ")}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
-              );
-            })}
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
-            </p>
-          </div>
+              )}
+            </>
+          )}
+
+          {/* TAB: PREMIS */}
+          {tab === "rewards" && (
+            <div>
+              <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
+              </p>
+              {RARITY_ORDER.map(rarity => {
+                const items = groupedRewards[rarity] ?? [];
+                const cfg = RARITY_CONFIG[rarity];
+                const drop = DROP_RATES[rarity];
+                if (items.length === 0) return null;
+                return (
+                  <div key={rarity} className="mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold">
+                        {cfg?.emoji} {drop?.label} ({items.length})
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {drop?.pct} · {cfg?.sell}🪙
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map((item: any) => (
+                        <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
+                          {item.icon} {item.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              <p className="text-[10px] text-muted-foreground mt-2">
+                Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>,
