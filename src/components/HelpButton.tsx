@@ -79,8 +79,47 @@ const RULES = [
   },
 ];
 
+const BASICS = [
+  {
+    step: "1",
+    title: "🎯 Què és el joc?",
+    text: "Tu i el rival amagueu cadascú UN objecte en un escenari (casa amb habitacions). Guanya qui trobi primer l'objecte de l'altre!",
+  },
+  {
+    step: "2",
+    title: "🫣 Amaga el teu objecte",
+    text: "Tries: HABITACIÓ → OBJECTE (una clau, un anell...) → MOBLE on amagar-lo → POSICIÓ (sobre, sota o dins). Pots deixar un missatge divertit que veurà el rival quan el trobi.",
+  },
+  {
+    step: "3",
+    title: "🚶 Mou-te per la casa",
+    text: "Cada habitació té portes a 1-2 habitacions adjacents. Moure costa pocs tokens. Has d'anar a la mateixa habitació on creus que el rival ha amagat el seu objecte.",
+  },
+  {
+    step: "4",
+    title: "👀 Mira als mobles",
+    text: "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes:\n❄️ FRED → Estàs a la habitació equivocada\n🌡️ CALENT → Habitació correcta, però moble equivocat\n🔥 MOLT CALENT → Moble correcte! Prova altra posició",
+  },
+  {
+    step: "5",
+    title: "🏆 Guanyar",
+    text: "Si encertes MOBLE + POSICIÓ exactes, trobes l'objecte i guanyes la partida! T'emportes una recompensa (un moble per la teva col·lecció).",
+  },
+  {
+    step: "6",
+    title: "🪙 Tokens",
+    text: "Tens 5 tokens al dia (es reinicien sols). Cada acció gasta una mica. Si t'acabes els tokens, has d'esperar a demà o convidar amics per guanyar bonus tokens.",
+  },
+  {
+    step: "7",
+    title: "⚡ Trucs i ítems socials",
+    text: "Pots fastidiar el rival! Plàtans 🍌 (li bloqueges una posició), bombes de fum 💣 (mous el teu objecte!), trampes 🪤, escuts 🛡️... Mira la pestanya 'Regles completes' per a tots.",
+  },
+];
+
 export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"basics" | "rules" | "rewards">("basics");
   const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
   const [scenarioMap, setScenarioMap] = useState<{ name: string; icon: string; connections: string[] }[]>([]);
 
@@ -146,77 +185,132 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
             ✕
           </Button>
         </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 px-3 pb-2 shrink-0 border-b border-border/30">
+          {([
+            { id: "basics", label: "🌟 Bàsic" },
+            { id: "rules", label: "📖 Regles" },
+            { id: "rewards", label: "🏆 Premis" },
+          ] as const).map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                tab === t.id ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/40"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <div
-          className="px-5 pb-5 space-y-4 overflow-y-auto flex-1 overscroll-contain"
+          className="px-5 pb-5 pt-4 space-y-4 overflow-y-auto flex-1 overscroll-contain"
           style={{
             WebkitOverflowScrolling: "touch",
             overscrollBehavior: "contain",
           }}
         >
-          {RULES.map((r, i) => (
-            <div key={i} className="border-b border-border/20 pb-3 last:border-0">
-              <p className="text-sm font-semibold mb-1">{r.title}</p>
-              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
-            </div>
-          ))}
-
-          {/* Scenario connections map */}
-          {scenarioMap.length > 0 && (
-            <div className="border-t border-border/40 pt-4">
-              <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
-              <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
-              <div className="space-y-2">
-                {scenarioMap.map((s, i) => (
-                  <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
-                    <span className="text-sm font-semibold">{s.icon} {s.name}</span>
-                    {s.connections.length > 0 ? (
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        → {s.connections.join(" · ")}
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
-                    )}
-                  </div>
-                ))}
+          {/* TAB: BÀSIC — Per a novells */}
+          {tab === "basics" && (
+            <>
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
+                <p className="text-xs font-semibold text-primary mb-1">👋 Primer cop?</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Llegeix aquests 7 passos i podràs jugar la teva primera partida en 3 minuts!
+                </p>
               </div>
-            </div>
+              {BASICS.map((b, i) => (
+                <div key={i} className="flex gap-3 border-b border-border/20 pb-3 last:border-0">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center">
+                    {b.step}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold mb-1">{b.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{b.text}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="bg-secondary/10 border border-secondary/20 rounded-xl p-3 mt-3">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  💡 <strong>Truc:</strong> A la teva partida, toca <span className="font-mono">🤫 El meu amagatall</span> si oblides on has amagat el teu objecte.
+                </p>
+              </div>
+            </>
           )}
 
-          {/* Reward catalog */}
-          <div className="border-t border-border/40 pt-4">
-            <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
-            <p className="text-xs text-muted-foreground mb-3">
-              Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
-            </p>
-            {RARITY_ORDER.map(rarity => {
-              const items = groupedRewards[rarity] ?? [];
-              const cfg = RARITY_CONFIG[rarity];
-              const drop = DROP_RATES[rarity];
-              if (items.length === 0) return null;
-              return (
-                <div key={rarity} className="mb-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold">
-                      {cfg?.emoji} {drop?.label} ({items.length})
-                    </span>
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      {drop?.pct} · {cfg?.sell}🪙
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {items.map((item: any) => (
-                      <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
-                        {item.icon} {item.name}
-                      </span>
+          {/* TAB: REGLES COMPLETES */}
+          {tab === "rules" && (
+            <>
+              {RULES.map((r, i) => (
+                <div key={i} className="border-b border-border/20 pb-3 last:border-0">
+                  <p className="text-sm font-semibold mb-1">{r.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
+                </div>
+              ))}
+
+              {/* Scenario connections map */}
+              {scenarioMap.length > 0 && (
+                <div className="border-t border-border/40 pt-4">
+                  <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
+                  <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
+                  <div className="space-y-2">
+                    {scenarioMap.map((s, i) => (
+                      <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
+                        <span className="text-sm font-semibold">{s.icon} {s.name}</span>
+                        {s.connections.length > 0 ? (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            → {s.connections.join(" · ")}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
-              );
-            })}
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
-            </p>
-          </div>
+              )}
+            </>
+          )}
+
+          {/* TAB: PREMIS */}
+          {tab === "rewards" && (
+            <div>
+              <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
+              </p>
+              {RARITY_ORDER.map(rarity => {
+                const items = groupedRewards[rarity] ?? [];
+                const cfg = RARITY_CONFIG[rarity];
+                const drop = DROP_RATES[rarity];
+                if (items.length === 0) return null;
+                return (
+                  <div key={rarity} className="mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold">
+                        {cfg?.emoji} {drop?.label} ({items.length})
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {drop?.pct} · {cfg?.sell}🪙
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map((item: any) => (
+                        <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
+                          {item.icon} {item.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              <p className="text-[10px] text-muted-foreground mt-2">
+                Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>,

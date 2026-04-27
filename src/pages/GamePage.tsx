@@ -72,6 +72,10 @@ export default function GamePage() {
   const [hideMessage, setHideMessage] = useState("");
   const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
 
+  // My hiding-spot reminder (lazy-loaded on demand)
+  const [showMyHideout, setShowMyHideout] = useState(false);
+  const [myHideoutData, setMyHideoutData] = useState<{ item: string; itemIcon: string; scenario: string; scenarioIcon: string } | null>(null);
+
   // Playing state
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
   const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
@@ -1181,7 +1185,55 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* Rival traits (PvP) */}
+          {/* My hideout reminder — privat, només per a mi */}
+          {player.hidden_item_id && player.hidden_object_id && (
+            <Card className="glass border-secondary/20">
+              <CardContent className="py-2.5 px-3">
+                <button
+                  onClick={async () => {
+                    if (!showMyHideout && !myHideoutData && player.hidden_item_id && player.hidden_object_id) {
+                      try {
+                        const [{ data: itm }, { data: obj }] = await Promise.all([
+                          supabase.from("items").select("name, scenario_id").eq("id", player.hidden_item_id).single(),
+                          supabase.from("objects").select("name, icon").eq("id", player.hidden_object_id).single(),
+                        ]);
+                        const sc = scenarios.find(s => s.id === itm?.scenario_id);
+                        setMyHideoutData({
+                          item: itm?.name ?? "?",
+                          itemIcon: "📦",
+                          scenario: sc?.name ?? "?",
+                          scenarioIcon: sc?.icon ?? "🏠",
+                        });
+                      } catch { /* silent */ }
+                    }
+                    setShowMyHideout(v => !v);
+                  }}
+                  className="w-full flex items-center justify-between text-left"
+                >
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    🤫 El meu amagatall {showMyHideout ? "(amagar)" : "(toca per recordar)"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{showMyHideout ? "▲" : "▼"}</span>
+                </button>
+                {showMyHideout && (
+                  <div className="mt-2 pt-2 border-t border-border/30 text-[12px]">
+                    {myHideoutData ? (
+                      <p>
+                        <span className="font-medium">{myHideoutData.scenarioIcon} {myHideoutData.scenario}</span>
+                        {" → "}
+                        <span className="font-medium">{myHideoutData.item}</span>
+                        {" → "}
+                        <span className="font-bold text-primary">{player.hidden_position}</span>
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">Carregant…</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {!isStory && (rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">

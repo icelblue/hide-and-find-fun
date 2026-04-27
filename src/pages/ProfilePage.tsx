@@ -58,6 +58,40 @@ export default function ProfilePage() {
   const [petEvents, setPetEvents] = useState<any[]>([]);
 
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    const trimmed = newName.trim();
+    if (trimmed.length < 2) {
+      toast.error("El nom ha de tenir almenys 2 caràcters");
+      return;
+    }
+    if (trimmed.length > 20) {
+      toast.error("Màxim 20 caràcters");
+      return;
+    }
+    // Validació bàsica: només lletres, números, espais, guions, punt i emojis comuns
+    if (!/^[\p{L}\p{N}\p{Emoji}\s._-]+$/u.test(trimmed)) {
+      toast.error("Caràcters no vàlids");
+      return;
+    }
+    setSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: trimmed })
+      .eq("user_id", user.id);
+    setSavingName(false);
+    if (error) {
+      toast.error("No s'ha pogut desar: " + error.message);
+      return;
+    }
+    setProfile((p: any) => ({ ...p, display_name: trimmed }));
+    setEditingName(false);
+    toast.success("Nom actualitzat ✨");
+  };
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -295,6 +329,35 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Modal: editar nom */}
+      {editingName && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={() => !savingName && setEditingName(false)}>
+          <Card className="glass max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <CardContent className="p-5 space-y-3">
+              <h3 className="text-lg font-bold">✏️ Canvia el teu nom</h3>
+              <p className="text-xs text-muted-foreground">Així et veuran els altres jugadors. Entre 2 i 20 caràcters.</p>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
+                maxLength={20}
+                autoFocus
+                placeholder="El teu àlies"
+                className="w-full px-3 py-2 rounded-xl border border-border/50 bg-muted/30 text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <div className="text-[10px] text-muted-foreground text-right">{newName.trim().length}/20</div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setEditingName(false)} disabled={savingName}>Cancel·lar</Button>
+                <Button className="flex-1" onClick={handleSaveName} disabled={savingName || newName.trim().length < 2}>
+                  {savingName ? "Desant…" : "Desar"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-5 block transition-colors relative z-10">
         ← Lobby
       </button>
@@ -304,7 +367,17 @@ export default function ProfilePage() {
         <div className={`w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${league.gradient} flex items-center justify-center shadow-lg text-4xl`}>
           {league.icon}
         </div>
-        <h1 className="text-2xl font-bold">{profile.display_name}</h1>
+        <div className="flex items-center justify-center gap-2">
+          <h1 className="text-2xl font-bold">{profile.display_name}</h1>
+          <button
+            onClick={() => { setNewName(profile.display_name ?? ""); setEditingName(true); }}
+            className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted/40"
+            aria-label="Editar nom"
+            title="Editar nom"
+          >
+            ✏️
+          </button>
+        </div>
         <p className="text-sm font-semibold text-primary capitalize mt-0.5">{profile.league} League</p>
       </div>
 
