@@ -329,9 +329,35 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-5 block transition-colors relative z-10">
-        ← Lobby
-      </button>
+      {/* Modal: editar nom */}
+      {editingName && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={() => !savingName && setEditingName(false)}>
+          <Card className="glass max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <CardContent className="p-5 space-y-3">
+              <h3 className="text-lg font-bold">✏️ Canvia el teu nom</h3>
+              <p className="text-xs text-muted-foreground">Així et veuran els altres jugadors. Entre 2 i 20 caràcters.</p>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
+                maxLength={20}
+                autoFocus
+                placeholder="El teu àlies"
+                className="w-full px-3 py-2 rounded-xl border border-border/50 bg-muted/30 text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <div className="text-[10px] text-muted-foreground text-right">{newName.trim().length}/20</div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setEditingName(false)} disabled={savingName}>Cancel·lar</Button>
+                <Button className="flex-1" onClick={handleSaveName} disabled={savingName || newName.trim().length < 2}>
+                  {savingName ? "Desant…" : "Desar"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
 
       {/* Profile header */}
       <div className="text-center mb-6 relative z-10">
