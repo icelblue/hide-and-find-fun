@@ -185,13 +185,66 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
             ✕
           </Button>
         </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 px-3 pb-2 shrink-0 border-b border-border/30">
+          {([
+            { id: "basics", label: "🌟 Bàsic" },
+            { id: "rules", label: "📖 Regles" },
+            { id: "rewards", label: "🏆 Premis" },
+          ] as const).map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                tab === t.id ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/40"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <div
-          className="px-5 pb-5 space-y-4 overflow-y-auto flex-1 overscroll-contain"
+          className="px-5 pb-5 pt-4 space-y-4 overflow-y-auto flex-1 overscroll-contain"
           style={{
             WebkitOverflowScrolling: "touch",
             overscrollBehavior: "contain",
           }}
         >
+          {/* TAB: BÀSIC — Per a novells */}
+          {tab === "basics" && (
+            <>
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
+                <p className="text-xs font-semibold text-primary mb-1">👋 Primer cop?</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Llegeix aquests 7 passos i podràs jugar la teva primera partida en 3 minuts!
+                </p>
+              </div>
+              {BASICS.map((b, i) => (
+                <div key={i} className="flex gap-3 border-b border-border/20 pb-3 last:border-0">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center">
+                    {b.step}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold mb-1">{b.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{b.text}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="bg-secondary/10 border border-secondary/20 rounded-xl p-3 mt-3">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  💡 <strong>Truc:</strong> A la teva partida, toca <span className="font-mono">🤫 El meu amagatall</span> si oblides on has amagat el teu objecte.
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* TAB: REGLES COMPLETES */}
+          {tab === "rules" && (
+            <></>
+          )}
+
           {RULES.map((r, i) => (
             <div key={i} className="border-b border-border/20 pb-3 last:border-0">
               <p className="text-sm font-semibold mb-1">{r.title}</p>
