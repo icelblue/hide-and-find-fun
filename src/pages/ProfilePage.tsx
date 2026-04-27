@@ -338,7 +338,17 @@ export default function ProfilePage() {
         <div className={`w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${league.gradient} flex items-center justify-center shadow-lg text-4xl`}>
           {league.icon}
         </div>
-        <h1 className="text-2xl font-bold">{profile.display_name}</h1>
+        <div className="flex items-center justify-center gap-2">
+          <h1 className="text-2xl font-bold">{profile.display_name}</h1>
+          <button
+            onClick={() => { setNewName(profile.display_name ?? ""); setEditingName(true); }}
+            className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted/40"
+            aria-label="Editar nom"
+            title="Editar nom"
+          >
+            ✏️
+          </button>
+        </div>
         <p className="text-sm font-semibold text-primary capitalize mt-0.5">{profile.league} League</p>
       </div>
 
