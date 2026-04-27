@@ -72,6 +72,10 @@ export default function GamePage() {
   const [hideMessage, setHideMessage] = useState("");
   const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
 
+  // My hiding-spot reminder (lazy-loaded on demand)
+  const [showMyHideout, setShowMyHideout] = useState(false);
+  const [myHideoutData, setMyHideoutData] = useState<{ item: string; itemIcon: string; scenario: string; scenarioIcon: string } | null>(null);
+
   // Playing state
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
   const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
