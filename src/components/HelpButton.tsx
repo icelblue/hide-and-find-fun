@@ -79,8 +79,47 @@ const RULES = [
   },
 ];
 
+const BASICS = [
+  {
+    step: "1",
+    title: "🎯 Què és el joc?",
+    text: "Tu i el rival amagueu cadascú UN objecte en un escenari (casa amb habitacions). Guanya qui trobi primer l'objecte de l'altre!",
+  },
+  {
+    step: "2",
+    title: "🫣 Amaga el teu objecte",
+    text: "Tries: HABITACIÓ → OBJECTE (una clau, un anell...) → MOBLE on amagar-lo → POSICIÓ (sobre, sota o dins). Pots deixar un missatge divertit que veurà el rival quan el trobi.",
+  },
+  {
+    step: "3",
+    title: "🚶 Mou-te per la casa",
+    text: "Cada habitació té portes a 1-2 habitacions adjacents. Moure costa pocs tokens. Has d'anar a la mateixa habitació on creus que el rival ha amagat el seu objecte.",
+  },
+  {
+    step: "4",
+    title: "👀 Mira als mobles",
+    text: "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes:\n❄️ FRED → Estàs a la habitació equivocada\n🌡️ CALENT → Habitació correcta, però moble equivocat\n🔥 MOLT CALENT → Moble correcte! Prova altra posició",
+  },
+  {
+    step: "5",
+    title: "🏆 Guanyar",
+    text: "Si encertes MOBLE + POSICIÓ exactes, trobes l'objecte i guanyes la partida! T'emportes una recompensa (un moble per la teva col·lecció).",
+  },
+  {
+    step: "6",
+    title: "🪙 Tokens",
+    text: "Tens 5 tokens al dia (es reinicien sols). Cada acció gasta una mica. Si t'acabes els tokens, has d'esperar a demà o convidar amics per guanyar bonus tokens.",
+  },
+  {
+    step: "7",
+    title: "⚡ Trucs i ítems socials",
+    text: "Pots fastidiar el rival! Plàtans 🍌 (li bloqueges una posició), bombes de fum 💣 (mous el teu objecte!), trampes 🪤, escuts 🛡️... Mira la pestanya 'Regles completes' per a tots.",
+  },
+];
+
 export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"basics" | "rules" | "rewards">("basics");
   const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
   const [scenarioMap, setScenarioMap] = useState<{ name: string; icon: string; connections: string[] }[]>([]);
 
