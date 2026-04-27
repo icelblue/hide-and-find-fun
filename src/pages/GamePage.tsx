@@ -1185,8 +1185,8 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* My hideout reminder — privat, només per a mi */}
-          {player.hidden_item_id && player.hidden_object_id && (
+          {/* My hideout reminder — privat, només per a mi (no aplicable a mode història) */}
+          {!isStory && player.hidden_item_id && player.hidden_object_id && (
             <Card className="glass border-secondary/20">
               <CardContent className="py-2.5 px-3">
                 <button
