@@ -58,6 +58,40 @@ export default function ProfilePage() {
   const [petEvents, setPetEvents] = useState<any[]>([]);
 
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    const trimmed = newName.trim();
+    if (trimmed.length < 2) {
+      toast.error("El nom ha de tenir almenys 2 caràcters");
+      return;
+    }
+    if (trimmed.length > 20) {
+      toast.error("Màxim 20 caràcters");
+      return;
+    }
+    // Validació bàsica: només lletres, números, espais, guions, punt i emojis comuns
+    if (!/^[\p{L}\p{N}\p{Emoji}\s._-]+$/u.test(trimmed)) {
+      toast.error("Caràcters no vàlids");
+      return;
+    }
+    setSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: trimmed })
+      .eq("user_id", user.id);
+    setSavingName(false);
+    if (error) {
+      toast.error("No s'ha pogut desar: " + error.message);
+      return;
+    }
+    setProfile((p: any) => ({ ...p, display_name: trimmed }));
+    setEditingName(false);
+    toast.success("Nom actualitzat ✨");
+  };
 
   const loadData = useCallback(async () => {
     if (!user) return;
