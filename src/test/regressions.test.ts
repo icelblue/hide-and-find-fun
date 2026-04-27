@@ -256,3 +256,18 @@ describe("REG-011: Etiquetes contextuals", () => {
     expect(getEnvironmentLabel("generic")).toBeNull();
   });
 });
+
+// ============================================
+// REG-012: Recordatori d'amagatall NO ha de ser visible al mode història
+// Data: 2026-04-27 | Fix: condició `!isStory` afegida al render del card
+// Bug: El bloc "🤫 El meu amagatall" es mostrava també a partides de
+//      mode història (single-player) on no té sentit.
+// ============================================
+describe("REG-012: Amagatall ocult al mode història", () => {
+  it("la condició de render exigeix !isStory", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync("src/pages/GamePage.tsx", "utf8");
+    // Comprovem que existeix la guarda exacta abans del card del recordatori
+    expect(src).toMatch(/!isStory && player\.hidden_item_id && player\.hidden_object_id/);
+  });
+});
