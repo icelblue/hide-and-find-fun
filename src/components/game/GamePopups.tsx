@@ -217,3 +217,39 @@ export function BonusTokenPicker({ bonusAvailable, bonusAmount, setBonusAmount, 
     </div>
   );
 }
+
+interface WinFoundPopupProps {
+  show: boolean;
+  objectIcon?: string;
+  objectName?: string;
+  itemIcon?: string;
+  itemName?: string;
+  positionLabel?: string;
+  rivalName?: string;
+  onClose: () => void;
+}
+
+export function WinFoundPopup({ show, objectIcon, objectName, itemIcon, itemName, positionLabel, rivalName, onClose }: WinFoundPopupProps) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-fade-in" role="dialog" aria-modal="true" aria-label="Has trobat l'objecte">
+      <Card className="mx-4 max-w-sm glass glow-primary animate-scale-in" onClick={e => e.stopPropagation()}>
+        <CardContent className="py-6 text-center">
+          <div className="text-6xl mb-2 animate-scale-in">🏆</div>
+          <p className="font-bold text-xl mb-1 text-gradient">Has trobat l'objecte!</p>
+          {rivalName && <p className="text-xs text-muted-foreground mb-4">de {rivalName}</p>}
+
+          <div className="my-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+            <div className="text-5xl mb-2">{objectIcon ?? "❓"}</div>
+            <p className="font-bold text-lg">{objectName ?? "Objecte"}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {itemIcon} {itemName} {positionLabel && <span>· {positionLabel}</span>}
+            </p>
+          </div>
+
+          <Button className="w-full" onClick={onClose}>Continuar</Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
