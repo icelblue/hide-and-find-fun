@@ -102,6 +102,7 @@ export default function GamePage() {
   const [rivalSmokeBombAt, setRivalSmokeBombAt] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
+  const [winFoundPopup, setWinFoundPopup] = useState<{ objectIcon?: string; objectName?: string; itemIcon?: string; itemName?: string; positionLabel?: string; rivalName?: string } | null>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
   const [specialFoundVariant, setSpecialFoundVariant] = useState<any>(null);
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
