@@ -30,7 +30,7 @@ import {
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
   rollHealthEvent,
 } from "@/lib/story-helpers";
-import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
+import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
