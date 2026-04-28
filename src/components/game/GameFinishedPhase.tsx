@@ -136,8 +136,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       setActionLog(log);
     })();
 
-    // Rival info (loser only)
-    if (game.winner_id === user?.id || !rival) return;
+    // Rival info (shown to both winner and loser, except in story mode)
+    if (game.is_story || !rival) return;
     (async () => {
       const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
         rival.hidden_object_id
@@ -209,18 +209,18 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         </Card>
       )}
 
-      {/* Loser: show where the object was */}
-      {!isWinner && rivalInfo && (
+      {/* Show object info to both winner and loser */}
+      {rivalInfo && (
         <div className="mb-6">
           {!showRivalInfo ? (
             <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
-              👁️ Veure on era l'objecte
+              {isWinner ? "🔍 Veure què has trobat" : "👁️ Veure on era l'objecte"}
             </Button>
           ) : (
             <Card className="mx-auto max-w-xs glass border-secondary/30">
               <CardContent className="py-4">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
-                  📍 L'objecte de {rivalInfo.rivalName}
+                  {isWinner ? `🏆 Has trobat l'objecte de ${rivalInfo.rivalName}` : `📍 L'objecte de ${rivalInfo.rivalName}`}
                 </p>
                 {rivalInfo.obj && (
                   <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
