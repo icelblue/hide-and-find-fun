@@ -30,7 +30,7 @@ import {
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
   rollHealthEvent,
 } from "@/lib/story-helpers";
-import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
+import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ import { HelpButton, Tip } from "@/components/HelpButton";
 import ItemActions from "@/components/game/ItemActions";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
-import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup } from "@/components/game/GamePopups";
+import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup, WinFoundPopup } from "@/components/game/GamePopups";
 
 const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -102,6 +102,7 @@ export default function GamePage() {
   const [rivalSmokeBombAt, setRivalSmokeBombAt] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
   const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
+  const [winFoundPopup, setWinFoundPopup] = useState<{ objectIcon?: string; objectName?: string; itemIcon?: string; itemName?: string; positionLabel?: string; rivalName?: string } | null>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
   const [specialFoundVariant, setSpecialFoundVariant] = useState<any>(null);
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
@@ -702,7 +703,17 @@ export default function GamePage() {
             }, 2000);
           }
         } else {
-          toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
+          // PvP win: show popup with the found object info (replaces the short toast)
+          const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", rival?.user_id ?? "").maybeSingle();
+          const foundObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
+          setWinFoundPopup({
+            objectIcon: foundObj?.icon,
+            objectName: foundObj?.name,
+            itemIcon: item?.icon,
+            itemName: item?.name,
+            positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
+            rivalName: rivalProf?.display_name ?? "Rival",
+          });
         }
         if (!isStory) {
           const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
@@ -877,6 +888,11 @@ export default function GamePage() {
         onSubmit={handleSpecialFoundSubmit}
         onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); setSpecialFoundVariant(null); }} />
       <MessagePopup message={receivedMessage} onClose={() => setReceivedMessage(null)} />
+      <WinFoundPopup show={!!winFoundPopup}
+        objectIcon={winFoundPopup?.objectIcon} objectName={winFoundPopup?.objectName}
+        itemIcon={winFoundPopup?.itemIcon} itemName={winFoundPopup?.itemName}
+        positionLabel={winFoundPopup?.positionLabel} rivalName={winFoundPopup?.rivalName}
+        onClose={() => setWinFoundPopup(null)} />
       <TrollEffect effect={trollEffect} onClose={() => setTrollEffect(null)} />
       <HideMessagePopup show={showHideMessagePopup} hideMessage={hideMessage}
         onMessageChange={setHideMessage} loading={actionLoading}
