@@ -209,12 +209,12 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         </Card>
       )}
 
-      {/* Loser: show where the object was */}
-      {!isWinner && rivalInfo && (
+      {/* Show object info to both winner and loser */}
+      {rivalInfo && (
         <div className="mb-6">
           {!showRivalInfo ? (
             <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
-              👁️ Veure on era l'objecte
+              {isWinner ? "🔍 Veure què has trobat" : "👁️ Veure on era l'objecte"}
             </Button>
           ) : (
             <Card className="mx-auto max-w-xs glass border-secondary/30">
