@@ -888,6 +888,11 @@ export default function GamePage() {
         onSubmit={handleSpecialFoundSubmit}
         onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); setSpecialFoundVariant(null); }} />
       <MessagePopup message={receivedMessage} onClose={() => setReceivedMessage(null)} />
+      <WinFoundPopup show={!!winFoundPopup}
+        objectIcon={winFoundPopup?.objectIcon} objectName={winFoundPopup?.objectName}
+        itemIcon={winFoundPopup?.itemIcon} itemName={winFoundPopup?.itemName}
+        positionLabel={winFoundPopup?.positionLabel} rivalName={winFoundPopup?.rivalName}
+        onClose={() => setWinFoundPopup(null)} />
       <TrollEffect effect={trollEffect} onClose={() => setTrollEffect(null)} />
       <HideMessagePopup show={showHideMessagePopup} hideMessage={hideMessage}
         onMessageChange={setHideMessage} loading={actionLoading}
