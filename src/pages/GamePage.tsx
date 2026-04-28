@@ -703,7 +703,17 @@ export default function GamePage() {
             }, 2000);
           }
         } else {
-          toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
+          // PvP win: show popup with the found object info (replaces the short toast)
+          const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", rival?.user_id ?? "").maybeSingle();
+          const foundObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
+          setWinFoundPopup({
+            objectIcon: foundObj?.icon,
+            objectName: foundObj?.name,
+            itemIcon: item?.icon,
+            itemName: item?.name,
+            positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
+            rivalName: rivalProf?.display_name ?? "Rival",
+          });
         }
         if (!isStory) {
           const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
