@@ -136,8 +136,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       setActionLog(log);
     })();
 
-    // Rival info (loser only)
-    if (game.winner_id === user?.id || !rival) return;
+    // Rival info (shown to both winner and loser, except in story mode)
+    if (game.is_story || !rival) return;
     (async () => {
       const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
         rival.hidden_object_id
