@@ -579,6 +579,10 @@ export default function GamePage() {
       if (hideMessage.trim()) {
         specialData = { ...(specialData || {}), hide_message: hideMessage.trim() };
       }
+      // Merge custom-object metadata if the player created their own object
+      if (selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData) {
+        specialData = { ...(specialData || {}), ...customObjectData };
+      }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
       setHideStep(4);
       toast.success("Objecte amagat! 🫣");
