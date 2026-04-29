@@ -390,9 +390,16 @@ export async function performTagAction(
 }
 
 export async function getObjects() {
-  const { data, error } = await supabase.from("objects").select("*").order("display_order");
+  const { data, error } = await supabase
+    .from("objects")
+    .select("*, object_specials(id)")
+    .order("display_order");
   if (error) throw error;
-  return data;
+  // Normalize: add boolean is_special flag, keep all original fields untouched
+  return (data ?? []).map((o: any) => ({
+    ...o,
+    is_special: Array.isArray(o.object_specials) && o.object_specials.length > 0,
+  }));
 }
 
 export async function getConnectedScenarios(scenarioId: string) {
