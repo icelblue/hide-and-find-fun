@@ -525,7 +525,10 @@ export default function GamePage() {
   };
 
   const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
-    const obj = objects.find((o: any) => o.id === selectedObject);
+    const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
+    const obj = isCustom
+      ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
+      : objects.find((o: any) => o.id === selectedObject);
     const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
       const objSize = (obj as any)?.size ?? 2;
