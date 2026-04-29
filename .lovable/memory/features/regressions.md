@@ -30,6 +30,9 @@ Cada regressió documentada amb:
 | REG-009 | Barricada funcional | RPC execute_barricada + check a execute_game_move |
 | REG-010 | Trampa funcional | RPC execute_trampa + check a execute_game_move |
 | REG-011 | Etiquetes contextuals | getEnvironmentLabel + ENVIRONMENT_LABELS |
+| REG-012 | Amagatall visible al mode història | guarda `!isStory` al render |
+| REG-013 | Display objecte custom | getTrophyDisplay* prioritza is_custom |
+| REG-014 | Validació icona custom | validateCustomObject + isSingleEmoji |
 
 ### Protocol per noves regressions
 

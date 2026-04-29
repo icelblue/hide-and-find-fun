@@ -14,6 +14,7 @@ import { logError } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getScenarios, getItemsByScenario, getObjects, getConnectedScenarios,
@@ -32,6 +33,17 @@ import {
 } from "@/lib/story-helpers";
 import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
+import {
+  CUSTOM_OBJECT_SENTINEL_ID,
+  CUSTOM_OBJECT_MATERIALS,
+  CUSTOM_OBJECT_SIZES,
+  buildCustomObjectSpecialData,
+  validateCustomObject,
+  isSingleEmoji,
+  type CustomObjectMaterial,
+  type CustomObjectSize,
+} from "@/lib/custom-object";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
@@ -71,6 +83,13 @@ export default function GamePage() {
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [hideMessage, setHideMessage] = useState("");
   const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
+
+  // Custom object (player-defined): icon + name + size + material
+  const [customObjectIcon, setCustomObjectIcon] = useState("");
+  const [customObjectName, setCustomObjectName] = useState("");
+  const [customObjectSize, setCustomObjectSize] = useState<CustomObjectSize>(2);
+  const [customObjectMaterial, setCustomObjectMaterial] = useState<CustomObjectMaterial>("generic");
+  const [customObjectData, setCustomObjectData] = useState<ReturnType<typeof buildCustomObjectSpecialData> | null>(null);
 
   // My hiding-spot reminder (lazy-loaded on demand)
   const [showMyHideout, setShowMyHideout] = useState(false);
@@ -484,8 +503,33 @@ export default function GamePage() {
     }
   };
 
+  /** Confirm a player-defined custom object and advance to scenario step. */
+  const handleSelectCustomObject = () => {
+    const input = {
+      icon: customObjectIcon.trim(),
+      name: customObjectName.trim(),
+      size: customObjectSize,
+      material: customObjectMaterial,
+    };
+    const v = validateCustomObject(input);
+    if (!v.ok) {
+      toast.error(v.error || "Objecte personalitzat no vàlid");
+      return;
+    }
+    setSelectedObject(CUSTOM_OBJECT_SENTINEL_ID);
+    setObjectSpecial(null);          // custom objects never carry a special
+    setSpecialInput("");
+    setSelectedVariant(null);
+    setHideMessage("");
+    setCustomObjectData(buildCustomObjectSpecialData(input as any));
+    setHideStep(1);
+  };
+
   const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
-    const obj = objects.find((o: any) => o.id === selectedObject);
+    const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
+    const obj = isCustom
+      ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
+      : objects.find((o: any) => o.id === selectedObject);
     const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
       const objSize = (obj as any)?.size ?? 2;
@@ -535,6 +579,10 @@ export default function GamePage() {
       let specialData = extraSpecialData || undefined;
       if (hideMessage.trim()) {
         specialData = { ...(specialData || {}), hide_message: hideMessage.trim() };
+      }
+      // Merge custom-object metadata if the player created their own object
+      if (selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData) {
+        specialData = { ...(specialData || {}), ...customObjectData };
       }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
       setHideStep(4);
@@ -986,8 +1034,10 @@ export default function GamePage() {
           </div>
 
           {hideStep === 0 && (() => {
-            const specials = objects.filter((o: any) => o.is_special);
-            const basics = objects.filter((o: any) => !o.is_special);
+            // Filter out the sentinel "__custom__" row from the regular lists
+            const realObjects = objects.filter((o: any) => o.id !== CUSTOM_OBJECT_SENTINEL_ID);
+            const specials = realObjects.filter((o: any) => o.is_special);
+            const basics = realObjects.filter((o: any) => !o.is_special);
             const renderCard = (o: any) => (
               <Card key={o.id} className={`glass transition-all active:scale-[0.97] relative ${actionLoading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-secondary/40"}`} onClick={() => !actionLoading && handleSelectObject(o.id)}>
                 <CardContent className="py-3 text-center">
@@ -996,31 +1046,100 @@ export default function GamePage() {
                 </CardContent>
               </Card>
             );
+            const customIconValid = customObjectIcon === "" || isSingleEmoji(customObjectIcon);
+            const customNameValid = customObjectName.trim().length > 0 && customObjectName.trim().length <= 20;
+            const customReady = isSingleEmoji(customObjectIcon) && customNameValid;
             return (
               <div>
                 <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
-                <Tip>Escull l'objecte que el rival haurà de trobar. ⭐ = objecte especial!</Tip>
+                <Tip>Escull un objecte o crea'n un de personalitzat. ⭐ = objecte especial!</Tip>
                 <div className="h-3" />
-                {specials.length > 0 && (
-                  <>
-                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                      <span>⭐</span> Especials
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      {specials.map(renderCard)}
-                    </div>
-                  </>
-                )}
-                {basics.length > 0 && (
-                  <>
-                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                      <span>📦</span> Bàsics
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {basics.map(renderCard)}
-                    </div>
-                  </>
-                )}
+                <Tabs defaultValue="specials" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-3">
+                    <TabsTrigger value="specials">⭐ Especials</TabsTrigger>
+                    <TabsTrigger value="basics">📦 Bàsics</TabsTrigger>
+                    <TabsTrigger value="custom">✨ El teu</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="specials">
+                    {specials.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-2">{specials.map(renderCard)}</div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground text-center py-4">Cap objecte especial disponible.</p>
+                    )}
+                  </TabsContent>
+                  <TabsContent value="basics">
+                    {basics.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-2">{basics.map(renderCard)}</div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground text-center py-4">Cap objecte bàsic disponible.</p>
+                    )}
+                  </TabsContent>
+                  <TabsContent value="custom">
+                    <Card className="glass">
+                      <CardContent className="py-4 space-y-3">
+                        <p className="text-[11px] text-muted-foreground">Crea el teu propi objecte. La icona ha de ser <strong>1 sol emoji</strong>.</p>
+                        <div>
+                          <label className="text-[11px] font-semibold mb-1 block">Icona (1 emoji)</label>
+                          <Input
+                            value={customObjectIcon}
+                            onChange={e => setCustomObjectIcon(e.target.value)}
+                            placeholder="🦄"
+                            maxLength={8}
+                            className={customIconValid ? "" : "border-destructive"}
+                          />
+                          {!customIconValid && <p className="text-[10px] text-destructive mt-1">Ha de ser exactament 1 emoji</p>}
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold mb-1 block">Nom (màx. 20)</label>
+                          <Input
+                            value={customObjectName}
+                            onChange={e => setCustomObjectName(e.target.value.slice(0, 20))}
+                            placeholder="Unicorn de peluix"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[11px] font-semibold mb-1 block">Mida</label>
+                            <select
+                              value={customObjectSize}
+                              onChange={e => setCustomObjectSize(Number(e.target.value) as CustomObjectSize)}
+                              className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
+                            >
+                              {CUSTOM_OBJECT_SIZES.map(s => (
+                                <option key={s} value={s}>{s === 1 ? "1 · Petit" : s === 2 ? "2 · Mitjà" : "3 · Gran"}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold mb-1 block">Material</label>
+                            <select
+                              value={customObjectMaterial}
+                              onChange={e => setCustomObjectMaterial(e.target.value as CustomObjectMaterial)}
+                              className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
+                            >
+                              {CUSTOM_OBJECT_MATERIALS.map(m => (
+                                <option key={m} value={m}>{MATERIAL_LABELS[m] ?? m}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        {customReady && (
+                          <div className="flex items-center justify-center gap-2 py-2 bg-muted/30 rounded-lg">
+                            <span className="text-2xl">{customObjectIcon}</span>
+                            <span className="text-sm font-medium">{customObjectName}</span>
+                          </div>
+                        )}
+                        <Button
+                          className="w-full"
+                          disabled={!customReady || actionLoading}
+                          onClick={handleSelectCustomObject}
+                        >
+                          Amagar aquest objecte →
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               </div>
             );
           })()}
@@ -1051,8 +1170,10 @@ export default function GamePage() {
               <div className="h-3" />
               <div className="grid grid-cols-2 gap-2.5">
                 {items.map(item => {
-                  const obj = objects.find((o: any) => o.id === selectedObject);
-                  const mat = (obj as any)?.material ?? "generic";
+                  const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
+                  const mat = isCustom
+                    ? customObjectData!.custom_material
+                    : ((objects.find((o: any) => o.id === selectedObject) as any)?.material ?? "generic");
                   const env = (item as any)?.environment ?? "generic";
                   const blockReason = getMaterialBlockReason(mat, env);
                   return (
@@ -1081,9 +1202,12 @@ export default function GamePage() {
 
               <div className="grid grid-cols-3 gap-3">
                 {POSITIONS.map(pos => {
-                  const obj = objects.find((o: any) => o.id === selectedObject);
+                  const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
+                  const objSize = isCustom
+                    ? customObjectData!.custom_size
+                    : ((objects.find((o: any) => o.id === selectedObject) as any)?.size ?? 2);
                   const itm = items.find((i: any) => i.id === selectedItem);
-                  const blocked = pos.value === "dins" && ((obj as any)?.size ?? 2) > ((itm as any)?.inner_capacity ?? 2);
+                  const blocked = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
                   return (
                     <Card key={pos.value}
                       className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}

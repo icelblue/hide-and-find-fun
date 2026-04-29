@@ -271,3 +271,46 @@ describe("REG-012: Amagatall ocult al mode història", () => {
     expect(src).toMatch(/!isStory && player\.hidden_item_id && player\.hidden_object_id/);
   });
 });
+
+// ============================================
+// REG-013: Objecte personalitzat (custom) — visualització correcta
+// Data: 2026-04-29 | Fix: getTrophyDisplayName/Icon respecten is_custom
+// Bug futur a evitar: si un jugador crea un objecte custom (icona+nom),
+//                      el nom/icona del trofeu i de la troballa han de
+//                      reflectir EL CUSTOM, no el sentinella "__custom__/✨".
+// ============================================
+describe("REG-013: Custom object display", () => {
+  it("getTrophyDisplayName retorna el nom custom quan is_custom=true", () => {
+    const sd = { is_custom: true, custom_name: "Unicorn", custom_icon: "🦄", object_name: "__custom__", object_icon: "✨" };
+    expect(getTrophyDisplayName(sd)).toBe("Unicorn");
+    expect(getTrophyDisplayIcon(sd)).toBe("🦄");
+  });
+
+  it("getTrophyDisplayName segueix funcionant per objectes especials clàssics", () => {
+    const sd = { custom_name: "La meva foto", object_name: "Foto", object_icon: "🖼️" };
+    expect(getTrophyDisplayName(sd)).toBe('"La meva foto"');
+  });
+
+  it("getTrophyDisplayName segueix funcionant per objectes normals", () => {
+    const sd = { object_name: "Cullera", object_icon: "🥄" };
+    expect(getTrophyDisplayName(sd)).toBe("Cullera");
+    expect(getTrophyDisplayIcon(sd)).toBe("🥄");
+  });
+});
+
+// ============================================
+// REG-014: Validació estricta d'icona del custom (1 sol emoji)
+// Data: 2026-04-29 | Fix: validateCustomObject + isSingleEmoji
+// Bug futur a evitar: permetre text o múltiples emojis al camp icona
+//                      del custom, contaminant la UI.
+// ============================================
+describe("REG-014: Custom object icon validation", () => {
+  it("rebutja text i múltiples emojis, accepta exactament 1 emoji", async () => {
+    const { isSingleEmoji, validateCustomObject } = await import("@/lib/custom-object");
+    expect(isSingleEmoji("🦄")).toBe(true);
+    expect(isSingleEmoji("hola")).toBe(false);
+    expect(isSingleEmoji("🦄🦄")).toBe(false);
+    const r = validateCustomObject({ icon: "abc", name: "x", size: 2, material: "generic" });
+    expect(r.ok).toBe(false);
+  });
+});
