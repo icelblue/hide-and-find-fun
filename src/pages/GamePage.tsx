@@ -502,7 +502,27 @@ export default function GamePage() {
     }
   };
 
-  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
+  /** Confirm a player-defined custom object and advance to scenario step. */
+  const handleSelectCustomObject = () => {
+    const input = {
+      icon: customObjectIcon.trim(),
+      name: customObjectName.trim(),
+      size: customObjectSize,
+      material: customObjectMaterial,
+    };
+    const v = validateCustomObject(input);
+    if (!v.ok) {
+      toast.error(v.error || "Objecte personalitzat no vàlid");
+      return;
+    }
+    setSelectedObject(CUSTOM_OBJECT_SENTINEL_ID);
+    setObjectSpecial(null);          // custom objects never carry a special
+    setSpecialInput("");
+    setSelectedVariant(null);
+    setHideMessage("");
+    setCustomObjectData(buildCustomObjectSpecialData(input as any));
+    setHideStep(1);
+  };
     const obj = objects.find((o: any) => o.id === selectedObject);
     const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
