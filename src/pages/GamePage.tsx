@@ -1202,9 +1202,12 @@ export default function GamePage() {
 
               <div className="grid grid-cols-3 gap-3">
                 {POSITIONS.map(pos => {
-                  const obj = objects.find((o: any) => o.id === selectedObject);
+                  const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
+                  const objSize = isCustom
+                    ? customObjectData!.custom_size
+                    : ((objects.find((o: any) => o.id === selectedObject) as any)?.size ?? 2);
                   const itm = items.find((i: any) => i.id === selectedItem);
-                  const blocked = pos.value === "dins" && ((obj as any)?.size ?? 2) > ((itm as any)?.inner_capacity ?? 2);
+                  const blocked = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
                   return (
                     <Card key={pos.value}
                       className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
