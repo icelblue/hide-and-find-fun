@@ -32,6 +32,17 @@ import {
 } from "@/lib/story-helpers";
 import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
+import {
+  CUSTOM_OBJECT_SENTINEL_ID,
+  CUSTOM_OBJECT_MATERIALS,
+  CUSTOM_OBJECT_SIZES,
+  buildCustomObjectSpecialData,
+  validateCustomObject,
+  isSingleEmoji,
+  type CustomObjectMaterial,
+  type CustomObjectSize,
+} from "@/lib/custom-object";
+import { MATERIAL_LABELS as MAT_LABELS_FOR_CUSTOM } from "@/lib/supabase-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
