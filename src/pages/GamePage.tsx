@@ -985,23 +985,45 @@ export default function GamePage() {
             ))}
           </div>
 
-          {hideStep === 0 && (
-            <div>
-              <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
-              <Tip>Escull l'objecte que el rival haurà de trobar. ⭐ = objecte especial!</Tip>
-              <div className="h-3" />
-              <div className="grid grid-cols-3 gap-2">
-                {objects.map(o => (
-                  <Card key={o.id} className={`glass transition-all active:scale-[0.97] relative ${actionLoading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-secondary/40"}`} onClick={() => !actionLoading && handleSelectObject(o.id)}>
-                    <CardContent className="py-3 text-center">
-                      <div className="text-2xl mb-1">{o.icon}</div>
-                      <div className="text-[11px] font-medium">{o.name}</div>
-                    </CardContent>
-                  </Card>
-                ))}
+          {hideStep === 0 && (() => {
+            const specials = objects.filter((o: any) => o.is_special);
+            const basics = objects.filter((o: any) => !o.is_special);
+            const renderCard = (o: any) => (
+              <Card key={o.id} className={`glass transition-all active:scale-[0.97] relative ${actionLoading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-secondary/40"}`} onClick={() => !actionLoading && handleSelectObject(o.id)}>
+                <CardContent className="py-3 text-center">
+                  <div className="text-2xl mb-1">{o.icon}</div>
+                  <div className="text-[11px] font-medium">{o.name}</div>
+                </CardContent>
+              </Card>
+            );
+            return (
+              <div>
+                <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
+                <Tip>Escull l'objecte que el rival haurà de trobar. ⭐ = objecte especial!</Tip>
+                <div className="h-3" />
+                {specials.length > 0 && (
+                  <>
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                      <span>⭐</span> Especials
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {specials.map(renderCard)}
+                    </div>
+                  </>
+                )}
+                {basics.length > 0 && (
+                  <>
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                      <span>📦</span> Bàsics
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {basics.map(renderCard)}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {hideStep === 1 && (
             <div>
