@@ -42,7 +42,7 @@ import {
   type CustomObjectMaterial,
   type CustomObjectSize,
 } from "@/lib/custom-object";
-import { MATERIAL_LABELS as MAT_LABELS_FOR_CUSTOM } from "@/lib/supabase-helpers";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
