@@ -1170,8 +1170,10 @@ export default function GamePage() {
               <div className="h-3" />
               <div className="grid grid-cols-2 gap-2.5">
                 {items.map(item => {
-                  const obj = objects.find((o: any) => o.id === selectedObject);
-                  const mat = (obj as any)?.material ?? "generic";
+                  const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
+                  const mat = isCustom
+                    ? customObjectData!.custom_material
+                    : ((objects.find((o: any) => o.id === selectedObject) as any)?.material ?? "generic");
                   const env = (item as any)?.environment ?? "generic";
                   const blockReason = getMaterialBlockReason(mat, env);
                   return (
