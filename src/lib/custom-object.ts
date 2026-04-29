@@ -61,11 +61,20 @@ export function isSingleEmoji(s: string): boolean {
   const trimmed = s.trim();
   if (trimmed.length === 0) return false;
 
-  // Regex que matcheja exactament 1 grafema emoji (incloent ZWJ sequences).
-  // \p{Extended_Pictographic} és la base; permetem modificadors (Fitz, VS16)
-  // i ZWJ joins amb altres pictogràfics.
-  const singleEmojiRegex =
-    /^(?:\p{Extended_Pictographic}(?:\uFE0F|\u{1F3FB}-\u{1F3FF})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\u{1F3FB}-\u{1F3FF})?)*)$/u;
+  // 1 grafema emoji = 1 pictogràfic base + opcionalment VS16/skin tone,
+  // possiblement seguit de ZWJ + (pictogràfic + opcionals) repetit.
+  // Acceptem també emojis regionals (banderes) com a 2 indicadors.
+  const singleEmojiRegex = new RegExp(
+    "^(?:" +
+      // banderes: 2 regional indicators
+      "[\\u{1F1E6}-\\u{1F1FF}]{2}" +
+      "|" +
+      // base pictogràfic + modificadors + (ZWJ + pictogràfic + modificadors)*
+      "\\p{Extended_Pictographic}[\\u{1F3FB}-\\u{1F3FF}\\uFE0F\\u20E3]*" +
+      "(?:\\u200D\\p{Extended_Pictographic}[\\u{1F3FB}-\\u{1F3FF}\\uFE0F\\u20E3]*)*" +
+      ")$",
+    "u",
+  );
 
   return singleEmojiRegex.test(trimmed);
 }
