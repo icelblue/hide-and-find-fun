@@ -40,12 +40,15 @@ export function buildTrophySpecialData(args: {
 }
 
 export function getTrophyDisplayName(specialData: any): string {
+  // Player-defined custom object takes priority over everything else
+  if (specialData?.is_custom && specialData?.custom_name) return `${specialData.custom_name}`;
   if (specialData?.custom_name) return `"${specialData.custom_name}"`;
   if (specialData?.variant_label) return `${specialData.variant_label}`;
   return specialData?.object_name ?? "Trofeu";
 }
 
 export function getTrophyDisplayIcon(specialData: any): string {
+  if (specialData?.is_custom && specialData?.custom_icon) return specialData.custom_icon;
   return specialData?.variant_icon ?? specialData?.object_icon ?? "⭐";
 }
 
