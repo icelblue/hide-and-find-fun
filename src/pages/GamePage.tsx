@@ -83,6 +83,13 @@ export default function GamePage() {
   const [hideMessage, setHideMessage] = useState("");
   const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
 
+  // Custom object (player-defined): icon + name + size + material
+  const [customObjectIcon, setCustomObjectIcon] = useState("");
+  const [customObjectName, setCustomObjectName] = useState("");
+  const [customObjectSize, setCustomObjectSize] = useState<CustomObjectSize>(2);
+  const [customObjectMaterial, setCustomObjectMaterial] = useState<CustomObjectMaterial>("generic");
+  const [customObjectData, setCustomObjectData] = useState<ReturnType<typeof buildCustomObjectSpecialData> | null>(null);
+
   // My hiding-spot reminder (lazy-loaded on demand)
   const [showMyHideout, setShowMyHideout] = useState(false);
   const [myHideoutData, setMyHideoutData] = useState<{ item: string; itemIcon: string; scenario: string; scenarioIcon: string } | null>(null);
