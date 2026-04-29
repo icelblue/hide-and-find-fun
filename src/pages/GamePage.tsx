@@ -523,6 +523,8 @@ export default function GamePage() {
     setCustomObjectData(buildCustomObjectSpecialData(input as any));
     setHideStep(1);
   };
+
+  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
     const obj = objects.find((o: any) => o.id === selectedObject);
     const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
