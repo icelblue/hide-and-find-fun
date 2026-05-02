@@ -139,8 +139,11 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
     // Rival info (loser only)
     if (game.winner_id === user?.id || !rival) return;
     (async () => {
+      const rivalSD: any = rival.special_data;
+      const isCustom = rivalSD?.is_custom === true;
+
       const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
-        rival.hidden_object_id
+        rival.hidden_object_id && !isCustom
           ? supabase.from("objects").select("name, icon, material, size").eq("id", rival.hidden_object_id).single()
           : { data: null },
         rival.hidden_item_id
@@ -156,7 +159,18 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
 
       let traits: string[] = [];
       let specialType: string | null = null;
-      if (rival.hidden_object_id) {
+      let displayObj: any = obj;
+      if (isCustom) {
+        // Player-created object: data lives in special_data
+        displayObj = {
+          name: rivalSD.custom_name,
+          icon: rivalSD.custom_icon,
+          material: rivalSD.custom_material ?? "generic",
+          size: rivalSD.custom_size ?? 2,
+        };
+        if (rivalSD.custom_trait1) traits.push(rivalSD.custom_trait1);
+        if (rivalSD.custom_trait2) traits.push(rivalSD.custom_trait2);
+      } else if (rival.hidden_object_id) {
         const [{ data: traitData }, { data: specialData }] = await Promise.all([
           supabase.from("object_traits").select("trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
           supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
@@ -166,7 +180,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       }
 
       setRivalInfo({
-        obj, item: itm, scenario: scn,
+        obj: displayObj, item: itm, scenario: scn,
         position: rival.hidden_position ?? "?",
         hideMessage: hideMsg,
         rivalName: rivalProf?.display_name ?? "Rival",
