@@ -512,6 +512,8 @@ export default function GamePage() {
       name: customObjectName.trim(),
       size: customObjectSize,
       material: customObjectMaterial,
+      trait1: customObjectTrait1.trim(),
+      trait2: customObjectTrait2.trim(),
     };
     const v = validateCustomObject(input);
     if (!v.ok) {
