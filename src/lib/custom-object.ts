@@ -38,6 +38,8 @@ export interface CustomObjectInput {
   name: string;
   size: CustomObjectSize;
   material: CustomObjectMaterial;
+  trait1: string;
+  trait2: string;
 }
 
 export interface CustomObjectSpecialData {
@@ -46,6 +48,8 @@ export interface CustomObjectSpecialData {
   custom_name: string;
   custom_size: CustomObjectSize;
   custom_material: CustomObjectMaterial;
+  custom_trait1: string;
+  custom_trait2: string;
 }
 
 /**
@@ -85,6 +89,7 @@ export interface ValidationResult {
 }
 
 const MAX_NAME_LENGTH = 20;
+const MAX_TRAIT_LENGTH = 60;
 
 /**
  * Valida l'objecte personalitzat. Retorna `{ok:true}` si tot és correcte
@@ -107,6 +112,14 @@ export function validateCustomObject(input: Partial<CustomObjectInput>): Validat
   if (!input.material || !CUSTOM_OBJECT_MATERIALS.includes(input.material as CustomObjectMaterial)) {
     return { ok: false, error: "Material no vàlid" };
   }
+  const trait1 = (input.trait1 ?? "").trim();
+  const trait2 = (input.trait2 ?? "").trim();
+  if (trait1.length === 0 || trait2.length === 0) {
+    return { ok: false, error: "Has d'escriure les 2 pistes" };
+  }
+  if (trait1.length > MAX_TRAIT_LENGTH || trait2.length > MAX_TRAIT_LENGTH) {
+    return { ok: false, error: `Cada pista ha de tenir ${MAX_TRAIT_LENGTH} caràcters o menys` };
+  }
   return { ok: true };
 }
 
@@ -121,6 +134,8 @@ export function buildCustomObjectSpecialData(input: CustomObjectInput): CustomOb
     custom_name: input.name.trim(),
     custom_size: input.size,
     custom_material: input.material,
+    custom_trait1: input.trait1.trim(),
+    custom_trait2: input.trait2.trim(),
   };
 }
 

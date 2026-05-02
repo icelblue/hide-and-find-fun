@@ -89,6 +89,8 @@ export default function GamePage() {
   const [customObjectName, setCustomObjectName] = useState("");
   const [customObjectSize, setCustomObjectSize] = useState<CustomObjectSize>(2);
   const [customObjectMaterial, setCustomObjectMaterial] = useState<CustomObjectMaterial>("generic");
+  const [customObjectTrait1, setCustomObjectTrait1] = useState("");
+  const [customObjectTrait2, setCustomObjectTrait2] = useState("");
   const [customObjectData, setCustomObjectData] = useState<ReturnType<typeof buildCustomObjectSpecialData> | null>(null);
 
   // My hiding-spot reminder (lazy-loaded on demand)
@@ -510,6 +512,8 @@ export default function GamePage() {
       name: customObjectName.trim(),
       size: customObjectSize,
       material: customObjectMaterial,
+      trait1: customObjectTrait1.trim(),
+      trait2: customObjectTrait2.trim(),
     };
     const v = validateCustomObject(input);
     if (!v.ok) {
@@ -754,9 +758,11 @@ export default function GamePage() {
           // PvP win: show popup with the found object info (replaces the short toast)
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", rival?.user_id ?? "").maybeSingle();
           const foundObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
+          const rivalSD: any = rival?.special_data;
+          const isCustomFound = rivalSD?.is_custom === true;
           setWinFoundPopup({
-            objectIcon: foundObj?.icon,
-            objectName: foundObj?.name,
+            objectIcon: isCustomFound ? rivalSD.custom_icon : foundObj?.icon,
+            objectName: isCustomFound ? rivalSD.custom_name : foundObj?.name,
             itemIcon: item?.icon,
             itemName: item?.name,
             positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
@@ -1048,7 +1054,11 @@ export default function GamePage() {
             );
             const customIconValid = customObjectIcon === "" || isSingleEmoji(customObjectIcon);
             const customNameValid = customObjectName.trim().length > 0 && customObjectName.trim().length <= 20;
-            const customReady = isSingleEmoji(customObjectIcon) && customNameValid;
+            const t1 = customObjectTrait1.trim();
+            const t2 = customObjectTrait2.trim();
+            const customTrait1Valid = t1.length > 0 && t1.length <= 60;
+            const customTrait2Valid = t2.length > 0 && t2.length <= 60;
+            const customReady = isSingleEmoji(customObjectIcon) && customNameValid && customTrait1Valid && customTrait2Valid;
             return (
               <div>
                 <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
@@ -1122,6 +1132,26 @@ export default function GamePage() {
                               ))}
                             </select>
                           </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold mb-1 block">Pista 1 (visible al rival al torn 2)</label>
+                          <Input
+                            value={customObjectTrait1}
+                            onChange={e => setCustomObjectTrait1(e.target.value.slice(0, 60))}
+                            placeholder="Ex: Fa olor de xocolata"
+                            maxLength={60}
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait1.trim().length}/60</p>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold mb-1 block">Pista 2 (visible al rival al torn 5)</label>
+                          <Input
+                            value={customObjectTrait2}
+                            onChange={e => setCustomObjectTrait2(e.target.value.slice(0, 60))}
+                            placeholder="Ex: Es pot trencar fàcilment"
+                            maxLength={60}
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait2.trim().length}/60</p>
                         </div>
                         {customReady && (
                           <div className="flex items-center justify-center gap-2 py-2 bg-muted/30 rounded-lg">
