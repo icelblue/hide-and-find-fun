@@ -1052,7 +1052,11 @@ export default function GamePage() {
             );
             const customIconValid = customObjectIcon === "" || isSingleEmoji(customObjectIcon);
             const customNameValid = customObjectName.trim().length > 0 && customObjectName.trim().length <= 20;
-            const customReady = isSingleEmoji(customObjectIcon) && customNameValid;
+            const t1 = customObjectTrait1.trim();
+            const t2 = customObjectTrait2.trim();
+            const customTrait1Valid = t1.length > 0 && t1.length <= 60;
+            const customTrait2Valid = t2.length > 0 && t2.length <= 60;
+            const customReady = isSingleEmoji(customObjectIcon) && customNameValid && customTrait1Valid && customTrait2Valid;
             return (
               <div>
                 <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
