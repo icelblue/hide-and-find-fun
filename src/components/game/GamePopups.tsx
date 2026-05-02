@@ -38,7 +38,7 @@ export function SpecialFoundPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Objecte especial trobat">
       <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
         <CardContent className="py-6 text-center">
-          <div className="text-5xl mb-3">{objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon ?? "⭐"}</div>
+          <div className="text-5xl mb-3">{(rival?.special_data as any)?.custom_icon ?? objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon ?? "⭐"}</div>
           <p className="font-bold text-lg mb-1">⭐ Objecte especial trobat!</p>
           {(() => {
             const sd = rival?.special_data as any;
