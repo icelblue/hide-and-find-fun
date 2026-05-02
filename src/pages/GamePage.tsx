@@ -89,6 +89,8 @@ export default function GamePage() {
   const [customObjectName, setCustomObjectName] = useState("");
   const [customObjectSize, setCustomObjectSize] = useState<CustomObjectSize>(2);
   const [customObjectMaterial, setCustomObjectMaterial] = useState<CustomObjectMaterial>("generic");
+  const [customObjectTrait1, setCustomObjectTrait1] = useState("");
+  const [customObjectTrait2, setCustomObjectTrait2] = useState("");
   const [customObjectData, setCustomObjectData] = useState<ReturnType<typeof buildCustomObjectSpecialData> | null>(null);
 
   // My hiding-spot reminder (lazy-loaded on demand)
