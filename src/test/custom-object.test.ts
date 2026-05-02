@@ -49,7 +49,14 @@ describe("isSingleEmoji", () => {
 });
 
 describe("validateCustomObject", () => {
-  const valid = { icon: "🦄", name: "Unicorn", size: 2 as const, material: "fabric" as const };
+  const valid = {
+    icon: "🦄",
+    name: "Unicorn",
+    size: 2 as const,
+    material: "fabric" as const,
+    trait1: "Té banya",
+    trait2: "És màgic",
+  };
 
   it("accepts a fully valid input", () => {
     expect(validateCustomObject(valid)).toEqual({ ok: true });
@@ -75,6 +82,15 @@ describe("validateCustomObject", () => {
   it("rejects bad material", () => {
     expect(validateCustomObject({ ...valid, material: "kryptonite" as any }).ok).toBe(false);
   });
+
+  it("rejects empty traits", () => {
+    expect(validateCustomObject({ ...valid, trait1: "" }).ok).toBe(false);
+    expect(validateCustomObject({ ...valid, trait2: "   " }).ok).toBe(false);
+  });
+
+  it("rejects too long traits", () => {
+    expect(validateCustomObject({ ...valid, trait1: "x".repeat(61) }).ok).toBe(false);
+  });
 });
 
 describe("buildCustomObjectSpecialData", () => {
@@ -84,6 +100,8 @@ describe("buildCustomObjectSpecialData", () => {
       name: "  Unicorn  ",
       size: 2,
       material: "fabric",
+      trait1: "  Té banya  ",
+      trait2: "És màgic",
     });
     expect(data).toEqual({
       is_custom: true,
@@ -91,6 +109,8 @@ describe("buildCustomObjectSpecialData", () => {
       custom_name: "Unicorn",
       custom_size: 2,
       custom_material: "fabric",
+      custom_trait1: "Té banya",
+      custom_trait2: "És màgic",
     });
   });
 });
