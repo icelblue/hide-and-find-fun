@@ -1131,6 +1131,26 @@ export default function GamePage() {
                             </select>
                           </div>
                         </div>
+                        <div>
+                          <label className="text-[11px] font-semibold mb-1 block">Pista 1 (visible al rival al torn 2)</label>
+                          <Input
+                            value={customObjectTrait1}
+                            onChange={e => setCustomObjectTrait1(e.target.value.slice(0, 60))}
+                            placeholder="Ex: Fa olor de xocolata"
+                            maxLength={60}
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait1.trim().length}/60</p>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold mb-1 block">Pista 2 (visible al rival al torn 5)</label>
+                          <Input
+                            value={customObjectTrait2}
+                            onChange={e => setCustomObjectTrait2(e.target.value.slice(0, 60))}
+                            placeholder="Ex: Es pot trencar fàcilment"
+                            maxLength={60}
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait2.trim().length}/60</p>
+                        </div>
                         {customReady && (
                           <div className="flex items-center justify-center gap-2 py-2 bg-muted/30 rounded-lg">
                             <span className="text-2xl">{customObjectIcon}</span>
