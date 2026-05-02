@@ -38,6 +38,8 @@ export interface CustomObjectInput {
   name: string;
   size: CustomObjectSize;
   material: CustomObjectMaterial;
+  trait1: string;
+  trait2: string;
 }
 
 export interface CustomObjectSpecialData {
@@ -46,6 +48,8 @@ export interface CustomObjectSpecialData {
   custom_name: string;
   custom_size: CustomObjectSize;
   custom_material: CustomObjectMaterial;
+  custom_trait1: string;
+  custom_trait2: string;
 }
 
 /**
