@@ -758,9 +758,11 @@ export default function GamePage() {
           // PvP win: show popup with the found object info (replaces the short toast)
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", rival?.user_id ?? "").maybeSingle();
           const foundObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
+          const rivalSD: any = rival?.special_data;
+          const isCustomFound = rivalSD?.is_custom === true;
           setWinFoundPopup({
-            objectIcon: foundObj?.icon,
-            objectName: foundObj?.name,
+            objectIcon: isCustomFound ? rivalSD.custom_icon : foundObj?.icon,
+            objectName: isCustomFound ? rivalSD.custom_name : foundObj?.name,
             itemIcon: item?.icon,
             itemName: item?.name,
             positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
