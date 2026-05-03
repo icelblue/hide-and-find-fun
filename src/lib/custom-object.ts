@@ -1,5 +1,7 @@
 // ============================================================
-// custom-object.ts — Helpers per a objectes personalitzats
+// 🔒 CRITICAL — custom-object.ts
+// Validació + display d'objectes personalitzats. Tocar amb pre-flight.
+// Tests: src/test/custom-object.test.ts + REG-013, REG-014
 // ============================================================
 // Permet als jugadors crear el seu propi objecte (icona + nom +
 // mida + material) sense canviar l'esquema. S'utilitza un objecte

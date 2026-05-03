@@ -1,5 +1,8 @@
 // ============================================================
-// supabase-helpers.ts — Lògica de negoci completa del joc
+// 🔒 CRITICAL — supabase-helpers.ts
+// Lògica de negoci completa del joc. Tocar amb pre-flight obligatori.
+// Tests obligatoris: src/test/supabase-helpers.test.ts + regressions.test.ts
+// Bugs passats: REG-005, REG-007, REG-008, REG-011
 // ============================================================
 // v1.8.1 — Arquitectura RPC + RLS
 //
