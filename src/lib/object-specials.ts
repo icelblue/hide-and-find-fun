@@ -1,3 +1,6 @@
+// 🔒 CRITICAL — object-specials.ts
+// Construcció de special_data del trofeu i display de noms/icones.
+// Tests: REG-006, REG-013. Pre-flight obligatori.
 export interface TrophySpecialData {
   [key: string]: string | null;
   object_name: string | null;
