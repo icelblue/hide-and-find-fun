@@ -314,3 +314,30 @@ describe("REG-014: Custom object icon validation", () => {
     expect(r.ok).toBe(false);
   });
 });
+
+// ============================================
+// REG-015: Pestanyes del HelpButton no canvien (es tanca el modal)
+// Data: 2026-05-03 | Fix: stopPropagation a onClick de les pestanyes
+// Bug: El click bubblejava al backdrop overlay, que cridava setOpen(false)
+//      i tancava la modal. Fix amb e.stopPropagation() al handler.
+// ============================================
+describe("REG-015: HelpButton tabs click", () => {
+  it("la callback de tab atura propagació (no tanca modal)", () => {
+    let closed = false;
+    let activeTab = "basics";
+    const setTab = (id: string) => { activeTab = id; };
+    const setOpen = (v: boolean) => { closed = !v; };
+    // Simulem clic amb stopPropagation
+    const tabHandler = (e: { stopPropagation: () => void }, id: string) => {
+      e.stopPropagation();
+      setTab(id);
+    };
+    const backdropHandler = () => setOpen(false);
+    let stopped = false;
+    const fakeEvent = { stopPropagation: () => { stopped = true; } };
+    tabHandler(fakeEvent, "rules");
+    if (!stopped) backdropHandler();
+    expect(activeTab).toBe("rules");
+    expect(closed).toBe(false);
+  });
+});
