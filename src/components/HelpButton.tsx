@@ -195,7 +195,8 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
           ] as const).map(t => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setTab(t.id); }}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
                 tab === t.id ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/40"
               }`}
