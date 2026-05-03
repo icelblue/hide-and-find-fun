@@ -33,6 +33,7 @@ Cada regressió documentada amb:
 | REG-012 | Amagatall visible al mode història | guarda `!isStory` al render |
 | REG-013 | Display objecte custom | getTrophyDisplay* prioritza is_custom |
 | REG-014 | Validació icona custom | validateCustomObject + isSingleEmoji |
+| REG-015 | Pestanyes HelpButton tanquen modal | stopPropagation al onClick de tabs |
 
 ### Protocol per noves regressions
 
