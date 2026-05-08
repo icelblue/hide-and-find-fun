@@ -13,7 +13,7 @@ interface Props {
 }
 
 function fillPet(text: string, petName: string) {
-  return text.replaceAll("{pet}", petName);
+  return text.split("{pet}").join(petName);
 }
 
 function rewardBadge(c: StoryChoice): string | null {
