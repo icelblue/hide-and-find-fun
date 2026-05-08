@@ -1007,6 +1007,81 @@ export type Database = {
         }
         Relationships: []
       }
+      story_choices: {
+        Row: {
+          choice_order: number
+          id: string
+          label: string
+          next_node_id: string | null
+          node_id: string
+          reward_type: string | null
+          reward_value: Json | null
+        }
+        Insert: {
+          choice_order: number
+          id?: string
+          label: string
+          next_node_id?: string | null
+          node_id: string
+          reward_type?: string | null
+          reward_value?: Json | null
+        }
+        Update: {
+          choice_order?: number
+          id?: string
+          label?: string
+          next_node_id?: string | null
+          node_id?: string
+          reward_type?: string | null
+          reward_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_choices_next_node_id_fkey"
+            columns: ["next_node_id"]
+            isOneToOne: false
+            referencedRelation: "story_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_choices_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "story_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_nodes: {
+        Row: {
+          chapter: number
+          created_at: string
+          ending_type: string | null
+          id: string
+          is_ending: boolean
+          narrative: string
+          title: string
+        }
+        Insert: {
+          chapter: number
+          created_at?: string
+          ending_type?: string | null
+          id: string
+          is_ending?: boolean
+          narrative: string
+          title: string
+        }
+        Update: {
+          chapter?: number
+          created_at?: string
+          ending_type?: string | null
+          id?: string
+          is_ending?: boolean
+          narrative?: string
+          title?: string
+        }
+        Relationships: []
+      }
       story_progress: {
         Row: {
           best_moves: number | null
@@ -1039,6 +1114,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      story_runs: {
+        Row: {
+          current_node_id: string | null
+          ended_at: string | null
+          ending_type: string | null
+          id: string
+          path: Json
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          current_node_id?: string | null
+          ended_at?: string | null
+          ending_type?: string | null
+          id?: string
+          path?: Json
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          current_node_id?: string | null
+          ended_at?: string | null
+          ending_type?: string | null
+          id?: string
+          path?: Json
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_runs_current_node_id_fkey"
+            columns: ["current_node_id"]
+            isOneToOne: false
+            referencedRelation: "story_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wall_messages: {
         Row: {
