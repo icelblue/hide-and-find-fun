@@ -1,31 +1,35 @@
 ---
-name: Story Mode
-description: Single-player tutorial with pet companion. Consumables heal specific events AND extend max life. Event↔Consumable mapping: Virus→Vacuna, Caiguda→Menjar, Febre→Aigua.
+name: Story Mode v3
+description: Aventura narrativa ramificada single-player. 8 capítols, ~48 nodes, 3 decisions/node, 6 finals + morts. Reset total si la mascota mor. Independent del PvP.
 type: feature
 ---
 
-## Mode Història (v2.3 — Consumible↔Event matching)
+## Mode Història v3 (Aventura ramificada)
 
-### Mascota
-- 5 animals: 🐕🐱🐰🐹🐢
-- `max_xp` dinàmic (base 5000, creix amb consumibles)
-- Evolució: Bebè→Jove→Adult→Veterà→Llegendari
+### Estructura
+- 48 nodes a `story_nodes` (id, chapter 1-8, title, narrative amb `{pet}` placeholder, is_ending, ending_type)
+- 111 opcions a `story_choices` (3 per node no-final): label, next_node_id, reward_type, reward_value (jsonb)
+- Run actiu a `story_runs` per usuari (current_node_id, path[], status: active/dead/completed)
 
-### Events de salut (25% post-capítol)
-| Event | Dany | Cura correcta |
-|-------|------|----------------|
-| 🤒 Virus | +200 XP | 💉 Vacuna |
-| 🤕 Caiguda | +150 XP | 🍖 Menjar |
-| 🫠 Febre | +100 XP | 💧 Aigua |
+### Recompenses (`reward_type`)
+- `xp`: `{xp:N}` → addPetXP
+- `damage`: `{damage:N}` → addPetXP (>=9999 = mort segura)
+- `accessory`: `{accessory:"Nom",icon:"🎀"}` → awardAccessory
+- `consumable`: `{consumable:"Menjar|Aigua|Vacuna"}` → insert pet_consumables
 
-### Consumibles (desbloquejats post-accesoris)
-| Consumible | XP Heal | Max XP Boost | Cura event |
-|------------|---------|--------------|------------|
-| 🍖 Menjar | -100 | +50 | caiguda |
-| 💧 Aigua | -50 | +25 | febre |
-| 💉 Vacuna | -200 | +100 | virus |
+### Finals
+6 endings: peaceful, hero, mystic, redeemed, lonely, adventure + 5 morts (fire, pan, wound, lost, dragon).
+Mort = `killAndReset(userId)` → esborra pet, accessoris, consumibles, events, story_progress + drop runs.
 
-**Comportament**: El consumible SEMPRE cura XP i amplia max_xp. Però NOMÉS resol l'event si coincideix (Vacuna→Virus, etc.). Si uses el consumible incorrecte, la mascota segueix malalta però recupera XP.
+### Fitxers
+- `src/lib/story-runs.ts` — helpers (catàleg cached, getActiveRun, startRun, makeChoice, killAndReset)
+- `src/components/story/StoryNodeView.tsx` — typewriter + 3 botons
+- `src/components/story/StoryEndingScreen.tsx` / `StoryDeathScreen.tsx`
+- `src/pages/StoryModePage.tsx` — phases: loading|intro|ready|playing|ended
 
-### Capítols
-1-2: Tutorial | 3-8: Accesoris | Repetibles per XP + consumibles
+### Independent del PvP
+🔒 NO toca cap RPC ni taula de partida real (`games`, `game_players`, etc.).
+El sistema antic d'`story_progress`+`create_story_game` es manté per compatibilitat però el flux nou no l'usa.
+
+### Placeholder `{pet}`
+Tots els textos (narrative + choice labels) substitueixen `{pet}` pel `pet_name` al frontend.
