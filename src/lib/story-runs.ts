@@ -216,4 +216,94 @@ export async function killAndReset(userId: string) {
   await supabase.from("story_runs").delete().eq("user_id", userId);
 }
 
+// ============================================
+// DAILY CHALLENGE
+// ============================================
+
+export interface DailyChallengeState {
+  node: StoryNode | null;
+  choices: StoryChoice[];
+  alreadyDone: boolean;
+  lastReward: { reward_type: string | null; reward_value: any } | null;
+  completedAt: string | null;
+}
+
+function todayISO(): string {
+  // Local date YYYY-MM-DD (matches user's day)
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function dailyNodeIdForToday(date: Date = new Date()): string {
+  const dow = date.getDay(); // 0..6
+  return `daily_dow_${dow}`;
+}
+
+export async function getTodayChallenge(userId: string): Promise<DailyChallengeState> {
+  const nodeId = dailyNodeIdForToday();
+  const today = todayISO();
+  const [node, choices, logRes] = await Promise.all([
+    getNode(nodeId),
+    getChoices(nodeId),
+    supabase
+      .from("daily_challenge_log")
+      .select("reward_type, reward_value, completed_at")
+      .eq("user_id", userId)
+      .eq("challenge_date", today)
+      .maybeSingle(),
+  ]);
+  return {
+    node,
+    choices,
+    alreadyDone: !!logRes.data,
+    lastReward: logRes.data ? { reward_type: logRes.data.reward_type, reward_value: logRes.data.reward_value } : null,
+    completedAt: logRes.data?.completed_at ?? null,
+  };
+}
+
+export async function submitDailyChoice(
+  userId: string,
+  choice: StoryChoice,
+): Promise<{ reward: RewardOutcome; alreadyDone?: boolean }> {
+  const today = todayISO();
+  // Apply reward first
+  const reward = await applyReward(userId, choice.reward_type, choice.reward_value);
+  // Insert log (unique constraint prevents double-claim)
+  const { error } = await supabase.from("daily_challenge_log").insert({
+    user_id: userId,
+    challenge_date: today,
+    node_id: choice.node_id,
+    choice_id: choice.id,
+    reward_type: choice.reward_type,
+    reward_value: choice.reward_value,
+  });
+  if (error && (error as any).code === "23505") {
+    return { reward, alreadyDone: true };
+  }
+  if (error) throw error;
+  return { reward };
+}
+
+// ============================================
+// REWARD → RevealData (UI helper)
+// ============================================
+
+export function rewardToReveal(r: RewardOutcome): {
+  kind: "xp" | "accessory" | "consumable" | "damage" | "nothing";
+  label: string;
+  emoji: string;
+  tone: "good" | "bad" | "neutral";
+} {
+  if (r.killed) return { kind: "damage", label: "Final tràgic...", emoji: "💀", tone: "bad" };
+  if (r.accessory) return { kind: "accessory", label: `${r.accessory.name}`, emoji: r.accessory.icon, tone: "good" };
+  if (r.consumable) return { kind: "consumable", label: r.consumable.name, emoji: r.consumable.icon, tone: "good" };
+  if (r.damage) return { kind: "damage", label: `-${r.damage} salut`, emoji: "💥", tone: "bad" };
+  if (r.xp) return { kind: "xp", label: `+${r.xp} XP`, emoji: "⭐", tone: "good" };
+  return { kind: "nothing", label: "Res aquesta vegada", emoji: "·", tone: "neutral" };
+}
+
 export { MAX_PET_XP };
+
