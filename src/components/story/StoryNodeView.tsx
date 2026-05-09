@@ -16,18 +16,6 @@ function fillPet(text: string, petName: string) {
   return text.split("{pet}").join(petName);
 }
 
-function rewardBadge(c: StoryChoice): string | null {
-  if (!c.reward_type || !c.reward_value) return null;
-  if (c.reward_type === "xp") return `+${c.reward_value.xp} XP`;
-  if (c.reward_type === "damage") {
-    const d = c.reward_value.damage;
-    return d >= 9999 ? "⚠️ Risc letal" : `⚠️ -${d} salut`;
-  }
-  if (c.reward_type === "accessory") return `🎁 ${c.reward_value.icon ?? ""} ${c.reward_value.accessory}`;
-  if (c.reward_type === "consumable") return `💊 ${c.reward_value.consumable}`;
-  return null;
-}
-
 export function StoryNodeView({ node, choices, petName, onChoose, busy }: Props) {
   const [revealChoices, setRevealChoices] = useState(false);
   const filled = useMemo(() => fillPet(node.narrative, petName), [node, petName]);
@@ -57,30 +45,25 @@ export function StoryNodeView({ node, choices, petName, onChoose, busy }: Props)
 
       {revealChoices && (
         <div className="space-y-2 animate-fade-in">
-          {choices.map((c, i) => {
-            const badge = rewardBadge(c);
-            return (
-              <Button
-                key={c.id}
-                variant="outline"
-                disabled={busy}
-                onClick={() => onChoose(c)}
-                className="w-full justify-start text-left h-auto py-3 px-4 whitespace-normal"
-              >
-                <div className="flex items-start gap-2 w-full">
-                  <span className="text-xs font-bold text-muted-foreground shrink-0 mt-0.5">
-                    {i + 1}.
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{fillPet(c.label, petName)}</p>
-                    {badge && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{badge}</p>
-                    )}
-                  </div>
-                </div>
-              </Button>
-            );
-          })}
+          {choices.map((c, i) => (
+            <Button
+              key={c.id}
+              variant="outline"
+              disabled={busy}
+              onClick={() => onChoose(c)}
+              className="w-full justify-start text-left h-auto py-3 px-4 whitespace-normal"
+            >
+              <div className="flex items-start gap-2 w-full">
+                <span className="text-xs font-bold text-muted-foreground shrink-0 mt-0.5">
+                  {i + 1}.
+                </span>
+                <p className="text-sm font-medium flex-1 min-w-0">{fillPet(c.label, petName)}</p>
+              </div>
+            </Button>
+          ))}
+          <p className="text-[10px] text-center text-muted-foreground/70 italic pt-1">
+            Les conseqüències es revelaran després de triar
+          </p>
         </div>
       )}
     </div>

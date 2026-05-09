@@ -16,15 +16,19 @@ import {
 } from "@/lib/story-helpers";
 import {
   getActiveRun, startRun, getNode, getChoices, makeChoice, killAndReset,
-  type StoryRun, type StoryNode, type StoryChoice,
+  rewardToReveal,
+  type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
 } from "@/lib/story-runs";
 import { StoryNodeView } from "@/components/story/StoryNodeView";
 import { StoryEndingScreen } from "@/components/story/StoryEndingScreen";
 import { StoryDeathScreen } from "@/components/story/StoryDeathScreen";
+import { RewardReveal, type RevealData } from "@/components/story/RewardReveal";
+import { ChapterCompleteScreen } from "@/components/story/ChapterCompleteScreen";
+import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type Phase = "loading" | "intro" | "ready" | "playing" | "ended";
+type Phase = "loading" | "intro" | "ready" | "playing" | "chapter_break" | "ended";
 
 export default function StoryModePage() {
   const { user } = useAuth();
@@ -49,6 +53,12 @@ export default function StoryModePage() {
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
   const [endedStatus, setEndedStatus] = useState<"dead" | "completed" | null>(null);
   const [endedPet, setEndedPet] = useState<{ name: string; icon: string } | null>(null);
+
+  // Chapter break + reveal
+  const [reveal, setReveal] = useState<RevealData | null>(null);
+  const [chapterRewards, setChapterRewards] = useState<RewardOutcome[]>([]);
+  const [pendingNext, setPendingNext] = useState<StoryNode | null>(null);
+  const [completedChapter, setCompletedChapter] = useState<number>(1);
 
   const loadAll = useCallback(async () => {
     if (!user) return;
@@ -120,42 +130,85 @@ export default function StoryModePage() {
 
   // ====== CHOICE ======
   const handleChoose = async (choice: StoryChoice) => {
-    if (!user || !run) return;
+    if (!user || !run || !node) return;
     setBusy(true);
     try {
       const result = await makeChoice(user.id, run, choice);
 
-      // Toast for reward
-      const r = result.reward;
-      if (r.xp) toast.success(`+${r.xp} XP ⭐`);
-      else if (r.accessory) toast.success(`Has obtingut ${r.accessory.icon} ${r.accessory.name}!`);
-      else if (r.consumable) toast.success(`Has obtingut ${r.consumable.icon} ${r.consumable.name}!`);
-      else if (r.damage && !r.killed) toast(`💥 ${pet?.pet_name ?? "La mascota"} ha rebut dany (-${r.damage} salut)`);
-
       // Refresh pet (xp/max changed)
-      const fresh = await getMyPet(user.id);
-      setPet(fresh);
+      const freshPet = await getMyPet(user.id);
+      setPet(freshPet);
+
+      // Always show reveal animation for the reward
+      setReveal(rewardToReveal(result.reward));
+
+      // Track rewards for current chapter
+      setChapterRewards(prev => [...prev, result.reward]);
 
       if (result.runEnded) {
-        // Snapshot ending info before potential reset
         setEndedNode(result.nextNode ?? node);
         setEndedStatus(result.runEnded);
-        setEndedPet({ name: pet?.pet_name ?? "?", icon: pet?.pet_icon ?? "🐾" });
-        setPhase("ended");
+        setEndedPet({ name: freshPet?.pet_name ?? pet?.pet_name ?? "?", icon: freshPet?.pet_icon ?? pet?.pet_icon ?? "🐾" });
+        // Phase set after reveal closes (handled in onDone via pendingFinish)
+        setPendingNext(null);
+        // We'll switch phase when reveal closes
         return;
       }
 
-      // Continue
       if (result.nextNode) {
-        const newChoices = await getChoices(result.nextNode.id);
-        setNode(result.nextNode);
-        setChoices(newChoices);
-        // Refresh run state
-        const fresh = await getActiveRun(user.id);
-        if (fresh) setRun(fresh);
+        // Detect chapter change
+        if (result.nextNode.chapter > node.chapter) {
+          setCompletedChapter(node.chapter);
+          setPendingNext(result.nextNode);
+        } else {
+          setPendingNext(result.nextNode);
+        }
+        // Refresh run
+        const freshRun = await getActiveRun(user.id);
+        if (freshRun) setRun(freshRun);
       }
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
+  };
+
+  // Called when RewardReveal animation finishes
+  const handleRevealDone = async () => {
+    setReveal(null);
+    // If run ended, transition to ended
+    if (endedStatus) {
+      setPhase("ended");
+      return;
+    }
+    if (!pendingNext || !node) return;
+    // Chapter break?
+    if (pendingNext.chapter > node.chapter) {
+      setPhase("chapter_break");
+      return;
+    }
+    // Same chapter, continue normally
+    const newChoices = await getChoices(pendingNext.id);
+    setNode(pendingNext);
+    setChoices(newChoices);
+    setPendingNext(null);
+  };
+
+  const handleContinueChapter = async () => {
+    if (!pendingNext) return;
+    setBusy(true);
+    try {
+      const newChoices = await getChoices(pendingNext.id);
+      setNode(pendingNext);
+      setChoices(newChoices);
+      setPendingNext(null);
+      setChapterRewards([]);
+      setPhase("playing");
+    } finally { setBusy(false); }
+  };
+
+  const handlePauseAdventure = () => {
+    // Run is already auto-saved in BD; just go to lobby
+    toast.success("✓ Aventura desada. Pots tornar quan vulguis.");
+    navigate("/");
   };
 
   // ====== ENDING HANDLERS ======
@@ -286,6 +339,9 @@ export default function StoryModePage() {
           <Button variant="ghost" onClick={() => navigate("/")} className="w-full">
             ← Lobby
           </Button>
+
+          {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
+
           <Button
             variant="ghost"
             onClick={async () => {
@@ -303,6 +359,27 @@ export default function StoryModePage() {
     );
   }
 
+  // CHAPTER BREAK
+  if (phase === "chapter_break" && pet && pendingNext) {
+    return (
+      <>
+        <ChapterCompleteScreen
+          completedChapter={completedChapter}
+          nextChapter={pendingNext.chapter}
+          rewards={chapterRewards}
+          petName={pet.pet_name}
+          petIcon={pet.pet_icon}
+          petXP={pet.xp ?? 0}
+          petMaxXP={pet.max_xp ?? MAX_PET_XP}
+          onContinue={handleContinueChapter}
+          onPause={handlePauseAdventure}
+          busy={busy}
+        />
+        {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
+      </>
+    );
+  }
+
   // PLAYING
   if (phase === "playing" && node && pet) {
     const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
@@ -310,9 +387,16 @@ export default function StoryModePage() {
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10 relative">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
 
-        <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-4 block transition-colors relative z-10">
-          ← Lobby
-        </button>
+        <div className="flex items-center justify-between mb-4 relative z-10">
+          <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            ← Lobby
+          </button>
+          {run && (
+            <span className="text-[10px] text-accent/80 font-medium">
+              ✓ Cap. {node.chapter}/8 · desat
+            </span>
+          )}
+        </div>
 
         {/* Pet status mini */}
         <div className="flex items-center gap-3 mb-5 relative z-10 glass rounded-xl px-3 py-2 border border-border/30">
@@ -335,9 +419,11 @@ export default function StoryModePage() {
             choices={choices}
             petName={pet.pet_name}
             onChoose={handleChoose}
-            busy={busy}
+            busy={busy || !!reveal}
           />
         </div>
+
+        {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
       </div>
     );
   }
