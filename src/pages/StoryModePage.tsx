@@ -16,15 +16,19 @@ import {
 } from "@/lib/story-helpers";
 import {
   getActiveRun, startRun, getNode, getChoices, makeChoice, killAndReset,
-  type StoryRun, type StoryNode, type StoryChoice,
+  rewardToReveal,
+  type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
 } from "@/lib/story-runs";
 import { StoryNodeView } from "@/components/story/StoryNodeView";
 import { StoryEndingScreen } from "@/components/story/StoryEndingScreen";
 import { StoryDeathScreen } from "@/components/story/StoryDeathScreen";
+import { RewardReveal, type RevealData } from "@/components/story/RewardReveal";
+import { ChapterCompleteScreen } from "@/components/story/ChapterCompleteScreen";
+import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type Phase = "loading" | "intro" | "ready" | "playing" | "ended";
+type Phase = "loading" | "intro" | "ready" | "playing" | "chapter_break" | "ended";
 
 export default function StoryModePage() {
   const { user } = useAuth();
@@ -49,6 +53,12 @@ export default function StoryModePage() {
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
   const [endedStatus, setEndedStatus] = useState<"dead" | "completed" | null>(null);
   const [endedPet, setEndedPet] = useState<{ name: string; icon: string } | null>(null);
+
+  // Chapter break + reveal
+  const [reveal, setReveal] = useState<RevealData | null>(null);
+  const [chapterRewards, setChapterRewards] = useState<RewardOutcome[]>([]);
+  const [pendingNext, setPendingNext] = useState<StoryNode | null>(null);
+  const [completedChapter, setCompletedChapter] = useState<number>(1);
 
   const loadAll = useCallback(async () => {
     if (!user) return;
