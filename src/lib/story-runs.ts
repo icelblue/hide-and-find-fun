@@ -119,7 +119,7 @@ export async function startRun(userId: string): Promise<StoryRun> {
 // REWARD APPLICATION
 // ============================================
 
-interface RewardOutcome {
+export interface RewardOutcome {
   xp?: number;
   damage?: number;
   accessory?: { name: string; icon: string };
