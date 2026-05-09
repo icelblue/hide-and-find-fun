@@ -130,42 +130,85 @@ export default function StoryModePage() {
 
   // ====== CHOICE ======
   const handleChoose = async (choice: StoryChoice) => {
-    if (!user || !run) return;
+    if (!user || !run || !node) return;
     setBusy(true);
     try {
       const result = await makeChoice(user.id, run, choice);
 
-      // Toast for reward
-      const r = result.reward;
-      if (r.xp) toast.success(`+${r.xp} XP ⭐`);
-      else if (r.accessory) toast.success(`Has obtingut ${r.accessory.icon} ${r.accessory.name}!`);
-      else if (r.consumable) toast.success(`Has obtingut ${r.consumable.icon} ${r.consumable.name}!`);
-      else if (r.damage && !r.killed) toast(`💥 ${pet?.pet_name ?? "La mascota"} ha rebut dany (-${r.damage} salut)`);
-
       // Refresh pet (xp/max changed)
-      const fresh = await getMyPet(user.id);
-      setPet(fresh);
+      const freshPet = await getMyPet(user.id);
+      setPet(freshPet);
+
+      // Always show reveal animation for the reward
+      setReveal(rewardToReveal(result.reward));
+
+      // Track rewards for current chapter
+      setChapterRewards(prev => [...prev, result.reward]);
 
       if (result.runEnded) {
-        // Snapshot ending info before potential reset
         setEndedNode(result.nextNode ?? node);
         setEndedStatus(result.runEnded);
-        setEndedPet({ name: pet?.pet_name ?? "?", icon: pet?.pet_icon ?? "🐾" });
-        setPhase("ended");
+        setEndedPet({ name: freshPet?.pet_name ?? pet?.pet_name ?? "?", icon: freshPet?.pet_icon ?? pet?.pet_icon ?? "🐾" });
+        // Phase set after reveal closes (handled in onDone via pendingFinish)
+        setPendingNext(null);
+        // We'll switch phase when reveal closes
         return;
       }
 
-      // Continue
       if (result.nextNode) {
-        const newChoices = await getChoices(result.nextNode.id);
-        setNode(result.nextNode);
-        setChoices(newChoices);
-        // Refresh run state
-        const fresh = await getActiveRun(user.id);
-        if (fresh) setRun(fresh);
+        // Detect chapter change
+        if (result.nextNode.chapter > node.chapter) {
+          setCompletedChapter(node.chapter);
+          setPendingNext(result.nextNode);
+        } else {
+          setPendingNext(result.nextNode);
+        }
+        // Refresh run
+        const freshRun = await getActiveRun(user.id);
+        if (freshRun) setRun(freshRun);
       }
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
+  };
+
+  // Called when RewardReveal animation finishes
+  const handleRevealDone = async () => {
+    setReveal(null);
+    // If run ended, transition to ended
+    if (endedStatus) {
+      setPhase("ended");
+      return;
+    }
+    if (!pendingNext || !node) return;
+    // Chapter break?
+    if (pendingNext.chapter > node.chapter) {
+      setPhase("chapter_break");
+      return;
+    }
+    // Same chapter, continue normally
+    const newChoices = await getChoices(pendingNext.id);
+    setNode(pendingNext);
+    setChoices(newChoices);
+    setPendingNext(null);
+  };
+
+  const handleContinueChapter = async () => {
+    if (!pendingNext) return;
+    setBusy(true);
+    try {
+      const newChoices = await getChoices(pendingNext.id);
+      setNode(pendingNext);
+      setChoices(newChoices);
+      setPendingNext(null);
+      setChapterRewards([]);
+      setPhase("playing");
+    } finally { setBusy(false); }
+  };
+
+  const handlePauseAdventure = () => {
+    // Run is already auto-saved in BD; just go to lobby
+    toast.success("✓ Aventura desada. Pots tornar quan vulguis.");
+    navigate("/");
   };
 
   // ====== ENDING HANDLERS ======
