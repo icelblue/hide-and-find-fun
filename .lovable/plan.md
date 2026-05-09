@@ -1,119 +1,91 @@
-## Mode Història v3 — Aventura narrativa ramificada
 
-**Independent del PvP**: cap canvi a `games`, `game_players`, `game_moves`, RPCs de partida, etc. Tot el nou viu en taules pròpies del story mode.
+# Pla — Mode Història v3.1 (UX polit + Reptes diaris)
 
----
+🔒 **Aïllament total del PvP**: només es toquen fitxers de `src/pages/StoryModePage.tsx`, `src/components/story/*`, `src/lib/story-runs.ts` i una migració additiva. Cap fitxer de `src/components/game/`, `src/lib/supabase-helpers.ts`, RPCs PvP, `GamePage.tsx` o `LobbyPage.tsx` es modifica.
 
-### Concepte
+## 1. Ocultar recompenses (decideix sense saber el resultat)
 
-8 capítols. A cada capítol: text animat (typewriter, com ara) + 3 botons de decisió. Cada decisió porta a un **node** diferent del següent capítol. Arbre ramificat ampli amb ~15-20 finals possibles. Si la mascota mor → **Reset total** (nova adopció des de zero).
+- A `StoryNodeView.tsx`: eliminar `rewardBadge` i la línia `{badge}` sota cada opció. Només queda el text de la decisió numerada.
+- Després de triar, el toast existent ja revela què ha passat (XP, accessori, dany, mort).
+- Afegir un breu "reveal" visual: petit overlay animat de 1.2s amb la recompensa real abans de carregar el següent node (`RewardReveal.tsx` nou — emoji + nom centrat amb fade-in/out).
 
-Recompenses lligades a la branca: cada node pot donar XP, accessoris, consumibles, o danyar la mascota.
+## 2. Checkpoint per capítol (resum + pausa)
 
----
+- Detectar a `handleChoose` quan `result.nextNode.chapter > node.chapter` i `!result.runEnded`.
+- Acumulem en estat `chapterRewards: RewardOutcome[]` cada recompensa del capítol actual; al canviar de capítol passem a una nova fase `chapter_break`.
+- Nou component `ChapterCompleteScreen.tsx`:
+  - Títol: "Capítol N completat"
+  - Llista de recompenses obtingudes en aquest capítol (icones + noms)
+  - Estat actual: ❤️ salut (xp barra), evolució mascota
+  - 2 botons: **"Continuar capítol N+1"** i **"Pausar aventura"** (= torna al lobby; el run ja està autosalvat a BD).
+- En tornar a entrar al Mode Història, si hi ha run actiu, es reprèn directament al node actual (ja funciona així). Afegim un petit indicador "✓ Aventura desada" al Ready/Playing perquè es noti.
 
-### Estructura de l'arbre
+## 3. Repte diari (1 decisió especial cada 24h)
 
-```text
-Cap 1 (1 node inicial)
- └─ A / B / C
-Cap 2 (3 nodes) → cada un amb 3 opcions = 9
-Cap 3 (fins a 9 nodes, algunes opcions ja porten a "mort prematura")
- ...
-Cap 8 (finals: heroic / tràgic / pacífic / ric / solitari / llegendari ...)
+### Esquema BD (migració additiva)
+
+```sql
+ALTER TABLE story_nodes ADD COLUMN is_daily boolean NOT NULL DEFAULT false;
+
+CREATE TABLE daily_challenge_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  challenge_date date NOT NULL,
+  node_id text NOT NULL,
+  choice_id uuid NOT NULL,
+  reward_type text,
+  reward_value jsonb,
+  completed_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(user_id, challenge_date)
+);
+-- RLS: SELECT/INSERT propi (user_id = auth.uid())
 ```
 
-Mort possible des del capítol 3 en endavant amb decisions "imprudents" clarament marcades amb to de risc al text (no com a trampa).
+### Contingut
 
----
+Seed de **7 nodes diaris** (un per dia de la setmana, rotació determinista per `EXTRACT(DOW FROM today)`). Cada node:
+- Narrativa curta (2-3 frases) sobre la mascota.
+- 3 opcions amb recompenses **cosmètiques o consumibles** (mai mort, mai dany >10). Exemples: 🍖 Menjar, 💧 Aigua, 🎀 accessoris exclusius daily, +50 XP.
 
-### Model de dades (noves taules, no toquem res existent)
+### Lògica (`story-runs.ts`)
 
-**`story_nodes`** — catàleg estàtic de nodes
-- `id` (text, ex: `c1_start`, `c2_park_dog`)
-- `chapter` (1-8)
-- `title`, `narrative` (text llarg per typewriter)
-- `is_ending` (bool), `ending_type` (text nullable: `death`, `hero`, etc.)
+- `getTodayChallenge(userId)` → `{ node, choices, alreadyDone, lastReward? }`. Selecciona node per `dow`. Comprova si avui ja s'ha completat.
+- `submitDailyChoice(userId, choice)` → aplica recompensa via `applyReward` existent + insert a `daily_challenge_log`.
 
-**`story_choices`** — opcions per node
-- `node_id` → `story_nodes.id`
-- `choice_order` (1-3)
-- `label` (text del botó), `next_node_id`
-- `reward_type` (nullable: `xp`, `accessory`, `consumable`, `damage`, `none`)
-- `reward_value` (jsonb: `{xp:200}` / `{accessory:"Collar"}` / `{damage:300}` ...)
+### UI
 
-**`story_runs`** — partida actual del jugador
-- `user_id`, `current_node_id`, `path` (jsonb array de node_ids visitats), `status` (`active`/`dead`/`completed`), `ending_type`, `started_at`, `ended_at`
+- Nou `DailyChallengeCard.tsx` mostrat **només a la fase `ready`** (sota el botó "Començar aventura"). 
+- Estat "disponible": card destacada amb 🌟 i "Repte diari · acaba en Xh".
+- En clicar → modal/full-screen amb la decisió. Després de triar, mostra recompensa i "Tornar". 
+- Estat "completat": card grisa amb ✓ i recompensa obtinguda + "Torna demà".
 
-RLS: `story_nodes`/`story_choices` lectura pública autenticada; `story_runs` només propietari.
+## 4. Tests + safety
 
----
+- Re-córrer `bun test` (169 tests existents + smoke E2E) → han de passar tots iguals.
+- Nou test mínim `story-runs-daily.test.ts`: que `getTodayChallenge` és determinista per dia i que no es pot completar dos cops el mateix dia.
+- Marcador `// 🔒 CRITICAL` mantingut a tots els fitxers nous/modificats del Mode Història.
 
-### Game Over (Reset total)
+## Fitxers afectats
 
-Quan mascota mor (XP ≥ max o decisió `damage` letal):
-- Borrar `player_pets`, `pet_accessories`, `pet_consumables`, `pet_events`, `story_progress` (legacy), `story_runs` del user
-- Pantalla "💔 Final tràgic — La teva història acaba aquí" + botó "Adoptar nova mascota"
+**Modificats** (3):
+- `src/components/story/StoryNodeView.tsx` — elimina badges
+- `src/pages/StoryModePage.tsx` — fase `chapter_break`, integra `RewardReveal` i `DailyChallengeCard`
+- `src/lib/story-runs.ts` — helpers `getTodayChallenge` + `submitDailyChoice` + tipus
 
-(Mantenim `story_progress` legacy per compatibilitat, però el flux nou usa `story_runs`.)
+**Nous** (4):
+- `src/components/story/RewardReveal.tsx`
+- `src/components/story/ChapterCompleteScreen.tsx`
+- `src/components/story/DailyChallengeCard.tsx`
+- `src/test/story-runs-daily.test.ts`
 
----
+**Migració + seed**:
+- `supabase/migrations/<timestamp>_daily_challenges.sql` — afegeix columna `is_daily`, crea `daily_challenge_log` amb RLS
+- Seed dels 7 nodes daily via insert tool (data, no migració)
 
-### UI / Pàgines
+## Què NO faig en aquesta tanda
 
-`StoryModePage.tsx` reescrit en 3 vistes segons estat:
-1. **Sense mascota** → adopció (igual que ara)
-2. **Mascota viva, sense run o run completed** → botó "Començar nova aventura" (crea `story_runs`)
-3. **Run actiu** → `StoryNodeView`: typewriter narratiu + 3 botons d'opció. En clicar: aplica recompensa, avança node, anima sortida.
+Per acord previ: l'**espai propi amb mobles** i la integració al PvP queda per una tanda futura (és un sistema gran que requereix taules d'inventari de mobles, editor d'habitació, selector d'escenari personalitzat al crear partida i validació de simetria/justícia per al rival). Ho faig en un segon pla quan tu ho diguis.
 
-Components nous:
-- `src/components/story/StoryNodeView.tsx`
-- `src/components/story/StoryEndingScreen.tsx`
-- `src/components/story/StoryDeathScreen.tsx`
+## Risc
 
-Helpers nous a `src/lib/story-helpers.ts` (afegim, no esborrem):
-- `getCurrentRun(userId)`, `startRun(userId)`, `chooseOption(runId, choiceId)`, `applyReward(...)`
-
----
-
-### Contingut narratiu inicial
-
-Escric un arbre coherent amb ~30-40 nodes que cobreixi cap. 1-8 amb diverses branques:
-- Tema: vida amb la mascota a casa, parc, vet, viatge, festa, perill, descoberta màgica.
-- 5-6 finals: **Heroic** (mascota llegendària), **Tràgic** (mort), **Pacífic** (vida tranquil·la al jardí), **Aventurer** (volta al món), **Místic** (descoberta sobrenatural), **Solitari** (decisions egoistes).
-- Pre-validat: cada `next_node_id` existeix, cada node no-final té 3 opcions.
-
-Tot el contingut català (UI bilingüe es manté en futures iteracions).
-
----
-
-### 🔒 Seguretat (Pre-flight)
-
-**Fitxers nous** (no risc):
-- Migració SQL (3 taules + RLS + seed contingut)
-- `src/components/story/*` (3 fitxers)
-- `src/lib/story-helpers.ts` (afegir funcions, no tocar les existents)
-
-**Fitxers modificats**:
-- `src/pages/StoryModePage.tsx` — reescrit (només afecta mode història)
-
-**NO es toca**:
-- Cap fitxer de `src/components/game/`, `src/lib/supabase-helpers.ts`, `src/lib/custom-object.ts`, `src/lib/object-specials.ts`, RPCs de PvP, `GamePage.tsx`, `LobbyPage.tsx`, etc.
-
-**Tests**:
-- Nou `src/test/story-mode-v3.test.ts`: validar que tots els `next_node_id` existeixen, tots els nodes no-final tenen exactament 3 opcions, hi ha almenys 1 final per branca principal.
-- Re-córrer els 168 tests existents per confirmar zero regressió.
-- Smoke E2E: començar run, fer 2 decisions, comprovar avenç.
-
-**Risc**: Baix — codi nou aïllat. Únic punt sensible: la mort esborra `pet_accessories`/`pet_consumables`, que també existeixen al sistema actual; ja era així abans (`resetPetAndProgress`), ho reutilitzem.
-
----
-
-### Pla d'execució
-
-1. Migració: crear `story_nodes`, `story_choices`, `story_runs` + RLS
-2. Seed: insert dels ~35 nodes i ~80 opcions amb història coherent
-3. Helpers TS + tipus
-4. Components UI (NodeView, EndingScreen, DeathScreen)
-5. Reescriure `StoryModePage.tsx`
-6. Tests + actualitzar memòria (`mem://features/story-mode.md` + `regressions.md`)
+Baix. Tots els canvis són additius. La columna `is_daily` té default `false` (els 48 nodes existents queden iguals). La nova taula no afecta cap query existent. La fase `chapter_break` només intercepta entre dos nodes — si fallés, el run resta intacte a BD i l'usuari pot recarregar i continuar.

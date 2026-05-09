@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_challenge_log: {
+        Row: {
+          challenge_date: string
+          choice_id: string
+          completed_at: string
+          id: string
+          node_id: string
+          reward_type: string | null
+          reward_value: Json | null
+          user_id: string
+        }
+        Insert: {
+          challenge_date: string
+          choice_id: string
+          completed_at?: string
+          id?: string
+          node_id: string
+          reward_type?: string | null
+          reward_value?: Json | null
+          user_id: string
+        }
+        Update: {
+          challenge_date?: string
+          choice_id?: string
+          completed_at?: string
+          id?: string
+          node_id?: string
+          reward_type?: string | null
+          reward_value?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_reminders_log: {
         Row: {
           bonus_reward_rarity: string | null
@@ -1058,6 +1091,7 @@ export type Database = {
           created_at: string
           ending_type: string | null
           id: string
+          is_daily: boolean
           is_ending: boolean
           narrative: string
           title: string
@@ -1067,6 +1101,7 @@ export type Database = {
           created_at?: string
           ending_type?: string | null
           id: string
+          is_daily?: boolean
           is_ending?: boolean
           narrative: string
           title: string
@@ -1076,6 +1111,7 @@ export type Database = {
           created_at?: string
           ending_type?: string | null
           id?: string
+          is_daily?: boolean
           is_ending?: boolean
           narrative?: string
           title?: string
