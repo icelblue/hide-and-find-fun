@@ -387,9 +387,16 @@ export default function StoryModePage() {
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10 relative">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
 
-        <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-4 block transition-colors relative z-10">
-          ← Lobby
-        </button>
+        <div className="flex items-center justify-between mb-4 relative z-10">
+          <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            ← Lobby
+          </button>
+          {run && (
+            <span className="text-[10px] text-accent/80 font-medium">
+              ✓ Cap. {node.chapter}/8 · desat
+            </span>
+          )}
+        </div>
 
         {/* Pet status mini */}
         <div className="flex items-center gap-3 mb-5 relative z-10 glass rounded-xl px-3 py-2 border border-border/30">
@@ -412,9 +419,11 @@ export default function StoryModePage() {
             choices={choices}
             petName={pet.pet_name}
             onChoose={handleChoose}
-            busy={busy}
+            busy={busy || !!reveal}
           />
         </div>
+
+        {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
       </div>
     );
   }
