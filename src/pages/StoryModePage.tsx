@@ -339,6 +339,9 @@ export default function StoryModePage() {
           <Button variant="ghost" onClick={() => navigate("/")} className="w-full">
             ← Lobby
           </Button>
+
+          {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
+
           <Button
             variant="ghost"
             onClick={async () => {
@@ -353,6 +356,27 @@ export default function StoryModePage() {
           </Button>
         </div>
       </div>
+    );
+  }
+
+  // CHAPTER BREAK
+  if (phase === "chapter_break" && pet && pendingNext) {
+    return (
+      <>
+        <ChapterCompleteScreen
+          completedChapter={completedChapter}
+          nextChapter={pendingNext.chapter}
+          rewards={chapterRewards}
+          petName={pet.pet_name}
+          petIcon={pet.pet_icon}
+          petXP={pet.xp ?? 0}
+          petMaxXP={pet.max_xp ?? MAX_PET_XP}
+          onContinue={handleContinueChapter}
+          onPause={handlePauseAdventure}
+          busy={busy}
+        />
+        {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
+      </>
     );
   }
 
