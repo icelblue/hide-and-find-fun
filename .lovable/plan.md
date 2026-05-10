@@ -1,91 +1,76 @@
+# Mode Història v4 — Plan
 
-# Pla — Mode Història v3.1 (UX polit + Reptes diaris)
+## 1. Fix start error + greeting
 
-🔒 **Aïllament total del PvP**: només es toquen fitxers de `src/pages/StoryModePage.tsx`, `src/components/story/*`, `src/lib/story-runs.ts` i una migració additiva. Cap fitxer de `src/components/game/`, `src/lib/supabase-helpers.ts`, RPCs PvP, `GamePage.tsx` o `LobbyPage.tsx` es modifica.
+- **Greeting**: si `display_name` és buit, usar prefix de l'email (`user.email.split('@')[0]`) com a fallback. Mai mostrar "aventurer" si hi ha email.
+- **Start error**: investigar afegint `try/catch` amb log explícit a `handleStartRun` i `loadAll`. Mostrar el missatge d'error real al toast (ara queda "undefined" si l'error és null). Sospita: si l'usuari ja té un run actiu obsolet sense `current_node_id`, falla. Solució: `startRun` ja tanca runs vells; afegir guard si `getNode` retorna null.
 
-## 1. Ocultar recompenses (decideix sense saber el resultat)
+## 2. Quatre mecàniques noves (totes integrades, polides)
 
-- A `StoryNodeView.tsx`: eliminar `rewardBadge` i la línia `{badge}` sota cada opció. Només queda el text de la decisió numerada.
-- Després de triar, el toast existent ja revela què ha passat (XP, accessori, dany, mort).
-- Afegir un breu "reveal" visual: petit overlay animat de 1.2s amb la recompensa real abans de carregar el següent node (`RewardReveal.tsx` nou — emoji + nom centrat amb fade-in/out).
+### A) Estats mascota (gana/son/por) 0-100
+- Nova taula `pet_state` (user_id, hunger, sleep, fear, bond, updated_at).
+- Cada decisió pot modificar estats via nou camp `state_delta` jsonb a `story_choices`.
+- UI: 4 mini-barres horitzontals dalt de la pantalla "playing" (😋 gana, 😴 son, 😨 por, ❤️ vincle).
+- Si hunger>80 o sleep>80 → opcions de "menjar"/"dormir" apareixen com a 4a opció extra al següent node (filtrades client-side).
+- Si fear>90 → -50 XP penalització i missatge "{pet} està aterrit".
 
-## 2. Checkpoint per capítol (resum + pausa)
+### B) Vincle (bond) — ja inclòs a A
+- Bond puja amb decisions empàtiques (`state_delta: {bond: +10}`).
+- Bond≥70 desbloqueja branques especials marcades `requires_bond` als choices.
 
-- Detectar a `handleChoose` quan `result.nextNode.chapter > node.chapter` i `!result.runEnded`.
-- Acumulem en estat `chapterRewards: RewardOutcome[]` cada recompensa del capítol actual; al canviar de capítol passem a una nova fase `chapter_break`.
-- Nou component `ChapterCompleteScreen.tsx`:
-  - Títol: "Capítol N completat"
-  - Llista de recompenses obtingudes en aquest capítol (icones + noms)
-  - Estat actual: ❤️ salut (xp barra), evolució mascota
-  - 2 botons: **"Continuar capítol N+1"** i **"Pausar aventura"** (= torna al lobby; el run ja està autosalvat a BD).
-- En tornar a entrar al Mode Història, si hi ha run actiu, es reprèn directament al node actual (ja funciona així). Afegim un petit indicador "✓ Aventura desada" al Ready/Playing perquè es noti.
+### C) Inventari narratiu
+- Nova taula `story_inventory` (user_id, item_id, item_name, item_icon, obtained_at).
+- Nou `reward_type='item'` amb `{item_id, name, icon}`.
+- Choices poden tenir `requires_items: ['clau_1']` jsonb → si no els tens, opció oculta.
+- UI: motxilla 🎒 al header del playing, click obre drawer amb la llista.
 
-## 3. Repte diari (1 decisió especial cada 24h)
+### D) Receptes (combinació d'objectes)
+- Nova taula `story_recipes` (id, name, icon, requires_items jsonb, result_item_id, result_name, result_icon, unlocks_choice_id).
+- Nou `reward_type='recipe'` amb `{recipe_id}` → afegeix a la llibreta de receptes.
+- Taula `story_recipe_book` (user_id, recipe_id) — receptes conegudes.
+- UI: dins el drawer de motxilla, secció "Receptes". Botó "Combinar" si tens tots els items requerits → crea l'item resultat i pot desbloquejar opcions.
+- Inicialment 3 receptes seed (ex: clau+oli=clau_obrible, mapa+brúixola=ruta_secreta, herba+aigua=poció_calma).
 
-### Esquema BD (migració additiva)
+### E) Mini-puzzle (cap. 4 i cap. 7)
+- Nou camp a `story_nodes`: `puzzle_type` ('order_actions' | null) i `puzzle_data` jsonb.
+- Component `PuzzleNode.tsx`: mostra 3 accions barrejades, l'usuari les ordena. Solució correcta = recompensa extra (item).
+- 2 nodes seed: `c4_puzzle_dishes` (ordenar pasos cuina), `c7_puzzle_lock` (ordenar combinació pany).
 
-```sql
-ALTER TABLE story_nodes ADD COLUMN is_daily boolean NOT NULL DEFAULT false;
+## 3. Neteja BBDD i codi obsolet
 
-CREATE TABLE daily_challenge_log (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  challenge_date date NOT NULL,
-  node_id text NOT NULL,
-  choice_id uuid NOT NULL,
-  reward_type text,
-  reward_value jsonb,
-  completed_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(user_id, challenge_date)
-);
--- RLS: SELECT/INSERT propi (user_id = auth.uid())
-```
+- DROP TABLE `story_progress` CASCADE.
+- DROP RPC `create_story_game`, `finish_story_game`.
+- ALTER TABLE games DROP COLUMN `is_story`, `story_chapter` (i delete previs de les 17 files is_story=true).
+- Eliminar de `story-helpers.ts`: `getStoryProgress`, `initChapter`, `completeChapter`, `calculateXP`. També treure referència a `story_progress` de `resetPetAndProgress`.
+- Eliminar `cpuChooseHidingSpot` (no s'usa enlloc).
+- Buscar i eliminar imports orfes.
 
-### Contingut
+## 4. Recompenses (revisió)
+Cada decisió genera UNA recompensa visible (mai 2). El `state_delta` és invisible (es revela al moviment de barres després de triar — animació suau).
 
-Seed de **7 nodes diaris** (un per dia de la setmana, rotació determinista per `EXTRACT(DOW FROM today)`). Cada node:
-- Narrativa curta (2-3 frases) sobre la mascota.
-- 3 opcions amb recompenses **cosmètiques o consumibles** (mai mort, mai dany >10). Exemples: 🍖 Menjar, 💧 Aigua, 🎀 accessoris exclusius daily, +50 XP.
+## 5. Tests + verificació
+- Nou test `story-runs-v4.test.ts`: cobreix inventory + recipes + state caps (0-100).
+- Run complet vitest (~170 tests + nous).
+- Test manual end-to-end al sandbox: nova partida → cap.1 decisió → veure barres moure → checkpoint cap.1→2 → motxilla amb item → arribar a node que requereixi item.
 
-### Lògica (`story-runs.ts`)
+## 6. Files
 
-- `getTodayChallenge(userId)` → `{ node, choices, alreadyDone, lastReward? }`. Selecciona node per `dow`. Comprova si avui ja s'ha completat.
-- `submitDailyChoice(userId, choice)` → aplica recompensa via `applyReward` existent + insert a `daily_challenge_log`.
+**Nous (8)**:
+- `src/components/story/PetStatsBar.tsx`
+- `src/components/story/InventoryDrawer.tsx`
+- `src/components/story/PuzzleNode.tsx`
+- `src/lib/story-state.ts` (estats + inventari + receptes)
+- `src/test/story-runs-v4.test.ts`
+- 2 migracions (schema + seed nodes/choices/recipes ampliats)
 
-### UI
-
-- Nou `DailyChallengeCard.tsx` mostrat **només a la fase `ready`** (sota el botó "Començar aventura"). 
-- Estat "disponible": card destacada amb 🌟 i "Repte diari · acaba en Xh".
-- En clicar → modal/full-screen amb la decisió. Després de triar, mostra recompensa i "Tornar". 
-- Estat "completat": card grisa amb ✓ i recompensa obtinguda + "Torna demà".
-
-## 4. Tests + safety
-
-- Re-córrer `bun test` (169 tests existents + smoke E2E) → han de passar tots iguals.
-- Nou test mínim `story-runs-daily.test.ts`: que `getTodayChallenge` és determinista per dia i que no es pot completar dos cops el mateix dia.
-- Marcador `// 🔒 CRITICAL` mantingut a tots els fitxers nous/modificats del Mode Història.
-
-## Fitxers afectats
-
-**Modificats** (3):
-- `src/components/story/StoryNodeView.tsx` — elimina badges
-- `src/pages/StoryModePage.tsx` — fase `chapter_break`, integra `RewardReveal` i `DailyChallengeCard`
-- `src/lib/story-runs.ts` — helpers `getTodayChallenge` + `submitDailyChoice` + tipus
-
-**Nous** (4):
-- `src/components/story/RewardReveal.tsx`
-- `src/components/story/ChapterCompleteScreen.tsx`
-- `src/components/story/DailyChallengeCard.tsx`
-- `src/test/story-runs-daily.test.ts`
-
-**Migració + seed**:
-- `supabase/migrations/<timestamp>_daily_challenges.sql` — afegeix columna `is_daily`, crea `daily_challenge_log` amb RLS
-- Seed dels 7 nodes daily via insert tool (data, no migració)
-
-## Què NO faig en aquesta tanda
-
-Per acord previ: l'**espai propi amb mobles** i la integració al PvP queda per una tanda futura (és un sistema gran que requereix taules d'inventari de mobles, editor d'habitació, selector d'escenari personalitzat al crear partida i validació de simetria/justícia per al rival). Ho faig en un segon pla quan tu ho diguis.
+**Modificats (5)**:
+- `src/pages/StoryModePage.tsx` (integració barres, drawer, fix greeting/error)
+- `src/components/story/StoryNodeView.tsx` (filtrar choices per items/bond/state)
+- `src/lib/story-runs.ts` (aplicar state_delta + items + receptes a `applyReward`/`makeChoice`)
+- `src/lib/story-helpers.ts` (cleanup)
+- `.lovable/memory/features/story-mode.md`
 
 ## Risc
+PvP totalment intacte (0 fitxers `src/components/game/`, `src/pages/GamePage.tsx`, `src/pages/LobbyPage.tsx`, `supabase-helpers.ts`, RPCs PvP modificats). Migració DROP de `games.is_story` requereix borrar 17 files prèvies — **destructiu**: confirmaràs abans.
 
-Baix. Tots els canvis són additius. La columna `is_daily` té default `false` (els 48 nodes existents queden iguals). La nova taula no afecta cap query existent. La fase `chapter_break` només intercepta entre dos nodes — si fallés, el run resta intacte a BD i l'usuari pot recarregar i continuar.
+Estimació: ~2 tandes de migració + edits. Vols que ho faci tot d'una o ho dividim per fases?

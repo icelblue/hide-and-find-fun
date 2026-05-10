@@ -141,87 +141,17 @@ export async function healPetXP(userId: string, xpReduce: number) {
   return { newXp };
 }
 
-// Delete pet + progress + accessories + events for rebirth
+// Delete pet + accessories + events + state + inventory + recipe book for rebirth
 export async function resetPetAndProgress(userId: string) {
   await Promise.all([
     supabase.from("pet_accessories").delete().eq("user_id", userId),
     supabase.from("pet_consumables").delete().eq("user_id", userId),
     supabase.from("pet_events").delete().eq("user_id", userId),
-    supabase.from("story_progress").delete().eq("user_id", userId),
+    supabase.from("pet_state").delete().eq("user_id", userId),
+    supabase.from("story_inventory").delete().eq("user_id", userId),
+    supabase.from("story_recipe_book").delete().eq("user_id", userId),
     supabase.from("player_pets").delete().eq("user_id", userId),
   ]);
-}
-
-// ============================================
-// STORY PROGRESS
-// ============================================
-
-export async function getStoryProgress(userId: string) {
-  const { data } = await supabase.from("story_progress").select("*").eq("user_id", userId).order("chapter");
-  return data ?? [];
-}
-
-export async function initChapter(userId: string, chapter: number) {
-  const { data: existing } = await supabase
-    .from("story_progress")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("chapter", chapter)
-    .maybeSingle();
-  if (existing) {
-    await supabase.from("story_progress").update({ status: "active", moves_used: 0 }).eq("id", existing.id);
-  } else {
-    await supabase.from("story_progress").insert({
-      user_id: userId,
-      chapter,
-      status: "active",
-    });
-  }
-}
-
-export async function completeChapter(userId: string, chapter: number, movesUsed: number) {
-  const { data: existing } = await supabase
-    .from("story_progress")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("chapter", chapter)
-    .single();
-
-  const bestMoves = existing?.best_moves ? Math.min(existing.best_moves, movesUsed) : movesUsed;
-
-  await supabase
-    .from("story_progress")
-    .update({
-      status: "completed",
-      moves_used: movesUsed,
-      best_moves: bestMoves,
-      completed_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId)
-    .eq("chapter", chapter);
-
-  // Unlock next chapter (only if not already existing)
-  const nextChapter = chapter + 1;
-  if (nextChapter <= 2 + PET_ACCESSORIES.length) {
-    const { data: next } = await supabase
-      .from("story_progress")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("chapter", nextChapter)
-      .maybeSingle();
-    if (!next) {
-      await supabase.from("story_progress").insert({
-        user_id: userId,
-        chapter: nextChapter,
-        status: "unlocked",
-      });
-    }
-  }
-
-  // Award XP
-  const xp = calculateXP(chapter, movesUsed);
-  const result = await addPetXP(userId, xp);
-  return { xp, isDead: result?.isDead ?? false, newXp: result?.newXp ?? 0 };
 }
 
 // ============================================

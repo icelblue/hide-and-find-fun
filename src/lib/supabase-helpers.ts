@@ -587,22 +587,21 @@ export async function getMyInvites(userId: string) {
 export async function getMyGames(userId: string) {
   const { data: joined } = await supabase
     .from("game_players")
-    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id, is_story)")
+    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id)")
     .eq("user_id", userId);
 
   const { data: pendingInvites } = await supabase
     .from("games")
-    .select("id, code, status, created_by, created_at, invited_user_id, is_story")
+    .select("id, code, status, created_by, created_at, invited_user_id")
     .eq("status", "waiting")
     .eq("invited_user_id", userId);
 
   const joinedIds = new Set((joined ?? []).map((gp: any) => gp.game_id));
   const pendingFormatted = (pendingInvites ?? [])
-    .filter((g) => !joinedIds.has(g.id))
-    .map((g) => ({ game_id: g.id, games: g, _pending: true }));
+    .filter((g: any) => !joinedIds.has(g.id))
+    .map((g: any) => ({ game_id: g.id, games: g, _pending: true }));
 
-  const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted]
-    .filter((gp: any) => !(gp.games as any).is_story);
+  const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
 
   const allGameIds = all.map((gp: any) => gp.game_id);
   const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];

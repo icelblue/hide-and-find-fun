@@ -10,6 +10,9 @@ import {
   addPetXP, healPetXP, getMyPet, awardAccessory,
   resetPetAndProgress, MAX_PET_XP,
 } from "./story-helpers";
+import {
+  applyStateDelta, addInventoryItem, discoverRecipe, type PetState,
+} from "./story-state";
 
 export interface StoryNode {
   id: string;
@@ -18,6 +21,8 @@ export interface StoryNode {
   narrative: string;
   is_ending: boolean;
   ending_type: string | null;
+  puzzle_type?: string | null;
+  puzzle_data?: any;
 }
 
 export interface StoryChoice {
@@ -28,6 +33,9 @@ export interface StoryChoice {
   next_node_id: string | null;
   reward_type: string | null;
   reward_value: any;
+  state_delta?: Partial<PetState> | null;
+  requires_items?: string[] | null;
+  requires_bond?: number | null;
 }
 
 export interface StoryRun {
@@ -124,7 +132,11 @@ export interface RewardOutcome {
   damage?: number;
   accessory?: { name: string; icon: string };
   consumable?: { name: string; icon: string };
+  item?: { id: string; name: string; icon: string };
+  recipe?: { id: string; name: string; icon: string };
   killed?: boolean;
+  stateChanged?: Partial<PetState>;
+  newState?: PetState;
 }
 
 const CONSUMABLE_ICONS: Record<string, string> = {
@@ -159,6 +171,20 @@ async function applyReward(
       consumable_icon: icon,
     });
     out.consumable = { name: rewardValue.consumable, icon };
+  } else if (rewardType === "item" && rewardValue.item_id) {
+    const icon = rewardValue.icon ?? "🎁";
+    const name = rewardValue.name ?? rewardValue.item_id;
+    const added = await addInventoryItem(userId, { item_id: rewardValue.item_id, item_name: name, item_icon: icon });
+    if (added) out.item = { id: rewardValue.item_id, name, icon };
+  } else if (rewardType === "recipe" && rewardValue.recipe_id) {
+    const discovered = await discoverRecipe(userId, rewardValue.recipe_id);
+    if (discovered) {
+      out.recipe = {
+        id: rewardValue.recipe_id,
+        name: rewardValue.name ?? "Recepta",
+        icon: rewardValue.icon ?? "📜",
+      };
+    }
   }
   return out;
 }
@@ -179,6 +205,22 @@ export async function makeChoice(
   choice: StoryChoice,
 ): Promise<ChoiceResult> {
   const reward = await applyReward(userId, choice.reward_type, choice.reward_value);
+
+  // Apply state delta (silent — revealed via animated bars)
+  if (choice.state_delta && typeof choice.state_delta === "object") {
+    const newState = await applyStateDelta(userId, choice.state_delta);
+    reward.stateChanged = choice.state_delta;
+    reward.newState = newState;
+    // Big fear penalty
+    if (newState.fear >= 95) {
+      const r = await addPetXP(userId, 50);
+      if (r?.isDead) {
+        reward.killed = true;
+        reward.damage = (reward.damage ?? 0) + 50;
+      }
+    }
+  }
+
   const nextNode = choice.next_node_id ? await getNode(choice.next_node_id) : null;
 
   // Determine end status
@@ -292,7 +334,7 @@ export async function submitDailyChoice(
 // ============================================
 
 export function rewardToReveal(r: RewardOutcome): {
-  kind: "xp" | "accessory" | "consumable" | "damage" | "nothing";
+  kind: "xp" | "accessory" | "consumable" | "item" | "recipe" | "damage" | "nothing";
   label: string;
   emoji: string;
   tone: "good" | "bad" | "neutral";
@@ -300,6 +342,8 @@ export function rewardToReveal(r: RewardOutcome): {
   if (r.killed) return { kind: "damage", label: "Final tràgic...", emoji: "💀", tone: "bad" };
   if (r.accessory) return { kind: "accessory", label: `${r.accessory.name}`, emoji: r.accessory.icon, tone: "good" };
   if (r.consumable) return { kind: "consumable", label: r.consumable.name, emoji: r.consumable.icon, tone: "good" };
+  if (r.item) return { kind: "item", label: `Has trobat ${r.item.name}!`, emoji: r.item.icon, tone: "good" };
+  if (r.recipe) return { kind: "recipe", label: `Recepta: ${r.recipe.name}`, emoji: "📜", tone: "good" };
   if (r.damage) return { kind: "damage", label: `-${r.damage} salut`, emoji: "💥", tone: "bad" };
   if (r.xp) return { kind: "xp", label: `+${r.xp} XP`, emoji: "⭐", tone: "good" };
   return { kind: "nothing", label: "Res aquesta vegada", emoji: "·", tone: "neutral" };
