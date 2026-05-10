@@ -338,10 +338,8 @@ export type Database = {
           created_by: string
           id: string
           invited_user_id: string | null
-          is_story: boolean
           scenario_id: string | null
           status: Database["public"]["Enums"]["game_status"]
-          story_chapter: number | null
           updated_at: string
           winner_id: string | null
         }
@@ -351,10 +349,8 @@ export type Database = {
           created_by: string
           id?: string
           invited_user_id?: string | null
-          is_story?: boolean
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
-          story_chapter?: number | null
           updated_at?: string
           winner_id?: string | null
         }
@@ -364,10 +360,8 @@ export type Database = {
           created_by?: string
           id?: string
           invited_user_id?: string | null
-          is_story?: boolean
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
-          story_chapter?: number | null
           updated_at?: string
           winner_id?: string | null
         }
@@ -659,6 +653,36 @@ export type Database = {
           resolved_at?: string | null
           user_id?: string
           xp_change?: number
+        }
+        Relationships: []
+      }
+      pet_state: {
+        Row: {
+          bond: number
+          fear: number
+          hunger: number
+          id: string
+          sleep: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bond?: number
+          fear?: number
+          hunger?: number
+          id?: string
+          sleep?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bond?: number
+          fear?: number
+          hunger?: number
+          id?: string
+          sleep?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1047,8 +1071,11 @@ export type Database = {
           label: string
           next_node_id: string | null
           node_id: string
+          requires_bond: number | null
+          requires_items: Json | null
           reward_type: string | null
           reward_value: Json | null
+          state_delta: Json | null
         }
         Insert: {
           choice_order: number
@@ -1056,8 +1083,11 @@ export type Database = {
           label: string
           next_node_id?: string | null
           node_id: string
+          requires_bond?: number | null
+          requires_items?: Json | null
           reward_type?: string | null
           reward_value?: Json | null
+          state_delta?: Json | null
         }
         Update: {
           choice_order?: number
@@ -1065,8 +1095,11 @@ export type Database = {
           label?: string
           next_node_id?: string | null
           node_id?: string
+          requires_bond?: number | null
+          requires_items?: Json | null
           reward_type?: string | null
           reward_value?: Json | null
+          state_delta?: Json | null
         }
         Relationships: [
           {
@@ -1085,6 +1118,33 @@ export type Database = {
           },
         ]
       }
+      story_inventory: {
+        Row: {
+          id: string
+          item_icon: string
+          item_id: string
+          item_name: string
+          obtained_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_icon?: string
+          item_id: string
+          item_name: string
+          obtained_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_icon?: string
+          item_id?: string
+          item_name?: string
+          obtained_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       story_nodes: {
         Row: {
           chapter: number
@@ -1094,6 +1154,8 @@ export type Database = {
           is_daily: boolean
           is_ending: boolean
           narrative: string
+          puzzle_data: Json | null
+          puzzle_type: string | null
           title: string
         }
         Insert: {
@@ -1104,6 +1166,8 @@ export type Database = {
           is_daily?: boolean
           is_ending?: boolean
           narrative: string
+          puzzle_data?: Json | null
+          puzzle_type?: string | null
           title: string
         }
         Update: {
@@ -1114,40 +1178,74 @@ export type Database = {
           is_daily?: boolean
           is_ending?: boolean
           narrative?: string
+          puzzle_data?: Json | null
+          puzzle_type?: string | null
           title?: string
         }
         Relationships: []
       }
-      story_progress: {
+      story_recipe_book: {
         Row: {
-          best_moves: number | null
-          chapter: number
-          completed_at: string | null
-          created_at: string
+          discovered_at: string
           id: string
-          moves_used: number
-          status: string
+          recipe_id: string
           user_id: string
         }
         Insert: {
-          best_moves?: number | null
-          chapter: number
-          completed_at?: string | null
-          created_at?: string
+          discovered_at?: string
           id?: string
-          moves_used?: number
-          status?: string
+          recipe_id: string
           user_id: string
         }
         Update: {
-          best_moves?: number | null
-          chapter?: number
-          completed_at?: string | null
-          created_at?: string
+          discovered_at?: string
           id?: string
-          moves_used?: number
-          status?: string
+          recipe_id?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_recipe_book_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "story_recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_recipes: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          name: string
+          requires_items: Json
+          result_item_icon: string
+          result_item_id: string
+          result_item_name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id: string
+          name: string
+          requires_items?: Json
+          result_item_icon?: string
+          result_item_id: string
+          result_item_name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          requires_items?: Json
+          result_item_icon?: string
+          result_item_id?: string
+          result_item_name?: string
         }
         Relationships: []
       }
@@ -1228,10 +1326,6 @@ export type Database = {
       }
       claim_reminder_bonus: { Args: { _claim_token: string }; Returns: Json }
       count_game_players: { Args: { _game_id: string }; Returns: number }
-      create_story_game: {
-        Args: { _chapter: number; _user_id: string }
-        Returns: string
-      }
       delete_user_account: { Args: never; Returns: Json }
       execute_barricada: {
         Args: { _game_id: string; _scenario_from: string; _scenario_to: string }
@@ -1272,10 +1366,6 @@ export type Database = {
       execute_trampa: {
         Args: { _game_id: string; _item_id: string }
         Returns: Json
-      }
-      finish_story_game: {
-        Args: { _game_id: string; _winner_id: string }
-        Returns: undefined
       }
       generate_referral_code: {
         Args: { _display_name: string }
