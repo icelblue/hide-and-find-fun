@@ -334,7 +334,7 @@ export async function submitDailyChoice(
 // ============================================
 
 export function rewardToReveal(r: RewardOutcome): {
-  kind: "xp" | "accessory" | "consumable" | "damage" | "nothing";
+  kind: "xp" | "accessory" | "consumable" | "item" | "recipe" | "damage" | "nothing";
   label: string;
   emoji: string;
   tone: "good" | "bad" | "neutral";
@@ -342,8 +342,15 @@ export function rewardToReveal(r: RewardOutcome): {
   if (r.killed) return { kind: "damage", label: "Final tràgic...", emoji: "💀", tone: "bad" };
   if (r.accessory) return { kind: "accessory", label: `${r.accessory.name}`, emoji: r.accessory.icon, tone: "good" };
   if (r.consumable) return { kind: "consumable", label: r.consumable.name, emoji: r.consumable.icon, tone: "good" };
+  if (r.item) return { kind: "item", label: `Has trobat ${r.item.name}!`, emoji: r.item.icon, tone: "good" };
+  if (r.recipe) return { kind: "recipe", label: `Recepta: ${r.recipe.name}`, emoji: "📜", tone: "good" };
   if (r.damage) return { kind: "damage", label: `-${r.damage} salut`, emoji: "💥", tone: "bad" };
   if (r.xp) return { kind: "xp", label: `+${r.xp} XP`, emoji: "⭐", tone: "good" };
+  return { kind: "nothing", label: "Res aquesta vegada", emoji: "·", tone: "neutral" };
+}
+
+export { MAX_PET_XP };
+
   return { kind: "nothing", label: "Res aquesta vegada", emoji: "·", tone: "neutral" };
 }
 
