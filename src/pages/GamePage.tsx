@@ -133,8 +133,8 @@ export default function GamePage() {
   const [savingTrophy, setSavingTrophy] = useState(false);
 
   // Story mode
-  const isStory = !!(game as any)?.is_story;
-  const storyChapter = (game as any)?.story_chapter as number | undefined;
+  const isStory = false; // 🔒 Story mode v4 viu a /story (StoryModePage). PvP no usa is_story.
+  const storyChapter: number | undefined = undefined;
   const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: any; consumable?: any } | null>(null);
 
   // ============================================
