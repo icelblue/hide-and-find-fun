@@ -10,6 +10,9 @@ import {
   addPetXP, healPetXP, getMyPet, awardAccessory,
   resetPetAndProgress, MAX_PET_XP,
 } from "./story-helpers";
+import {
+  applyStateDelta, addInventoryItem, discoverRecipe, type PetState,
+} from "./story-state";
 
 export interface StoryNode {
   id: string;
@@ -18,6 +21,8 @@ export interface StoryNode {
   narrative: string;
   is_ending: boolean;
   ending_type: string | null;
+  puzzle_type?: string | null;
+  puzzle_data?: any;
 }
 
 export interface StoryChoice {
@@ -28,6 +33,9 @@ export interface StoryChoice {
   next_node_id: string | null;
   reward_type: string | null;
   reward_value: any;
+  state_delta?: Partial<PetState> | null;
+  requires_items?: string[] | null;
+  requires_bond?: number | null;
 }
 
 export interface StoryRun {
