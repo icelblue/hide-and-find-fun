@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 
 export interface RevealData {
-  kind: "xp" | "accessory" | "consumable" | "damage" | "nothing";
+  kind: "xp" | "accessory" | "consumable" | "item" | "recipe" | "damage" | "nothing";
   label: string;
   emoji: string;
   tone: "good" | "bad" | "neutral";
