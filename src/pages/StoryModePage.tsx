@@ -1,8 +1,7 @@
 // ============================================================
-// StoryModePage.tsx — Mode Història v3 (aventura ramificada)
+// StoryModePage.tsx — Mode Història v4
 // ============================================================
-// 🔒 CRITICAL: Aquest fitxer és INDEPENDENT del PvP.
-// No toca cap RPC ni taula de partida real.
+// 🔒 CRITICAL: INDEPENDENT del PvP. No toca cap RPC ni taula de partida real.
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -19,12 +18,15 @@ import {
   rewardToReveal,
   type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
 } from "@/lib/story-runs";
+import { getPetState, getInventory, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
 import { StoryNodeView } from "@/components/story/StoryNodeView";
 import { StoryEndingScreen } from "@/components/story/StoryEndingScreen";
 import { StoryDeathScreen } from "@/components/story/StoryDeathScreen";
 import { RewardReveal, type RevealData } from "@/components/story/RewardReveal";
 import { ChapterCompleteScreen } from "@/components/story/ChapterCompleteScreen";
 import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
+import { PetStatsBar } from "@/components/story/PetStatsBar";
+import { InventoryDrawer } from "@/components/story/InventoryDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -40,7 +42,7 @@ export default function StoryModePage() {
   const [node, setNode] = useState<StoryNode | null>(null);
   const [choices, setChoices] = useState<StoryChoice[]>([]);
   const [busy, setBusy] = useState(false);
-  const [playerName, setPlayerName] = useState("aventurer");
+  const [playerName, setPlayerName] = useState("");
 
   // Adoption flow
   const [randomPet, setRandomPet] = useState(PET_OPTIONS[0]);
@@ -49,7 +51,13 @@ export default function StoryModePage() {
   const [petNameInput, setPetNameInput] = useState("");
   const [namingPet, setNamingPet] = useState(false);
 
-  // Last ending info (kept after run ends to show screen)
+  // v4: state + inventory
+  const [petState, setPetState] = useState<PetState>(DEFAULT_STATE);
+  const [prevPetState, setPrevPetState] = useState<PetState | null>(null);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventoryRefresh, setInventoryRefresh] = useState(0);
+
+  // Last ending info
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
   const [endedStatus, setEndedStatus] = useState<"dead" | "completed" | null>(null);
   const [endedPet, setEndedPet] = useState<{ name: string; icon: string } | null>(null);
@@ -63,31 +71,51 @@ export default function StoryModePage() {
   const loadAll = useCallback(async () => {
     if (!user) return;
     setPhase("loading");
-    const [petData, profileRes, runData] = await Promise.all([
-      getMyPet(user.id),
-      supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
-      getActiveRun(user.id),
-    ]);
-    if (profileRes.data?.display_name) setPlayerName(profileRes.data.display_name);
-    setPet(petData);
+    try {
+      const [petData, profileRes, runData, stateData, invData] = await Promise.all([
+        getMyPet(user.id),
+        supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+        getActiveRun(user.id),
+        getPetState(user.id),
+        getInventory(user.id),
+      ]);
+      // Greeting fallback: display_name → email prefix → "aventurer"
+      const name = profileRes.data?.display_name?.trim()
+        || (user.email ? user.email.split("@")[0] : "")
+        || "aventurer";
+      setPlayerName(name);
+      setPet(petData);
+      setPetState(stateData);
+      setInventory(invData);
 
-    if (!petData) {
-      const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
-      setRandomPet(rp);
-      setIntroStep(0);
-      setGiftOpened(false);
-      setPhase("intro");
-      return;
-    }
+      if (!petData) {
+        const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
+        setRandomPet(rp);
+        setIntroStep(0);
+        setGiftOpened(false);
+        setPhase("intro");
+        return;
+      }
 
-    if (runData && runData.current_node_id) {
-      setRun(runData);
-      const n = await getNode(runData.current_node_id);
-      const c = await getChoices(runData.current_node_id);
-      setNode(n);
-      setChoices(c);
-      setPhase("playing");
-    } else {
+      if (runData && runData.current_node_id) {
+        const n = await getNode(runData.current_node_id);
+        if (!n) {
+          // Stale run pointing to non-existent node — close it
+          await supabase.from("story_runs").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", runData.id);
+          setPhase("ready");
+          return;
+        }
+        const c = await getChoices(runData.current_node_id);
+        setRun(runData);
+        setNode(n);
+        setChoices(c);
+        setPhase("playing");
+      } else {
+        setPhase("ready");
+      }
+    } catch (e: any) {
+      console.error("[StoryMode] loadAll error", e);
+      toast.error(`Error carregant: ${e?.message ?? e}`);
       setPhase("ready");
     }
   }, [user]);
@@ -98,17 +126,14 @@ export default function StoryModePage() {
   const handleConfirmPetName = async () => {
     if (!user) return;
     const trimmed = petNameInput.trim();
-    if (!trimmed || trimmed.length > 20) {
-      toast.error("El nom ha de tenir entre 1 i 20 caràcters");
-      return;
-    }
+    if (!trimmed || trimmed.length > 20) { toast.error("El nom ha de tenir entre 1 i 20 caràcters"); return; }
     setNamingPet(true);
     try {
       const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
       setPet(p);
       setPhase("ready");
       toast.success(`${randomPet.icon} ${trimmed} és el teu company!`);
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(e?.message ?? "Error creant la mascota"); }
     finally { setNamingPet(false); }
   };
 
@@ -118,13 +143,20 @@ export default function StoryModePage() {
     setBusy(true);
     try {
       const r = await startRun(user.id);
-      const n = await getNode(r.current_node_id!);
-      const c = await getChoices(r.current_node_id!);
+      if (!r.current_node_id) throw new Error("No s'ha trobat el node inicial");
+      const n = await getNode(r.current_node_id);
+      if (!n) throw new Error(`Node inicial '${r.current_node_id}' no existeix`);
+      const c = await getChoices(r.current_node_id);
       setRun(r);
       setNode(n);
       setChoices(c);
+      setChapterRewards([]);
+      setPrevPetState(null);
       setPhase("playing");
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) {
+      console.error("[StoryMode] startRun error", e);
+      toast.error(`No s'ha pogut començar: ${e?.message ?? "error desconegut"}`);
+    }
     finally { setBusy(false); }
   };
 
@@ -134,58 +166,54 @@ export default function StoryModePage() {
     setBusy(true);
     try {
       const result = await makeChoice(user.id, run, choice);
-
-      // Refresh pet (xp/max changed)
       const freshPet = await getMyPet(user.id);
       setPet(freshPet);
 
-      // Always show reveal animation for the reward
-      setReveal(rewardToReveal(result.reward));
+      // Update state bars
+      if (result.reward.newState) {
+        setPrevPetState(petState);
+        setPetState(result.reward.newState);
+      }
 
-      // Track rewards for current chapter
+      // Refresh inventory if item/recipe gained
+      if (result.reward.item || result.reward.recipe) {
+        const inv = await getInventory(user.id);
+        setInventory(inv);
+        setInventoryRefresh((n) => n + 1);
+      }
+
+      // Reveal animation
+      setReveal(rewardToReveal(result.reward));
       setChapterRewards(prev => [...prev, result.reward]);
 
       if (result.runEnded) {
         setEndedNode(result.nextNode ?? node);
         setEndedStatus(result.runEnded);
         setEndedPet({ name: freshPet?.pet_name ?? pet?.pet_name ?? "?", icon: freshPet?.pet_icon ?? pet?.pet_icon ?? "🐾" });
-        // Phase set after reveal closes (handled in onDone via pendingFinish)
         setPendingNext(null);
-        // We'll switch phase when reveal closes
         return;
       }
 
       if (result.nextNode) {
-        // Detect chapter change
         if (result.nextNode.chapter > node.chapter) {
           setCompletedChapter(node.chapter);
-          setPendingNext(result.nextNode);
-        } else {
-          setPendingNext(result.nextNode);
         }
-        // Refresh run
+        setPendingNext(result.nextNode);
         const freshRun = await getActiveRun(user.id);
         if (freshRun) setRun(freshRun);
       }
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) {
+      console.error("[StoryMode] choice error", e);
+      toast.error(`Error: ${e?.message ?? "no s'ha pogut aplicar la decisió"}`);
+    }
     finally { setBusy(false); }
   };
 
-  // Called when RewardReveal animation finishes
   const handleRevealDone = async () => {
     setReveal(null);
-    // If run ended, transition to ended
-    if (endedStatus) {
-      setPhase("ended");
-      return;
-    }
+    if (endedStatus) { setPhase("ended"); return; }
     if (!pendingNext || !node) return;
-    // Chapter break?
-    if (pendingNext.chapter > node.chapter) {
-      setPhase("chapter_break");
-      return;
-    }
-    // Same chapter, continue normally
+    if (pendingNext.chapter > node.chapter) { setPhase("chapter_break"); return; }
     const newChoices = await getChoices(pendingNext.id);
     setNode(pendingNext);
     setChoices(newChoices);
@@ -206,16 +234,14 @@ export default function StoryModePage() {
   };
 
   const handlePauseAdventure = () => {
-    // Run is already auto-saved in BD; just go to lobby
     toast.success("✓ Aventura desada. Pots tornar quan vulguis.");
     navigate("/");
   };
 
   // ====== ENDING HANDLERS ======
   const handlePlayAgain = async () => {
-    // Completed (non-death) → just start a new run
-    await handleStartRun();
     setEndedNode(null); setEndedStatus(null); setEndedPet(null);
+    await handleStartRun();
   };
 
   const handleAdoptAfterDeath = async () => {
@@ -225,13 +251,12 @@ export default function StoryModePage() {
       await killAndReset(user.id);
       setEndedNode(null); setEndedStatus(null); setEndedPet(null);
       setRun(null); setNode(null); setChoices([]); setPet(null);
+      setPetState(DEFAULT_STATE); setInventory([]);
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
       setRandomPet(rp);
-      setIntroStep(0);
-      setGiftOpened(false);
-      setPetNameInput("");
+      setIntroStep(0); setGiftOpened(false); setPetNameInput("");
       setPhase("intro");
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(e?.message ?? "Error reiniciant"); }
     finally { setBusy(false); }
   };
 
@@ -294,35 +319,30 @@ export default function StoryModePage() {
     if (endedStatus === "dead") {
       return (
         <StoryDeathScreen
-          title={endedNode.title}
-          narrative={endedNode.narrative}
-          petName={endedPet.name}
-          petIcon={endedPet.icon}
-          onAdoptNew={handleAdoptAfterDeath}
-          onLobby={() => navigate("/")}
+          title={endedNode.title} narrative={endedNode.narrative}
+          petName={endedPet.name} petIcon={endedPet.icon}
+          onAdoptNew={handleAdoptAfterDeath} onLobby={() => navigate("/")}
         />
       );
     }
     return (
       <StoryEndingScreen
-        title={endedNode.title}
-        narrative={endedNode.narrative}
+        title={endedNode.title} narrative={endedNode.narrative}
         endingType={endedNode.ending_type}
-        petName={endedPet.name}
-        petIcon={endedPet.icon}
-        onPlayAgain={handlePlayAgain}
-        onLobby={() => navigate("/")}
+        petName={endedPet.name} petIcon={endedPet.icon}
+        onPlayAgain={handlePlayAgain} onLobby={() => navigate("/")}
       />
     );
   }
 
-  // READY (mascota viva, sense run actiu)
+  // READY
   if (phase === "ready" && pet) {
     const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
     return (
       <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         <div className="text-center relative z-10 animate-fade-in w-full">
+          <p className="text-xs text-muted-foreground mb-2">Hola, {playerName}</p>
           <div className={`inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring} mb-3`}>
             <span className="text-7xl">{pet.pet_icon}</span>
           </div>
@@ -331,14 +351,12 @@ export default function StoryModePage() {
             {evo.badge} {evo.label} · ⭐ {pet.xp ?? 0} / {pet.max_xp ?? MAX_PET_XP} XP
           </p>
           <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-            8 capítols. Cada decisió canvia la història. Tria amb seny: les males opcions poden ser mortals.
+            8 capítols. Cada decisió canvia la història, els estats de {pet.pet_name} i el vincle entre vosaltres. Recull objectes i descobreix receptes!
           </p>
           <Button onClick={handleStartRun} size="lg" disabled={busy} className="w-full mb-2">
             {busy ? "..." : "📖 Començar nova aventura"}
           </Button>
-          <Button variant="ghost" onClick={() => navigate("/")} className="w-full">
-            ← Lobby
-          </Button>
+          <Button variant="ghost" onClick={() => navigate("/")} className="w-full">← Lobby</Button>
 
           {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
 
@@ -346,7 +364,7 @@ export default function StoryModePage() {
             variant="ghost"
             onClick={async () => {
               if (!user) return;
-              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota i progrés.")) return;
+              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota, objectes i progrés.")) return;
               await killAndReset(user.id);
               loadAll();
             }}
@@ -387,19 +405,25 @@ export default function StoryModePage() {
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10 relative">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
 
-        <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className="flex items-center justify-between mb-3 relative z-10">
           <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
             ← Lobby
           </button>
-          {run && (
-            <span className="text-[10px] text-accent/80 font-medium">
-              ✓ Cap. {node.chapter}/8 · desat
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {user && <InventoryDrawer userId={user.id} petName={pet.pet_name} triggerCount={inventoryRefresh} onChange={async () => {
+              const inv = await getInventory(user.id);
+              setInventory(inv);
+            }} />}
+            {run && (
+              <span className="text-[10px] text-accent/80 font-medium">
+                ✓ Cap. {node.chapter}/8
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Pet status mini */}
-        <div className="flex items-center gap-3 mb-5 relative z-10 glass rounded-xl px-3 py-2 border border-border/30">
+        <div className="flex items-center gap-3 mb-3 relative z-10 glass rounded-xl px-3 py-2 border border-border/30">
           <span className="text-3xl">{pet.pet_icon}</span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold truncate">{pet.pet_name}</p>
@@ -413,11 +437,18 @@ export default function StoryModePage() {
           </div>
         </div>
 
+        {/* v4: state bars */}
+        <div className="relative z-10">
+          <PetStatsBar state={petState} prevState={prevPetState} />
+        </div>
+
         <div className="relative z-10">
           <StoryNodeView
             node={node}
             choices={choices}
             petName={pet.pet_name}
+            inventory={inventory}
+            state={petState}
             onChoose={handleChoose}
             busy={busy || !!reveal}
           />
