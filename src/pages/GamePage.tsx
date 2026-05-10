@@ -27,10 +27,11 @@ import {
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
-  completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
+  getMyAccessories, awardAccessory, hasAllAccessories,
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
   rollHealthEvent,
 } from "@/lib/story-helpers";
+const completeChapter = async (_u: string, _c: number, _m: number) => ({ xp: 0, isDead: false, newXp: 0 }); // legacy stub — story v4 viu a StoryModePage
 import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import {
