@@ -351,8 +351,3 @@ export function rewardToReveal(r: RewardOutcome): {
 
 export { MAX_PET_XP };
 
-  return { kind: "nothing", label: "Res aquesta vegada", emoji: "·", tone: "neutral" };
-}
-
-export { MAX_PET_XP };
-
