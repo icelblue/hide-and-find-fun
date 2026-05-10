@@ -132,7 +132,11 @@ export interface RewardOutcome {
   damage?: number;
   accessory?: { name: string; icon: string };
   consumable?: { name: string; icon: string };
+  item?: { id: string; name: string; icon: string };
+  recipe?: { id: string; name: string; icon: string };
   killed?: boolean;
+  stateChanged?: Partial<PetState>;
+  newState?: PetState;
 }
 
 const CONSUMABLE_ICONS: Record<string, string> = {
@@ -167,6 +171,20 @@ async function applyReward(
       consumable_icon: icon,
     });
     out.consumable = { name: rewardValue.consumable, icon };
+  } else if (rewardType === "item" && rewardValue.item_id) {
+    const icon = rewardValue.icon ?? "🎁";
+    const name = rewardValue.name ?? rewardValue.item_id;
+    const added = await addInventoryItem(userId, { item_id: rewardValue.item_id, item_name: name, item_icon: icon });
+    if (added) out.item = { id: rewardValue.item_id, name, icon };
+  } else if (rewardType === "recipe" && rewardValue.recipe_id) {
+    const discovered = await discoverRecipe(userId, rewardValue.recipe_id);
+    if (discovered) {
+      out.recipe = {
+        id: rewardValue.recipe_id,
+        name: rewardValue.name ?? "Recepta",
+        icon: rewardValue.icon ?? "📜",
+      };
+    }
   }
   return out;
 }
