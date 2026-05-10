@@ -205,6 +205,22 @@ export async function makeChoice(
   choice: StoryChoice,
 ): Promise<ChoiceResult> {
   const reward = await applyReward(userId, choice.reward_type, choice.reward_value);
+
+  // Apply state delta (silent — revealed via animated bars)
+  if (choice.state_delta && typeof choice.state_delta === "object") {
+    const newState = await applyStateDelta(userId, choice.state_delta);
+    reward.stateChanged = choice.state_delta;
+    reward.newState = newState;
+    // Big fear penalty
+    if (newState.fear >= 95) {
+      const r = await addPetXP(userId, 50);
+      if (r?.isDead) {
+        reward.killed = true;
+        reward.damage = (reward.damage ?? 0) + 50;
+      }
+    }
+  }
+
   const nextNode = choice.next_node_id ? await getNode(choice.next_node_id) : null;
 
   // Determine end status
