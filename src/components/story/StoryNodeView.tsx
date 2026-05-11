@@ -46,7 +46,8 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
     <div className="space-y-5 animate-fade-in">
       <div className="text-center">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-          Capítol {node.chapter}
+          {worldLabel ? `${worldLabel} · ` : ""}Capítol {node.chapter}
+          {nodeVisitCount > 1 ? ` · Visita #${nodeVisitCount}` : ""}
         </p>
         <h2 className="text-lg font-bold">{node.title}</h2>
       </div>
