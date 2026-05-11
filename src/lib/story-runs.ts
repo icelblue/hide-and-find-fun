@@ -48,11 +48,12 @@ export interface StoryRun {
   path: string[];
   status: "active" | "dead" | "completed";
   ending_type: string | null;
+  starting_world: string | null;
   started_at: string;
   ended_at: string | null;
 }
 
-const START_NODE_ID = "c1_start";
+const DEFAULT_START_NODE_ID = "c1_start";
 
 // ============================================
 // NODE / CHOICE FETCH (cached per session)
