@@ -237,6 +237,9 @@ export default function StoryModePage() {
         if (result.nextNode.chapter > node.chapter) {
           setCompletedChapter(node.chapter);
         }
+        // Refresh visit map (next node will have its visit recorded server-side)
+        const fresh = await getNodeVisitMap(user.id);
+        setVisitMap(fresh);
         setPendingNext(result.nextNode);
         const freshRun = await getActiveRun(user.id);
         if (freshRun) setRun(freshRun);
