@@ -12,6 +12,9 @@ interface Props {
   petName: string;
   inventory: InventoryItem[];
   state: PetState;
+  unlockedSkills: Set<string>;
+  nodeVisitCount: number;
+  worldLabel?: string;
   onChoose: (choice: StoryChoice) => Promise<ChoiceResult | void>;
   busy: boolean;
 }
@@ -20,7 +23,7 @@ function fillPet(text: string, petName: string) {
   return text.split("{pet}").join(petName);
 }
 
-export function StoryNodeView({ node, choices, petName, inventory, state, onChoose, busy }: Props) {
+export function StoryNodeView({ node, choices, petName, inventory, state, unlockedSkills, nodeVisitCount, worldLabel, onChoose, busy }: Props) {
   const [revealChoices, setRevealChoices] = useState(false);
   const filled = useMemo(() => fillPet(node.narrative, petName), [node, petName]);
 
@@ -32,9 +35,12 @@ export function StoryNodeView({ node, choices, petName, inventory, state, onChoo
     return choices.filter((c) => {
       if (c.requires_items && c.requires_items.length > 0 && !hasItems(inventory, c.requires_items)) return false;
       if (typeof c.requires_bond === "number" && state.bond < c.requires_bond) return false;
+      if (c.requires_skill && !unlockedSkills.has(c.requires_skill)) return false;
+      if (typeof c.min_visits === "number" && nodeVisitCount < c.min_visits) return false;
+      if (typeof c.max_visits === "number" && nodeVisitCount > c.max_visits) return false;
       return true;
     });
-  }, [choices, inventory, state]);
+  }, [choices, inventory, state, unlockedSkills, nodeVisitCount]);
 
   return (
     <div className="space-y-5 animate-fade-in">
