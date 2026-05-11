@@ -1,76 +1,109 @@
-# Mode Història v4 — Plan
+# Mode Història v5 — Mons, Mapa, Evolució i Diari
 
-## 1. Fix start error + greeting
+## Problema actual
+- 8 capítols sense explicació de què són ni cap a on van.
+- Rejugar = tornar al mateix node `c1_start`; sense progressió persistent.
+- L'usuari no veu créixer res entre partides (la mascota té XP però gairebé no es nota).
+- Capítols repetitius perquè les opcions no canvien segons el que has fet abans.
 
-- **Greeting**: si `display_name` és buit, usar prefix de l'email (`user.email.split('@')[0]`) com a fallback. Mai mostrar "aventurer" si hi ha email.
-- **Start error**: investigar afegint `try/catch` amb log explícit a `handleStartRun` i `loadAll`. Mostrar el missatge d'error real al toast (ara queda "undefined" si l'error és null). Sospita: si l'usuari ja té un run actiu obsolet sense `current_node_id`, falla. Solució: `startRun` ja tanca runs vells; afegir guard si `getNode` retorna null.
+## Visió v5: "El Viatge de {pet}"
+4 mons que es desbloquegen amb el progrés. Cada món = 2 capítols de la història. La mascota evoluciona visualment i guanya habilitats que obren noves branques.
 
-## 2. Quatre mecàniques noves (totes integrades, polides)
+```text
+🏠 CASA          🌳 CARRER         🌲 BOSC           🏰 CASTELL
+(cap 1-2)        (cap 3-4)         (cap 5-6)         (cap 7-8)
+sempre obert     vincle≥40         3+ receptes       nivell≥7
+                 + 1 final         desc.             + ferro mític
+```
 
-### A) Estats mascota (gana/son/por) 0-100
-- Nova taula `pet_state` (user_id, hunger, sleep, fear, bond, updated_at).
-- Cada decisió pot modificar estats via nou camp `state_delta` jsonb a `story_choices`.
-- UI: 4 mini-barres horitzontals dalt de la pantalla "playing" (😋 gana, 😴 son, 😨 por, ❤️ vincle).
-- Si hunger>80 o sleep>80 → opcions de "menjar"/"dormir" apareixen com a 4a opció extra al següent node (filtrades client-side).
-- Si fear>90 → -50 XP penalització i missatge "{pet} està aterrit".
+## Quatre pilars de progressió
 
-### B) Vincle (bond) — ja inclòs a A
-- Bond puja amb decisions empàtiques (`state_delta: {bond: +10}`).
-- Bond≥70 desbloqueja branques especials marcades `requires_bond` als choices.
+### 1. Nivells de mascota (1→10) amb habilitats
+Nova columna `player_pets.level` (smallint, default 1). XP/500 = nivell. Cada nivell desbloqueja una habilitat persistent (taula `pet_skills`):
+- Nv 2 — 👃 **Olfacte**: troba branques ocultes (choices marcats `requires_skill: 'smell'`).
+- Nv 4 — 💪 **Força**: trenca obstacles (obre choices a c4 i c6).
+- Nv 6 — ✨ **Empatia**: respostes amistoses sempre disponibles.
+- Nv 8 — 🔥 **Coratge**: redueix por +20 a cada decisió.
+- Nv 10 — 👑 **Llegenda**: desbloqueja final secret.
 
-### C) Inventari narratiu
-- Nova taula `story_inventory` (user_id, item_id, item_name, item_icon, obtained_at).
-- Nou `reward_type='item'` amb `{item_id, name, icon}`.
-- Choices poden tenir `requires_items: ['clau_1']` jsonb → si no els tens, opció oculta.
-- UI: motxilla 🎒 al header del playing, click obre drawer amb la llista.
+### 2. Evolució visual de la mascota
+Ja existeix `getPetEvolution`. Reforçar: 4 etapes visuals clares (cadell, jove, adult, llegendari) amb ring + glow + mida diferent al header del playing i al ready. Mostrar a la pantalla "ready" quina és la pròxima evolució i quants XP falten.
 
-### D) Receptes (combinació d'objectes)
-- Nova taula `story_recipes` (id, name, icon, requires_items jsonb, result_item_id, result_name, result_icon, unlocks_choice_id).
-- Nou `reward_type='recipe'` amb `{recipe_id}` → afegeix a la llibreta de receptes.
-- Taula `story_recipe_book` (user_id, recipe_id) — receptes conegudes.
-- UI: dins el drawer de motxilla, secció "Receptes". Botó "Combinar" si tens tots els items requerits → crea l'item resultat i pot desbloquejar opcions.
-- Inicialment 3 receptes seed (ex: clau+oli=clau_obrible, mapa+brúixola=ruta_secreta, herba+aigua=poció_calma).
+### 3. Mapa del viatge
+Nova taula `story_world_progress` (user_id, world_id, unlocked, completed_endings jsonb, visits int). Component `WorldMap.tsx` a la pantalla "ready": 4 cartes de món amb estat (🔓 obert / 🔒 bloquejat amb requisit / ✓ completat amb pin). Les noves partides comencen al món més avançat desbloquejat (no sempre c1).
 
-### E) Mini-puzzle (cap. 4 i cap. 7)
-- Nou camp a `story_nodes`: `puzzle_type` ('order_actions' | null) i `puzzle_data` jsonb.
-- Component `PuzzleNode.tsx`: mostra 3 accions barrejades, l'usuari les ordena. Solució correcta = recompensa extra (item).
-- 2 nodes seed: `c4_puzzle_dishes` (ordenar pasos cuina), `c7_puzzle_lock` (ordenar combinació pany).
+### 4. Diari de descobertes
+Component `DiscoveryJournal.tsx` accessible des de "ready" (botó 📖). Tres pestanyes:
+- **Objectes** (X/Y trobats — silueta gris si no trobat)
+- **Receptes** (X/Y descobertes)
+- **Finals** (X/6 vistos)
 
-## 3. Neteja BBDD i codi obsolet
+Estimula completisme. Tots els descobriments persisteixen entre partides.
 
-- DROP TABLE `story_progress` CASCADE.
-- DROP RPC `create_story_game`, `finish_story_game`.
-- ALTER TABLE games DROP COLUMN `is_story`, `story_chapter` (i delete previs de les 17 files is_story=true).
-- Eliminar de `story-helpers.ts`: `getStoryProgress`, `initChapter`, `completeChapter`, `calculateXP`. També treure referència a `story_progress` de `resetPetAndProgress`.
-- Eliminar `cpuChooseHidingSpot` (no s'usa enlloc).
-- Buscar i eliminar imports orfes.
+## Branques noves cada cop (resoldre repetició)
+Afegir al `story_choices` el camp `seen_count_min` i `seen_count_max` (smallint nullable). Una decisió pot dir "només surt si has vist aquest node ≥ 2 vegades". Crear noves variants de choices a cada node clau:
+- Primera visita: opcions "introductòries"
+- Segona visita: opcions "alternatives" (les que no vas triar primer + 1 nova)
+- Tercera+: opcions "expertes" amb recompenses millors
 
-## 4. Recompenses (revisió)
-Cada decisió genera UNA recompensa visible (mai 2). El `state_delta` és invisible (es revela al moviment de barres després de triar — animació suau).
+Nova taula `story_node_visits` (user_id, node_id, count). S'incrementa a `getChoices`/`makeChoice`.
 
-## 5. Tests + verificació
-- Nou test `story-runs-v4.test.ts`: cobreix inventory + recipes + state caps (0-100).
-- Run complet vitest (~170 tests + nous).
-- Test manual end-to-end al sandbox: nova partida → cap.1 decisió → veure barres moure → checkpoint cap.1→2 → motxilla amb item → arribar a node que requereixi item.
+## Onboarding narratiu (resoldre "no sé per què")
+A la pantalla "ready", abans del botó començar:
+- Cita inicial: *"{pet} ha de viatjar de Casa fins al Castell. Cada decisió forja qui esdevindrà."*
+- Mostrar barra de progressió global: **Mons 1/4 · Nivell 1 · Final 0/6**
+- Si retorn: *"Continues el teu viatge al **Carrer**. {pet} recorda haver vist el {item}..."*
 
-## 6. Files
+A cada node, afegir un subtítol contextual: "Món: 🏠 Casa · Visita #2".
 
-**Nous (8)**:
-- `src/components/story/PetStatsBar.tsx`
-- `src/components/story/InventoryDrawer.tsx`
-- `src/components/story/PuzzleNode.tsx`
-- `src/lib/story-state.ts` (estats + inventari + receptes)
-- `src/test/story-runs-v4.test.ts`
-- 2 migracions (schema + seed nodes/choices/recipes ampliats)
+## Pla tècnic (canvis BBDD)
 
-**Modificats (5)**:
-- `src/pages/StoryModePage.tsx` (integració barres, drawer, fix greeting/error)
-- `src/components/story/StoryNodeView.tsx` (filtrar choices per items/bond/state)
-- `src/lib/story-runs.ts` (aplicar state_delta + items + receptes a `applyReward`/`makeChoice`)
-- `src/lib/story-helpers.ts` (cleanup)
-- `.lovable/memory/features/story-mode.md`
+```sql
+-- 1. Nivells + habilitats
+ALTER TABLE player_pets ADD COLUMN level smallint NOT NULL DEFAULT 1;
+CREATE TABLE pet_skills (user_id uuid, skill_id text, unlocked_at timestamptz);
 
-## Risc
-PvP totalment intacte (0 fitxers `src/components/game/`, `src/pages/GamePage.tsx`, `src/pages/LobbyPage.tsx`, `supabase-helpers.ts`, RPCs PvP modificats). Migració DROP de `games.is_story` requereix borrar 17 files prèvies — **destructiu**: confirmaràs abans.
+-- 2. Mons
+CREATE TABLE story_worlds (id text PK, name, icon, requires jsonb, chapters int[]);
+CREATE TABLE story_world_progress (user_id, world_id, visits int, completed_endings jsonb);
 
-Estimació: ~2 tandes de migració + edits. Vols que ho faci tot d'una o ho dividim per fases?
+-- 3. Visites a nodes (per branques noves cada cop)
+CREATE TABLE story_node_visits (user_id, node_id, count);
+
+-- 4. Choices millorats
+ALTER TABLE story_choices
+  ADD COLUMN requires_skill text,
+  ADD COLUMN min_visits smallint,
+  ADD COLUMN max_visits smallint;
+
+-- 5. Story_runs sap on començar
+ALTER TABLE story_runs ADD COLUMN starting_world text;
+```
+
+## Files
+
+**Nous (5)**:
+- `src/components/story/WorldMap.tsx` — selector de mons a "ready"
+- `src/components/story/DiscoveryJournal.tsx` — diari amb 3 pestanyes
+- `src/components/story/PetEvolutionCard.tsx` — etapa actual + propera
+- `src/lib/story-progression.ts` — nivells, habilitats, mons, visites
+- `src/test/story-progression.test.ts`
+
+**Modificats (4)**:
+- `src/pages/StoryModePage.tsx` — nova "ready" amb mapa+diari, onboarding text
+- `src/lib/story-runs.ts` — `startRun` accepta `worldId`, incrementa `node_visits`, aplica skills
+- `src/components/story/StoryNodeView.tsx` — filtra choices per skill+visits, mostra subtítol món
+- `src/lib/story-helpers.ts` — `getPetEvolution` reforçat (4 etapes amb mida visible)
+
+**Seed**:
+- 4 entrades a `story_worlds`
+- ~12 noves variants de `story_choices` (alternatives per cada node clau dels caps 1-4)
+- Mapeig habilitats↔choices
+
+## Risc / scope
+- **No toca PvP** (0 fitxers PvP modificats).
+- Migració additiva, sense DROP. Compatible amb runs existents.
+- Estimació: 1 migració BBDD + 1 insert seed + ~9 fitxers de codi.
+
+## Confirmes?
+Si dius sí, executo migració i tot seguit el codi + tests. Si vols retallar (p.ex. saltar habilitats o saltar diari), digues quin pilar treure.

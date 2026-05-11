@@ -1,41 +1,58 @@
 ---
-name: Story Mode v4
-description: Aventura ramificada single-player. 8 capítols, recompenses ocultes, checkpoints, repte diari, estats mascota (gana/son/por/vincle), inventari narratiu i sistema de receptes. Independent del PvP.
+name: Story Mode v5
+description: Aventura ramificada single-player amb 4 mons que es desbloquegen, evolució de mascota amb 10 nivells i 5 habilitats, mapa del viatge, diari de descobertes i branques noves cada cop que rejugues. Independent del PvP.
 type: feature
 ---
 
-## Mode Història v4
+## Mode Història v5 — "El Viatge de {pet}"
 
-### Mecàniques (v4)
-- **Estats mascota** (taula `pet_state`, 0-100): hunger, sleep, fear, bond. Defaults 30/30/20/40. Cada `story_choices.state_delta` jsonb modifica un o més. UI: 4 barres a `PetStatsBar` (vincle, gana, son, por). Si fear≥95 → +50 dany XP.
-- **Vincle (bond)**: choices amb `requires_bond` només surten si bond≥X. Marca ❤️.
-- **Inventari narratiu** (taula `story_inventory`): reward_type='item' amb `{item_id,name,icon}`. Choices amb `requires_items: ["id1","id2"]` només surten si tens els items. Marca ✨.
-- **Receptes** (taules `story_recipes` catàleg + `story_recipe_book` descobertes): reward_type='recipe' amb `{recipe_id,...}` afegeix la recepta al diari. Combinar a l'`InventoryDrawer` consumeix els items requerits i crea el resultat. 3 receptes seed.
-- **UX**: Recompenses 100% ocultes fins després de triar (`RewardReveal` 1.5s). Autosave a cada decisió. `ChapterCompleteScreen` cada canvi de capítol amb resum + Pausar.
-- **Repte diari** (`daily_challenge_log`): 1 node per `dow`, recompenses suaus.
+### Estructura: 4 mons que es desbloquegen progressivament
+| Món | Caps | Desbloqueig |
+|-----|------|-------------|
+| 🏠 Casa | 1-2 | sempre |
+| 🌳 Carrer | 3-4 | vincle ≥ 40 |
+| 🌲 Bosc | 5-6 | 3+ receptes descobertes |
+| 🏰 Castell | 7-8 | nivell ≥ 7 |
 
-### Fitxers
-- `src/lib/story-runs.ts` — makeChoice aplica reward + state_delta + cleanup
-- `src/lib/story-state.ts` — estats, inventari, receptes (`combineRecipe`)
-- `src/lib/story-helpers.ts` — pet/accessoris/consumables (cleanup: ja no toca story_progress)
-- `src/components/story/PetStatsBar.tsx` — 4 barres animades amb deltas visibles
-- `src/components/story/InventoryDrawer.tsx` — motxilla 🎒 + receptes
-- `src/components/story/StoryNodeView.tsx` — filtra choices per items/bond
-- `src/components/story/{RewardReveal,ChapterCompleteScreen,DailyChallengeCard,StoryEndingScreen,StoryDeathScreen}.tsx`
-- `src/pages/StoryModePage.tsx` — fases: loading|intro|ready|playing|chapter_break|ended
+A la pantalla "ready" el jugador veu el `WorldMap` i tria on començar (no sempre c1_start).
 
-### Greeting fix
-`playerName` = display_name → email prefix → "aventurer" (mai falla).
+### Pilars de progressió persistent
+1. **Nivells 1→10** (`player_pets.level`, +1 cada 500 XP). Cada nivell pot desbloquejar habilitat (taula `pet_skills`).
+2. **Habilitats** desbloquegen choices marcats `requires_skill`:
+   - Lv2 👃 Olfacte · Lv4 💪 Força · Lv6 ✨ Empatia · Lv8 🔥 Coratge · Lv10 👑 Llegenda.
+3. **Evolució visual** (`getPetEvolution`): Bebè 🥚 / Jove 🌱 / Adult ⭐ / Veterà 🔥 / Llegendari 👑 — visible al `PetEvolutionCard`.
+4. **Diari de descobertes** (`DiscoveryJournal`): objectes, receptes, finals (X/Y).
+
+### Branques noves cada cop
+`story_choices` té camps `requires_skill`, `min_visits`, `max_visits`. Visites es registren a `story_node_visits`. Es mostra subtítol "Visita #N" quan n>1. ~12 noves variants seedades a caps 1-4.
+
+### Onboarding narratiu
+Pantalla "ready" mostra cita motivacional + barra global "🗺️ Mons X/4 · 🏁 Finals X/6 · 🧪 Receptes X". Subtítol contextual a cada node: "🏠 Casa · Capítol 2 · Visita #2".
+
+### Taules v5 (additives)
+- `pet_skills(user_id, skill_id)`
+- `story_worlds(id, name, icon, start_node_id, chapters[], unlock_rule jsonb)`
+- `story_world_progress(user_id, world_id, visits, completed_endings jsonb)`
+- `story_node_visits(user_id, node_id, count)`
+- `player_pets.level smallint`
+- `story_choices.requires_skill / min_visits / max_visits`
+- `story_runs.starting_world`
+- Choice order constraint pujat a 1-6.
+
+### Fitxers v5
+- `src/lib/story-progression.ts` — nivells, skills, mons, visites, diari
+- `src/components/story/{WorldMap,DiscoveryJournal,PetEvolutionCard}.tsx`
+- `src/lib/story-runs.ts` — `startRun(userId, startNodeId?, worldId?)`, `makeChoice` registra visites/finals/skills
+- `src/components/story/StoryNodeView.tsx` — filtra per skill+visits, subtítol món
+
+### Mecàniques v4 (mantingudes)
+Estats `pet_state` (hunger/sleep/fear/bond), inventari, receptes, recompenses ocultes, `RewardReveal`, `ChapterCompleteScreen`, repte diari.
 
 ### Independent del PvP 🔒
-Cap RPC PvP, cap taula PvP. Migració v4 ha eliminat:
-- taula `story_progress` (sistema antic)
-- RPCs `create_story_game`, `finish_story_game`
-- columnes `games.is_story` i `games.story_chapter` (i 17 partides obsoletes)
-- helpers obsolets: `getStoryProgress`, `initChapter`, `completeChapter`
+Cap RPC PvP, cap taula PvP modificada.
 
 ### Pendent
+- Mini-puzzles (puzzle_type/puzzle_data ja al schema)
 - Espai propi amb mobles desbloquejables
 - Selector d'espai personalitzat al crear partida PvP
-- Mini-puzzles (puzzle_type/puzzle_data ja al schema)
-- Més seeds amb items/state_delta a capítols 3-8
+- Més seeds amb requires_skill a capítols 5-8

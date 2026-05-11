@@ -656,6 +656,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_skills: {
+        Row: {
+          id: string
+          skill_id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          skill_id: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          skill_id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pet_state: {
         Row: {
           bond: number
@@ -734,6 +755,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          level: number
           max_xp: number
           pet_icon: string
           pet_name: string
@@ -744,6 +766,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          level?: number
           max_xp?: number
           pet_icon: string
           pet_name: string
@@ -754,6 +777,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          level?: number
           max_xp?: number
           pet_icon?: string
           pet_name?: string
@@ -1069,10 +1093,13 @@ export type Database = {
           choice_order: number
           id: string
           label: string
+          max_visits: number | null
+          min_visits: number | null
           next_node_id: string | null
           node_id: string
           requires_bond: number | null
           requires_items: Json | null
+          requires_skill: string | null
           reward_type: string | null
           reward_value: Json | null
           state_delta: Json | null
@@ -1081,10 +1108,13 @@ export type Database = {
           choice_order: number
           id?: string
           label: string
+          max_visits?: number | null
+          min_visits?: number | null
           next_node_id?: string | null
           node_id: string
           requires_bond?: number | null
           requires_items?: Json | null
+          requires_skill?: string | null
           reward_type?: string | null
           reward_value?: Json | null
           state_delta?: Json | null
@@ -1093,10 +1123,13 @@ export type Database = {
           choice_order?: number
           id?: string
           label?: string
+          max_visits?: number | null
+          min_visits?: number | null
           next_node_id?: string | null
           node_id?: string
           requires_bond?: number | null
           requires_items?: Json | null
+          requires_skill?: string | null
           reward_type?: string | null
           reward_value?: Json | null
           state_delta?: Json | null
@@ -1141,6 +1174,30 @@ export type Database = {
           item_id?: string
           item_name?: string
           obtained_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      story_node_visits: {
+        Row: {
+          count: number
+          id: string
+          last_visited_at: string
+          node_id: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          id?: string
+          last_visited_at?: string
+          node_id: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          id?: string
+          last_visited_at?: string
+          node_id?: string
           user_id?: string
         }
         Relationships: []
@@ -1257,6 +1314,7 @@ export type Database = {
           id: string
           path: Json
           started_at: string
+          starting_world: string | null
           status: string
           user_id: string
         }
@@ -1267,6 +1325,7 @@ export type Database = {
           id?: string
           path?: Json
           started_at?: string
+          starting_world?: string | null
           status?: string
           user_id: string
         }
@@ -1277,6 +1336,7 @@ export type Database = {
           id?: string
           path?: Json
           started_at?: string
+          starting_world?: string | null
           status?: string
           user_id?: string
         }
@@ -1289,6 +1349,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      story_world_progress: {
+        Row: {
+          completed_endings: Json
+          id: string
+          last_visited_at: string
+          user_id: string
+          visits: number
+          world_id: string
+        }
+        Insert: {
+          completed_endings?: Json
+          id?: string
+          last_visited_at?: string
+          user_id: string
+          visits?: number
+          world_id: string
+        }
+        Update: {
+          completed_endings?: Json
+          id?: string
+          last_visited_at?: string
+          user_id?: string
+          visits?: number
+          world_id?: string
+        }
+        Relationships: []
+      }
+      story_worlds: {
+        Row: {
+          chapters: number[]
+          description: string | null
+          display_order: number
+          icon: string
+          id: string
+          name: string
+          start_node_id: string
+          unlock_rule: Json
+        }
+        Insert: {
+          chapters: number[]
+          description?: string | null
+          display_order?: number
+          icon: string
+          id: string
+          name: string
+          start_node_id: string
+          unlock_rule?: Json
+        }
+        Update: {
+          chapters?: number[]
+          description?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          name?: string
+          start_node_id?: string
+          unlock_rule?: Json
+        }
+        Relationships: []
       }
       wall_messages: {
         Row: {

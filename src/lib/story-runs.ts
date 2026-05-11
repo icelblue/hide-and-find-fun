@@ -36,6 +36,9 @@ export interface StoryChoice {
   state_delta?: Partial<PetState> | null;
   requires_items?: string[] | null;
   requires_bond?: number | null;
+  requires_skill?: string | null;
+  min_visits?: number | null;
+  max_visits?: number | null;
 }
 
 export interface StoryRun {
@@ -45,11 +48,12 @@ export interface StoryRun {
   path: string[];
   status: "active" | "dead" | "completed";
   ending_type: string | null;
+  starting_world: string | null;
   started_at: string;
   ended_at: string | null;
 }
 
-const START_NODE_ID = "c1_start";
+const DEFAULT_START_NODE_ID = "c1_start";
 
 // ============================================
 // NODE / CHOICE FETCH (cached per session)
@@ -101,7 +105,7 @@ export async function getActiveRun(userId: string): Promise<StoryRun | null> {
   return data as StoryRun | null;
 }
 
-export async function startRun(userId: string): Promise<StoryRun> {
+export async function startRun(userId: string, startNodeId?: string, worldId?: string): Promise<StoryRun> {
   // Close any leftover active runs first
   await supabase
     .from("story_runs")
@@ -109,17 +113,27 @@ export async function startRun(userId: string): Promise<StoryRun> {
     .eq("user_id", userId)
     .eq("status", "active");
 
+  const startId = startNodeId ?? DEFAULT_START_NODE_ID;
   const { data, error } = await supabase
     .from("story_runs")
     .insert({
       user_id: userId,
-      current_node_id: START_NODE_ID,
-      path: [START_NODE_ID],
+      current_node_id: startId,
+      path: [startId],
       status: "active",
+      starting_world: worldId ?? null,
     })
     .select()
     .single();
   if (error) throw error;
+
+  // Increment node visit + world visit
+  try {
+    const { incrementNodeVisit, recordWorldVisit } = await import("./story-progression");
+    await incrementNodeVisit(userId, startId);
+    if (worldId) await recordWorldVisit(userId, worldId);
+  } catch { /* non-blocking */ }
+
   return data as StoryRun;
 }
 
@@ -237,6 +251,16 @@ export async function makeChoice(
     update.ended_at = new Date().toISOString();
   }
   await supabase.from("story_runs").update(update).eq("id", run.id);
+
+  // v5: track visits + endings + sync level/skills
+  try {
+    const prog = await import("./story-progression");
+    if (nextNode) await prog.incrementNodeVisit(userId, nextNode.id);
+    if (endStatus === "completed" && nextNode && run.starting_world) {
+      await prog.recordEndingCompleted(userId, run.starting_world, nextNode.id);
+    }
+    if (reward.xp) await prog.syncLevelAndSkills(userId);
+  } catch { /* non-blocking */ }
 
   return { reward, nextNode, runEnded: endStatus };
 }

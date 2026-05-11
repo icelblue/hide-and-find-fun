@@ -1,0 +1,89 @@
+// 🔒 Component v5 — Mode Història. Diari de descobertes.
+import { useEffect, useState } from "react";
+import {
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { getJournal, type JournalSummary } from "@/lib/story-progression";
+
+interface Props { userId: string; }
+
+export function DiscoveryJournal({ userId }: Props) {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState<JournalSummary | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    getJournal(userId).then(setData).catch(() => setData(null));
+  }, [open, userId]);
+
+  return (
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full">
+          📖 Diari de descobertes
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent className="max-w-md mx-auto">
+        <DrawerHeader>
+          <DrawerTitle>📖 Diari del Viatge</DrawerTitle>
+        </DrawerHeader>
+        <div className="px-4 pb-6">
+          {!data ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Carregant...</p>
+          ) : (
+            <Tabs defaultValue="items">
+              <TabsList className="grid grid-cols-3 w-full">
+                <TabsTrigger value="items">🎒 {data.itemsFound.length}</TabsTrigger>
+                <TabsTrigger value="recipes">🧪 {data.recipesDiscovered.length}/{data.totals.recipes}</TabsTrigger>
+                <TabsTrigger value="endings">🏁 {data.endingsSeen.length}/{data.totals.endings}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="items" className="mt-3 max-h-[50vh] overflow-y-auto">
+                {data.itemsFound.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Encara no has trobat cap objecte.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {data.itemsFound.map((it) => (
+                      <div key={it.id} className="glass rounded-lg p-2 text-center border border-border/30">
+                        <div className="text-2xl">{it.icon}</div>
+                        <p className="text-[10px] font-medium leading-tight mt-1">{it.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="recipes" className="mt-3 max-h-[50vh] overflow-y-auto">
+                {data.recipesDiscovered.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Encara no has descobert cap recepta.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {data.recipesDiscovered.map((r) => (
+                      <div key={r.id} className="glass rounded-lg p-2 flex items-center gap-2 border border-border/30">
+                        <span className="text-xl">{r.icon}</span>
+                        <p className="text-sm font-medium">{r.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="endings" className="mt-3 max-h-[50vh] overflow-y-auto">
+                {data.endingsSeen.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Encara no has acabat cap final.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {data.endingsSeen.map((e) => (
+                      <div key={e.id} className="glass rounded-lg p-2 border border-border/30">
+                        <p className="text-sm font-medium">{e.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}

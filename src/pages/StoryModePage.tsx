@@ -19,6 +19,10 @@ import {
   type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
 } from "@/lib/story-runs";
 import { getPetState, getInventory, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
+import {
+  getMySkills, getWorldStatuses, syncLevelAndSkills, getNodeVisitMap,
+  type WorldStatus, SKILLS,
+} from "@/lib/story-progression";
 import { StoryNodeView } from "@/components/story/StoryNodeView";
 import { StoryEndingScreen } from "@/components/story/StoryEndingScreen";
 import { StoryDeathScreen } from "@/components/story/StoryDeathScreen";
@@ -27,6 +31,9 @@ import { ChapterCompleteScreen } from "@/components/story/ChapterCompleteScreen"
 import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
 import { PetStatsBar } from "@/components/story/PetStatsBar";
 import { InventoryDrawer } from "@/components/story/InventoryDrawer";
+import { WorldMap } from "@/components/story/WorldMap";
+import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
+import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -57,6 +64,13 @@ export default function StoryModePage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [inventoryRefresh, setInventoryRefresh] = useState(0);
 
+  // v5: skills + worlds + visits
+  const [skills, setSkills] = useState<Set<string>>(new Set());
+  const [worlds, setWorlds] = useState<WorldStatus[]>([]);
+  const [selectedWorld, setSelectedWorld] = useState<string>("home");
+  const [visitMap, setVisitMap] = useState<Map<string, number>>(new Map());
+  const [recipeCount, setRecipeCount] = useState(0);
+
   // Last ending info
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
   const [endedStatus, setEndedStatus] = useState<"dead" | "completed" | null>(null);
@@ -72,14 +86,16 @@ export default function StoryModePage() {
     if (!user) return;
     setPhase("loading");
     try {
-      const [petData, profileRes, runData, stateData, invData] = await Promise.all([
+      const [petData, profileRes, runData, stateData, invData, skillSet, visits, recipeBookRes] = await Promise.all([
         getMyPet(user.id),
         supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
         getActiveRun(user.id),
         getPetState(user.id),
         getInventory(user.id),
+        getMySkills(user.id),
+        getNodeVisitMap(user.id),
+        supabase.from("story_recipe_book").select("recipe_id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
-      // Greeting fallback: display_name → email prefix → "aventurer"
       const name = profileRes.data?.display_name?.trim()
         || (user.email ? user.email.split("@")[0] : "")
         || "aventurer";
@@ -87,6 +103,10 @@ export default function StoryModePage() {
       setPet(petData);
       setPetState(stateData);
       setInventory(invData);
+      setSkills(skillSet);
+      setVisitMap(visits);
+      const rcCount = recipeBookRes.count ?? 0;
+      setRecipeCount(rcCount);
 
       if (!petData) {
         const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
@@ -97,10 +117,26 @@ export default function StoryModePage() {
         return;
       }
 
+      // Sync level/skills from XP, then load worlds
+      const synced = await syncLevelAndSkills(user.id);
+      if (synced.newlyUnlocked.length > 0) {
+        const fresh = await getMySkills(user.id);
+        setSkills(fresh);
+        synced.newlyUnlocked.forEach((s) => toast.success(`🎉 Habilitat desbloquejada: ${s.icon} ${s.name}`));
+      }
+      const ws = await getWorldStatuses(user.id, {
+        bond: stateData.bond,
+        recipesDiscovered: rcCount,
+        level: synced.level,
+      });
+      setWorlds(ws);
+      // Default selection: most-advanced unlocked world
+      const lastUnlocked = [...ws].reverse().find((w) => w.unlocked);
+      if (lastUnlocked) setSelectedWorld(lastUnlocked.id);
+
       if (runData && runData.current_node_id) {
         const n = await getNode(runData.current_node_id);
         if (!n) {
-          // Stale run pointing to non-existent node — close it
           await supabase.from("story_runs").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", runData.id);
           setPhase("ready");
           return;
@@ -142,7 +178,10 @@ export default function StoryModePage() {
     if (!user) return;
     setBusy(true);
     try {
-      const r = await startRun(user.id);
+      const world = worlds.find((w) => w.id === selectedWorld && w.unlocked);
+      const startNodeId = world?.start_node_id;
+      const worldId = world?.id;
+      const r = await startRun(user.id, startNodeId, worldId);
       if (!r.current_node_id) throw new Error("No s'ha trobat el node inicial");
       const n = await getNode(r.current_node_id);
       if (!n) throw new Error(`Node inicial '${r.current_node_id}' no existeix`);
@@ -198,6 +237,9 @@ export default function StoryModePage() {
         if (result.nextNode.chapter > node.chapter) {
           setCompletedChapter(node.chapter);
         }
+        // Refresh visit map (next node will have its visit recorded server-side)
+        const fresh = await getNodeVisitMap(user.id);
+        setVisitMap(fresh);
         setPendingNext(result.nextNode);
         const freshRun = await getActiveRun(user.id);
         if (freshRun) setRun(freshRun);
@@ -337,26 +379,47 @@ export default function StoryModePage() {
 
   // READY
   if (phase === "ready" && pet) {
-    const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
+    const completedWorlds = worlds.filter((w) => w.endingsCompleted.length > 0).length;
+    const totalEndings = worlds.reduce((acc, w) => acc + w.endingsCompleted.length, 0);
+    const selected = worlds.find((w) => w.id === selectedWorld);
     return (
-      <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
-        <div className="text-center relative z-10 animate-fade-in w-full">
-          <p className="text-xs text-muted-foreground mb-2">Hola, {playerName}</p>
-          <div className={`inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring} mb-3`}>
-            <span className="text-7xl">{pet.pet_icon}</span>
+        <div className="relative z-10 animate-fade-in">
+          <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
+
+          <PetEvolutionCard
+            pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
+            unlockedSkills={skills}
+          />
+
+          {/* Narrative intro */}
+          <div className="text-center mb-3 px-2">
+            <p className="text-sm text-foreground/80 italic leading-relaxed">
+              "{pet.pet_name} ha de viatjar de la <b>Casa</b> fins al <b>Castell</b>. Cada decisió forja qui esdevindrà."
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              🗺️ Mons {completedWorlds}/4 · 🏁 Finals {totalEndings}/6 · 🧪 Receptes {recipeCount}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold mb-1">{pet.pet_name}</h1>
-          <p className="text-xs text-muted-foreground mb-4">
-            {evo.badge} {evo.label} · ⭐ {pet.xp ?? 0} / {pet.max_xp ?? MAX_PET_XP} XP
-          </p>
-          <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-            8 capítols. Cada decisió canvia la història, els estats de {pet.pet_name} i el vincle entre vosaltres. Recull objectes i descobreix receptes!
-          </p>
-          <Button onClick={handleStartRun} size="lg" disabled={busy} className="w-full mb-2">
-            {busy ? "..." : "📖 Començar nova aventura"}
+
+          {/* World selector */}
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Tria on començar</p>
+          <WorldMap worlds={worlds} selectedId={selectedWorld} onSelect={setSelectedWorld} />
+
+          {selected && (
+            <p className="text-[11px] text-muted-foreground text-center mb-3 px-3">
+              {selected.description?.split("{pet}").join(pet.pet_name)}
+            </p>
+          )}
+
+          <Button onClick={handleStartRun} size="lg" disabled={busy || !selected?.unlocked} className="w-full mb-2">
+            {busy ? "..." : `📖 Començar a ${selected?.icon ?? "🏠"} ${selected?.name ?? "Casa"}`}
           </Button>
-          <Button variant="ghost" onClick={() => navigate("/")} className="w-full">← Lobby</Button>
+
+          {user && <DiscoveryJournal userId={user.id} />}
+
+          <Button variant="ghost" onClick={() => navigate("/")} className="w-full mt-2">← Lobby</Button>
 
           {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
 
@@ -364,7 +427,7 @@ export default function StoryModePage() {
             variant="ghost"
             onClick={async () => {
               if (!user) return;
-              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota, objectes i progrés.")) return;
+              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota, objectes, habilitats i progrés.")) return;
               await killAndReset(user.id);
               loadAll();
             }}
@@ -449,6 +512,11 @@ export default function StoryModePage() {
             petName={pet.pet_name}
             inventory={inventory}
             state={petState}
+            unlockedSkills={skills}
+            nodeVisitCount={visitMap.get(node.id) ?? 1}
+            worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
+              ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
+              : undefined}
             onChoose={handleChoose}
             busy={busy || !!reveal}
           />
