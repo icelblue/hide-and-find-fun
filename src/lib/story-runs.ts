@@ -36,6 +36,9 @@ export interface StoryChoice {
   state_delta?: Partial<PetState> | null;
   requires_items?: string[] | null;
   requires_bond?: number | null;
+  requires_skill?: string | null;
+  min_visits?: number | null;
+  max_visits?: number | null;
 }
 
 export interface StoryRun {
