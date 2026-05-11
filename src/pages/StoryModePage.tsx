@@ -509,6 +509,11 @@ export default function StoryModePage() {
             petName={pet.pet_name}
             inventory={inventory}
             state={petState}
+            unlockedSkills={skills}
+            nodeVisitCount={visitMap.get(node.id) ?? 1}
+            worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
+              ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
+              : undefined}
             onChoose={handleChoose}
             busy={busy || !!reveal}
           />
