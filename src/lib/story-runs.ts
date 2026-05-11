@@ -105,7 +105,7 @@ export async function getActiveRun(userId: string): Promise<StoryRun | null> {
   return data as StoryRun | null;
 }
 
-export async function startRun(userId: string): Promise<StoryRun> {
+export async function startRun(userId: string, startNodeId?: string, worldId?: string): Promise<StoryRun> {
   // Close any leftover active runs first
   await supabase
     .from("story_runs")
@@ -113,17 +113,27 @@ export async function startRun(userId: string): Promise<StoryRun> {
     .eq("user_id", userId)
     .eq("status", "active");
 
+  const startId = startNodeId ?? DEFAULT_START_NODE_ID;
   const { data, error } = await supabase
     .from("story_runs")
     .insert({
       user_id: userId,
-      current_node_id: START_NODE_ID,
-      path: [START_NODE_ID],
+      current_node_id: startId,
+      path: [startId],
       status: "active",
+      starting_world: worldId ?? null,
     })
     .select()
     .single();
   if (error) throw error;
+
+  // Increment node visit + world visit
+  try {
+    const { incrementNodeVisit, recordWorldVisit } = await import("./story-progression");
+    await incrementNodeVisit(userId, startId);
+    if (worldId) await recordWorldVisit(userId, worldId);
+  } catch { /* non-blocking */ }
+
   return data as StoryRun;
 }
 
