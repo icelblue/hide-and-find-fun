@@ -19,6 +19,10 @@ import {
   type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
 } from "@/lib/story-runs";
 import { getPetState, getInventory, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
+import {
+  getMySkills, getWorldStatuses, syncLevelAndSkills, getNodeVisitMap,
+  type WorldStatus, SKILLS,
+} from "@/lib/story-progression";
 import { StoryNodeView } from "@/components/story/StoryNodeView";
 import { StoryEndingScreen } from "@/components/story/StoryEndingScreen";
 import { StoryDeathScreen } from "@/components/story/StoryDeathScreen";
@@ -27,6 +31,9 @@ import { ChapterCompleteScreen } from "@/components/story/ChapterCompleteScreen"
 import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
 import { PetStatsBar } from "@/components/story/PetStatsBar";
 import { InventoryDrawer } from "@/components/story/InventoryDrawer";
+import { WorldMap } from "@/components/story/WorldMap";
+import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
+import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
