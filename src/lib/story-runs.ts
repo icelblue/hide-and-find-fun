@@ -252,6 +252,16 @@ export async function makeChoice(
   }
   await supabase.from("story_runs").update(update).eq("id", run.id);
 
+  // v5: track visits + endings + sync level/skills
+  try {
+    const prog = await import("./story-progression");
+    if (nextNode) await prog.incrementNodeVisit(userId, nextNode.id);
+    if (endStatus === "completed" && nextNode && run.starting_world) {
+      await prog.recordEndingCompleted(userId, run.starting_world, nextNode.id);
+    }
+    if (reward.xp) await prog.syncLevelAndSkills(userId);
+  } catch { /* non-blocking */ }
+
   return { reward, nextNode, runEnded: endStatus };
 }
 
