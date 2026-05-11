@@ -86,14 +86,16 @@ export default function StoryModePage() {
     if (!user) return;
     setPhase("loading");
     try {
-      const [petData, profileRes, runData, stateData, invData] = await Promise.all([
+      const [petData, profileRes, runData, stateData, invData, skillSet, visits, recipeBookRes] = await Promise.all([
         getMyPet(user.id),
         supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
         getActiveRun(user.id),
         getPetState(user.id),
         getInventory(user.id),
+        getMySkills(user.id),
+        getNodeVisitMap(user.id),
+        supabase.from("story_recipe_book").select("recipe_id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
-      // Greeting fallback: display_name → email prefix → "aventurer"
       const name = profileRes.data?.display_name?.trim()
         || (user.email ? user.email.split("@")[0] : "")
         || "aventurer";
@@ -101,6 +103,10 @@ export default function StoryModePage() {
       setPet(petData);
       setPetState(stateData);
       setInventory(invData);
+      setSkills(skillSet);
+      setVisitMap(visits);
+      const rcCount = recipeBookRes.count ?? 0;
+      setRecipeCount(rcCount);
 
       if (!petData) {
         const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
@@ -111,10 +117,26 @@ export default function StoryModePage() {
         return;
       }
 
+      // Sync level/skills from XP, then load worlds
+      const synced = await syncLevelAndSkills(user.id);
+      if (synced.newlyUnlocked.length > 0) {
+        const fresh = await getMySkills(user.id);
+        setSkills(fresh);
+        synced.newlyUnlocked.forEach((s) => toast.success(`🎉 Habilitat desbloquejada: ${s.icon} ${s.name}`));
+      }
+      const ws = await getWorldStatuses(user.id, {
+        bond: stateData.bond,
+        recipesDiscovered: rcCount,
+        level: synced.level,
+      });
+      setWorlds(ws);
+      // Default selection: most-advanced unlocked world
+      const lastUnlocked = [...ws].reverse().find((w) => w.unlocked);
+      if (lastUnlocked) setSelectedWorld(lastUnlocked.id);
+
       if (runData && runData.current_node_id) {
         const n = await getNode(runData.current_node_id);
         if (!n) {
-          // Stale run pointing to non-existent node — close it
           await supabase.from("story_runs").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", runData.id);
           setPhase("ready");
           return;
