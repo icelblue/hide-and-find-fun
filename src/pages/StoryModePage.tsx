@@ -376,26 +376,47 @@ export default function StoryModePage() {
 
   // READY
   if (phase === "ready" && pet) {
-    const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
+    const completedWorlds = worlds.filter((w) => w.endingsCompleted.length > 0).length;
+    const totalEndings = worlds.reduce((acc, w) => acc + w.endingsCompleted.length, 0);
+    const selected = worlds.find((w) => w.id === selectedWorld);
     return (
-      <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
-        <div className="text-center relative z-10 animate-fade-in w-full">
-          <p className="text-xs text-muted-foreground mb-2">Hola, {playerName}</p>
-          <div className={`inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring} mb-3`}>
-            <span className="text-7xl">{pet.pet_icon}</span>
+        <div className="relative z-10 animate-fade-in">
+          <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
+
+          <PetEvolutionCard
+            pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
+            unlockedSkills={skills}
+          />
+
+          {/* Narrative intro */}
+          <div className="text-center mb-3 px-2">
+            <p className="text-sm text-foreground/80 italic leading-relaxed">
+              "{pet.pet_name} ha de viatjar de la <b>Casa</b> fins al <b>Castell</b>. Cada decisió forja qui esdevindrà."
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              🗺️ Mons {completedWorlds}/4 · 🏁 Finals {totalEndings}/6 · 🧪 Receptes {recipeCount}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold mb-1">{pet.pet_name}</h1>
-          <p className="text-xs text-muted-foreground mb-4">
-            {evo.badge} {evo.label} · ⭐ {pet.xp ?? 0} / {pet.max_xp ?? MAX_PET_XP} XP
-          </p>
-          <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-            8 capítols. Cada decisió canvia la història, els estats de {pet.pet_name} i el vincle entre vosaltres. Recull objectes i descobreix receptes!
-          </p>
-          <Button onClick={handleStartRun} size="lg" disabled={busy} className="w-full mb-2">
-            {busy ? "..." : "📖 Començar nova aventura"}
+
+          {/* World selector */}
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Tria on començar</p>
+          <WorldMap worlds={worlds} selectedId={selectedWorld} onSelect={setSelectedWorld} />
+
+          {selected && (
+            <p className="text-[11px] text-muted-foreground text-center mb-3 px-3">
+              {selected.description?.split("{pet}").join(pet.pet_name)}
+            </p>
+          )}
+
+          <Button onClick={handleStartRun} size="lg" disabled={busy || !selected?.unlocked} className="w-full mb-2">
+            {busy ? "..." : `📖 Començar a ${selected?.icon ?? "🏠"} ${selected?.name ?? "Casa"}`}
           </Button>
-          <Button variant="ghost" onClick={() => navigate("/")} className="w-full">← Lobby</Button>
+
+          {user && <DiscoveryJournal userId={user.id} />}
+
+          <Button variant="ghost" onClick={() => navigate("/")} className="w-full mt-2">← Lobby</Button>
 
           {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
 
@@ -403,7 +424,7 @@ export default function StoryModePage() {
             variant="ghost"
             onClick={async () => {
               if (!user) return;
-              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota, objectes i progrés.")) return;
+              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota, objectes, habilitats i progrés.")) return;
               await killAndReset(user.id);
               loadAll();
             }}
