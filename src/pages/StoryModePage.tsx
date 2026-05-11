@@ -64,6 +64,13 @@ export default function StoryModePage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [inventoryRefresh, setInventoryRefresh] = useState(0);
 
+  // v5: skills + worlds + visits
+  const [skills, setSkills] = useState<Set<string>>(new Set());
+  const [worlds, setWorlds] = useState<WorldStatus[]>([]);
+  const [selectedWorld, setSelectedWorld] = useState<string>("home");
+  const [visitMap, setVisitMap] = useState<Map<string, number>>(new Map());
+  const [recipeCount, setRecipeCount] = useState(0);
+
   // Last ending info
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
   const [endedStatus, setEndedStatus] = useState<"dead" | "completed" | null>(null);
