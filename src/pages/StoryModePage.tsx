@@ -178,7 +178,10 @@ export default function StoryModePage() {
     if (!user) return;
     setBusy(true);
     try {
-      const r = await startRun(user.id);
+      const world = worlds.find((w) => w.id === selectedWorld && w.unlocked);
+      const startNodeId = world?.start_node_id;
+      const worldId = world?.id;
+      const r = await startRun(user.id, startNodeId, worldId);
       if (!r.current_node_id) throw new Error("No s'ha trobat el node inicial");
       const n = await getNode(r.current_node_id);
       if (!n) throw new Error(`Node inicial '${r.current_node_id}' no existeix`);
