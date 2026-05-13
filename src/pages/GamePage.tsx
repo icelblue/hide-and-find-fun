@@ -756,10 +756,19 @@ export default function GamePage() {
             }, 2000);
           }
         } else {
-          // PvP win: show popup with the found object info (replaces the short toast)
-          const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", rival?.user_id ?? "").maybeSingle();
-          const foundObj = objects.find((o: any) => o.id === rival?.hidden_object_id);
-          const rivalSD: any = rival?.special_data;
+          // PvP win: fetch revealed rival data FIRST (RLS hides hidden_object_id until game finishes)
+          const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+          const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p: any) => p.user_id !== user.id) ?? rival;
+          setRival(resolvedRival);
+
+          const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", resolvedRival?.user_id ?? "").maybeSingle();
+          const foundObjectId = resolvedRival?.hidden_object_id;
+          let foundObj: any = objects.find((o: any) => o.id === foundObjectId);
+          if (!foundObj && foundObjectId) {
+            const { data: objRow } = await supabase.from("objects").select("name, icon").eq("id", foundObjectId).maybeSingle();
+            foundObj = objRow;
+          }
+          const rivalSD: any = resolvedRival?.special_data;
           const isCustomFound = rivalSD?.is_custom === true;
           setWinFoundPopup({
             objectIcon: isCustomFound ? rivalSD.custom_icon : foundObj?.icon,
@@ -771,10 +780,7 @@ export default function GamePage() {
           });
         }
         if (!isStory) {
-          const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
-          const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p: any) => p.user_id !== user.id) ?? rival;
-          setRival(resolvedRival);
-
+          const resolvedRival = rival;
           const foundObjectId = resolvedRival?.hidden_object_id;
           const rivalSpecial = foundObjectId ? await getObjectSpecial(foundObjectId) : null;
 
