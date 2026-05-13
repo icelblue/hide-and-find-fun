@@ -781,6 +781,7 @@ export default function GamePage() {
         }
         if (!isStory) {
           const resolvedRival = rival;
+          const foundObjectId = resolvedRival?.hidden_object_id;
           const rivalSpecial = foundObjectId ? await getObjectSpecial(foundObjectId) : null;
 
           if (rivalSpecial) {
