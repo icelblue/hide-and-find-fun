@@ -211,8 +211,12 @@ export default function PlayerProfilePage() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">
-                  {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
+                <p className="font-bold text-sm flex items-center gap-1.5 flex-wrap">
+                  <span>{pet.pet_name}</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">
+                    Lv. {pet.level ?? 1}
+                  </span>
+                  <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
                   {evo.isDead
                     ? <span className="text-xs text-destructive font-semibold ml-1">· Mort 🪦</span>
                     : petEvents.length > 0

@@ -1,4 +1,4 @@
-// 🔒 Component v5 — Mode Història.
+// 🔒 Component v5.1 — Mode Història. Mons amb requisits visibles.
 import type { WorldStatus } from "@/lib/story-progression";
 
 interface Props {
@@ -23,7 +23,7 @@ export function WorldMap({ worlds, selectedId, onSelect }: Props) {
                 ? "border-accent ring-2 ring-accent/40"
                 : w.unlocked
                 ? "border-border/30 hover:border-accent/50 active:scale-[0.98]"
-                : "border-border/20 opacity-50"
+                : "border-border/20 opacity-70"
             }`}
           >
             <div className="flex items-center justify-between mb-1">
@@ -32,13 +32,25 @@ export function WorldMap({ worlds, selectedId, onSelect }: Props) {
               {completed && <span className="text-xs">✓</span>}
             </div>
             <p className="text-sm font-bold leading-tight">{w.name}</p>
-            <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
-              {w.unlocked ? `Cap. ${w.chapters.join("-")}` : w.reason}
-            </p>
-            {w.visits > 0 && (
-              <p className="text-[9px] text-accent/70 mt-1">
-                Visites: {w.visits} · Finals: {w.endingsCompleted.length}
-              </p>
+
+            {w.unlocked ? (
+              <>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Cap. {w.chapters.join("-")}
+                </p>
+                {w.visits > 0 && (
+                  <p className="text-[9px] text-accent/70 mt-1">
+                    Visites: {w.visits} · Finals: {w.endingsCompleted.length}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="mt-1 space-y-0.5">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Per desbloquejar:</p>
+                <p className="text-[10px] text-amber-500/90 font-medium leading-tight">
+                  {w.reason}
+                </p>
+              </div>
             )}
           </button>
         );

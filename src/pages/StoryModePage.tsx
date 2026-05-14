@@ -18,7 +18,7 @@ import {
   rewardToReveal,
   type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
 } from "@/lib/story-runs";
-import { getPetState, getInventory, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
+import { getPetState, getInventory, autoDiscoverRecipes, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
 import {
   getMySkills, getWorldStatuses, syncLevelAndSkills, getNodeVisitMap,
   type WorldStatus, SKILLS,
@@ -34,6 +34,7 @@ import { InventoryDrawer } from "@/components/story/InventoryDrawer";
 import { WorldMap } from "@/components/story/WorldMap";
 import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
+import { HelpDialog } from "@/components/story/HelpDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -107,6 +108,20 @@ export default function StoryModePage() {
       setVisitMap(visits);
       const rcCount = recipeBookRes.count ?? 0;
       setRecipeCount(rcCount);
+
+      // 🧪 Auto-discover passive: comprova si ja té ingredients per receptes no descobertes
+      if (invData.length > 0) {
+        const newly = await autoDiscoverRecipes(user.id, invData);
+        if (newly.length > 0) {
+          setRecipeCount(rcCount + newly.length);
+          newly.forEach((r) =>
+            toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`, {
+              description: "Tens els ingredients! Obre la motxilla per combinar.",
+              duration: 5000,
+            })
+          );
+        }
+      }
 
       if (!petData) {
         const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
@@ -219,6 +234,17 @@ export default function StoryModePage() {
         const inv = await getInventory(user.id);
         setInventory(inv);
         setInventoryRefresh((n) => n + 1);
+        // 🧪 Auto-descobriment de receptes amb ingredients actuals
+        const newlyDiscovered = await autoDiscoverRecipes(user.id, inv);
+        if (newlyDiscovered.length > 0) {
+          setRecipeCount((c) => c + newlyDiscovered.length);
+          newlyDiscovered.forEach((r) =>
+            toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`, {
+              description: "Obre la motxilla 🎒 per combinar-la.",
+              duration: 5000,
+            })
+          );
+        }
       }
 
       // Reveal animation
@@ -386,7 +412,10 @@ export default function StoryModePage() {
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         <div className="relative z-10 animate-fade-in">
-          <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
+          <p className="text-xs text-muted-foreground text-center mb-2 flex items-center justify-center gap-2">
+            <span>Hola, {playerName}</span>
+            <HelpDialog />
+          </p>
 
           <PetEvolutionCard
             pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
@@ -472,10 +501,20 @@ export default function StoryModePage() {
           <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
             ← Lobby
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <HelpDialog />
             {user && <InventoryDrawer userId={user.id} petName={pet.pet_name} triggerCount={inventoryRefresh} onChange={async () => {
               const inv = await getInventory(user.id);
               setInventory(inv);
+              // Re-trigger auto-discover after using/combining items (state may have changed)
+              const newly = await autoDiscoverRecipes(user.id, inv);
+              if (newly.length > 0) {
+                setRecipeCount((c) => c + newly.length);
+                newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
+              }
+              // Refresh pet state too (using items affects it)
+              const st = await getPetState(user.id);
+              setPetState(st);
             }} />}
             {run && (
               <span className="text-[10px] text-accent/80 font-medium">

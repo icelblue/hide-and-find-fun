@@ -1,16 +1,17 @@
 // ============================================================
-// story-state.ts — Estats mascota + Inventari + Receptes (v4)
+// story-state.ts — Estats mascota + Inventari + Receptes (v5.1)
 // ============================================================
 // 🔒 CRITICAL: INDEPENDENT del PvP.
+// Decay temporal: hunger/sleep pugen amb el temps, fear baixa, bond baixa lent.
 // ============================================================
 
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PetState {
-  hunger: number;
-  sleep: number;
-  fear: number;
-  bond: number;
+  hunger: number;  // 0=ple, 100=famolenc
+  sleep: number;   // 0=descansat, 100=esgotat
+  fear: number;    // 0=tranquil, 100=aterrit
+  bond: number;    // 0=fred, 100=inseparable
 }
 
 export interface InventoryItem {
@@ -35,16 +36,52 @@ export const DEFAULT_STATE: PetState = { hunger: 30, sleep: 30, fear: 20, bond: 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
 // ============================================
+// 🕒 DECAY TEMPORAL — apply when reading state
+// ============================================
+// Cada 6h: hunger +15, sleep +12, fear -5, bond -3
+const DECAY_PER_6H: Partial<PetState> = { hunger: 15, sleep: 12, fear: -5, bond: -3 };
+
+function applyDecay(state: PetState, hoursElapsed: number): { state: PetState; changed: boolean } {
+  if (hoursElapsed < 0.5) return { state, changed: false };
+  const factor = hoursElapsed / 6;
+  const next: PetState = {
+    hunger: clamp(state.hunger + (DECAY_PER_6H.hunger! * factor)),
+    sleep: clamp(state.sleep + (DECAY_PER_6H.sleep! * factor)),
+    fear: clamp(state.fear + (DECAY_PER_6H.fear! * factor)),
+    bond: clamp(state.bond + (DECAY_PER_6H.bond! * factor)),
+  };
+  const changed =
+    next.hunger !== state.hunger || next.sleep !== state.sleep ||
+    next.fear !== state.fear || next.bond !== state.bond;
+  return { state: next, changed };
+}
+
+// ============================================
 // PET STATE
 // ============================================
 
 export async function getPetState(userId: string): Promise<PetState> {
-  const { data } = await supabase.from("pet_state").select("hunger,sleep,fear,bond").eq("user_id", userId).maybeSingle();
+  const { data } = await supabase
+    .from("pet_state")
+    .select("hunger,sleep,fear,bond,updated_at")
+    .eq("user_id", userId)
+    .maybeSingle();
   if (!data) {
     await supabase.from("pet_state").insert({ user_id: userId, ...DEFAULT_STATE });
     return { ...DEFAULT_STATE };
   }
-  return { hunger: data.hunger, sleep: data.sleep, fear: data.fear, bond: data.bond };
+  const current: PetState = {
+    hunger: data.hunger, sleep: data.sleep, fear: data.fear, bond: data.bond,
+  };
+  const updatedAt = data.updated_at ? new Date(data.updated_at).getTime() : Date.now();
+  const hoursElapsed = (Date.now() - updatedAt) / (1000 * 60 * 60);
+  const { state: next, changed } = applyDecay(current, hoursElapsed);
+  if (changed) {
+    await supabase.from("pet_state")
+      .update({ ...next, updated_at: new Date().toISOString() })
+      .eq("user_id", userId);
+  }
+  return next;
 }
 
 export async function applyStateDelta(userId: string, delta: Partial<PetState>): Promise<PetState> {
@@ -61,6 +98,77 @@ export async function applyStateDelta(userId: string, delta: Partial<PetState>):
 
 export async function resetPetState(userId: string) {
   await supabase.from("pet_state").delete().eq("user_id", userId);
+}
+
+// ============================================
+// 🎯 EFECTES D'OBJECTES — donar items a la mascota
+// ============================================
+
+export interface ItemEffect {
+  delta: Partial<PetState>;
+  label: string;     // botó "Donar..."
+  verb: string;      // toast verb
+}
+
+/** Mapping per item_id base. Si no hi és, fallback genèric per paraules clau al nom. */
+const ITEM_EFFECTS_BY_ID: Record<string, ItemEffect> = {
+  apple:    { delta: { hunger: -40, bond: 5 },   label: "🍎 Donar menjar", verb: "menja" },
+  bread:    { delta: { hunger: -50, bond: 5 },   label: "🍞 Donar pa",     verb: "menja" },
+  meat:     { delta: { hunger: -60 },             label: "🍖 Donar carn",   verb: "devora" },
+  fish:     { delta: { hunger: -50, bond: 5 },   label: "🐟 Donar peix",   verb: "menja" },
+  berries:  { delta: { hunger: -25, bond: 10 }, label: "🫐 Donar baies",  verb: "tasta" },
+  water:    { delta: { sleep: -15, hunger: -10 }, label: "💧 Donar aigua",  verb: "beu" },
+  blanket:  { delta: { sleep: -45, fear: -15 },  label: "🛏️ Acotxar",      verb: "es relaxa amb" },
+  toy:      { delta: { bond: 25, fear: -20 },    label: "🧸 Jugar",        verb: "juga amb" },
+  ball:     { delta: { bond: 20, fear: -15 },    label: "⚽ Jugar a pilota", verb: "juga amb" },
+  potion:   { delta: { fear: -50, bond: 10 },    label: "🧪 Calmar",       verb: "pren" },
+  flower:   { delta: { bond: 15, fear: -10 },    label: "🌸 Regalar flor",  verb: "olora" },
+  music:    { delta: { fear: -30, sleep: -10 },  label: "🎵 Calmar amb música", verb: "escolta" },
+};
+
+/** Inferred fallback by name keyword (català/castellà). */
+function inferEffect(item: InventoryItem): ItemEffect | null {
+  const direct = ITEM_EFFECTS_BY_ID[item.item_id];
+  if (direct) return direct;
+  const n = item.item_name.toLowerCase();
+  if (/poma|fruita|menj|comid|pa\b|pan\b|carn|peix|pesc|baia|baya|llaminadu|caram|honey|mel|miel/.test(n))
+    return { delta: { hunger: -40, bond: 5 }, label: `${item.item_icon} Donar a menjar`, verb: "menja" };
+  if (/aigu|agua|beguda|bebid/.test(n))
+    return { delta: { sleep: -15, hunger: -10 }, label: `${item.item_icon} Donar de beure`, verb: "beu" };
+  if (/manta|coix|coj|llit|cama|dormir/.test(n))
+    return { delta: { sleep: -40, fear: -10 }, label: `${item.item_icon} Acotxar`, verb: "descansa amb" };
+  if (/jogui|joc|peluix|pilota|pelota|toy|ball/.test(n))
+    return { delta: { bond: 20, fear: -15 }, label: `${item.item_icon} Jugar`, verb: "juga amb" };
+  if (/poci|elixir|tonic|calm|cur|medic/.test(n))
+    return { delta: { fear: -40, bond: 5 }, label: `${item.item_icon} Calmar`, verb: "pren" };
+  if (/flor|flower|ram|regal/.test(n))
+    return { delta: { bond: 15 }, label: `${item.item_icon} Regalar`, verb: "rep" };
+  return null;
+}
+
+export function getItemEffect(item: InventoryItem): ItemEffect | null {
+  return inferEffect(item);
+}
+
+/** Use one item: consume + apply delta. Returns new state and effect used (null if not usable). */
+export async function useItemOnPet(userId: string, item: InventoryItem):
+  Promise<{ state: PetState; effect: ItemEffect } | null>
+{
+  const effect = getItemEffect(item);
+  if (!effect) return null;
+  // Remove ONE instance (delete by id from row table — match item_id, limit 1 via eq+row)
+  const { data: row } = await supabase
+    .from("story_inventory")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("item_id", item.item_id)
+    .limit(1)
+    .maybeSingle();
+  if (row?.id) {
+    await supabase.from("story_inventory").delete().eq("id", row.id);
+  }
+  const state = await applyStateDelta(userId, effect.delta);
+  return { state, effect };
 }
 
 // ============================================
@@ -115,6 +223,29 @@ export async function discoverRecipe(userId: string, recipeId: string): Promise<
   if (error && (error as any).code === "23505") return false;
   if (error) throw error;
   return true;
+}
+
+/**
+ * Auto-discover: detect recipes the user could craft with current inventory but hasn't unlocked yet.
+ * Returns newly discovered recipe definitions (so caller can toast them).
+ */
+export async function autoDiscoverRecipes(userId: string, inventory: InventoryItem[]):
+  Promise<Recipe[]>
+{
+  const [all, known] = await Promise.all([
+    getAllRecipes(),
+    getDiscoveredRecipeIds(userId),
+  ]);
+  const newlyDiscovered: Recipe[] = [];
+  for (const r of all) {
+    if (known.has(r.id)) continue;
+    if (r.requires_items.length === 0) continue;
+    if (hasItems(inventory, r.requires_items)) {
+      const ok = await discoverRecipe(userId, r.id);
+      if (ok) newlyDiscovered.push(r);
+    }
+  }
+  return newlyDiscovered;
 }
 
 /** Combine: consume inputs, add result. Returns the new item or null if cannot. */
