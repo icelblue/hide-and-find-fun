@@ -18,7 +18,7 @@ import {
   rewardToReveal,
   type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
 } from "@/lib/story-runs";
-import { getPetState, getInventory, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
+import { getPetState, getInventory, autoDiscoverRecipes, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
 import {
   getMySkills, getWorldStatuses, syncLevelAndSkills, getNodeVisitMap,
   type WorldStatus, SKILLS,
@@ -34,6 +34,7 @@ import { InventoryDrawer } from "@/components/story/InventoryDrawer";
 import { WorldMap } from "@/components/story/WorldMap";
 import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
+import { HelpDialog } from "@/components/story/HelpDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
