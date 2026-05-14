@@ -109,6 +109,20 @@ export default function StoryModePage() {
       const rcCount = recipeBookRes.count ?? 0;
       setRecipeCount(rcCount);
 
+      // 🧪 Auto-discover passive: comprova si ja té ingredients per receptes no descobertes
+      if (invData.length > 0) {
+        const newly = await autoDiscoverRecipes(user.id, invData);
+        if (newly.length > 0) {
+          setRecipeCount(rcCount + newly.length);
+          newly.forEach((r) =>
+            toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`, {
+              description: "Tens els ingredients! Obre la motxilla per combinar.",
+              duration: 5000,
+            })
+          );
+        }
+      }
+
       if (!petData) {
         const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
         setRandomPet(rp);
