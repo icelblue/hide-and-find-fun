@@ -501,10 +501,20 @@ export default function StoryModePage() {
           <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
             ← Lobby
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <HelpDialog />
             {user && <InventoryDrawer userId={user.id} petName={pet.pet_name} triggerCount={inventoryRefresh} onChange={async () => {
               const inv = await getInventory(user.id);
               setInventory(inv);
+              // Re-trigger auto-discover after using/combining items (state may have changed)
+              const newly = await autoDiscoverRecipes(user.id, inv);
+              if (newly.length > 0) {
+                setRecipeCount((c) => c + newly.length);
+                newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
+              }
+              // Refresh pet state too (using items affects it)
+              const st = await getPetState(user.id);
+              setPetState(st);
             }} />}
             {run && (
               <span className="text-[10px] text-accent/80 font-medium">
