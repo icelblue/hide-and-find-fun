@@ -412,7 +412,10 @@ export default function StoryModePage() {
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         <div className="relative z-10 animate-fade-in">
-          <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
+          <p className="text-xs text-muted-foreground text-center mb-2 flex items-center justify-center gap-2">
+            <span>Hola, {playerName}</span>
+            <HelpDialog />
+          </p>
 
           <PetEvolutionCard
             pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
