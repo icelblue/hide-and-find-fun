@@ -412,10 +412,34 @@ export default function StoryModePage() {
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         <div className="relative z-10 animate-fade-in">
-          <p className="text-xs text-muted-foreground text-center mb-2 flex items-center justify-center gap-2">
-            <span>Hola, {playerName}</span>
-            <HelpDialog />
-          </p>
+          {/* Header de navegació unificat */}
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              ← Lobby
+            </button>
+            <div className="flex items-center gap-1">
+              <HelpDialog />
+              {user && (
+                <InventoryDrawer
+                  userId={user.id}
+                  petName={pet.pet_name}
+                  triggerCount={inventoryRefresh}
+                  onChange={async () => {
+                    const inv = await getInventory(user.id);
+                    setInventory(inv);
+                    const st = await getPetState(user.id);
+                    setPetState(st);
+                    const newly = await autoDiscoverRecipes(user.id, inv);
+                    if (newly.length > 0) {
+                      setRecipeCount((c) => c + newly.length);
+                      newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
+                    }
+                  }}
+                />
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
 
           <PetEvolutionCard
             pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
