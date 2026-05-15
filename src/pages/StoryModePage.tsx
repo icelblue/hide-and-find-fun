@@ -472,8 +472,6 @@ export default function StoryModePage() {
 
           {user && <DiscoveryJournal userId={user.id} />}
 
-          <Button variant="ghost" onClick={() => navigate("/")} className="w-full mt-2">← Lobby</Button>
-
           {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
 
           <Button
