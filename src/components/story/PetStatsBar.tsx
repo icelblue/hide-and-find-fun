@@ -28,7 +28,7 @@ export function PetStatsBar({ state, prevState }: Props) {
         const warn = v < 20;
         const goodHigh = true;
         return (
-          <div key={s.key} className={`glass rounded-lg px-2 py-1.5 border ${warn ? "border-destructive/50" : "border-border/30"}`}>
+          <div key={s.key} title={s.tip} className={`glass rounded-lg px-2 py-1.5 border ${warn ? "border-destructive/50" : "border-border/30"}`}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-medium text-muted-foreground">
                 {s.emoji} {s.label}
@@ -36,7 +36,7 @@ export function PetStatsBar({ state, prevState }: Props) {
               <span className="text-[10px] font-bold flex items-center gap-1">
                 {v}
                 {delta !== 0 && (
-                  <span className={`text-[9px] ${delta > 0 === s.goodHigh ? "text-accent" : "text-destructive"} animate-fade-in`}>
+                  <span className={`text-[9px] ${delta > 0 === goodHigh ? "text-accent" : "text-destructive"} animate-fade-in`}>
                     {delta > 0 ? "+" : ""}{delta}
                   </span>
                 )}
