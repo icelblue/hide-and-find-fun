@@ -656,6 +656,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_relationships: {
+        Row: {
+          id: string
+          interactions_count: number
+          last_interaction_at: string
+          score: number
+          status: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          id?: string
+          interactions_count?: number
+          last_interaction_at?: string
+          score?: number
+          status?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          id?: string
+          interactions_count?: number
+          last_interaction_at?: string
+          score?: number
+          status?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
       pet_skills: {
         Row: {
           id: string
@@ -704,6 +734,48 @@ export type Database = {
           sleep?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      pet_visits: {
+        Row: {
+          ends_at: string
+          host_delta: Json | null
+          host_user_id: string
+          id: string
+          outcome: string | null
+          resolved_at: string | null
+          seen_by_host: boolean
+          seen_by_visitor: boolean
+          started_at: string
+          visitor_delta: Json | null
+          visitor_user_id: string
+        }
+        Insert: {
+          ends_at?: string
+          host_delta?: Json | null
+          host_user_id: string
+          id?: string
+          outcome?: string | null
+          resolved_at?: string | null
+          seen_by_host?: boolean
+          seen_by_visitor?: boolean
+          started_at?: string
+          visitor_delta?: Json | null
+          visitor_user_id: string
+        }
+        Update: {
+          ends_at?: string
+          host_delta?: Json | null
+          host_user_id?: string
+          id?: string
+          outcome?: string | null
+          resolved_at?: string | null
+          seen_by_host?: boolean
+          seen_by_visitor?: boolean
+          started_at?: string
+          visitor_delta?: Json | null
+          visitor_user_id?: string
         }
         Relationships: []
       }
@@ -1536,6 +1608,10 @@ export type Database = {
         Args: { _consumable_name: string; _to_user_id: string }
         Returns: Json
       }
+      gift_inventory_item: {
+        Args: { _item_id: string; _to_user_id: string }
+        Returns: Json
+      }
       insert_cpu_move: {
         Args: {
           _action: Database["public"]["Enums"]["action_type"]
@@ -1563,7 +1639,9 @@ export type Database = {
         Returns: number
       }
       register_referral: { Args: { _referral_code: string }; Returns: Json }
+      resolve_my_pet_visits: { Args: never; Returns: Json }
       sell_reward_item: { Args: { _player_reward_id: string }; Returns: number }
+      send_pet_visit: { Args: { _host_user_id: string }; Returns: Json }
       start_game_setup: { Args: { _game_id: string }; Returns: undefined }
     }
     Enums: {
