@@ -39,11 +39,18 @@ const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 // 🕒 DECAY TEMPORAL — apply when reading state
 // ============================================
 // Cada 6h: hunger +15, sleep +12, fear -5, bond -3
-const DECAY_PER_6H: Partial<PetState> = { hunger: 15, sleep: 12, fear: -5, bond: -3 };
+// v6: Decay més lent (cada 12h enlloc de 6h) — la mascota viu més temps
+const DECAY_PER_12H: Partial<PetState> = { hunger: 15, sleep: 12, fear: -5, bond: -3 };
 
 function applyDecay(state: PetState, hoursElapsed: number): { state: PetState; changed: boolean } {
-  if (hoursElapsed < 0.5) return { state, changed: false };
-  const factor = hoursElapsed / 6;
+  if (hoursElapsed < 1) return { state, changed: false };
+  const factor = hoursElapsed / 12;
+  const next: PetState = {
+    hunger: clamp(state.hunger + (DECAY_PER_12H.hunger! * factor)),
+    sleep: clamp(state.sleep + (DECAY_PER_12H.sleep! * factor)),
+    fear: clamp(state.fear + (DECAY_PER_12H.fear! * factor)),
+    bond: clamp(state.bond + (DECAY_PER_12H.bond! * factor)),
+  };
   const next: PetState = {
     hunger: clamp(state.hunger + (DECAY_PER_6H.hunger! * factor)),
     sleep: clamp(state.sleep + (DECAY_PER_6H.sleep! * factor)),
