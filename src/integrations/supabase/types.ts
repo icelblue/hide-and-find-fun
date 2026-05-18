@@ -659,6 +659,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_notifications: {
+        Row: {
+          created_at: string
+          from_user_id: string | null
+          id: string
+          notif_type: string
+          payload: Json
+          seen: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          notif_type: string
+          payload?: Json
+          seen?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          notif_type?: string
+          payload?: Json
+          seen?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       pet_relationships: {
         Row: {
           id: string
