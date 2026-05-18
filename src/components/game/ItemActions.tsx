@@ -3,7 +3,7 @@
 // ============================================================
 import { useState } from "react";
 import { getTagActions, TOKEN_COSTS } from "@/lib/supabase-helpers";
-import type { PlayerTools } from "@/lib/game-types";
+import type { PlayerTools, Position } from "@/lib/game-types";
 
 interface ItemActionsProps {
   item: any;
