@@ -136,8 +136,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       setActionLog(log);
     })();
 
-    // Rival info (loser only)
-    if (game.winner_id === user?.id || !rival) return;
+    // Rival's hidden object — shown to BOTH (winner: trofeu, perdedor: descoberta)
+    if (!rival) return;
     (async () => {
       const rivalSD: any = rival.special_data;
       const isCustom = rivalSD?.is_custom === true;
@@ -161,7 +161,6 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       let specialType: string | null = null;
       let displayObj: any = obj;
       if (isCustom) {
-        // Player-created object: data lives in special_data
         displayObj = {
           name: rivalSD.custom_name,
           icon: rivalSD.custom_icon,
@@ -187,6 +186,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         specialType,
         traits,
       });
+      // Per al guanyador, mostrem automàticament la targeta de l'objecte trobat
+      if (game.winner_id === user?.id) setShowRivalInfo(true);
     })();
   }, [game.winner_id, user?.id, rival, scenarios, gameId]);
 
