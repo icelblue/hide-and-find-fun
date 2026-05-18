@@ -125,13 +125,16 @@ export default function StoryModePage() {
         }
       }
 
-      // 🐾 Resoldre visites pendents i mostrar toast per cada novetat
+      // 🐾 Resoldre visites pendents + notificacions de regals → popup "mentre no hi eres"
       try {
-        const pending = await resolveAndFetchPendingVisits(user.id);
-        for (const v of pending) {
-          const action = v.role === "host" ? "ha vingut a jugar" : "ha jugat amb tu";
-          const o = outcomeLabel(v.outcome);
-          toast(`${v.other_pet_icon} ${v.other_pet_name} ${action} — ${o.icon} ${o.text}`, { duration: 5000 });
+        const [pending, notifs] = await Promise.all([
+          resolveAndFetchPendingVisits(user.id),
+          fetchAndMarkUnseenNotifications(user.id),
+        ]);
+        if (pending.length > 0 || notifs.length > 0) {
+          setAwayVisits(pending);
+          setAwayNotifs(notifs);
+          setAwayOpen(true);
         }
       } catch { /* silent */ }
 
