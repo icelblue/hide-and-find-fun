@@ -458,6 +458,7 @@ export default function StoryModePage() {
                   }}
                 />
               )}
+              {user && <DailyChallengeCard variant="icon" userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
             </div>
           </div>
           <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
@@ -492,8 +493,6 @@ export default function StoryModePage() {
           </Button>
 
           {user && <DiscoveryJournal userId={user.id} />}
-
-          {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
 
           <Button
             variant="ghost"
