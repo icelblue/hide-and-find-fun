@@ -51,12 +51,6 @@ function applyDecay(state: PetState, hoursElapsed: number): { state: PetState; c
     fear: clamp(state.fear + (DECAY_PER_12H.fear! * factor)),
     bond: clamp(state.bond + (DECAY_PER_12H.bond! * factor)),
   };
-  const next: PetState = {
-    hunger: clamp(state.hunger + (DECAY_PER_6H.hunger! * factor)),
-    sleep: clamp(state.sleep + (DECAY_PER_6H.sleep! * factor)),
-    fear: clamp(state.fear + (DECAY_PER_6H.fear! * factor)),
-    bond: clamp(state.bond + (DECAY_PER_6H.bond! * factor)),
-  };
   const changed =
     next.hunger !== state.hunger || next.sleep !== state.sleep ||
     next.fear !== state.fear || next.bond !== state.bond;
