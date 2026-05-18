@@ -28,6 +28,8 @@ import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvent
 import { levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
+import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
+import { PetActivityFeed } from "@/components/PetActivityFeed";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
@@ -51,6 +53,7 @@ export default function PlayerProfilePage() {
   const [giftingItem, setGiftingItem] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
@@ -99,6 +102,7 @@ export default function PlayerProfilePage() {
       setMyConsumables(myCons ?? []);
       setMyStoryInventory(myInv ?? []);
     }
+    getRecentVisits(userId).then(setRecentVisits).catch(() => setRecentVisits([]));
   }, [userId, user]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -284,6 +288,11 @@ export default function PlayerProfilePage() {
           </div>
         );
       })()}
+
+      {/* Recent pet activity (visible on any profile) */}
+      <div className="relative z-10">
+        <PetActivityFeed visits={recentVisits} ownUserId={user?.id ?? null} isOwn={false} petName={pet?.pet_name} />
+      </div>
 
       {/* Pet health events + gift consumables */}
       {pet && !isOwnProfile && user && (

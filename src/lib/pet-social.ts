@@ -128,3 +128,45 @@ export function outcomeLabel(o: VisitOutcome): { icon: string; text: string; col
   if (o === "enemies") return { icon: "💢", text: "baralla", color: "text-destructive" };
   return { icon: "😐", text: "neutral", color: "text-muted-foreground" };
 }
+
+// ============================================================
+// Pet notifications — "què ha passat amb la teva mascota"
+// ============================================================
+export interface PetNotification {
+  id: string;
+  user_id: string;
+  from_user_id: string | null;
+  from_display_name: string;
+  notif_type: "gift_consumable" | "gift_item" | string;
+  payload: any;
+  seen: boolean;
+  created_at: string;
+}
+
+/** Fetch unseen pet notifications + mark them as seen. Returns the unseen rows enriched with the sender display name. */
+export async function fetchAndMarkUnseenNotifications(userId: string): Promise<PetNotification[]> {
+  const { data, error } = await supabase
+    .from("pet_notifications" as any)
+    .select("*")
+    .eq("user_id", userId)
+    .eq("seen", false)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error || !data || data.length === 0) return [];
+
+  const fromIds = Array.from(new Set((data as any[]).map((n) => n.from_user_id).filter(Boolean)));
+  let nameMap = new Map<string, string>();
+  if (fromIds.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles").select("user_id, display_name").in("user_id", fromIds);
+    nameMap = new Map((profs ?? []).map((p) => [p.user_id, p.display_name ?? "Algú"]));
+  }
+  const ids = (data as any[]).map((n) => n.id);
+  await supabase.from("pet_notifications" as any).update({ seen: true }).in("id", ids);
+
+  return (data as any[]).map((n) => ({
+    ...n,
+    from_display_name: n.from_user_id ? (nameMap.get(n.from_user_id) ?? "Algú") : "Algú",
+  })) as PetNotification[];
+}
+

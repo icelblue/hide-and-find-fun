@@ -35,7 +35,8 @@ import { WorldMap } from "@/components/story/WorldMap";
 import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
-import { resolveAndFetchPendingVisits, outcomeLabel } from "@/lib/pet-social";
+import { resolveAndFetchPendingVisits, fetchAndMarkUnseenNotifications, type ResolvedVisit, type PetNotification } from "@/lib/pet-social";
+import { WhileAwayDialog } from "@/components/story/WhileAwayDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -84,6 +85,11 @@ export default function StoryModePage() {
   const [pendingNext, setPendingNext] = useState<StoryNode | null>(null);
   const [completedChapter, setCompletedChapter] = useState<number>(1);
 
+  // 📬 "Mentre no hi eres" popup
+  const [awayOpen, setAwayOpen] = useState(false);
+  const [awayVisits, setAwayVisits] = useState<ResolvedVisit[]>([]);
+  const [awayNotifs, setAwayNotifs] = useState<PetNotification[]>([]);
+
   const loadAll = useCallback(async () => {
     if (!user) return;
     setPhase("loading");
@@ -124,13 +130,16 @@ export default function StoryModePage() {
         }
       }
 
-      // 🐾 Resoldre visites pendents i mostrar toast per cada novetat
+      // 🐾 Resoldre visites pendents + notificacions de regals → popup "mentre no hi eres"
       try {
-        const pending = await resolveAndFetchPendingVisits(user.id);
-        for (const v of pending) {
-          const action = v.role === "host" ? "ha vingut a jugar" : "ha jugat amb tu";
-          const o = outcomeLabel(v.outcome);
-          toast(`${v.other_pet_icon} ${v.other_pet_name} ${action} — ${o.icon} ${o.text}`, { duration: 5000 });
+        const [pending, notifs] = await Promise.all([
+          resolveAndFetchPendingVisits(user.id),
+          fetchAndMarkUnseenNotifications(user.id),
+        ]);
+        if (pending.length > 0 || notifs.length > 0) {
+          setAwayVisits(pending);
+          setAwayNotifs(notifs);
+          setAwayOpen(true);
         }
       } catch { /* silent */ }
 
@@ -421,6 +430,7 @@ export default function StoryModePage() {
     const selected = worlds.find((w) => w.id === selectedWorld);
     return (
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
+        <WhileAwayDialog open={awayOpen} onClose={() => setAwayOpen(false)} visits={awayVisits} notifications={awayNotifs} petName={pet?.pet_name} />
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         <div className="relative z-10 animate-fade-in">
           {/* Header de navegació unificat */}
@@ -528,6 +538,7 @@ export default function StoryModePage() {
     const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
     return (
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10 relative">
+        <WhileAwayDialog open={awayOpen} onClose={() => setAwayOpen(false)} visits={awayVisits} notifications={awayNotifs} petName={pet?.pet_name} />
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
 
         <div className="flex items-center justify-between mb-3 relative z-10">
