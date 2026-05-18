@@ -774,19 +774,10 @@ export default function GamePage() {
           }
           const rivalSD: any = resolvedRival?.special_data;
           const isCustomFound = rivalSD?.is_custom === true;
-          setWinFoundPopup({
-            objectIcon: isCustomFound ? rivalSD.custom_icon : foundObj?.icon,
-            objectName: isCustomFound ? rivalSD.custom_name : foundObj?.name,
-            itemIcon: item?.icon,
-            itemName: item?.name,
-            positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
-            rivalName: rivalProf?.display_name ?? "Rival",
-          });
-        }
-        if (!isStory) {
-          const resolvedRival = rival;
-          const foundObjectId = resolvedRival?.hidden_object_id;
-          const rivalSpecial = foundObjectId ? await getObjectSpecial(foundObjectId) : null;
+
+          // Determine if a special popup will appear (custom objects no tenen special)
+          const rivalSpecial = !isCustomFound && foundObjectId ? await getObjectSpecial(foundObjectId) : null;
+          let willShowSpecialPopup = false;
 
           if (rivalSpecial) {
             if (rivalSpecial.special_type === "troll_effect") {
@@ -797,13 +788,26 @@ export default function GamePage() {
               setSpecialFoundInput("");
               setSpecialFoundVariant(null);
               setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
+              willShowSpecialPopup = true;
             } else if (rivalSpecial.find_special_type) {
-              // Dual-behavior objects (e.g. Foto): hide popup already done, now show find popup
               const findSpecial = { ...rivalSpecial, special_type: rivalSpecial.find_special_type, prompt_text: rivalSpecial.find_prompt_text || rivalSpecial.prompt_text };
               setSpecialFoundInput("");
               setSpecialFoundVariant(null);
               setShowSpecialFoundPopup({ special: findSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
+              willShowSpecialPopup = true;
             }
+          }
+
+          // Only show the generic "win" popup if no trophy popup will steal focus
+          if (!willShowSpecialPopup) {
+            setWinFoundPopup({
+              objectIcon: isCustomFound ? rivalSD.custom_icon : foundObj?.icon,
+              objectName: isCustomFound ? rivalSD.custom_name : foundObj?.name,
+              itemIcon: item?.icon,
+              itemName: item?.name,
+              positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
+              rivalName: rivalProf?.display_name ?? "Rival",
+            });
           }
 
           const hideMsg = getHideMessage(resolvedRival?.special_data);
