@@ -538,6 +538,7 @@ export default function StoryModePage() {
     const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
     return (
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10 relative">
+        <WhileAwayDialog open={awayOpen} onClose={() => setAwayOpen(false)} visits={awayVisits} notifications={awayNotifs} petName={pet?.pet_name} />
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
 
         <div className="flex items-center justify-between mb-3 relative z-10">
