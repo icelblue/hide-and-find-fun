@@ -28,6 +28,8 @@ import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvent
 import { levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
+import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
+import { PetActivityFeed } from "@/components/PetActivityFeed";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
