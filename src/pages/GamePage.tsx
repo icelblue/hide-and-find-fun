@@ -32,7 +32,7 @@ import {
   rollHealthEvent,
 } from "@/lib/story-helpers";
 const completeChapter = async (_u: string, _c: number, _m: number) => ({ xp: 0, isDead: false, newXp: 0 }); // legacy stub — story v4 viu a StoryModePage
-import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase } from "@/lib/game-types";
+import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase, type Position } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import {
   CUSTOM_OBJECT_SENTINEL_ID,
