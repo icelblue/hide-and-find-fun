@@ -115,6 +115,7 @@ export default function ProfilePage() {
     setPet(petData);
     setPetAccessories(accs);
     setPetEvents(events);
+    getRecentVisits(user.id).then(setRecentVisits).catch(() => setRecentVisits([]));
 
     // Find top rival (exclude CPU and anonymous)
     const CPU_ID = "00000000-0000-0000-0000-000000000001";
