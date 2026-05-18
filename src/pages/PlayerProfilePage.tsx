@@ -121,6 +121,40 @@ export default function PlayerProfilePage() {
     }
   };
 
+  const handleSendVisit = async () => {
+    if (!user || !userId) return;
+    setSendingVisit(true);
+    try {
+      const { error } = await supabase.rpc("send_pet_visit" as any, { _host_user_id: userId });
+      if (error) throw error;
+      toast.success(`🐾 La teva mascota ha anat a jugar amb ${pet?.pet_name ?? "ell"}!`, {
+        description: "Torna en una estona per veure com ha anat.",
+      });
+    } catch (err: any) {
+      toast.error(err.message || "No s'ha pogut enviar la visita");
+    } finally {
+      setSendingVisit(false);
+    }
+  };
+
+  const handleGiftItem = async (item: any) => {
+    if (!user || !userId) return;
+    setGiftingItem(item.id);
+    try {
+      const { error } = await supabase.rpc("gift_inventory_item" as any, {
+        _to_user_id: userId,
+        _item_id: item.id,
+      });
+      if (error) throw error;
+      toast.success(`🎁 Has regalat ${item.item_icon} ${item.item_name}!`);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || "No s'ha pogut regalar");
+    } finally {
+      setGiftingItem(null);
+    }
+  };
+
   const handleSend = async () => {
     if (!user || !userId || !newMsg.trim()) return;
     setSending(true);
