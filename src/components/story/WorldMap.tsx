@@ -13,6 +13,10 @@ export function WorldMap({ worlds, selectedId, onSelect }: Props) {
       {worlds.map((w) => {
         const selected = selectedId === w.id;
         const completed = w.endingsCompleted.length > 0;
+        // Mons "ocults": no desbloquejats i amb requisits alts (bond≥60, recipes≥3 o level≥6)
+        const r = w.unlock_rule ?? {};
+        const isDeepLocked =
+          !w.unlocked && ((r.bond ?? 0) >= 60 || (r.recipes ?? 0) >= 3 || (r.level ?? 0) >= 6);
         return (
           <button
             key={w.id}
@@ -27,11 +31,13 @@ export function WorldMap({ worlds, selectedId, onSelect }: Props) {
             }`}
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-2xl">{w.icon}</span>
+              <span className="text-2xl">{isDeepLocked ? "❔" : w.icon}</span>
               {!w.unlocked && <span className="text-xs">🔒</span>}
               {completed && <span className="text-xs">✓</span>}
             </div>
-            <p className="text-sm font-bold leading-tight">{w.name}</p>
+            <p className="text-sm font-bold leading-tight">
+              {isDeepLocked ? "???" : w.name}
+            </p>
 
             {w.unlocked ? (
               <>
@@ -46,9 +52,11 @@ export function WorldMap({ worlds, selectedId, onSelect }: Props) {
               </>
             ) : (
               <div className="mt-1 space-y-0.5">
-                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Per desbloquejar:</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/80">
+                  {isDeepLocked ? "Indici:" : "Per desbloquejar:"}
+                </p>
                 <p className="text-[10px] text-amber-500/90 font-medium leading-tight">
-                  {w.reason}
+                  {isDeepLocked ? "Un lloc llunyà espera... continua creixent." : w.reason}
                 </p>
               </div>
             )}
@@ -58,3 +66,4 @@ export function WorldMap({ worlds, selectedId, onSelect }: Props) {
     </div>
   );
 }
+
