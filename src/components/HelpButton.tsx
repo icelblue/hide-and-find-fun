@@ -35,7 +35,7 @@ const RULES = [
   },
   {
     title: "👀 Observar · " + TOKEN_COSTS.look + "🪙",
-    text: "Mira una posició d'un moble. Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista progressiva:\n❄️ Fred → L'objecte NO és en aquesta habitació.\n🌡️ Calent → Bona habitació, moble incorrecte.\n🔥 Molt calent → Moble correcte, prova altra posició!",
+    text: "Mira una posició d'un moble. Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista progressiva:\n❄️ Fred → L'objecte NO és en aquesta habitació.\n🌡️ Calent → Bona habitació, moble incorrecte.\n🔥 Molt calent → Moble correcte, prova altra posició!\n\n⚠️ Atenció: hi ha un 10% de probabilitat que la pista t'enganyi amb un nivell adjacent. No t'hi confiïs al 100%!",
   },
   {
     title: "💡 Pistes de l'objecte rival",
