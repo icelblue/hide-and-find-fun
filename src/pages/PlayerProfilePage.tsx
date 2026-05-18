@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 import { toast } from "sonner";
 import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents, PET_CONSUMABLES } from "@/lib/story-helpers";
+import { levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 
