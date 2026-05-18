@@ -1237,18 +1237,21 @@ export default function GamePage() {
           {hideStep === 3 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
-              <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
+              <Tip>Sobre, sota, dins o darrere del moble. Alerta: alguns mobles no permeten totes les posicions!</Tip>
               <div className="h-3" />
 
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {POSITIONS.map(pos => {
                   const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
                   const objSize = isCustom
                     ? customObjectData!.custom_size
                     : ((objects.find((o: any) => o.id === selectedObject) as any)?.size ?? 2);
                   const itm = items.find((i: any) => i.id === selectedItem);
-                  const blocked = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
+                  const blockedDins = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
+                  const blockedDarrere = pos.value === "darrere" && (itm as any)?.can_behind === false;
+                  const blocked = blockedDins || blockedDarrere;
+                  const blockReason = blockedDins ? "🚫 No hi cap" : blockedDarrere ? "🚫 No es pot" : "";
                   return (
                     <Card key={pos.value}
                       className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
@@ -1256,7 +1259,7 @@ export default function GamePage() {
                       <CardContent className="py-6 text-center">
                         <div className="text-4xl mb-2">{pos.icon}</div>
                         <div className="text-sm font-semibold">{pos.label}</div>
-                        {blocked && <div className="text-[9px] text-destructive mt-1">🚫 No hi cap</div>}
+                        {blocked && <div className="text-[9px] text-destructive mt-1">{blockReason}</div>}
                       </CardContent>
                     </Card>
                   );
