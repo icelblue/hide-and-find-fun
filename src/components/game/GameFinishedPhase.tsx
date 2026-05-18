@@ -224,8 +224,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         </Card>
       )}
 
-      {/* Loser: show where the object was */}
-      {!isWinner && rivalInfo && (
+      {/* Hidden object recap — both winner and loser */}
+      {rivalInfo && (
         <div className="mb-6">
           {!showRivalInfo ? (
             <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
@@ -235,7 +235,9 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
             <Card className="mx-auto max-w-xs glass border-secondary/30">
               <CardContent className="py-4">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
-                  📍 L'objecte de {rivalInfo.rivalName}
+                  {isWinner
+                    ? `🏆 Has trobat l'objecte de ${rivalInfo.rivalName}`
+                    : `📍 L'objecte de ${rivalInfo.rivalName}`}
                 </p>
                 {rivalInfo.obj && (
                   <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
