@@ -28,7 +28,7 @@
 //   - Perfils: només display_name/avatar_url editables
 // ============================================================
 import { supabase } from "@/integrations/supabase/client";
-import { parseTools, type PlayerTools, type ToolType } from "@/lib/game-types";
+import { parseTools, type PlayerTools, type ToolType, type Position } from "@/lib/game-types";
 
 // Re-export for backwards compatibility
 export { parseTools, type ToolType } from "@/lib/game-types";
