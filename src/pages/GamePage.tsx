@@ -32,7 +32,7 @@ import {
   rollHealthEvent,
 } from "@/lib/story-helpers";
 const completeChapter = async (_u: string, _c: number, _m: number) => ({ xp: 0, isDead: false, newXp: 0 }); // legacy stub — story v4 viu a StoryModePage
-import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase } from "@/lib/game-types";
+import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase, type Position } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import {
   CUSTOM_OBJECT_SENTINEL_ID,
@@ -77,7 +77,7 @@ export default function GamePage() {
   const [selectedScenario, setSelectedScenario] = useState("");
   const [selectedObject, setSelectedObject] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
+  const [selectedPosition, setSelectedPosition] = useState<Position | "">("");
   const [hideStep, setHideStep] = useState(0);
   const [objectSpecial, setObjectSpecial] = useState<any>(null);
   const [specialInput, setSpecialInput] = useState("");
@@ -530,7 +530,7 @@ export default function GamePage() {
     setHideStep(1);
   };
 
-  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
+  const handleSelectPosition = async (pos: Position) => {
     const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
     const obj = isCustom
       ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
@@ -543,6 +543,10 @@ export default function GamePage() {
         toast.error(`${obj?.icon} ${obj?.name} és massa gran per amagar dins de ${itm?.icon} ${itm?.name}!`);
         return;
       }
+    }
+    if (pos === "darrere" && (itm as any)?.can_behind === false) {
+      toast.error(`No es pot amagar darrere de ${itm?.icon} ${itm?.name}!`);
+      return;
     }
     const material = (obj as any)?.material ?? "generic";
     const environment = (itm as any)?.environment ?? "generic";
@@ -576,8 +580,8 @@ export default function GamePage() {
     await doHide(pos);
   };
 
-  const doHide = async (pos?: "sobre" | "sota" | "dins", extraSpecialData?: any) => {
-    const finalPos = pos || selectedPosition as "sobre" | "sota" | "dins";
+  const doHide = async (pos?: Position, extraSpecialData?: any) => {
+    const finalPos = pos || selectedPosition as Position;
     if (!gameId || !user || !finalPos) return;
     setActionLoading(true);
     try {
@@ -704,7 +708,7 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
+  const handleLook = async (itemId: string, pos: Position) => {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
@@ -1233,18 +1237,21 @@ export default function GamePage() {
           {hideStep === 3 && (
             <div>
               <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
-              <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
+              <Tip>Sobre, sota, dins o darrere del moble. Alerta: alguns mobles no permeten totes les posicions!</Tip>
               <div className="h-3" />
 
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {POSITIONS.map(pos => {
                   const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
                   const objSize = isCustom
                     ? customObjectData!.custom_size
                     : ((objects.find((o: any) => o.id === selectedObject) as any)?.size ?? 2);
                   const itm = items.find((i: any) => i.id === selectedItem);
-                  const blocked = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
+                  const blockedDins = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
+                  const blockedDarrere = pos.value === "darrere" && (itm as any)?.can_behind === false;
+                  const blocked = blockedDins || blockedDarrere;
+                  const blockReason = blockedDins ? "🚫 No hi cap" : blockedDarrere ? "🚫 No es pot" : "";
                   return (
                     <Card key={pos.value}
                       className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
@@ -1252,7 +1259,7 @@ export default function GamePage() {
                       <CardContent className="py-6 text-center">
                         <div className="text-4xl mb-2">{pos.icon}</div>
                         <div className="text-sm font-semibold">{pos.label}</div>
-                        {blocked && <div className="text-[9px] text-destructive mt-1">🚫 No hi cap</div>}
+                        {blocked && <div className="text-[9px] text-destructive mt-1">{blockReason}</div>}
                       </CardContent>
                     </Card>
                   );

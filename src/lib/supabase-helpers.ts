@@ -28,7 +28,7 @@
 //   - Perfils: només display_name/avatar_url editables
 // ============================================================
 import { supabase } from "@/integrations/supabase/client";
-import { parseTools, type PlayerTools, type ToolType } from "@/lib/game-types";
+import { parseTools, type PlayerTools, type ToolType, type Position } from "@/lib/game-types";
 
 // Re-export for backwards compatibility
 export { parseTools, type ToolType } from "@/lib/game-types";
@@ -682,12 +682,12 @@ export async function hideObject(
   userId: string,
   objectId: string,
   itemId: string,
-  position: "sobre" | "sota" | "dins",
+  position: Position,
   specialData?: any,
 ) {
   const [{ data: obj }, { data: itm }] = await Promise.all([
     supabase.from("objects").select("size, material").eq("id", objectId).single(),
-    supabase.from("items").select("inner_capacity, environment").eq("id", itemId).single(),
+    supabase.from("items").select("inner_capacity, environment, can_behind").eq("id", itemId).single(),
   ]);
 
   if (position === "dins") {
@@ -696,6 +696,10 @@ export async function hideObject(
     if (objSize > capacity) {
       throw new Error("L'objecte és massa gran per amagar-lo dins d'aquest moble! Tria una altra posició.");
     }
+  }
+
+  if (position === "darrere" && (itm as any)?.can_behind === false) {
+    throw new Error("No es pot amagar darrere d'aquest moble! Tria una altra posició.");
   }
 
   const material = (obj as any)?.material ?? "generic";
@@ -788,7 +792,7 @@ export async function performMove(
   action: "move" | "look" | "confirm",
   targetScenarioId?: string,
   targetItemId?: string,
-  targetPosition?: "sobre" | "sota" | "dins",
+  targetPosition?: Position,
   isStory?: boolean,
 ) {
   const { data, error } = await supabase.rpc("execute_game_move" as any, {

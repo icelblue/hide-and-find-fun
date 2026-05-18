@@ -3,12 +3,12 @@
 // ============================================================
 import { useState } from "react";
 import { getTagActions, TOKEN_COSTS } from "@/lib/supabase-helpers";
-import type { PlayerTools } from "@/lib/game-types";
+import type { PlayerTools, Position } from "@/lib/game-types";
 
 interface ItemActionsProps {
   item: any;
-  positions: readonly { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
-  onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
+  positions: readonly { value: Position; label: string; icon: string }[];
+  onLook: (id: string, pos: Position) => void;
   disabled: boolean;
   tokensRemaining: number;
   lookedSpots: Set<string>;
@@ -99,7 +99,7 @@ export default function ItemActions({
             </div>
           )}
           {/* Position grid */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {positions.map(pos => {
               const spotKey = `${item.id}:${pos.value}`;
               const alreadyLooked = lookedSpots.has(spotKey);
@@ -107,8 +107,16 @@ export default function ItemActions({
               // Dirty blocks "dins", Broken blocks "sobre" + "dins"
               const blockedByDirty = isDirty && pos.value === "dins";
               const blockedByBroken = isBroken && (pos.value === "sobre" || pos.value === "dins");
-              const isBlocked = blockedByDirty || blockedByBroken;
-              const blockLabel = blockedByBroken ? "💥 Arregla primer" : blockedByDirty ? "🧹 Neteja primer" : "";
+              // Logical block: "darrere" not possible for some furniture
+              const blockedByBehind = pos.value === "darrere" && item?.can_behind === false;
+              // Logical block: object too big for "dins" (capacity 0 = nothing fits)
+              const blockedByCapacity = pos.value === "dins" && (item?.inner_capacity ?? 2) === 0;
+              const isBlocked = blockedByDirty || blockedByBroken || blockedByBehind || blockedByCapacity;
+              const blockLabel = blockedByBroken ? "💥 Arregla primer"
+                : blockedByDirty ? "🧹 Neteja primer"
+                : blockedByBehind ? "🚫 No es pot"
+                : blockedByCapacity ? "🚫 No hi cap"
+                : "";
               return (
                 <button key={pos.value}
                   onClick={() => onLook(item.id, pos.value)} aria-label={`${pos.label} ${item.name}`}
