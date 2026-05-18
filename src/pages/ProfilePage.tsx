@@ -401,46 +401,52 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Pet companion with evolution */}
+      {/* Pet companion with evolution (same style as other players' profile) */}
       {pet && (() => {
-        const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
+        const xp = pet.xp ?? 0;
+        const max = pet.max_xp ?? MAX_PET_XP;
+        const evo = getPetEvolution(xp, max);
+        const level = levelFromXp(xp);
+        const { remaining } = xpToNextLevel(xp);
+        const sick = petEvents.length > 0;
         return (
-          <Card className={`mb-4 glass ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
-            <CardContent className="py-3 flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${petEvents.length > 0 ? "ring-destructive/50" : evo.ring} flex items-center justify-center relative`}>
-                <span className="text-2xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
-                {petEvents.length > 0 && (
-                  <span className="absolute -top-1 -right-1 text-sm animate-pulse">🤒</span>
+          <div className={`glass rounded-2xl p-4 border mb-4 ${sick ? "border-destructive/40" : "border-border/30"}`}>
+            <div className="flex items-center gap-3">
+              <div className={`relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${sick ? "ring-destructive/50" : evo.ring}`}>
+                <span className="text-5xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
+                <span className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold">
+                  Lv{level}
+                </span>
+                {sick && !evo.isDead && (
+                  <span className="absolute -top-1 -right-1 text-base animate-pulse">🤒</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm flex items-center gap-1.5 flex-wrap">
-                  <span>{pet.pet_name}</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">
-                    Lv. {pet.level ?? 1}
-                  </span>
-                  <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
+                <p className="text-base font-bold truncate">{pet.pet_name}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {evo.badge} {evo.label}
                   {evo.isDead
-                    ? <span className="text-xs text-destructive font-semibold ml-1">· Mort 🪦</span>
-                    : petEvents.length > 0
-                      ? <span className="text-xs text-destructive font-semibold ml-1">· Malalt! 🤒</span>
-                      : <span className="text-xs text-green-500 font-semibold ml-1">· Saludable ✅</span>
-                  }
+                    ? <span className="text-destructive font-semibold ml-1">· Mort 🪦</span>
+                    : sick
+                      ? <span className="text-destructive font-semibold ml-1">· Malalt 🤒</span>
+                      : <span className="text-green-500 font-semibold ml-1">· Saludable ✅</span>}
                 </p>
-                <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                  <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
+                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-1.5">
+                  <div className={`h-1.5 rounded-full transition-all duration-500 ${sick ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min((xp / max) * 100, 100)}%` }} />
                 </div>
-                <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {level >= MAX_LEVEL ? "Nivell màxim!" : `${remaining} XP per pujar a Lv${level + 1}`}
+                </p>
               </div>
               {petAccessories.length > 0 && (
-                <div className="flex gap-1 flex-wrap max-w-[80px]">
+                <div className="flex flex-col gap-1">
                   {petAccessories.map((a: any) => (
                     <span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         );
       })()}
 
@@ -450,6 +456,10 @@ export default function ProfilePage() {
           <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
         </div>
       )}
+
+      {/* Recent pet activity (under the pet card) */}
+      <PetActivityFeed visits={recentVisits} ownUserId={user?.id ?? null} isOwn={true} />
+
 
       {/* Top rival */}
       {topRival && (
