@@ -87,12 +87,12 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
           )}
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="max-h-[85vh]">
+      <DrawerContent className="max-h-[85vh] flex flex-col">
         <DrawerHeader className="pb-2">
           <DrawerTitle>🎒 Motxilla de {petName}</DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-4 pb-6 overflow-y-auto">
+        <div className="px-4 pb-6 overflow-y-auto flex-1 min-h-0">
           <Tabs defaultValue="items" className="w-full">
             <TabsList className="grid grid-cols-4 w-full h-auto mb-3">
               <TabsTrigger value="items" className="text-[10px] py-2">
