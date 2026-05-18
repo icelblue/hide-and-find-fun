@@ -141,13 +141,14 @@ export async function healPetXP(userId: string, xpReduce: number) {
   return { newXp };
 }
 
-// Delete pet + accessories + events + state + inventory + recipe book for rebirth
+// Delete pet + accessories + events + state + inventory + recipe book + skills for rebirth
 export async function resetPetAndProgress(userId: string) {
   await Promise.all([
     supabase.from("pet_accessories").delete().eq("user_id", userId),
     supabase.from("pet_consumables").delete().eq("user_id", userId),
     supabase.from("pet_events").delete().eq("user_id", userId),
     supabase.from("pet_state").delete().eq("user_id", userId),
+    supabase.from("pet_skills").delete().eq("user_id", userId),
     supabase.from("story_inventory").delete().eq("user_id", userId),
     supabase.from("story_recipe_book").delete().eq("user_id", userId),
     supabase.from("player_pets").delete().eq("user_id", userId),

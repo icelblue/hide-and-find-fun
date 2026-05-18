@@ -8,6 +8,7 @@ import {
   getItemEffect, useItemOnPet,
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
+import { getMyAccessories } from "@/lib/story-helpers";
 import { toast } from "sonner";
 
 interface Props {
@@ -22,6 +23,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [knownIds, setKnownIds] = useState<Set<string>>(new Set());
+  const [accessories, setAccessories] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
@@ -35,12 +37,13 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   );
 
   const load = async () => {
-    const [inv, recs, known] = await Promise.all([
-      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId),
+    const [inv, recs, known, accs] = await Promise.all([
+      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId),
     ]);
     setInventory(inv);
     setRecipes(recs);
     setKnownIds(known);
+    setAccessories(accs);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount]);
@@ -91,14 +94,17 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
 
         <div className="px-4 pb-6 overflow-y-auto">
           <Tabs defaultValue="items" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full h-auto mb-3">
-              <TabsTrigger value="items" className="text-xs py-2">
-                Objectes {inventory.length > 0 && <span className="ml-1 text-accent">({inventory.length})</span>}
+            <TabsList className="grid grid-cols-4 w-full h-auto mb-3">
+              <TabsTrigger value="items" className="text-[10px] py-2">
+                🎒 {inventory.length > 0 && <span className="ml-0.5 text-accent">({inventory.length})</span>}
               </TabsTrigger>
-              <TabsTrigger value="recipes" className="text-xs py-2">
-                Receptes {knownRecipes.length > 0 && <span className="ml-1 text-accent">({knownRecipes.length})</span>}
+              <TabsTrigger value="recipes" className="text-[10px] py-2">
+                🧪 {knownRecipes.length > 0 && <span className="ml-0.5 text-accent">({knownRecipes.length})</span>}
               </TabsTrigger>
-              <TabsTrigger value="help" className="text-xs py-2">❓ Ajuda</TabsTrigger>
+              <TabsTrigger value="accessories" className="text-[10px] py-2">
+                ✨ {accessories.length > 0 && <span className="ml-0.5 text-accent">({accessories.length})</span>}
+              </TabsTrigger>
+              <TabsTrigger value="help" className="text-[10px] py-2">❓</TabsTrigger>
             </TabsList>
 
             {/* OBJECTES */}
@@ -218,6 +224,31 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               )}
             </TabsContent>
 
+            {/* ACCESSORIS */}
+            <TabsContent value="accessories" className="mt-0 space-y-2">
+              {accessories.length === 0 ? (
+                <div className="text-center py-8 text-xs text-muted-foreground italic">
+                  Encara no tens cap accessori per a {petName}.<br />
+                  Es desbloquegen completant capítols i reptes especials.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {accessories.map((a: any) => (
+                    <div key={a.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
+                      <span className="text-2xl">{a.accessory_icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate">{a.accessory_name}</p>
+                        <p className="text-[9px] text-muted-foreground">Equipat sempre</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground/70 italic text-center pt-2">
+                Els accessoris són permanents i es veuen al perfil públic de {petName}.
+              </p>
+            </TabsContent>
+
             {/* AJUDA */}
             <TabsContent value="help" className="mt-0 space-y-3 text-xs">
               <div className="glass rounded-lg p-3 border border-border/30">
@@ -228,10 +259,10 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                 </p>
               </div>
               <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">🍖 Donar objectes</p>
+                <p className="font-bold mb-1">📊 Barres = més plenes, millor</p>
                 <p className="text-muted-foreground">
-                  Cada objecte mostra <b>què afecta</b> (Gana, Son, Por, Vincle). Prem el botó de la dreta
-                  per donar-lo. Es consumeix i es modifiquen les barres de necessitats.
+                  <b>Sacietat</b>, <b>Descans</b>, <b>Calma</b> i <b>Vincle</b>: com més plenes, més feliç està {petName}.
+                  Els objectes amb números en verd milloren l'estat; els grocs el desgasten.
                 </p>
               </div>
               <div className="glass rounded-lg p-3 border border-border/30">
@@ -243,10 +274,17 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                 </p>
               </div>
               <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">⏰ Necessitats decauen</p>
+                <p className="font-bold mb-1">⏰ Necessitats canvien soles</p>
                 <p className="text-muted-foreground">
-                  Cada 6h sense jugar, la <b>Gana</b> i el <b>Son</b> pugen i el <b>Vincle</b> baixa una mica.
+                  Cada 12h sense jugar, la <b>Sacietat</b>, el <b>Descans</b> i el <b>Vincle</b> baixen una mica.
                   Torna i dona-li el que necessita per mantenir-la feliç!
+                </p>
+              </div>
+              <div className="glass rounded-lg p-3 border border-border/30">
+                <p className="font-bold mb-1">🐾 Visites i regals</p>
+                <p className="text-muted-foreground">
+                  Des del perfil d'un altre jugador pots <b>enviar la teva mascota a jugar</b> amb la seva
+                  (cooldown 4h) o <b>regalar-li un objecte</b> de la teva motxilla.
                 </p>
               </div>
             </TabsContent>

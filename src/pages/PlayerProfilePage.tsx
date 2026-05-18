@@ -45,6 +45,9 @@ export default function PlayerProfilePage() {
   const [petEvents, setPetEvents] = useState<any[]>([]);
   const [myConsumables, setMyConsumables] = useState<any[]>([]);
   const [giftingConsumable, setGiftingConsumable] = useState(false);
+  const [myStoryInventory, setMyStoryInventory] = useState<any[]>([]);
+  const [sendingVisit, setSendingVisit] = useState(false);
+  const [giftingItem, setGiftingItem] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -86,14 +89,14 @@ export default function PlayerProfilePage() {
     }
     setMessages(wallMsgs);
 
-    // Load visitor's own unused consumables (for gifting)
+    // Load visitor's own unused consumables (for gifting) + story inventory
     if (user && user.id !== userId) {
-      const { data: myCons } = await supabase
-        .from("pet_consumables")
-        .select("*")
-        .eq("user_id", user.id)
-        .is("used_at", null);
+      const [{ data: myCons }, { data: myInv }] = await Promise.all([
+        supabase.from("pet_consumables").select("*").eq("user_id", user.id).is("used_at", null),
+        supabase.from("story_inventory").select("*").eq("user_id", user.id).order("obtained_at"),
+      ]);
       setMyConsumables(myCons ?? []);
+      setMyStoryInventory(myInv ?? []);
     }
   }, [userId, user]);
 
@@ -115,6 +118,40 @@ export default function PlayerProfilePage() {
       toast.error(err.message);
     } finally {
       setGiftingConsumable(false);
+    }
+  };
+
+  const handleSendVisit = async () => {
+    if (!user || !userId) return;
+    setSendingVisit(true);
+    try {
+      const { error } = await supabase.rpc("send_pet_visit" as any, { _host_user_id: userId });
+      if (error) throw error;
+      toast.success(`🐾 La teva mascota ha anat a jugar amb ${pet?.pet_name ?? "ell"}!`, {
+        description: "Torna en una estona per veure com ha anat.",
+      });
+    } catch (err: any) {
+      toast.error(err.message || "No s'ha pogut enviar la visita");
+    } finally {
+      setSendingVisit(false);
+    }
+  };
+
+  const handleGiftItem = async (item: any) => {
+    if (!user || !userId) return;
+    setGiftingItem(item.id);
+    try {
+      const { error } = await supabase.rpc("gift_inventory_item" as any, {
+        _to_user_id: userId,
+        _item_id: item.id,
+      });
+      if (error) throw error;
+      toast.success(`🎁 Has regalat ${item.item_icon} ${item.item_name}!`);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || "No s'ha pogut regalar");
+    } finally {
+      setGiftingItem(null);
     }
   };
 
@@ -269,6 +306,54 @@ export default function PlayerProfilePage() {
                   })}
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1.5">Gastes un consumible teu per curar la seva mascota</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 🐾 Visita entre mascotes */}
+          <Card className="glass border-primary/30 mt-2">
+            <CardContent className="py-3">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">
+                🐾 Enviar la teva mascota a jugar
+              </p>
+              <Button
+                size="sm"
+                onClick={handleSendVisit}
+                disabled={sendingVisit}
+                className="w-full text-xs"
+              >
+                {sendingVisit ? "Enviant..." : `🐾 Que jugui amb ${pet.pet_name}`}
+              </Button>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                La teva mascota visitarà {pet.pet_name} durant 30 min. Cooldown: 4h.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* 🎁 Regalar objecte de la motxilla */}
+          {myStoryInventory.length > 0 && (
+            <Card className="glass border-accent/30 mt-2">
+              <CardContent className="py-3">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                  🎁 Regalar un objecte de la teva motxilla
+                </p>
+                <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto">
+                  {myStoryInventory.map((it: any) => (
+                    <Button
+                      key={it.id}
+                      size="sm"
+                      variant="outline"
+                      disabled={giftingItem !== null}
+                      onClick={() => handleGiftItem(it)}
+                      className="text-xs"
+                    >
+                      {it.item_icon} {it.item_name}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  L'objecte sortirà de la teva motxilla i passarà a la seva.
+                </p>
               </CardContent>
             </Card>
           )}
