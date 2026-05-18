@@ -1594,13 +1594,15 @@ export default function GamePage() {
               </summary>
               <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 {moveHistory.map(m => {
-                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
+                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
                   const hl = (m as any).hint_level;
                   return (
                     <div key={m.id} className={`text-[10px] rounded-md px-2 py-1 flex justify-between items-center border border-border/15 ${
-                      hl === 2 ? "bg-orange-500/10 border-orange-500/30" :
-                      hl === 1 ? "bg-yellow-500/10 border-yellow-500/20" :
-                      hl === 0 ? "bg-blue-500/10 border-blue-500/20" :
+                      hl === 4 ? "bg-orange-500/10 border-orange-500/30" :
+                      hl === 3 ? "bg-yellow-500/10 border-yellow-500/30" :
+                      hl === 2 ? "bg-cyan-500/10 border-cyan-500/20" :
+                      hl === 1 ? "bg-blue-500/10 border-blue-500/20" :
+                      hl === 0 ? "bg-slate-500/10 border-slate-500/20" :
                       "bg-muted/20"
                     }`}>
                       <span className="truncate mr-1">
