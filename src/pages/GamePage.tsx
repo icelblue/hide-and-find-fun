@@ -544,6 +544,10 @@ export default function GamePage() {
         return;
       }
     }
+    if (pos === "darrere" && (itm as any)?.can_behind === false) {
+      toast.error(`No es pot amagar darrere de ${itm?.icon} ${itm?.name}!`);
+      return;
+    }
     const material = (obj as any)?.material ?? "generic";
     const environment = (itm as any)?.environment ?? "generic";
     const blockReason = getMaterialBlockReason(material, environment);
