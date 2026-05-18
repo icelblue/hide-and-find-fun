@@ -30,7 +30,9 @@ import { getMyReferralLink, getMyReferrals } from "@/lib/referral-helpers";
 import { toast } from "sonner";
 import { Tip } from "@/components/HelpButton";
 import { getRewardCatalog } from "@/lib/reward-helpers";
-import { getRecentVisits, outcomeLabel, type RecentVisit } from "@/lib/pet-social";
+import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
+import { levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
+import { PetActivityFeed } from "@/components/PetActivityFeed";
 
 const WALL_TTL_HOURS = 22;
 
