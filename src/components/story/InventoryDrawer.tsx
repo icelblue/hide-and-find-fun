@@ -94,14 +94,17 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
 
         <div className="px-4 pb-6 overflow-y-auto">
           <Tabs defaultValue="items" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full h-auto mb-3">
-              <TabsTrigger value="items" className="text-xs py-2">
-                Objectes {inventory.length > 0 && <span className="ml-1 text-accent">({inventory.length})</span>}
+            <TabsList className="grid grid-cols-4 w-full h-auto mb-3">
+              <TabsTrigger value="items" className="text-[10px] py-2">
+                🎒 {inventory.length > 0 && <span className="ml-0.5 text-accent">({inventory.length})</span>}
               </TabsTrigger>
-              <TabsTrigger value="recipes" className="text-xs py-2">
-                Receptes {knownRecipes.length > 0 && <span className="ml-1 text-accent">({knownRecipes.length})</span>}
+              <TabsTrigger value="recipes" className="text-[10px] py-2">
+                🧪 {knownRecipes.length > 0 && <span className="ml-0.5 text-accent">({knownRecipes.length})</span>}
               </TabsTrigger>
-              <TabsTrigger value="help" className="text-xs py-2">❓ Ajuda</TabsTrigger>
+              <TabsTrigger value="accessories" className="text-[10px] py-2">
+                ✨ {accessories.length > 0 && <span className="ml-0.5 text-accent">({accessories.length})</span>}
+              </TabsTrigger>
+              <TabsTrigger value="help" className="text-[10px] py-2">❓</TabsTrigger>
             </TabsList>
 
             {/* OBJECTES */}
