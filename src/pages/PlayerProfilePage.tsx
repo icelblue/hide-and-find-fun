@@ -53,6 +53,7 @@ export default function PlayerProfilePage() {
   const [giftingItem, setGiftingItem] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
