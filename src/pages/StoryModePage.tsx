@@ -430,6 +430,7 @@ export default function StoryModePage() {
     const selected = worlds.find((w) => w.id === selectedWorld);
     return (
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
+        <WhileAwayDialog open={awayOpen} onClose={() => setAwayOpen(false)} visits={awayVisits} notifications={awayNotifs} petName={pet?.pet_name} />
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         <div className="relative z-10 animate-fade-in">
           {/* Header de navegació unificat */}
