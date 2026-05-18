@@ -36,7 +36,7 @@ function rewardLabel(reward_type: string | null, reward_value: any): string {
   return "—";
 }
 
-export function DailyChallengeCard({ userId, petName, onRewardApplied }: Props) {
+export function DailyChallengeCard({ userId, petName, onRewardApplied, variant = "card" }: Props) {
   const [state, setState] = useState<DailyChallengeState | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
