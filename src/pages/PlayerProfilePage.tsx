@@ -102,6 +102,7 @@ export default function PlayerProfilePage() {
       setMyConsumables(myCons ?? []);
       setMyStoryInventory(myInv ?? []);
     }
+    getRecentVisits(userId).then(setRecentVisits).catch(() => setRecentVisits([]));
   }, [userId, user]);
 
   useEffect(() => { loadData(); }, [loadData]);
