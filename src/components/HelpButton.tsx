@@ -98,7 +98,7 @@ const BASICS = [
   {
     step: "4",
     title: "👀 Mira als mobles",
-    text: "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes:\n❄️ FRED → Estàs a la habitació equivocada\n🌡️ CALENT → Habitació correcta, però moble equivocat\n🔥 MOLT CALENT → Moble correcte! Prova altra posició",
+    text: "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes de 5 nivells:\n❄️ Glaçat → Molt lluny\n🥶 Fred → Habitació veïna\n🌬️ Fresc → Bona habitació, moble no relacionat\n🌡️ Tebi → Bona habitació, moble similar\n🔥 Calent → Moble correcte! Prova altra posició\n\n⚠️ 20% de pistes poden enganyar-te (±1 nivell). La victòria mai és falsa.",
   },
   {
     step: "5",
