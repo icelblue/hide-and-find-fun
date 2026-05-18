@@ -23,6 +23,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [knownIds, setKnownIds] = useState<Set<string>>(new Set());
+  const [accessories, setAccessories] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
