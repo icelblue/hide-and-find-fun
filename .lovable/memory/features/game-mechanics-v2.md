@@ -9,6 +9,12 @@ type: feature
   - **Hint noise (v1.9.0)**: 10% probability the returned hint is nudged to an ADJACENT level (0↔1 or 2↔1). Level 3 (found) is NEVER altered — victory is always honest. RPC returns `hint_noisy: true` when nudged. Makes PvP longer and less deterministic.
 - **Moure (0.5🪙)**: Move to connected scenario.
 - ~~**Confirmar**~~: REMOVED in v1.5.0. Observar now finds the object directly.
+## Positions (v1.9.0)
+4 posicions: ⬆️ sobre, ⬇️ sota, 📦 dins, 🔙 darrere.
+- **dins**: bloquejat si `objSize > inner_capacity` (o capacity=0).
+- **darrere**: bloquejat si `can_behind=false` al moble. Bloquejats lògicament: Catifa, Llum, Hamaca, Barana, Fanal, Pedra.
+- Validació al frontend (ItemActions + hide UI) i al backend (`hideObject` a supabase-helpers).
+- Type `Position` exportat des de `src/lib/game-types.ts` — sempre importar d'allà, mai literals "sobre" | "sota"…
 
 ## Furniture inner_capacity=0 (can't hide "dins")
 Cadira, Llum, Catifa, Quadre, Taula, Tovalloler, Barana, Hamaca, Pedra, Banc, Ordinador, Televisió, **Arbre, Estenedor, Prestatge, Prestatgeria, Sofà** (added v1.9.0 — logical review).
