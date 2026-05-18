@@ -19,11 +19,12 @@ export function HelpDialog({ trigger }: { trigger?: React.ReactNode }) {
         </DialogHeader>
 
         <Tabs defaultValue="basics" className="mt-2">
-          <TabsList className="grid grid-cols-4 w-full h-auto">
-            <TabsTrigger value="basics" className="text-[11px] py-1.5">🎮 Bàsic</TabsTrigger>
-            <TabsTrigger value="needs" className="text-[11px] py-1.5">🍖 Necess.</TabsTrigger>
-            <TabsTrigger value="recipes" className="text-[11px] py-1.5">🧪 Receptes</TabsTrigger>
-            <TabsTrigger value="worlds" className="text-[11px] py-1.5">🗺️ Mons</TabsTrigger>
+          <TabsList className="grid grid-cols-5 w-full h-auto">
+            <TabsTrigger value="basics" className="text-[10px] py-1.5">🎮 Bàsic</TabsTrigger>
+            <TabsTrigger value="needs" className="text-[10px] py-1.5">🍖 Necess.</TabsTrigger>
+            <TabsTrigger value="recipes" className="text-[10px] py-1.5">🧪 Recept.</TabsTrigger>
+            <TabsTrigger value="worlds" className="text-[10px] py-1.5">🗺️ Mons</TabsTrigger>
+            <TabsTrigger value="social" className="text-[10px] py-1.5">🐾 Social</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basics" className="space-y-3 text-sm leading-relaxed mt-3">
