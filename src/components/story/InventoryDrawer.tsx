@@ -8,6 +8,7 @@ import {
   getItemEffect, useItemOnPet,
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
+import { getMyAccessories } from "@/lib/story-helpers";
 import { toast } from "sonner";
 
 interface Props {
