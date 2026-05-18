@@ -857,16 +857,20 @@ export default function GamePage() {
         return;
       }
 
-      await supabase.from("player_inventory").insert([{
+      const { error: insErr } = await supabase.from("player_inventory").insert([{
         user_id: user.id, game_id: gameId,
         item_type: "special_trophy",
         item_value: special.special_type === "choose_variant" ? specialFoundVariant?.value ?? null : specialFoundInput.trim() || null,
         special_data: specialData,
       }]);
+      if (insErr) throw insErr;
       toast.success(`🏆 Trofeu desat!`);
       setShowSpecialFoundPopup(null);
       setSpecialFoundInput("");
       setSpecialFoundVariant(null);
+    } catch (err: any) {
+      toast.error(`No s'ha pogut desar el trofeu: ${err.message ?? "error desconegut"}`);
+      logError(err.message ?? String(err), err.stack, "GamePage.handleSpecialFoundSubmit");
     } finally {
       setSavingTrophy(false);
     }
