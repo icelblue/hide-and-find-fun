@@ -628,6 +628,41 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* Pet activity */}
+      {recentVisits.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            🐾 Activitat recent · <span className="normal-case">visites de mascotes</span>
+          </h2>
+          <div className="space-y-1.5">
+            {recentVisits.map((v) => {
+              const o = outcomeLabel(v.outcome);
+              const action = v.role === "host" ? "ha vingut a jugar" : "vas enviar-la a";
+              const mins = Math.floor((Date.now() - new Date(v.resolved_at).getTime()) / 60000);
+              const timeStr = mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins / 60)}h` : `${Math.floor(mins / 1440)}d`;
+              return (
+                <Card key={v.id} className="glass">
+                  <CardContent className="py-2 px-3 flex items-center gap-2">
+                    <span className="text-xl">{v.other_pet_icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() => navigate(`/player/${v.other_user_id}`)}
+                        className="text-xs font-semibold text-primary hover:underline truncate block">
+                        {v.other_pet_name}
+                      </button>
+                      <p className="text-[11px] text-muted-foreground">
+                        {action} · <span className={`font-semibold ${o.color}`}>{o.icon} {o.text}</span>
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeStr}</span>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Wall messages */}
       <div className="mb-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
