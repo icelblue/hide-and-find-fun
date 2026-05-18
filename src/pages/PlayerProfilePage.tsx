@@ -289,6 +289,11 @@ export default function PlayerProfilePage() {
         );
       })()}
 
+      {/* Recent pet activity (visible on any profile) */}
+      <div className="relative z-10">
+        <PetActivityFeed visits={recentVisits} ownUserId={user?.id ?? null} isOwn={false} petName={pet?.pet_name} />
+      </div>
+
       {/* Pet health events + gift consumables */}
       {pet && !isOwnProfile && user && (
         <div className="mb-4 relative z-10">
