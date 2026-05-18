@@ -108,7 +108,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         } else if (m.action === "look" && m.target_item_id) {
           const itm = itemMap.get(m.target_item_id);
           const posLabel = m.target_position ? POS_LABELS[m.target_position] ?? m.target_position : "";
-          const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥", 3: "🏆" };
+          const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
           const hint = m.hint_level != null ? ` ${hintIcons[m.hint_level] ?? ""}` : "";
           if (m.found_object) {
             description = `🏆 TROBA l'objecte a ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}!`;

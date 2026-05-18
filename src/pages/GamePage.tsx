@@ -820,9 +820,12 @@ export default function GamePage() {
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
       else {
         const level = result.hintLevel ?? 0;
-        if (level === 0) toast.info(`❄️ Fred! L'objecte NO és a ${currentScenario?.icon} ${currentScenario?.name}. (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 1) toast.warning(`🌡️ Calent! L'objecte ÉS en aquesta habitació, però no a ${item?.icon} ${item?.name}. (-${TOKEN_COSTS.look}🪙)`);
-        else toast.success(`🔥 MOLT CALENT! ${item?.icon} ${item?.name} és el moble correcte! Prova altra posició. (-${TOKEN_COSTS.look}🪙)`);
+        const noisy = (result as any).hintNoisy ? " ⚠️" : "";
+        if (level === 0) toast.info(`❄️ Glaçat${noisy}. Estàs molt lluny. (-${TOKEN_COSTS.look}🪙)`);
+        else if (level === 1) toast.info(`🥶 Fred${noisy}. T'acostes, però no t'hi escalfes encara. (-${TOKEN_COSTS.look}🪙)`);
+        else if (level === 2) toast.info(`🌬️ Fresc${noisy}. Hi ha alguna cosa per aquí... (-${TOKEN_COSTS.look}🪙)`);
+        else if (level === 3) toast.warning(`🌡️ Tebi${noisy}. Mires en una zona similar a la correcta. (-${TOKEN_COSTS.look}🪙)`);
+        else toast.success(`🔥 Calent${noisy}! Aquest moble cou! Prova una altra posició. (-${TOKEN_COSTS.look}🪙)`);
       }
       clearBanana();
       await loadGame();
@@ -1591,13 +1594,15 @@ export default function GamePage() {
               </summary>
               <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 {moveHistory.map(m => {
-                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
+                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
                   const hl = (m as any).hint_level;
                   return (
                     <div key={m.id} className={`text-[10px] rounded-md px-2 py-1 flex justify-between items-center border border-border/15 ${
-                      hl === 2 ? "bg-orange-500/10 border-orange-500/30" :
-                      hl === 1 ? "bg-yellow-500/10 border-yellow-500/20" :
-                      hl === 0 ? "bg-blue-500/10 border-blue-500/20" :
+                      hl === 4 ? "bg-orange-500/10 border-orange-500/30" :
+                      hl === 3 ? "bg-yellow-500/10 border-yellow-500/30" :
+                      hl === 2 ? "bg-cyan-500/10 border-cyan-500/20" :
+                      hl === 1 ? "bg-blue-500/10 border-blue-500/20" :
+                      hl === 0 ? "bg-slate-500/10 border-slate-500/20" :
                       "bg-muted/20"
                     }`}>
                       <span className="truncate mr-1">

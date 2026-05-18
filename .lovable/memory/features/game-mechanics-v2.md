@@ -5,8 +5,15 @@ type: feature
 ---
 
 ## Actions
-- **Observar (0.3🪙)**: Gives progressive hints. ❄️ cold (wrong scenario), 🌡️ warm (right scenario wrong item), 🔥 hot (right item wrong position). **If correct item+position → FINDS the object and wins!** hint_level stored in game_moves (0=cold, 1=warm, 2=hot, 3=found).
-  - **Hint noise (v1.9.0)**: 10% probability the returned hint is nudged to an ADJACENT level (0↔1 or 2↔1). Level 3 (found) is NEVER altered — victory is always honest. RPC returns `hint_noisy: true` when nudged. Makes PvP longer and less deterministic.
+- **Observar (0.3🪙)**: 5-level hint system (v2.0.0). hint_level 0-4 stored in game_moves:
+  - 0 ❄️ Glaçat — wrong scenario, NOT connected to correct one
+  - 1 🥶 Fred — wrong scenario, connected/adjacent to correct
+  - 2 🌬️ Fresc — right scenario, wrong item (no shared tags with hidden item)
+  - 3 🌡️ Tebi — right scenario, wrong item but SHARES tags with hidden item
+  - 4 🔥 Calent — right item, wrong position (also returned when found_object=true)
+  - found_object=true → right item + right position → WIN
+  - **Hint noise (v2.0.0)**: 20% prob the level is shifted ±1 (clamped to [0,4]). NEVER fabricates a win — found_object is always honest. RPC returns `hint_noisy: true` when shifted.
+  - Implementation uses items.tags (array overlap via INTERSECT) and scenario_connections (bidirectional EXISTS check).
 - **Moure (0.5🪙)**: Move to connected scenario.
 - ~~**Confirmar**~~: REMOVED in v1.5.0. Observar now finds the object directly.
 ## Positions (v1.9.0)

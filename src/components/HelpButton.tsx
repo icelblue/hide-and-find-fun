@@ -35,7 +35,7 @@ const RULES = [
   },
   {
     title: "👀 Observar · " + TOKEN_COSTS.look + "🪙",
-    text: "Mira una posició d'un moble (⬆️ sobre, ⬇️ sota, 📦 dins, 🔙 darrere). Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista progressiva:\n❄️ Fred → L'objecte NO és en aquesta habitació.\n🌡️ Calent → Bona habitació, moble incorrecte.\n🔥 Molt calent → Moble correcte, prova altra posició!\n\n⚠️ Atenció: hi ha un 10% de probabilitat que la pista t'enganyi amb un nivell adjacent. No t'hi confiïs al 100%!\n\nℹ️ Alguns mobles no permeten totes les posicions (una catifa no té 'dins', un arbre no té 'darrere'…). Els botons bloquejats t'ho indiquen.",
+    text: "Mira una posició d'un moble (⬆️ sobre, ⬇️ sota, 📦 dins, 🔙 darrere). Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista de 5 nivells:\n❄️ Glaçat → Habitació molt lluny.\n🥶 Fred → Habitació pròxima a la correcta.\n🌬️ Fresc → Bona habitació, però el moble no té res a veure.\n🌡️ Tebi → Bona habitació, moble d'una categoria similar a la correcta.\n🔥 Calent → Moble correcte! Prova altra posició.\n\n⚠️ Atenció: hi ha un 20% de probabilitat que la pista t'enganyi amb un nivell adjacent. La victòria, però, mai és falsa.\n\nℹ️ Alguns mobles no permeten totes les posicions (una catifa no té 'dins', un arbre no té 'darrere'…). Els botons bloquejats t'ho indiquen.",
   },
   {
     title: "💡 Pistes de l'objecte rival",
@@ -98,7 +98,7 @@ const BASICS = [
   {
     step: "4",
     title: "👀 Mira als mobles",
-    text: "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes:\n❄️ FRED → Estàs a la habitació equivocada\n🌡️ CALENT → Habitació correcta, però moble equivocat\n🔥 MOLT CALENT → Moble correcte! Prova altra posició",
+    text: "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes de 5 nivells:\n❄️ Glaçat → Molt lluny\n🥶 Fred → Habitació veïna\n🌬️ Fresc → Bona habitació, moble no relacionat\n🌡️ Tebi → Bona habitació, moble similar\n🔥 Calent → Moble correcte! Prova altra posició\n\n⚠️ 20% de pistes poden enganyar-te (±1 nivell). La victòria mai és falsa.",
   },
   {
     step: "5",
