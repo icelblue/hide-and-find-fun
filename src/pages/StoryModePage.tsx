@@ -494,8 +494,6 @@ export default function StoryModePage() {
 
           {user && <DiscoveryJournal userId={user.id} />}
 
-          {user && <DailyChallengeCard userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
-
           <Button
             variant="ghost"
             onClick={async () => {
