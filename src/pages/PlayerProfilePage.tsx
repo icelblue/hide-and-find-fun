@@ -45,6 +45,9 @@ export default function PlayerProfilePage() {
   const [petEvents, setPetEvents] = useState<any[]>([]);
   const [myConsumables, setMyConsumables] = useState<any[]>([]);
   const [giftingConsumable, setGiftingConsumable] = useState(false);
+  const [myStoryInventory, setMyStoryInventory] = useState<any[]>([]);
+  const [sendingVisit, setSendingVisit] = useState(false);
+  const [giftingItem, setGiftingItem] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
 
