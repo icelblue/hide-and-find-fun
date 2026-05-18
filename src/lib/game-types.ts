@@ -56,14 +56,18 @@ export type Phase = "waiting" | "hiding" | "playing" | "finished";
 
 export const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
+export type Position = "sobre" | "sota" | "dins" | "darrere";
+
 export const POSITIONS = [
   { value: "sobre" as const, label: "Sobre", icon: "⬆️" },
   { value: "sota" as const, label: "Sota", icon: "⬇️" },
   { value: "dins" as const, label: "Dins", icon: "📦" },
+  { value: "darrere" as const, label: "Darrere", icon: "🔙" },
 ] as const;
 
 export const POS_LABELS: Record<string, string> = {
   sobre: "⬆️ Sobre",
   sota: "⬇️ Sota",
   dins: "📦 Dins",
+  darrere: "🔙 Darrere",
 };
