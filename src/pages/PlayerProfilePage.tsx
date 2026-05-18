@@ -309,6 +309,54 @@ export default function PlayerProfilePage() {
               </CardContent>
             </Card>
           )}
+
+          {/* 🐾 Visita entre mascotes */}
+          <Card className="glass border-primary/30 mt-2">
+            <CardContent className="py-3">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">
+                🐾 Enviar la teva mascota a jugar
+              </p>
+              <Button
+                size="sm"
+                onClick={handleSendVisit}
+                disabled={sendingVisit}
+                className="w-full text-xs"
+              >
+                {sendingVisit ? "Enviant..." : `🐾 Que jugui amb ${pet.pet_name}`}
+              </Button>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                La teva mascota visitarà {pet.pet_name} durant 30 min. Cooldown: 4h.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* 🎁 Regalar objecte de la motxilla */}
+          {myStoryInventory.length > 0 && (
+            <Card className="glass border-accent/30 mt-2">
+              <CardContent className="py-3">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                  🎁 Regalar un objecte de la teva motxilla
+                </p>
+                <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto">
+                  {myStoryInventory.map((it: any) => (
+                    <Button
+                      key={it.id}
+                      size="sm"
+                      variant="outline"
+                      disabled={giftingItem !== null}
+                      onClick={() => handleGiftItem(it)}
+                      className="text-xs"
+                    >
+                      {it.item_icon} {it.item_name}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  L'objecte sortirà de la teva motxilla i passarà a la seva.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
