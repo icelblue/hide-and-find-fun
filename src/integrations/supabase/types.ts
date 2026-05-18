@@ -1528,9 +1528,9 @@ export type Database = {
           _action: Database["public"]["Enums"]["action_type"]
           _game_id: string
           _is_story?: boolean
-          _target_item_id?: string
-          _target_position?: Database["public"]["Enums"]["position_type"]
-          _target_scenario_id?: string
+          _target_item_id: string
+          _target_position: Database["public"]["Enums"]["position_type"]
+          _target_scenario_id: string
         }
         Returns: Json
       }
