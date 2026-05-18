@@ -19,11 +19,12 @@ export function HelpDialog({ trigger }: { trigger?: React.ReactNode }) {
         </DialogHeader>
 
         <Tabs defaultValue="basics" className="mt-2">
-          <TabsList className="grid grid-cols-4 w-full h-auto">
-            <TabsTrigger value="basics" className="text-[11px] py-1.5">🎮 Bàsic</TabsTrigger>
-            <TabsTrigger value="needs" className="text-[11px] py-1.5">🍖 Necess.</TabsTrigger>
-            <TabsTrigger value="recipes" className="text-[11px] py-1.5">🧪 Receptes</TabsTrigger>
-            <TabsTrigger value="worlds" className="text-[11px] py-1.5">🗺️ Mons</TabsTrigger>
+          <TabsList className="grid grid-cols-5 w-full h-auto">
+            <TabsTrigger value="basics" className="text-[10px] py-1.5">🎮 Bàsic</TabsTrigger>
+            <TabsTrigger value="needs" className="text-[10px] py-1.5">🍖 Necess.</TabsTrigger>
+            <TabsTrigger value="recipes" className="text-[10px] py-1.5">🧪 Recept.</TabsTrigger>
+            <TabsTrigger value="worlds" className="text-[10px] py-1.5">🗺️ Mons</TabsTrigger>
+            <TabsTrigger value="social" className="text-[10px] py-1.5">🐾 Social</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basics" className="space-y-3 text-sm leading-relaxed mt-3">
@@ -100,18 +101,48 @@ export function HelpDialog({ trigger }: { trigger?: React.ReactNode }) {
 
           <TabsContent value="worlds" className="space-y-3 text-sm leading-relaxed mt-3">
             <div>
-              <p className="font-bold mb-1">🗺️ Els 4 mons</p>
+              <p className="font-bold mb-1">🗺️ Els mons</p>
               <ul className="text-xs text-muted-foreground space-y-1">
-                <li>🏠 <b>Casa</b> — sempre disponible. Tutorial.</li>
-                <li>🌳 <b>Carrer</b> — necessites ❤️ Vincle ≥ 40.</li>
-                <li>🌲 <b>Bosc</b> — necessites 3 receptes descobertes.</li>
-                <li>🏰 <b>Castell</b> — necessites Nivell 7+.</li>
+                <li>🏠 <b>Casa</b> — sempre. Tutorial.</li>
+                <li>🌳 <b>Carrer</b> — ❤️ Vincle ≥ 40.</li>
+                <li>🌲 <b>Bosc</b> — 3 receptes descobertes.</li>
+                <li>🏖️ <b>Platja</b> — Nivell 4.</li>
+                <li>🏰 <b>Castell</b> — Nivell 7.</li>
+                <li>🌋 <b>Volcà</b> — Nivell 6 + 3 receptes.</li>
+                <li>🌌 <b>Somnis</b> — Nivell 8 + ❤️ ≥ 70.</li>
               </ul>
             </div>
             <div className="glass rounded-lg p-2 border border-border/30">
               <p className="text-[11px] text-muted-foreground">
-                Al mapa veuràs <b>quant et falta</b> sota cada món bloquejat. Juga a Casa i Carrer per pujar
-                vincle i nivell, descobreix receptes i s'obriran els mons següents.
+                Els mons amb requisits molt alts surten com a <b>"???"</b> fins que t'hi acostes.
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="social" className="space-y-3 text-sm leading-relaxed mt-3">
+            <div>
+              <p className="font-bold mb-1">🐾 Enviar mascota a jugar</p>
+              <p className="text-muted-foreground text-xs">
+                Al perfil d'un altre jugador prem <b>"Enviar mascota a jugar"</b>. Les mascotes interactuen 30 min i
+                tornes veient 🤝 amistat, 😐 neutral o 💢 baralla.
+              </p>
+            </div>
+            <div>
+              <p className="font-bold mb-1">🎁 Regalar objectes</p>
+              <p className="text-muted-foreground text-xs">
+                Regala qualsevol objecte de la motxilla a un altre jugador des del seu perfil. Suma punts de relació.
+              </p>
+            </div>
+            <div>
+              <p className="font-bold mb-1">❤️ Amics i enemics</p>
+              <p className="text-muted-foreground text-xs">
+                Bones trobades us fan <b>amics</b>; males trobades us fan <b>enemics</b>. Es veu al perfil públic.
+              </p>
+            </div>
+            <div className="glass rounded-lg p-2 border border-border/30">
+              <p className="text-[11px] text-muted-foreground">
+                ⏰ Cooldown de <b>4h</b> entre visites a la mateixa mascota. Mira <b>"🐾 Activitat recent"</b> al
+                teu perfil.
               </p>
             </div>
           </TabsContent>

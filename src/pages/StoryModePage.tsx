@@ -35,6 +35,7 @@ import { WorldMap } from "@/components/story/WorldMap";
 import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
+import { resolveAndFetchPendingVisits, outcomeLabel } from "@/lib/pet-social";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -123,17 +124,13 @@ export default function StoryModePage() {
         }
       }
 
-      // 🐾 Resoldre visites pendents (cap problema si la RPC no existeix)
+      // 🐾 Resoldre visites pendents i mostrar toast per cada novetat
       try {
-        const { data: resolved } = await supabase.rpc("resolve_my_pet_visits" as any);
-        if (Array.isArray(resolved)) {
-          for (const v of resolved as any[]) {
-            const role = v.role === "host" ? "ha vingut" : "ha anat";
-            const other = v.other_pet_name ?? "una mascota";
-            const outcome = v.outcome === "friends" ? "🤝 amistat!" :
-                            v.outcome === "enemies" ? "💢 baralla" : "neutral";
-            toast(`🐾 ${other} ${role} a jugar — ${outcome}`, { duration: 5000 });
-          }
+        const pending = await resolveAndFetchPendingVisits(user.id);
+        for (const v of pending) {
+          const action = v.role === "host" ? "ha vingut a jugar" : "ha jugat amb tu";
+          const o = outcomeLabel(v.outcome);
+          toast(`${v.other_pet_icon} ${v.other_pet_name} ${action} — ${o.icon} ${o.text}`, { duration: 5000 });
         }
       } catch { /* silent */ }
 
