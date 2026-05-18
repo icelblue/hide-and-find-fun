@@ -136,8 +136,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       setActionLog(log);
     })();
 
-    // Rival info (loser only)
-    if (game.winner_id === user?.id || !rival) return;
+    // Rival's hidden object — shown to BOTH (winner: trofeu, perdedor: descoberta)
+    if (!rival) return;
     (async () => {
       const rivalSD: any = rival.special_data;
       const isCustom = rivalSD?.is_custom === true;
@@ -161,7 +161,6 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       let specialType: string | null = null;
       let displayObj: any = obj;
       if (isCustom) {
-        // Player-created object: data lives in special_data
         displayObj = {
           name: rivalSD.custom_name,
           icon: rivalSD.custom_icon,
@@ -187,6 +186,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         specialType,
         traits,
       });
+      // Per al guanyador, mostrem automàticament la targeta de l'objecte trobat
+      if (game.winner_id === user?.id) setShowRivalInfo(true);
     })();
   }, [game.winner_id, user?.id, rival, scenarios, gameId]);
 
@@ -223,8 +224,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         </Card>
       )}
 
-      {/* Loser: show where the object was */}
-      {!isWinner && rivalInfo && (
+      {/* Hidden object recap — both winner and loser */}
+      {rivalInfo && (
         <div className="mb-6">
           {!showRivalInfo ? (
             <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
@@ -234,7 +235,9 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
             <Card className="mx-auto max-w-xs glass border-secondary/30">
               <CardContent className="py-4">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
-                  📍 L'objecte de {rivalInfo.rivalName}
+                  {isWinner
+                    ? `🏆 Has trobat l'objecte de ${rivalInfo.rivalName}`
+                    : `📍 L'objecte de ${rivalInfo.rivalName}`}
                 </p>
                 {rivalInfo.obj && (
                   <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
