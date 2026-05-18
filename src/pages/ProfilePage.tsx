@@ -57,7 +57,7 @@ export default function ProfilePage() {
   const [pet, setPet] = useState<any>(null);
   const [petAccessories, setPetAccessories] = useState<any[]>([]);
   const [petEvents, setPetEvents] = useState<any[]>([]);
-
+  const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
