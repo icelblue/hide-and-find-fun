@@ -123,6 +123,20 @@ export default function StoryModePage() {
         }
       }
 
+      // 🐾 Resoldre visites pendents (cap problema si la RPC no existeix)
+      try {
+        const { data: resolved } = await supabase.rpc("resolve_my_pet_visits" as any);
+        if (Array.isArray(resolved)) {
+          for (const v of resolved as any[]) {
+            const role = v.role === "host" ? "ha vingut" : "ha anat";
+            const other = v.other_pet_name ?? "una mascota";
+            const outcome = v.outcome === "friends" ? "🤝 amistat!" :
+                            v.outcome === "enemies" ? "💢 baralla" : "neutral";
+            toast(`🐾 ${other} ${role} a jugar — ${outcome}`, { duration: 5000 });
+          }
+        }
+      } catch { /* silent */ }
+
       if (!petData) {
         const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
         setRandomPet(rp);
