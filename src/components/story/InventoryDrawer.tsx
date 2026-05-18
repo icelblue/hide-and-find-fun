@@ -224,6 +224,31 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               )}
             </TabsContent>
 
+            {/* ACCESSORIS */}
+            <TabsContent value="accessories" className="mt-0 space-y-2">
+              {accessories.length === 0 ? (
+                <div className="text-center py-8 text-xs text-muted-foreground italic">
+                  Encara no tens cap accessori per a {petName}.<br />
+                  Es desbloquegen completant capítols i reptes especials.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {accessories.map((a: any) => (
+                    <div key={a.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
+                      <span className="text-2xl">{a.accessory_icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate">{a.accessory_name}</p>
+                        <p className="text-[9px] text-muted-foreground">Equipat sempre</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground/70 italic text-center pt-2">
+                Els accessoris són permanents i es veuen al perfil públic de {petName}.
+              </p>
+            </TabsContent>
+
             {/* AJUDA */}
             <TabsContent value="help" className="mt-0 space-y-3 text-xs">
               <div className="glass rounded-lg p-3 border border-border/30">
@@ -234,10 +259,10 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                 </p>
               </div>
               <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">🍖 Donar objectes</p>
+                <p className="font-bold mb-1">📊 Barres = més plenes, millor</p>
                 <p className="text-muted-foreground">
-                  Cada objecte mostra <b>què afecta</b> (Gana, Son, Por, Vincle). Prem el botó de la dreta
-                  per donar-lo. Es consumeix i es modifiquen les barres de necessitats.
+                  <b>Sacietat</b>, <b>Descans</b>, <b>Calma</b> i <b>Vincle</b>: com més plenes, més feliç està {petName}.
+                  Els objectes amb números en verd milloren l'estat; els grocs el desgasten.
                 </p>
               </div>
               <div className="glass rounded-lg p-3 border border-border/30">
@@ -249,10 +274,17 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                 </p>
               </div>
               <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">⏰ Necessitats decauen</p>
+                <p className="font-bold mb-1">⏰ Necessitats canvien soles</p>
                 <p className="text-muted-foreground">
-                  Cada 6h sense jugar, la <b>Gana</b> i el <b>Son</b> pugen i el <b>Vincle</b> baixa una mica.
+                  Cada 12h sense jugar, la <b>Sacietat</b>, el <b>Descans</b> i el <b>Vincle</b> baixen una mica.
                   Torna i dona-li el que necessita per mantenir-la feliç!
+                </p>
+              </div>
+              <div className="glass rounded-lg p-3 border border-border/30">
+                <p className="font-bold mb-1">🐾 Visites i regals</p>
+                <p className="text-muted-foreground">
+                  Des del perfil d'un altre jugador pots <b>enviar la teva mascota a jugar</b> amb la seva
+                  (cooldown 4h) o <b>regalar-li un objecte</b> de la teva motxilla.
                 </p>
               </div>
             </TabsContent>
