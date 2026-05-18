@@ -77,7 +77,7 @@ export default function GamePage() {
   const [selectedScenario, setSelectedScenario] = useState("");
   const [selectedObject, setSelectedObject] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
+  const [selectedPosition, setSelectedPosition] = useState<Position | "">("");
   const [hideStep, setHideStep] = useState(0);
   const [objectSpecial, setObjectSpecial] = useState<any>(null);
   const [specialInput, setSpecialInput] = useState("");
@@ -530,7 +530,7 @@ export default function GamePage() {
     setHideStep(1);
   };
 
-  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
+  const handleSelectPosition = async (pos: Position) => {
     const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
     const obj = isCustom
       ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
@@ -576,8 +576,8 @@ export default function GamePage() {
     await doHide(pos);
   };
 
-  const doHide = async (pos?: "sobre" | "sota" | "dins", extraSpecialData?: any) => {
-    const finalPos = pos || selectedPosition as "sobre" | "sota" | "dins";
+  const doHide = async (pos?: Position, extraSpecialData?: any) => {
+    const finalPos = pos || selectedPosition as Position;
     if (!gameId || !user || !finalPos) return;
     setActionLoading(true);
     try {
@@ -704,7 +704,7 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
+  const handleLook = async (itemId: string, pos: Position) => {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {

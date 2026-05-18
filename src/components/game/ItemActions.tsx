@@ -7,8 +7,8 @@ import type { PlayerTools } from "@/lib/game-types";
 
 interface ItemActionsProps {
   item: any;
-  positions: readonly { value: "sobre" | "sota" | "dins"; label: string; icon: string }[];
-  onLook: (id: string, pos: "sobre" | "sota" | "dins") => void;
+  positions: readonly { value: Position; label: string; icon: string }[];
+  onLook: (id: string, pos: Position) => void;
   disabled: boolean;
   tokensRemaining: number;
   lookedSpots: Set<string>;

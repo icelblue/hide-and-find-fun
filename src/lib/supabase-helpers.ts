@@ -682,7 +682,7 @@ export async function hideObject(
   userId: string,
   objectId: string,
   itemId: string,
-  position: "sobre" | "sota" | "dins",
+  position: Position,
   specialData?: any,
 ) {
   const [{ data: obj }, { data: itm }] = await Promise.all([
@@ -788,7 +788,7 @@ export async function performMove(
   action: "move" | "look" | "confirm",
   targetScenarioId?: string,
   targetItemId?: string,
-  targetPosition?: "sobre" | "sota" | "dins",
+  targetPosition?: Position,
   isStory?: boolean,
 ) {
   const { data, error } = await supabase.rpc("execute_game_move" as any, {
