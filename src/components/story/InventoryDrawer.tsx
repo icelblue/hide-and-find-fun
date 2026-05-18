@@ -37,12 +37,13 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   );
 
   const load = async () => {
-    const [inv, recs, known] = await Promise.all([
-      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId),
+    const [inv, recs, known, accs] = await Promise.all([
+      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId),
     ]);
     setInventory(inv);
     setRecipes(recs);
     setKnownIds(known);
+    setAccessories(accs);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount]);
