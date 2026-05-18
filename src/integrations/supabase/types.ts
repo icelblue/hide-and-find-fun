@@ -427,6 +427,7 @@ export type Database = {
       }
       items: {
         Row: {
+          can_behind: boolean
           display_order: number
           environment: Database["public"]["Enums"]["item_environment"]
           hidden: boolean
@@ -438,6 +439,7 @@ export type Database = {
           tags: string[]
         }
         Insert: {
+          can_behind?: boolean
           display_order?: number
           environment?: Database["public"]["Enums"]["item_environment"]
           hidden?: boolean
@@ -449,6 +451,7 @@ export type Database = {
           tags?: string[]
         }
         Update: {
+          can_behind?: boolean
           display_order?: number
           environment?: Database["public"]["Enums"]["item_environment"]
           hidden?: boolean
@@ -1676,7 +1679,7 @@ export type Database = {
         | "leather"
         | "stone"
         | "food"
-      position_type: "sobre" | "sota" | "dins"
+      position_type: "sobre" | "sota" | "dins" | "darrere"
       social_item_type:
         | "banana"
         | "smoke_bomb"
@@ -1848,7 +1851,7 @@ export const Constants = {
         "stone",
         "food",
       ],
-      position_type: ["sobre", "sota", "dins"],
+      position_type: ["sobre", "sota", "dins", "darrere"],
       social_item_type: [
         "banana",
         "smoke_bomb",
