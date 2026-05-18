@@ -15,6 +15,7 @@ interface Props {
   userId: string;
   petName: string;
   onRewardApplied?: () => void;
+  variant?: "card" | "icon";
 }
 
 function timeUntilMidnight(): string {
