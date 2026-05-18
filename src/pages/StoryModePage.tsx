@@ -85,6 +85,11 @@ export default function StoryModePage() {
   const [pendingNext, setPendingNext] = useState<StoryNode | null>(null);
   const [completedChapter, setCompletedChapter] = useState<number>(1);
 
+  // 📬 "Mentre no hi eres" popup
+  const [awayOpen, setAwayOpen] = useState(false);
+  const [awayVisits, setAwayVisits] = useState<ResolvedVisit[]>([]);
+  const [awayNotifs, setAwayNotifs] = useState<PetNotification[]>([]);
+
   const loadAll = useCallback(async () => {
     if (!user) return;
     setPhase("loading");
