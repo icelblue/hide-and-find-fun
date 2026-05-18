@@ -75,7 +75,17 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
 
   const fillPet = (s: string) => s.split("{pet}").join(petName);
 
+  const isIcon = variant === "icon";
+
   if (state.alreadyDone) {
+    if (isIcon) {
+      return (
+        <Button variant="ghost" size="sm" disabled className="relative h-8 px-2 opacity-60" title={`Repte completat · torna en ${countdown}`}>
+          <span className="text-xl">🌟</span>
+          <span className="absolute -top-1 -right-1 bg-muted text-muted-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">✓</span>
+        </Button>
+      );
+    }
     return (
       <Card className="glass border-muted/30 mt-4 opacity-80">
         <CardContent className="py-3 px-4 text-center">
@@ -89,16 +99,29 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
 
   return (
     <>
-      <Card
-        className="glass border-accent/40 mt-4 cursor-pointer hover:border-accent/70 transition-colors animate-fade-in"
-        onClick={() => setOpen(true)}
-      >
-        <CardContent className="py-3 px-4 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-accent font-bold mb-0.5">🌟 Repte diari · disponible</p>
-          <p className="text-sm font-bold">{state.node.title}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Acaba en {countdown}</p>
-        </CardContent>
-      </Card>
+      {isIcon ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className="relative h-8 px-2"
+          title={`Repte diari: ${state.node.title}`}
+        >
+          <span className="text-xl">🌟</span>
+          <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-pulse">!</span>
+        </Button>
+      ) : (
+        <Card
+          className="glass border-accent/40 mt-4 cursor-pointer hover:border-accent/70 transition-colors animate-fade-in"
+          onClick={() => setOpen(true)}
+        >
+          <CardContent className="py-3 px-4 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-accent font-bold mb-0.5">🌟 Repte diari · disponible</p>
+            <p className="text-sm font-bold">{state.node.title}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Acaba en {countdown}</p>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
