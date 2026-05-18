@@ -89,14 +89,14 @@ export default function PlayerProfilePage() {
     }
     setMessages(wallMsgs);
 
-    // Load visitor's own unused consumables (for gifting)
+    // Load visitor's own unused consumables (for gifting) + story inventory
     if (user && user.id !== userId) {
-      const { data: myCons } = await supabase
-        .from("pet_consumables")
-        .select("*")
-        .eq("user_id", user.id)
-        .is("used_at", null);
+      const [{ data: myCons }, { data: myInv }] = await Promise.all([
+        supabase.from("pet_consumables").select("*").eq("user_id", user.id).is("used_at", null),
+        supabase.from("story_inventory").select("*").eq("user_id", user.id).order("obtained_at"),
+      ]);
       setMyConsumables(myCons ?? []);
+      setMyStoryInventory(myInv ?? []);
     }
   }, [userId, user]);
 
