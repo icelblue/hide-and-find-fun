@@ -35,6 +35,7 @@ import { WorldMap } from "@/components/story/WorldMap";
 import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
+import { resolveAndFetchPendingVisits, outcomeLabel } from "@/lib/pet-social";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
