@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { getJournal, type JournalSummary } from "@/lib/story-progression";
 
-interface Props { userId: string; }
+interface Props { userId: string; variant?: "card" | "icon"; }
 
 /** Hint d'ús per objectes especials de la història (clau, mapa, etc.) */
 function describeItemUse(id: string, name: string): string {
