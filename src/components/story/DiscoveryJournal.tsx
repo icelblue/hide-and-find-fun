@@ -25,7 +25,7 @@ function describeItemUse(id: string, name: string): string {
   return "Es fa servir automàticament en escenes que el requereixin";
 }
 
-export function DiscoveryJournal({ userId }: Props) {
+export function DiscoveryJournal({ userId, variant = "card" }: Props) {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<JournalSummary | null>(null);
 
@@ -37,15 +37,21 @@ export function DiscoveryJournal({ userId }: Props) {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
-          📖 Diari de descobertes
-        </Button>
+        {variant === "icon" ? (
+          <Button variant="ghost" size="sm" className="h-8 px-2" title="Diari de descobertes">
+            <span className="text-xl">📖</span>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="w-full">
+            📖 Diari de descobertes
+          </Button>
+        )}
       </DrawerTrigger>
-      <DrawerContent className="max-w-md mx-auto bg-background">
+      <DrawerContent className="max-w-md mx-auto bg-background max-h-[85vh] flex flex-col">
         <DrawerHeader>
           <DrawerTitle>📖 Diari del Viatge</DrawerTitle>
         </DrawerHeader>
-        <div className="px-4 pb-6">
+        <div className="px-4 pb-6 flex-1 min-h-0 overflow-y-auto">
           {!data ? (
             <p className="text-sm text-muted-foreground text-center py-4">Carregant...</p>
           ) : (
