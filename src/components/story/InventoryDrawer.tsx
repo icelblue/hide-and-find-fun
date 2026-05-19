@@ -9,6 +9,7 @@ import {
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
 import { getMyAccessories } from "@/lib/story-helpers";
+import { getJournal, type JournalSummary } from "@/lib/story-progression";
 import { toast } from "sonner";
 
 interface Props {
@@ -24,6 +25,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [knownIds, setKnownIds] = useState<Set<string>>(new Set());
   const [accessories, setAccessories] = useState<any[]>([]);
+  const [journal, setJournal] = useState<JournalSummary | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
@@ -37,13 +39,14 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   );
 
   const load = async () => {
-    const [inv, recs, known, accs] = await Promise.all([
-      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId),
+    const [inv, recs, known, accs, jour] = await Promise.all([
+      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId), getJournal(userId),
     ]);
     setInventory(inv);
     setRecipes(recs);
     setKnownIds(known);
     setAccessories(accs);
+    setJournal(jour);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount]);
@@ -94,7 +97,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
 
         <div className="px-4 pb-6 overflow-y-auto flex-1 min-h-0">
           <Tabs defaultValue="items" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full h-auto mb-3">
+            <TabsList className="grid grid-cols-5 w-full h-auto mb-3">
               <TabsTrigger value="items" className="text-[10px] py-2">
                 🎒 {inventory.length > 0 && <span className="ml-0.5 text-accent">({inventory.length})</span>}
               </TabsTrigger>
@@ -103,6 +106,9 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               </TabsTrigger>
               <TabsTrigger value="accessories" className="text-[10px] py-2">
                 ✨ {accessories.length > 0 && <span className="ml-0.5 text-accent">({accessories.length})</span>}
+              </TabsTrigger>
+              <TabsTrigger value="endings" className="text-[10px] py-2">
+                🏁 {journal && journal.endingsSeen.length > 0 && <span className="ml-0.5 text-accent">({journal.endingsSeen.length})</span>}
               </TabsTrigger>
               <TabsTrigger value="help" className="text-[10px] py-2">❓</TabsTrigger>
             </TabsList>
@@ -247,6 +253,30 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               <p className="text-[10px] text-muted-foreground/70 italic text-center pt-2">
                 Els accessoris són permanents i es veuen al perfil públic de {petName}.
               </p>
+            </TabsContent>
+
+            {/* FINALS DESCOBERTS */}
+            <TabsContent value="endings" className="mt-0 space-y-2">
+              {!journal ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Carregant...</p>
+              ) : journal.endingsSeen.length === 0 ? (
+                <div className="text-center py-8 text-xs text-muted-foreground italic">
+                  Encara no has arribat a cap final.<br />
+                  Continua jugant per descobrir-los! ({journal.totals.endings} totals)
+                </div>
+              ) : (
+                <>
+                  <p className="text-[10px] text-muted-foreground/70 px-1">
+                    Has descobert {journal.endingsSeen.length} de {journal.totals.endings} finals possibles.
+                  </p>
+                  {journal.endingsSeen.map((e) => (
+                    <div key={e.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
+                      <span className="text-2xl">🏁</span>
+                      <p className="text-sm font-medium">{e.title}</p>
+                    </div>
+                  ))}
+                </>
+              )}
             </TabsContent>
 
             {/* AJUDA */}
