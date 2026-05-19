@@ -97,7 +97,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
 
         <div className="px-4 pb-6 overflow-y-auto flex-1 min-h-0">
           <Tabs defaultValue="items" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full h-auto mb-3">
+            <TabsList className="grid grid-cols-5 w-full h-auto mb-3">
               <TabsTrigger value="items" className="text-[10px] py-2">
                 🎒 {inventory.length > 0 && <span className="ml-0.5 text-accent">({inventory.length})</span>}
               </TabsTrigger>
@@ -106,6 +106,9 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               </TabsTrigger>
               <TabsTrigger value="accessories" className="text-[10px] py-2">
                 ✨ {accessories.length > 0 && <span className="ml-0.5 text-accent">({accessories.length})</span>}
+              </TabsTrigger>
+              <TabsTrigger value="endings" className="text-[10px] py-2">
+                🏁 {journal && journal.endingsSeen.length > 0 && <span className="ml-0.5 text-accent">({journal.endingsSeen.length})</span>}
               </TabsTrigger>
               <TabsTrigger value="help" className="text-[10px] py-2">❓</TabsTrigger>
             </TabsList>
