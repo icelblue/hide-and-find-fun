@@ -32,7 +32,7 @@ import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
 import { PetStatsBar } from "@/components/story/PetStatsBar";
 import { InventoryDrawer } from "@/components/story/InventoryDrawer";
 import { WorldMap } from "@/components/story/WorldMap";
-import { DiscoveryJournal } from "@/components/story/DiscoveryJournal";
+
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
 import { resolveAndFetchPendingVisits, fetchAndMarkUnseenNotifications, type ResolvedVisit, type PetNotification } from "@/lib/pet-social";
