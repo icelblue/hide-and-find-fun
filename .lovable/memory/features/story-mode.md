@@ -1,6 +1,6 @@
 ---
 name: Story Mode v5.1
-description: Aventura ramificada single-player. v5.1 afegeix decay temporal de necessitats, ús d'items des de motxilla amb efectes a estats, auto-descobriment de receptes quan tens ingredients, motxilla amb pestanyes (Objectes/Receptes/Ajuda), HelpDialog persistent, requisits de mons visibles amb progrés, i nivell mascota al perfil públic.
+description: Aventura ramificada single-player. v5.2 elimina DiscoveryJournal (duplicava Objectes/Receptes amb Motxilla). Finals descoberts ara són pestanya 🏁 dins InventoryDrawer (5 tabs: Objectes/Receptes/Accessoris/Finals/Ajuda). v5.1 base: decay temporal, ús d'items, auto-descobriment receptes, HelpDialog, requisits mons visibles.
 type: feature
 ---
 
