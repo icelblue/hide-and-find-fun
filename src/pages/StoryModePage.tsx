@@ -560,6 +560,7 @@ export default function StoryModePage() {
               const st = await getPetState(user.id);
               setPetState(st);
             }} />}
+            {user && <DiscoveryJournal userId={user.id} variant="icon" />}
             {run && (
               <span className="text-[10px] text-accent/80 font-medium">
                 ✓ Cap. {node.chapter}/8
