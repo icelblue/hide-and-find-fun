@@ -9,6 +9,7 @@ import {
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
 import { getMyAccessories } from "@/lib/story-helpers";
+import { getJournal, type JournalSummary } from "@/lib/story-progression";
 import { toast } from "sonner";
 
 interface Props {
