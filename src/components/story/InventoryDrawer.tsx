@@ -255,6 +255,30 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               </p>
             </TabsContent>
 
+            {/* FINALS DESCOBERTS */}
+            <TabsContent value="endings" className="mt-0 space-y-2">
+              {!journal ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Carregant...</p>
+              ) : journal.endingsSeen.length === 0 ? (
+                <div className="text-center py-8 text-xs text-muted-foreground italic">
+                  Encara no has arribat a cap final.<br />
+                  Continua jugant per descobrir-los! ({journal.totals.endings} totals)
+                </div>
+              ) : (
+                <>
+                  <p className="text-[10px] text-muted-foreground/70 px-1">
+                    Has descobert {journal.endingsSeen.length} de {journal.totals.endings} finals possibles.
+                  </p>
+                  {journal.endingsSeen.map((e) => (
+                    <div key={e.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
+                      <span className="text-2xl">🏁</span>
+                      <p className="text-sm font-medium">{e.title}</p>
+                    </div>
+                  ))}
+                </>
+              )}
+            </TabsContent>
+
             {/* AJUDA */}
             <TabsContent value="help" className="mt-0 space-y-3 text-xs">
               <div className="glass rounded-lg p-3 border border-border/30">
