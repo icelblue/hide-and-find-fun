@@ -458,7 +458,6 @@ export default function StoryModePage() {
                   }}
                 />
               )}
-              {user && <DiscoveryJournal userId={user.id} variant="icon" />}
               {user && <DailyChallengeCard variant="icon" userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
             </div>
           </div>
