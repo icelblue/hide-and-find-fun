@@ -493,7 +493,7 @@ export default function StoryModePage() {
             {busy ? "..." : `📖 Començar a ${selected?.icon ?? "🏠"} ${selected?.name ?? "Casa"}`}
           </Button>
 
-          {user && <DiscoveryJournal userId={user.id} />}
+          
 
           <Button
             variant="ghost"
