@@ -25,6 +25,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [knownIds, setKnownIds] = useState<Set<string>>(new Set());
   const [accessories, setAccessories] = useState<any[]>([]);
+  const [journal, setJournal] = useState<JournalSummary | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
@@ -38,13 +39,14 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   );
 
   const load = async () => {
-    const [inv, recs, known, accs] = await Promise.all([
-      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId),
+    const [inv, recs, known, accs, jour] = await Promise.all([
+      getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId), getJournal(userId),
     ]);
     setInventory(inv);
     setRecipes(recs);
     setKnownIds(known);
     setAccessories(accs);
+    setJournal(jour);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount]);
