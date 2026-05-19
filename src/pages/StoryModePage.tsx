@@ -458,6 +458,7 @@ export default function StoryModePage() {
                   }}
                 />
               )}
+              {user && <DiscoveryJournal userId={user.id} variant="icon" />}
               {user && <DailyChallengeCard variant="icon" userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
             </div>
           </div>
@@ -492,7 +493,7 @@ export default function StoryModePage() {
             {busy ? "..." : `📖 Començar a ${selected?.icon ?? "🏠"} ${selected?.name ?? "Casa"}`}
           </Button>
 
-          {user && <DiscoveryJournal userId={user.id} />}
+          
 
           <Button
             variant="ghost"
@@ -559,6 +560,7 @@ export default function StoryModePage() {
               const st = await getPetState(user.id);
               setPetState(st);
             }} />}
+            {user && <DiscoveryJournal userId={user.id} variant="icon" />}
             {run && (
               <span className="text-[10px] text-accent/80 font-medium">
                 ✓ Cap. {node.chapter}/8
