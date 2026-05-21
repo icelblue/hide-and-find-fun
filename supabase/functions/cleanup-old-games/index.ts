@@ -178,7 +178,30 @@ Deno.serve(async () => {
     stats.fixed_blocked_social_items = fixedBlocked?.length ?? 0;
 
     // ─────────────────────────────────────────────
-    // 8. Clean old backups in storage (keep last 6)
+    // 9. Pet visits resolved > 24 hours
+    // ─────────────────────────────────────────────
+    const petVisitCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: deletedPetVisits } = await supabase
+      .from("pet_visits")
+      .delete()
+      .not("resolved_at", "is", null)
+      .lt("resolved_at", petVisitCutoff)
+      .select("id");
+    stats.deleted_pet_visits = deletedPetVisits?.length ?? 0;
+
+    // ─────────────────────────────────────────────
+    // 10. Pet notifications > 7 days
+    // ─────────────────────────────────────────────
+    const petNotifCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: deletedPetNotifs } = await supabase
+      .from("pet_notifications")
+      .delete()
+      .lt("created_at", petNotifCutoff)
+      .select("id");
+    stats.deleted_pet_notifications = deletedPetNotifs?.length ?? 0;
+
+    // ─────────────────────────────────────────────
+    // 11. Clean old backups in storage (keep last 6)
     // ─────────────────────────────────────────────
     const { data: backupFiles } = await supabase.storage
       .from("backups")
