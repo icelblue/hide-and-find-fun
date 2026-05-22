@@ -74,6 +74,7 @@ export default function StoryModePage() {
   const [selectedWorld, setSelectedWorld] = useState<string>("home");
   const [visitMap, setVisitMap] = useState<Map<string, number>>(new Map());
   const [recipeCount, setRecipeCount] = useState(0);
+  const [personality, setPersonality] = useState<Personality | null>(null);
 
   // Last ending info
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
