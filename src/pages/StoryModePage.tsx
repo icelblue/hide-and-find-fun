@@ -37,6 +37,7 @@ import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
 import { resolveAndFetchPendingVisits, fetchAndMarkUnseenNotifications, type ResolvedVisit, type PetNotification } from "@/lib/pet-social";
 import { WhileAwayDialog } from "@/components/story/WhileAwayDialog";
+import { getPetPersonality, type Personality } from "@/lib/pet-personality";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
