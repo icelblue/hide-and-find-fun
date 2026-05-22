@@ -163,6 +163,7 @@ async function applyReward(
   userId: string,
   rewardType: string | null,
   rewardValue: any,
+  xpMultiplier: number = 1,
 ): Promise<RewardOutcome> {
   if (!rewardType || !rewardValue) return {};
   const out: RewardOutcome = {};
