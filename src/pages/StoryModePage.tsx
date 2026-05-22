@@ -607,7 +607,7 @@ export default function StoryModePage() {
         {personality && (
           <div className="relative z-10 flex flex-wrap gap-1.5 justify-center px-1">
             {(["curious","loyal","brave","gluttonous","calm"] as const).map((t) => {
-              const meta = (require("@/lib/pet-personality") as typeof import("@/lib/pet-personality")).TRAIT_META[t];
+              const meta = TRAIT_META[t];
               const value = personality[t];
               const strong = value >= 7;
               const weak = value <= 3;
