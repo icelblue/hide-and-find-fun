@@ -245,7 +245,7 @@ export default function StoryModePage() {
     if (!user || !run || !node) return;
     setBusy(true);
     try {
-      const result = await makeChoice(user.id, run, choice);
+      const result = await makeChoice(user.id, run, choice, personality ?? undefined);
       const freshPet = await getMyPet(user.id);
       setPet(freshPet);
 
@@ -253,6 +253,15 @@ export default function StoryModePage() {
       if (result.reward.newState) {
         setPrevPetState(petState);
         setPetState(result.reward.newState);
+        // Estat ha canviat → recalcular personalitat efectiva
+        try { setPersonality(await getPetPersonality(user.id)); } catch { /* non-blocking */ }
+      }
+
+      // Notify trait bonus (if any)
+      if (result.traitBonus) {
+        const { TRAIT_META } = await import("@/lib/pet-personality");
+        const meta = TRAIT_META[result.traitBonus.trait as keyof typeof TRAIT_META];
+        toast.success(`✨ ${meta?.label ?? result.traitBonus.trait}! Bonus XP ×${result.traitBonus.multiplier}`);
       }
 
       // Refresh inventory if item/recipe gained
