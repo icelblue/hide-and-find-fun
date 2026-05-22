@@ -117,6 +117,10 @@ export default function StoryModePage() {
       setVisitMap(visits);
       const rcCount = recipeBookRes.count ?? 0;
       setRecipeCount(rcCount);
+      // Carrega personalitat efectiva (espècie + estat)
+      if (petData) {
+        try { setPersonality(await getPetPersonality(user.id)); } catch { /* non-blocking */ }
+      }
 
       // 🧪 Auto-discover passive: comprova si ja té ingredients per receptes no descobertes
       if (invData.length > 0) {
