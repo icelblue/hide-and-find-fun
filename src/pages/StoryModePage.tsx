@@ -603,6 +603,31 @@ export default function StoryModePage() {
           <PetStatsBar state={petState} prevState={prevPetState} />
         </div>
 
+        {/* FASE 1: Personalitat efectiva (espècie + estat actual) */}
+        {personality && (
+          <div className="relative z-10 flex flex-wrap gap-1.5 justify-center px-1">
+            {(["curious","loyal","brave","gluttonous","calm"] as const).map((t) => {
+              const meta = (require("@/lib/pet-personality") as typeof import("@/lib/pet-personality")).TRAIT_META[t];
+              const value = personality[t];
+              const strong = value >= 7;
+              const weak = value <= 3;
+              return (
+                <span
+                  key={t}
+                  title={`${meta.label}: ${value}/10`}
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                    strong ? `bg-purple-500/20 ${meta.color} ring-1 ring-purple-400/40`
+                    : weak ? "bg-muted/30 text-muted-foreground/60"
+                    : "bg-muted/40 text-foreground/70"
+                  }`}
+                >
+                  {meta.icon} {value}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         <div className="relative z-10">
           <StoryNodeView
             node={node}
