@@ -222,8 +222,20 @@ export async function makeChoice(
   userId: string,
   run: StoryRun,
   choice: StoryChoice,
-): Promise<ChoiceResult> {
-  const reward = await applyReward(userId, choice.reward_type, choice.reward_value);
+  personality?: import("./pet-personality").Personality,
+): Promise<ChoiceResult & { traitBonus?: { trait: string; multiplier: number } }> {
+  // Compute trait-based XP multiplier
+  let xpMultiplier = 1;
+  let traitBonus: { trait: string; multiplier: number } | undefined;
+  if (personality && choice.trait_reward_multiplier) {
+    const { getRewardTraitBonus } = await import("./pet-personality");
+    const bonus = getRewardTraitBonus(personality, choice.trait_reward_multiplier);
+    xpMultiplier = bonus.multiplier;
+    if (bonus.trait && bonus.multiplier > 1) {
+      traitBonus = { trait: bonus.trait, multiplier: bonus.multiplier };
+    }
+  }
+  const reward = await applyReward(userId, choice.reward_type, choice.reward_value, xpMultiplier);
 
   // Apply state delta (silent — revealed via animated bars)
   if (choice.state_delta && typeof choice.state_delta === "object") {
