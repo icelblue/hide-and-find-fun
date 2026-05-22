@@ -740,6 +740,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_species_traits: {
+        Row: {
+          brave: number
+          calm: number
+          created_at: string
+          curious: number
+          gluttonous: number
+          loyal: number
+          pet_type: string
+        }
+        Insert: {
+          brave?: number
+          calm?: number
+          created_at?: string
+          curious?: number
+          gluttonous?: number
+          loyal?: number
+          pet_type: string
+        }
+        Update: {
+          brave?: number
+          calm?: number
+          created_at?: string
+          curious?: number
+          gluttonous?: number
+          loyal?: number
+          pet_type?: string
+        }
+        Relationships: []
+      }
       pet_state: {
         Row: {
           bond: number
@@ -1205,9 +1235,11 @@ export type Database = {
           requires_bond: number | null
           requires_items: Json | null
           requires_skill: string | null
+          requires_traits: Json | null
           reward_type: string | null
           reward_value: Json | null
           state_delta: Json | null
+          trait_reward_multiplier: Json | null
         }
         Insert: {
           choice_order: number
@@ -1220,9 +1252,11 @@ export type Database = {
           requires_bond?: number | null
           requires_items?: Json | null
           requires_skill?: string | null
+          requires_traits?: Json | null
           reward_type?: string | null
           reward_value?: Json | null
           state_delta?: Json | null
+          trait_reward_multiplier?: Json | null
         }
         Update: {
           choice_order?: number
@@ -1235,9 +1269,11 @@ export type Database = {
           requires_bond?: number | null
           requires_items?: Json | null
           requires_skill?: string | null
+          requires_traits?: Json | null
           reward_type?: string | null
           reward_value?: Json | null
           state_delta?: Json | null
+          trait_reward_multiplier?: Json | null
         }
         Relationships: [
           {
