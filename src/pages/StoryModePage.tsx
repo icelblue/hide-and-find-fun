@@ -615,6 +615,7 @@ export default function StoryModePage() {
             worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
               ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
               : undefined}
+            personality={personality ?? undefined}
             onChoose={handleChoose}
             busy={busy || !!reveal}
           />
