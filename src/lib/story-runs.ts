@@ -169,10 +169,12 @@ async function applyReward(
   const out: RewardOutcome = {};
 
   if (rewardType === "xp" && typeof rewardValue.xp === "number") {
-    const r = await addPetXP(userId, rewardValue.xp);
-    out.xp = rewardValue.xp;
+    const xp = Math.round(rewardValue.xp * xpMultiplier);
+    const r = await addPetXP(userId, xp);
+    out.xp = xp;
     if (r?.isDead) out.killed = true;
   } else if (rewardType === "damage" && typeof rewardValue.damage === "number") {
+    // Mai amplifiquem el dany per personalitat (només upside)
     const r = await addPetXP(userId, rewardValue.damage);
     out.damage = rewardValue.damage;
     if (r?.isDead) out.killed = true;
