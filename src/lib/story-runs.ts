@@ -39,6 +39,8 @@ export interface StoryChoice {
   requires_skill?: string | null;
   min_visits?: number | null;
   max_visits?: number | null;
+  requires_traits?: Record<string, number> | null;
+  trait_reward_multiplier?: Record<string, number> | null;
 }
 
 export interface StoryRun {
