@@ -5,6 +5,7 @@ import { TypewriterText } from "@/components/TypewriterText";
 import type { StoryNode, StoryChoice, ChoiceResult } from "@/lib/story-runs";
 import type { InventoryItem, PetState } from "@/lib/story-state";
 import { hasItems } from "@/lib/story-state";
+import { checkTraitRequirement, getRewardTraitBonus, TRAIT_META, type Personality, type Trait } from "@/lib/pet-personality";
 
 interface Props {
   node: StoryNode;
@@ -15,6 +16,7 @@ interface Props {
   unlockedSkills: Set<string>;
   nodeVisitCount: number;
   worldLabel?: string;
+  personality?: Personality;
   onChoose: (choice: StoryChoice) => Promise<ChoiceResult | void>;
   busy: boolean;
 }
@@ -23,14 +25,13 @@ function fillPet(text: string, petName: string) {
   return text.split("{pet}").join(petName);
 }
 
-export function StoryNodeView({ node, choices, petName, inventory, state, unlockedSkills, nodeVisitCount, worldLabel, onChoose, busy }: Props) {
+export function StoryNodeView({ node, choices, petName, inventory, state, unlockedSkills, nodeVisitCount, worldLabel, personality, onChoose, busy }: Props) {
   const [revealChoices, setRevealChoices] = useState(false);
   const filled = useMemo(() => fillPet(node.narrative, petName), [node, petName]);
 
-  // Reset reveal on node change
   useEffect(() => { setRevealChoices(false); }, [node.id]);
 
-  // Filter visible choices based on requirements
+  // Filter visible choices (hides locked-by-trait too)
   const visibleChoices = useMemo(() => {
     return choices.filter((c) => {
       if (c.requires_items && c.requires_items.length > 0 && !hasItems(inventory, c.requires_items)) return false;
@@ -38,9 +39,14 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
       if (c.requires_skill && !unlockedSkills.has(c.requires_skill)) return false;
       if (typeof c.min_visits === "number" && nodeVisitCount < c.min_visits) return false;
       if (typeof c.max_visits === "number" && nodeVisitCount > c.max_visits) return false;
+      // Trait-gated options: only visible if personality meets requirement
+      if (c.requires_traits && personality) {
+        const { ok } = checkTraitRequirement(personality, c.requires_traits);
+        if (!ok) return false;
+      }
       return true;
     });
-  }, [choices, inventory, state, unlockedSkills, nodeVisitCount]);
+  }, [choices, inventory, state, unlockedSkills, nodeVisitCount, personality]);
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -68,23 +74,53 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
           {visibleChoices.map((c, i) => {
             const usesItems = c.requires_items && c.requires_items.length > 0;
             const usesBond = typeof c.requires_bond === "number";
+            const usesTraits = c.requires_traits && Object.keys(c.requires_traits).length > 0;
+            // Detect if this choice has a trait-based bonus that the pet WILL trigger
+            const traitBonus = personality && c.trait_reward_multiplier
+              ? getRewardTraitBonus(personality, c.trait_reward_multiplier)
+              : null;
+            const hasActiveBonus = !!(traitBonus && traitBonus.trait && traitBonus.multiplier > 1);
+            const isPersonalityChoice = usesTraits || hasActiveBonus;
             return (
               <Button
                 key={c.id}
                 variant="outline"
                 disabled={busy}
                 onClick={() => onChoose(c)}
-                className={`w-full justify-start text-left h-auto py-3 px-4 whitespace-normal ${usesItems || usesBond ? "border-accent/50" : ""}`}
+                className={`w-full justify-start text-left h-auto py-3 px-4 whitespace-normal ${
+                  isPersonalityChoice ? "border-purple-400/60 bg-purple-500/5"
+                  : usesItems || usesBond ? "border-accent/50" : ""
+                }`}
               >
                 <div className="flex items-start gap-2 w-full">
                   <span className="text-xs font-bold text-muted-foreground shrink-0 mt-0.5">
                     {i + 1}.
                   </span>
-                  <p className="text-sm font-medium flex-1 min-w-0">
-                    {usesItems && <span className="text-accent mr-1">✨</span>}
-                    {usesBond && <span className="text-pink-400 mr-1">❤️</span>}
-                    {fillPet(c.label, petName)}
-                  </p>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-sm font-medium">
+                      {usesItems && <span className="text-accent mr-1">✨</span>}
+                      {usesBond && <span className="text-pink-400 mr-1">❤️</span>}
+                      {fillPet(c.label, petName)}
+                    </p>
+                    {usesTraits && c.requires_traits && (
+                      <div className="flex flex-wrap gap-1">
+                        {Object.keys(c.requires_traits).map((t) => {
+                          const meta = TRAIT_META[t as Trait];
+                          if (!meta) return null;
+                          return (
+                            <span key={t} className={`text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 ${meta.color} font-semibold`}>
+                              {meta.icon} {meta.label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {hasActiveBonus && traitBonus?.trait && (
+                      <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-semibold`}>
+                        ✨ Bonus {TRAIT_META[traitBonus.trait as Trait]?.label} ×{traitBonus.multiplier}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Button>
             );

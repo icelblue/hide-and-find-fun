@@ -37,6 +37,7 @@ import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
 import { resolveAndFetchPendingVisits, fetchAndMarkUnseenNotifications, type ResolvedVisit, type PetNotification } from "@/lib/pet-social";
 import { WhileAwayDialog } from "@/components/story/WhileAwayDialog";
+import { getPetPersonality, TRAIT_META, type Personality } from "@/lib/pet-personality";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -73,6 +74,7 @@ export default function StoryModePage() {
   const [selectedWorld, setSelectedWorld] = useState<string>("home");
   const [visitMap, setVisitMap] = useState<Map<string, number>>(new Map());
   const [recipeCount, setRecipeCount] = useState(0);
+  const [personality, setPersonality] = useState<Personality | null>(null);
 
   // Last ending info
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
@@ -115,6 +117,10 @@ export default function StoryModePage() {
       setVisitMap(visits);
       const rcCount = recipeBookRes.count ?? 0;
       setRecipeCount(rcCount);
+      // Carrega personalitat efectiva (espècie + estat)
+      if (petData) {
+        try { setPersonality(await getPetPersonality(user.id)); } catch { /* non-blocking */ }
+      }
 
       // 🧪 Auto-discover passive: comprova si ja té ingredients per receptes no descobertes
       if (invData.length > 0) {
@@ -239,7 +245,7 @@ export default function StoryModePage() {
     if (!user || !run || !node) return;
     setBusy(true);
     try {
-      const result = await makeChoice(user.id, run, choice);
+      const result = await makeChoice(user.id, run, choice, personality ?? undefined);
       const freshPet = await getMyPet(user.id);
       setPet(freshPet);
 
@@ -247,6 +253,15 @@ export default function StoryModePage() {
       if (result.reward.newState) {
         setPrevPetState(petState);
         setPetState(result.reward.newState);
+        // Estat ha canviat → recalcular personalitat efectiva
+        try { setPersonality(await getPetPersonality(user.id)); } catch { /* non-blocking */ }
+      }
+
+      // Notify trait bonus (if any)
+      if (result.traitBonus) {
+        const { TRAIT_META } = await import("@/lib/pet-personality");
+        const meta = TRAIT_META[result.traitBonus.trait as keyof typeof TRAIT_META];
+        toast.success(`✨ ${meta?.label ?? result.traitBonus.trait}! Bonus XP ×${result.traitBonus.multiplier}`);
       }
 
       // Refresh inventory if item/recipe gained
@@ -588,6 +603,31 @@ export default function StoryModePage() {
           <PetStatsBar state={petState} prevState={prevPetState} />
         </div>
 
+        {/* FASE 1: Personalitat efectiva (espècie + estat actual) */}
+        {personality && (
+          <div className="relative z-10 flex flex-wrap gap-1.5 justify-center px-1">
+            {(["curious","loyal","brave","gluttonous","calm"] as const).map((t) => {
+              const meta = TRAIT_META[t];
+              const value = personality[t];
+              const strong = value >= 7;
+              const weak = value <= 3;
+              return (
+                <span
+                  key={t}
+                  title={`${meta.label}: ${value}/10`}
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                    strong ? `bg-purple-500/20 ${meta.color} ring-1 ring-purple-400/40`
+                    : weak ? "bg-muted/30 text-muted-foreground/60"
+                    : "bg-muted/40 text-foreground/70"
+                  }`}
+                >
+                  {meta.icon} {value}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         <div className="relative z-10">
           <StoryNodeView
             node={node}
@@ -600,6 +640,7 @@ export default function StoryModePage() {
             worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
               ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
               : undefined}
+            personality={personality ?? undefined}
             onChoose={handleChoose}
             busy={busy || !!reveal}
           />
