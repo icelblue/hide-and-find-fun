@@ -279,7 +279,7 @@ export async function makeChoice(
     if (reward.xp) await prog.syncLevelAndSkills(userId);
   } catch { /* non-blocking */ }
 
-  return { reward, nextNode, runEnded: endStatus };
+  return { reward, nextNode, runEnded: endStatus, traitBonus };
 }
 
 // ============================================
