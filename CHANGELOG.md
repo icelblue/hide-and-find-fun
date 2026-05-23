@@ -7,6 +7,20 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.13.1] — 2026-05-23 — Personalitat aplicada a nodes existents (PATCH)
+
+### Modificat
+- **Mode història — FASE 2**: aplicats `requires_traits` i `trait_reward_multiplier` a 11 opcions dels nodes inicials (`c1_start`, `c2_garden`, `c2_kitchen`, `c2_living`)
+- Algunes opcions ara només són visibles si la mascota té el trait mínim (ex: obrir caixa misteriosa requereix valentia ≥7)
+- Bonificacions d'XP visibles via badge "Bonus" quan el trait dominant ≥7
+
+### Per validar
+- Crear partida amb mascotes de traits oposats (gat curiós vs tortuga calmada) i veure les opcions diferents
+
+---
+
+
+
 ## [1.12.0] — 2026-04-26 — Eliminació de compte (GDPR) (MINOR)
 
 ### Afegit
