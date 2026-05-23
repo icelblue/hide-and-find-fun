@@ -7,6 +7,26 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.14.0] — 2026-05-23 — Bosc Encantat (FASE 3) (MINOR)
+
+### Afegit
+- **Món Bosc expandit**: 8 nodes nous (Cercle de fades, Tempesta, Bèstia, Cadell perdut, Móres, Riu, Santuari, Llop)
+- **Final nou** `ending_wolf_friend`: només accessible amb mascota molt valenta i lleial (brave ≥7, loyal ≥6)
+- **28 opcions noves** amb requisits i bonificacions de personalitat
+- **8 ítems nous** com a recompenses: ploma de fada, pols màgica, móra encantada, cristall del riu, pedra del santuari, etc.
+- **Límit d'opcions per node** ampliat de 6 a 10 (constraint SQL)
+
+### Cada trait té el seu camí
+- 🔍 Curiós → Cercle fades, Riu encantat
+- ⚔️ Valent → Bèstia, Llop, Tempesta sota pluja
+- 🌿 Calmat → Santuari, refugi tempesta
+- 🤝 Lleial → Cadell perdut, vincle amb el llop
+- 🍖 Gormand → Móres salvatges, alimentar la bèstia
+
+---
+
+
+
 ## [1.13.1] — 2026-05-23 — Personalitat aplicada a nodes existents (PATCH)
 
 ### Modificat
