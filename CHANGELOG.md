@@ -5,9 +5,22 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **MINOR**: funcionalitats noves (compatibles)
 - **PATCH**: correccions de bugs
 
+
+## [1.15.0] — 2026-05-24 — Casa Abandonada + Fira del Poble (FASE 4) (MINOR)
+
+### Afegit
+- **🏚️ Món Casa Abandonada** (unlock: level ≥5): 8 nodes (Entrada, Hall, Golfes, Soterrani, Biblioteca, Mirall, Infant fantasma, Pati) + 3 finals (Amic per sempre, Tresor amagat, Atrapat pel mirall)
+- **🎪 Món Fira del Poble** (unlock: bond ≥50): 8 nodes (Entrada, Tómbola, Mag, Dolços, Atraccions, Concurs, Escenari, Darrere) + 4 finals (Campió, Golafre, Heroi, Expulsat)
+- **24+ opcions noves** amb `requires_traits` i `trait_reward_multiplier` (bonus fins ×1.7)
+- **10 ítems de recompensa nous**: Nina antiga, Tresor antic, Llibre encantat, Amulet fantasmal, Premi tómbola, Barret de mag, Cotó sucre, Corona fira, Pilota brillant, Medalla heroi
+
+### Resum del roadmap
+- ✅ FASE 1-4 completes. Pendent: FASE 5 (retroactiu a Castell/Casa antiga) + i18n CA/EN.
+
 ---
 
 ## [1.14.0] — 2026-05-23 — Bosc Encantat (FASE 3) (MINOR)
+
 
 ### Afegit
 - **Món Bosc expandit**: 8 nodes nous (Cercle de fades, Tempesta, Bèstia, Cadell perdut, Móres, Riu, Santuari, Llop)
