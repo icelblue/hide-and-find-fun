@@ -6,7 +6,20 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **PATCH**: correccions de bugs
 
 
+## [1.16.0] — 2026-05-24 — Personalitat retroactiva (FASE 5) (MINOR)
+
+### Afegit
+- **87 opcions actualitzades** als capítols 3-7 (Carrer, Bosc antic, Castell preludi/final) amb `requires_traits` i `trait_reward_multiplier`. Ara totes les decisions del Mode Història reflecteixen la personalitat de la mascota.
+- Distribució per tret: brave (decisions arriscades/protectores), loyal (compromís/vincle), curious (exploració/secrets), calm (reflexió/relax), gluttonous (plaer/golafreria).
+
+### Següent
+- Roadmap personalitat: **COMPLET** ✅ (FASES 1-5)
+- Pendent: i18n CA/EN amb taula `translations` manual.
+
+---
+
 ## [1.15.0] — 2026-05-24 — Casa Abandonada + Fira del Poble (FASE 4) (MINOR)
+
 
 ### Afegit
 - **🏚️ Món Casa Abandonada** (unlock: level ≥5): 8 nodes (Entrada, Hall, Golfes, Soterrani, Biblioteca, Mirall, Infant fantasma, Pati) + 3 finals (Amic per sempre, Tresor amagat, Atrapat pel mirall)
