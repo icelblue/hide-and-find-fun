@@ -976,6 +976,7 @@ export type Database = {
           games_played: number
           games_won: number
           id: string
+          language: string
           last_active_at: string | null
           last_reminder_sent_at: string | null
           league: Database["public"]["Enums"]["league_tier"]
@@ -994,6 +995,7 @@ export type Database = {
           games_played?: number
           games_won?: number
           id?: string
+          language?: string
           last_active_at?: string | null
           last_reminder_sent_at?: string | null
           league?: Database["public"]["Enums"]["league_tier"]
@@ -1012,6 +1014,7 @@ export type Database = {
           games_played?: number
           games_won?: number
           id?: string
+          language?: string
           last_active_at?: string | null
           last_reminder_sent_at?: string | null
           league?: Database["public"]["Enums"]["league_tier"]
@@ -1551,6 +1554,33 @@ export type Database = {
         }
         Relationships: []
       }
+      translations: {
+        Row: {
+          entity_id: string
+          entity_type: string
+          id: string
+          lang: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          entity_id: string
+          entity_type: string
+          id?: string
+          lang: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          lang?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       wall_messages: {
         Row: {
           author_user_id: string
@@ -1672,6 +1702,15 @@ export type Database = {
           tools: Json
           user_id: string
         }[]
+      }
+      get_translation: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_fallback: string
+          p_lang: string
+        }
+        Returns: string
       }
       gift_consumable: {
         Args: { _consumable_name: string; _to_user_id: string }
