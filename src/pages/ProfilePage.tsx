@@ -33,6 +33,8 @@ import { getRewardCatalog } from "@/lib/reward-helpers";
 import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
 import { levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
 import { PetActivityFeed } from "@/components/PetActivityFeed";
+import { useLanguage, useT, type Lang } from "@/i18n/LanguageProvider";
+
 
 const WALL_TTL_HOURS = 22;
 
@@ -978,3 +980,33 @@ function DangerZone({ displayName, onDeleted }: { displayName: string; onDeleted
     </div>
   );
 }
+
+/** Selector d'idioma de joc (UI + contingut narratiu) */
+function LanguageSection() {
+  const { lang, setLang } = useLanguage();
+  const t = useT();
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div>
+          <h3 className="font-semibold text-sm">🌐 {t("profile.languagePreference")}</h3>
+          <p className="text-xs text-muted-foreground mt-1">{t("profile.languageHint")}</p>
+        </div>
+        <div className="flex gap-2">
+          {(["ca", "en"] as Lang[]).map((l) => (
+            <Button
+              key={l}
+              size="sm"
+              variant={lang === l ? "default" : "outline"}
+              onClick={() => setLang(l)}
+              className="flex-1"
+            >
+              {t(`lang.${l}`)}
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
