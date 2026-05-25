@@ -684,9 +684,13 @@ export default function ProfilePage() {
       {/* Referrals — convida amics */}
       <ReferralsSection userId={user!.id} />
 
+      {/* Idioma de joc */}
+      <LanguageSection />
+
       <Button variant="outline" className="w-full" onClick={signOut}>
         🚪 Tancar sessió
       </Button>
+
 
       {/* Zona perillosa — eliminar compte */}
       <DangerZone displayName={profile?.display_name ?? ""} onDeleted={() => {
