@@ -20,3 +20,4 @@ Camins 100% predefinits per escenari. 3 escenaris inicials: Cuina, Biblioteca, G
 - [Ranking system](mem://features/ranking) — Elo intern + Lligues Bronze→Diamant
 - [Object validation](mem://features/objects) — Regex, diccionari, propietats booleanes
 - [Regressions](mem://features/regressions) — REG-001..REG-015 amb tests
+- [i18n system](mem://features/i18n) — CA/EN híbrid: UI JSON + contingut BD `translations`, fallback CA
