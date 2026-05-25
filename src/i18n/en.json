@@ -1,0 +1,50 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "continue": "Continue",
+    "retry": "Retry",
+    "yes": "Yes",
+    "no": "No",
+    "language": "Language"
+  },
+  "lang": {
+    "ca": "Català",
+    "en": "English"
+  },
+  "nav": {
+    "lobby": "Home",
+    "profile": "Profile",
+    "story": "Story",
+    "logout": "Sign out"
+  },
+  "profile": {
+    "title": "My profile",
+    "displayName": "Name",
+    "stats": "Stats",
+    "level": "Level",
+    "elo": "Rating",
+    "languagePreference": "Game language",
+    "languageHint": "Choose the language for the interface and narrative"
+  },
+  "story": {
+    "title": "Story mode",
+    "newRun": "New adventure",
+    "continueRun": "Continue",
+    "inventory": "Backpack",
+    "help": "Help",
+    "worlds": "Worlds",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "noChoices": "No choices available"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "password": "Password"
+  }
+}

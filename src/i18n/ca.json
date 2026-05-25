@@ -1,0 +1,50 @@
+{
+  "common": {
+    "loading": "Carregant...",
+    "save": "Desa",
+    "cancel": "Cancel·la",
+    "close": "Tanca",
+    "back": "Enrere",
+    "continue": "Continua",
+    "retry": "Reintenta",
+    "yes": "Sí",
+    "no": "No",
+    "language": "Idioma"
+  },
+  "lang": {
+    "ca": "Català",
+    "en": "English"
+  },
+  "nav": {
+    "lobby": "Inici",
+    "profile": "Perfil",
+    "story": "Història",
+    "logout": "Tanca sessió"
+  },
+  "profile": {
+    "title": "El meu perfil",
+    "displayName": "Nom",
+    "stats": "Estadístiques",
+    "level": "Nivell",
+    "elo": "Puntuació",
+    "languagePreference": "Idioma de joc",
+    "languageHint": "Tria l'idioma per a la interfície i la narrativa"
+  },
+  "story": {
+    "title": "Mode història",
+    "newRun": "Nova aventura",
+    "continueRun": "Continua",
+    "inventory": "Motxilla",
+    "help": "Ajuda",
+    "worlds": "Mons",
+    "locked": "Bloquejat",
+    "unlocked": "Desbloquejat",
+    "noChoices": "No hi ha opcions disponibles"
+  },
+  "auth": {
+    "signIn": "Inicia sessió",
+    "signUp": "Crea un compte",
+    "email": "Correu",
+    "password": "Contrasenya"
+  }
+}

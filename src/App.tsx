@@ -4,6 +4,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy-loaded toaster (not needed for FCP)
@@ -45,24 +46,26 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <ErrorBoundary>
     <AuthProvider>
-      <Suspense fallback={null}>
-        <Sonner />
-      </Suspense>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/" element={<ProtectedRoute><LobbyPage /></ProtectedRoute>} />
-            <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
-            <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
-            <Route path="/claim" element={<ClaimReminderPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+      <LanguageProvider>
+        <Suspense fallback={null}>
+          <Sonner />
         </Suspense>
-      </BrowserRouter>
+        <BrowserRouter>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/" element={<ProtectedRoute><LobbyPage /></ProtectedRoute>} />
+              <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
+              <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
+              <Route path="/claim" element={<ClaimReminderPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </LanguageProvider>
     </AuthProvider>
   </ErrorBoundary>
 );
