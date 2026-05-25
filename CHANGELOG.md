@@ -6,6 +6,29 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **PATCH**: correccions de bugs
 
 
+## [1.17.0] — 2026-05-25 — i18n CA/EN base (MINOR)
+
+### Afegit
+- **Taula `translations`** (entity_type, entity_id, lang, value): emmagatzema traduccions de contingut narratiu (story_nodes, story_choices, story_worlds, story_recipes, reward_items). Índex per lookups ràpids.
+- **Camp `profiles.language`** (default `'ca'`, CHECK ca/en).
+- **Funció `get_translation(entity_type, entity_id, lang, fallback)`** amb fallback automàtic a CA si l'EN no existeix.
+- **Seed automàtic CA**: copiat tot el contingut existent a `translations` amb `lang='ca'`.
+- **Frontend i18n híbrid**:
+  - `src/i18n/{ca,en}.json` — strings d'UI.
+  - `src/i18n/LanguageProvider.tsx` — context React, `useT()` hook, helpers `fetchTranslations()` i `translateContent()` per BD.
+  - Sincronització bidireccional `localStorage` ↔ `profiles.language`.
+- **Selector d'idioma al perfil** (CA / EN) amb persistència a BD.
+
+### Arquitectura
+- UI strings: JSON (ràpides, versionades amb git).
+- Contingut narratiu: BD (editable sense desplegar, fallback CA si EN buit).
+
+### Següent
+- Refactor punts de lectura (StoryNodeView, WorldMap, RewardReveal, InventoryDrawer) perquè facin servir `fetchTranslations()` per mostrar contingut en l'idioma triat.
+- Omplir traduccions EN progressivament (admin task).
+
+---
+
 ## [1.16.0] — 2026-05-24 — Personalitat retroactiva (FASE 5) (MINOR)
 
 ### Afegit
