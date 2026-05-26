@@ -58,27 +58,38 @@ export interface StoryRun {
 const DEFAULT_START_NODE_ID = "c1_start";
 
 // ============================================
-// NODE / CHOICE FETCH (cached per session)
+// NODE / CHOICE FETCH (cached per session, per lang)
 // ============================================
+
+import { getCurrentLang, translateNodes, translateChoices, onLangChange } from "@/i18n/translate-data";
 
 let _nodesCache: Map<string, StoryNode> | null = null;
 let _choicesCache: Map<string, StoryChoice[]> | null = null;
+let _cacheLang: string | null = null;
+
+if (typeof window !== "undefined") {
+  onLangChange(() => { _nodesCache = null; _choicesCache = null; _cacheLang = null; });
+}
 
 async function loadCatalog() {
-  if (_nodesCache && _choicesCache) return;
+  const lang = getCurrentLang();
+  if (_nodesCache && _choicesCache && _cacheLang === lang) return;
   const [nodesRes, choicesRes] = await Promise.all([
     supabase.from("story_nodes").select("*"),
     supabase.from("story_choices").select("*").order("choice_order"),
   ]);
   if (nodesRes.error) throw nodesRes.error;
   if (choicesRes.error) throw choicesRes.error;
-  _nodesCache = new Map((nodesRes.data ?? []).map((n: any) => [n.id, n]));
+  const nodes = await translateNodes((nodesRes.data ?? []) as StoryNode[], lang);
+  const choices = await translateChoices((choicesRes.data ?? []) as StoryChoice[], lang);
+  _nodesCache = new Map(nodes.map((n) => [n.id, n]));
   _choicesCache = new Map();
-  for (const c of (choicesRes.data ?? []) as any[]) {
+  for (const c of choices) {
     const arr = _choicesCache.get(c.node_id) ?? [];
     arr.push(c);
     _choicesCache.set(c.node_id, arr);
   }
+  _cacheLang = lang;
 }
 
 export async function getNode(id: string): Promise<StoryNode | null> {
