@@ -39,7 +39,17 @@
     "worlds": "Mons",
     "locked": "Bloquejat",
     "unlocked": "Desbloquejat",
-    "noChoices": "No hi ha opcions disponibles"
+    "noChoices": "No hi ha opcions disponibles",
+    "chapter": "Capítol",
+    "chapterShort": "Cap.",
+    "visit": "Visita",
+    "visits": "Visites",
+    "endings": "Finals",
+    "toUnlock": "Per desbloquejar:",
+    "hint": "Indici:",
+    "hiddenWorldHint": "Un lloc llunyà espera... continua creixent.",
+    "consequencesHint": "Les conseqüències es revelaran després de triar",
+    "bonus": "Bonus"
   },
   "auth": {
     "signIn": "Inicia sessió",
