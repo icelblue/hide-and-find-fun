@@ -119,7 +119,7 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
                     )}
                     {hasActiveBonus && traitBonus?.trait && (
                       <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-semibold`}>
-                        ✨ Bonus {TRAIT_META[traitBonus.trait as Trait]?.label} ×{traitBonus.multiplier}
+                        ✨ {t("story.bonus")} {TRAIT_META[traitBonus.trait as Trait]?.label} ×{traitBonus.multiplier}
                       </span>
                     )}
                   </div>
