@@ -44,21 +44,21 @@ export function WorldMap({ worlds, selectedId, onSelect }: Props) {
             {w.unlocked ? (
               <>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Cap. {w.chapters.join("-")}
+                  {t("story.chapterShort")} {w.chapters.join("-")}
                 </p>
                 {w.visits > 0 && (
                   <p className="text-[9px] text-accent/70 mt-1">
-                    Visites: {w.visits} · Finals: {w.endingsCompleted.length}
+                    {t("story.visits")}: {w.visits} · {t("story.endings")}: {w.endingsCompleted.length}
                   </p>
                 )}
               </>
             ) : (
               <div className="mt-1 space-y-0.5">
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground/80">
-                  {isDeepLocked ? "Indici:" : "Per desbloquejar:"}
+                  {isDeepLocked ? t("story.hint") : t("story.toUnlock")}
                 </p>
                 <p className="text-[10px] text-amber-500/90 font-medium leading-tight">
-                  {isDeepLocked ? "Un lloc llunyà espera... continua creixent." : w.reason}
+                  {isDeepLocked ? t("story.hiddenWorldHint") : w.reason}
                 </p>
               </div>
             )}
