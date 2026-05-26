@@ -39,7 +39,17 @@
     "worlds": "Worlds",
     "locked": "Locked",
     "unlocked": "Unlocked",
-    "noChoices": "No choices available"
+    "noChoices": "No choices available",
+    "chapter": "Chapter",
+    "chapterShort": "Ch.",
+    "visit": "Visit",
+    "visits": "Visits",
+    "endings": "Endings",
+    "toUnlock": "To unlock:",
+    "hint": "Hint:",
+    "hiddenWorldHint": "A faraway place awaits... keep growing.",
+    "consequencesHint": "Consequences will be revealed after you choose",
+    "bonus": "Bonus"
   },
   "auth": {
     "signIn": "Sign in",
