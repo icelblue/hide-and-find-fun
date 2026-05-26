@@ -199,6 +199,13 @@ export default function StoryModePage() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
+  // Recarrega quan canvia l'idioma (les caches de catàleg s'invaliden soles)
+  useEffect(() => {
+    const handler = () => { loadAll(); };
+    window.addEventListener("lang-changed", handler);
+    return () => window.removeEventListener("lang-changed", handler);
+  }, [loadAll]);
+
   // ====== INTRO ======
   const handleConfirmPetName = async () => {
     if (!user) return;
