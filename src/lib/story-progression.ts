@@ -87,16 +87,26 @@ export interface WorldStatus extends World {
   endingsCompleted: string[];
 }
 
+import { getCurrentLang, translateWorlds, onLangChange } from "@/i18n/translate-data";
+
 let _worldsCache: World[] | null = null;
+let _worldsLang: string | null = null;
+
+if (typeof window !== "undefined") {
+  onLangChange(() => { _worldsCache = null; _worldsLang = null; });
+}
 
 export async function getAllWorlds(): Promise<World[]> {
-  if (_worldsCache) return _worldsCache;
+  const lang = getCurrentLang();
+  if (_worldsCache && _worldsLang === lang) return _worldsCache;
   const { data } = await supabase.from("story_worlds").select("*").order("display_order");
-  _worldsCache = ((data ?? []) as any[]).map((w) => ({
+  const raw = ((data ?? []) as any[]).map((w) => ({
     ...w,
     chapters: w.chapters ?? [],
     unlock_rule: w.unlock_rule ?? {},
-  }));
+  })) as World[];
+  _worldsCache = await translateWorlds(raw, lang);
+  _worldsLang = lang;
   return _worldsCache;
 }
 
