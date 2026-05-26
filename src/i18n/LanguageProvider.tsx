@@ -64,6 +64,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     async (l: Lang) => {
       setLangState(l);
       localStorage.setItem("lang", l);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("lang-changed", { detail: l }));
+      }
       if (user) {
         await supabase.from("profiles").update({ language: l } as never).eq("user_id", user.id);
       }
