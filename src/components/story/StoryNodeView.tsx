@@ -128,7 +128,7 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
             );
           })}
           <p className="text-[10px] text-center text-muted-foreground/70 italic pt-1">
-            Les conseqüències es revelaran després de triar
+            {t("story.consequencesHint")}
           </p>
         </div>
       )}
