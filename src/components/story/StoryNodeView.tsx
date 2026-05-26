@@ -6,6 +6,7 @@ import type { StoryNode, StoryChoice, ChoiceResult } from "@/lib/story-runs";
 import type { InventoryItem, PetState } from "@/lib/story-state";
 import { hasItems } from "@/lib/story-state";
 import { checkTraitRequirement, getRewardTraitBonus, TRAIT_META, type Personality, type Trait } from "@/lib/pet-personality";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   node: StoryNode;
