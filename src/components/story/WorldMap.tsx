@@ -1,5 +1,6 @@
 // 🔒 Component v5.1 — Mode Història. Mons amb requisits visibles.
 import type { WorldStatus } from "@/lib/story-progression";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   worlds: WorldStatus[];
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function WorldMap({ worlds, selectedId, onSelect }: Props) {
+  const t = useT();
   return (
     <div className="grid grid-cols-2 gap-2 mb-4">
       {worlds.map((w) => {
