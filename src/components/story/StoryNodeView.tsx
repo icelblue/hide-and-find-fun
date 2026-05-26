@@ -6,6 +6,7 @@ import type { StoryNode, StoryChoice, ChoiceResult } from "@/lib/story-runs";
 import type { InventoryItem, PetState } from "@/lib/story-state";
 import { hasItems } from "@/lib/story-state";
 import { checkTraitRequirement, getRewardTraitBonus, TRAIT_META, type Personality, type Trait } from "@/lib/pet-personality";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   node: StoryNode;
@@ -26,6 +27,7 @@ function fillPet(text: string, petName: string) {
 }
 
 export function StoryNodeView({ node, choices, petName, inventory, state, unlockedSkills, nodeVisitCount, worldLabel, personality, onChoose, busy }: Props) {
+  const t = useT();
   const [revealChoices, setRevealChoices] = useState(false);
   const filled = useMemo(() => fillPet(node.narrative, petName), [node, petName]);
 
@@ -52,8 +54,8 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
     <div className="space-y-5 animate-fade-in">
       <div className="text-center">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-          {worldLabel ? `${worldLabel} · ` : ""}Capítol {node.chapter}
-          {nodeVisitCount > 1 ? ` · Visita #${nodeVisitCount}` : ""}
+          {worldLabel ? `${worldLabel} · ` : ""}{t("story.chapter")} {node.chapter}
+          {nodeVisitCount > 1 ? ` · ${t("story.visit")} #${nodeVisitCount}` : ""}
         </p>
         <h2 className="text-lg font-bold">{node.title}</h2>
       </div>
@@ -117,7 +119,7 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
                     )}
                     {hasActiveBonus && traitBonus?.trait && (
                       <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-semibold`}>
-                        ✨ Bonus {TRAIT_META[traitBonus.trait as Trait]?.label} ×{traitBonus.multiplier}
+                        ✨ {t("story.bonus")} {TRAIT_META[traitBonus.trait as Trait]?.label} ×{traitBonus.multiplier}
                       </span>
                     )}
                   </div>
@@ -126,7 +128,7 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
             );
           })}
           <p className="text-[10px] text-center text-muted-foreground/70 italic pt-1">
-            Les conseqüències es revelaran després de triar
+            {t("story.consequencesHint")}
           </p>
         </div>
       )}
