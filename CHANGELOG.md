@@ -6,6 +6,29 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **PATCH**: correccions de bugs
 
 
+## [1.18.0] — 2026-05-26 — i18n Mode Història integrat (MINOR)
+
+### Afegit
+- **`src/i18n/translate-data.ts`**: helpers `translateNodes`, `translateChoices`, `translateWorlds`, `getCurrentLang()` (sync) i `onLangChange()` (event-based).
+- **Catàleg traduït en càrrega**: `loadCatalog()` a `story-runs.ts` i `getAllWorlds()` a `story-progression.ts` apliquen traduccions BD segons lang actual. Cache invalidada automàticament quan l'usuari canvia idioma.
+- **StoryNodeView** i **WorldMap** ara usen `useT()` per a strings d'UI ("Capítol", "Visita", "Per desbloquejar", etc.).
+- **StoryModePage**: listener `lang-changed` recarrega tot el contingut quan l'usuari canvia idioma.
+
+### Modificat
+- `LanguageProvider.setLang()` dispara `window.dispatchEvent('lang-changed')` perquè caches i pàgines reaccionin.
+- `ca.json` / `en.json` ampliats amb `story.chapter`, `story.visit`, `story.endings`, `story.toUnlock`, `story.hint`, `story.bonus`, etc.
+
+### Com funciona
+1. Usuari canvia idioma al perfil → `setLang('en')`.
+2. Event `lang-changed` invalida `_nodesCache`, `_choicesCache`, `_worldsCache`.
+3. Pàgina actual recarrega → fetcha catàleg + aplica traduccions BD (fallback CA si EN buit).
+
+### Pendent
+- Omplir traduccions EN reals a la taula `translations` (ara EN cau a CA per fallback).
+- Traduir InventoryDrawer, RewardReveal i recipes (els ítems ja estan a la taula amb seed CA, falta integrar).
+
+---
+
 ## [1.17.0] — 2026-05-25 — i18n CA/EN base (MINOR)
 
 ### Afegit
