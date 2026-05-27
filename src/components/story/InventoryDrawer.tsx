@@ -94,7 +94,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
       </DrawerTrigger>
       <DrawerContent className="max-h-[85vh] flex flex-col">
         <DrawerHeader className="pb-2">
-          <DrawerTitle>🎒 Motxilla de {petName}</DrawerTitle>
+          <DrawerTitle>🎒 {t("inventory.backpackOf", { name: petName })}</DrawerTitle>
         </DrawerHeader>
 
         <div className="px-4 pb-6 overflow-y-auto flex-1 min-h-0">
