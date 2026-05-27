@@ -21,6 +21,7 @@ interface Props {
 }
 
 export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
