@@ -22,7 +22,7 @@ const BUNDLES: Record<Lang, Record<string, unknown>> = {
 type Ctx = {
   lang: Lang;
   setLang: (l: Lang) => Promise<void>;
-  t: (key: string, fallback?: string) => string;
+  t: (key: string, varsOrFallback?: Record<string, string | number> | string, maybeFallback?: string) => string;
 };
 
 const LanguageContext = createContext<Ctx | null>(null);
@@ -75,13 +75,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   const t = useCallback(
-    (key: string, fallback?: string) => {
-      return (
+    (key: string, varsOrFallback?: Record<string, string | number> | string, maybeFallback?: string) => {
+      const vars = typeof varsOrFallback === "object" ? varsOrFallback : undefined;
+      const fallback = typeof varsOrFallback === "string" ? varsOrFallback : maybeFallback;
+      const raw =
         deepGet(BUNDLES[lang], key) ??
         deepGet(BUNDLES.ca, key) ??
         fallback ??
-        key
-      );
+        key;
+      if (!vars) return raw;
+      return raw.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : `{${k}}`));
     },
     [lang]
   );

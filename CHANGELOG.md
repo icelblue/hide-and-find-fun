@@ -6,6 +6,21 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **PATCH**: correccions de bugs
 
 
+## [1.19.0] — 2026-05-27 — i18n: pantalles de capítol, final, mort, motxilla i barres (MINOR)
+
+### Afegit
+- **`t()` amb interpolació `{var}`**: el hook `useT` ara accepta vars (`t("story.chapterComplete", { n: 3 })`).
+- Claus noves a `ca.json`/`en.json`: `story.chapterComplete/Continue/Pause`, `story.endingType.*`, `story.deathTitle/Hint/adoptNew`, `inventory.*` (motxilla completa), `stats.bond/hunger/sleep/fear` + tooltips, `common.lobby`.
+
+### Canviat
+- **`ChapterCompleteScreen`**, **`StoryEndingScreen`**, **`StoryDeathScreen`**, **`PetStatsBar`**, **`InventoryDrawer`** (tabs Objectes, Receptes, Accessoris, Finals): tots els labels d'UI passen per `useT()`.
+
+### Pendent
+- Tab "Ajuda" del `InventoryDrawer`, `HelpDialog`, `WhileAwayDialog`, `DailyChallengeCard` i `PetEvolutionCard` encara amb strings CA hardcoded.
+- Seed EN real del contingut BD (story_nodes/choices/worlds): la taula `translations` només té CA, EN fa fallback a CA.
+
+---
+
 ## [1.18.0] — 2026-05-26 — i18n Mode Història integrat (MINOR)
 
 ### Afegit

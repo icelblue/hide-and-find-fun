@@ -11,6 +11,7 @@ import {
 import { getMyAccessories } from "@/lib/story-helpers";
 import { getJournal, type JournalSummary } from "@/lib/story-progression";
 import { toast } from "sonner";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   userId: string;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -92,7 +94,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
       </DrawerTrigger>
       <DrawerContent className="max-h-[85vh] flex flex-col">
         <DrawerHeader className="pb-2">
-          <DrawerTitle>🎒 Motxilla de {petName}</DrawerTitle>
+          <DrawerTitle>🎒 {t("inventory.backpackOf", { name: petName })}</DrawerTitle>
         </DrawerHeader>
 
         <div className="px-4 pb-6 overflow-y-auto flex-1 min-h-0">
@@ -117,8 +119,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
             <TabsContent value="items" className="mt-0 space-y-2">
               {grouped.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground italic">
-                  Encara no tens cap objecte.<br />
-                  Explora la història per trobar-ne!
+                  {t("inventory.emptyItems")}<br />
+                  {t("inventory.emptyItemsHint")}
                 </div>
               ) : (
                 grouped.map(({ item, count }) => {
@@ -139,16 +141,16 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                           <p className="text-[10px] text-muted-foreground">
                             {Object.entries(effect.delta).map(([k, v]) => {
                               const isGood = (k === "bond" && v! > 0) || (k !== "bond" && v! < 0);
-                              const labels: any = { hunger: "Gana", sleep: "Son", fear: "Por", bond: "Vincle" };
+                              const statKey = k === "fear" ? "stats.fear" : k === "hunger" ? "stats.hunger" : k === "sleep" ? "stats.sleep" : "stats.bond";
                               return (
                                 <span key={k} className={`mr-1.5 ${isGood ? "text-accent" : "text-amber-500"}`}>
-                                  {labels[k]} {v! > 0 ? "+" : ""}{v}
+                                  {t(statKey)} {v! > 0 ? "+" : ""}{v}
                                 </span>
                               );
                             })}
                           </p>
                         ) : (
-                          <p className="text-[10px] text-muted-foreground italic">Material per combinar</p>
+                          <p className="text-[10px] text-muted-foreground italic">{t("inventory.materialOnly")}</p>
                         )}
                       </div>
                       {effect && (
@@ -172,7 +174,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
             <TabsContent value="recipes" className="mt-0 space-y-2">
               {knownRecipes.length === 0 && unknownCount === 0 && (
                 <p className="text-xs text-muted-foreground italic text-center py-4">
-                  Encara no hi ha receptes definides.
+                  {t("inventory.noRecipes")}
                 </p>
               )}
 
@@ -189,7 +191,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       </div>
                     </div>
                     <div className="text-[10px] text-muted-foreground mb-2 flex flex-wrap gap-1 items-center">
-                      <span>Necessites:</span>
+                      <span>{t("inventory.needs")}</span>
                       {r.requires_items.map((id) => {
                         const it = inventory.find((i) => i.item_id === id);
                         const has = !!it;
@@ -201,7 +203,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       })}
                     </div>
                     <Button size="sm" disabled={!canCombine || busy} onClick={() => handleCombine(r)} className="w-full h-8 text-xs">
-                      {canCombine ? `✨ Combinar → ${r.result_item_icon} ${r.result_item_name}` : "Falten ingredients"}
+                      {canCombine ? t("inventory.combineTo", { icon: r.result_item_icon, name: r.result_item_name }) : t("inventory.missingIngredients")}
                     </Button>
                   </div>
                 );
@@ -211,16 +213,16 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               {unknownCount > 0 && (
                 <div className="space-y-2 pt-2">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                    {unknownCount} receptes per descobrir
+                    {t("inventory.toDiscover", { n: unknownCount })}
                   </p>
                   {Array.from({ length: Math.min(unknownCount, 5) }).map((_, i) => (
                     <div key={i} className="glass rounded-lg p-3 border border-border/20 opacity-60">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl grayscale">❓</span>
                         <div>
-                          <p className="text-sm font-bold text-muted-foreground">Recepta secreta</p>
+                          <p className="text-sm font-bold text-muted-foreground">{t("inventory.secretRecipe")}</p>
                           <p className="text-[10px] text-muted-foreground italic">
-                            Acumula els ingredients adequats i es revelarà sola.
+                            {t("inventory.secretRecipeHint")}
                           </p>
                         </div>
                       </div>
@@ -234,8 +236,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
             <TabsContent value="accessories" className="mt-0 space-y-2">
               {accessories.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground italic">
-                  Encara no tens cap accessori per a {petName}.<br />
-                  Es desbloquegen completant capítols i reptes especials.
+                  {t("inventory.noAccessories", { name: petName })}<br />
+                  {t("inventory.accessoriesHint")}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
@@ -244,30 +246,30 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       <span className="text-2xl">{a.accessory_icon}</span>
                       <div className="min-w-0">
                         <p className="text-xs font-bold truncate">{a.accessory_name}</p>
-                        <p className="text-[9px] text-muted-foreground">Equipat sempre</p>
+                        <p className="text-[9px] text-muted-foreground">{t("inventory.alwaysEquipped")}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground/70 italic text-center pt-2">
-                Els accessoris són permanents i es veuen al perfil públic de {petName}.
+                {t("inventory.accessoriesFooter", { name: petName })}
               </p>
             </TabsContent>
 
             {/* FINALS DESCOBERTS */}
             <TabsContent value="endings" className="mt-0 space-y-2">
               {!journal ? (
-                <p className="text-xs text-muted-foreground text-center py-4">Carregant...</p>
+                <p className="text-xs text-muted-foreground text-center py-4">{t("common.loading")}</p>
               ) : journal.endingsSeen.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground italic">
-                  Encara no has arribat a cap final.<br />
-                  Continua jugant per descobrir-los! ({journal.totals.endings} totals)
+                  {t("inventory.noEndings")}<br />
+                  {t("inventory.noEndingsHint", { n: journal.totals.endings })}
                 </div>
               ) : (
                 <>
                   <p className="text-[10px] text-muted-foreground/70 px-1">
-                    Has descobert {journal.endingsSeen.length} de {journal.totals.endings} finals possibles.
+                    {t("inventory.endingsProgress", { seen: journal.endingsSeen.length, total: journal.totals.endings })}
                   </p>
                   {journal.endingsSeen.map((e) => (
                     <div key={e.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">

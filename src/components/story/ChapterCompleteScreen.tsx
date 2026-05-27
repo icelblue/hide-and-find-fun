@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { RewardOutcome } from "@/lib/story-runs";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   completedChapter: number;
@@ -28,6 +29,7 @@ export function ChapterCompleteScreen({
   completedChapter, nextChapter, rewards, petName, petIcon, petXP, petMaxXP,
   onContinue, onPause, busy,
 }: Props) {
+  const t = useT();
   const visible = rewards.filter(r => r.xp || r.accessory || r.consumable || r.damage);
   const healthPct = Math.min((petXP / petMaxXP) * 100, 100);
 
@@ -35,10 +37,10 @@ export function ChapterCompleteScreen({
     <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/10 blur-[100px] pointer-events-none" />
       <div className="text-center relative z-10 animate-fade-in w-full">
-        <p className="text-xs uppercase tracking-widest text-accent font-bold mb-1">✓ Aventura desada</p>
+        <p className="text-xs uppercase tracking-widest text-accent font-bold mb-1">{t("story.chapterSaved")}</p>
         <div className="text-5xl mb-2">📖</div>
-        <h2 className="text-2xl font-bold mb-1">Capítol {completedChapter} completat</h2>
-        <p className="text-xs text-muted-foreground mb-5">Pots continuar o pausar i tornar més tard.</p>
+        <h2 className="text-2xl font-bold mb-1">{t("story.chapterComplete", { n: completedChapter })}</h2>
+        <p className="text-xs text-muted-foreground mb-5">{t("story.chapterPauseHint")}</p>
 
         <Card className="glass border-accent/20 mb-4">
           <CardContent className="py-4 text-left">
@@ -54,20 +56,20 @@ export function ChapterCompleteScreen({
             </div>
             {visible.length > 0 ? (
               <>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Recompenses d'aquest capítol</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{t("story.rewardsTitle")}</p>
                 <ul className="text-sm space-y-0.5">{visible.map(rewardLine)}</ul>
               </>
             ) : (
-              <p className="text-xs text-muted-foreground italic">Sense recompenses aquest capítol.</p>
+              <p className="text-xs text-muted-foreground italic">{t("story.rewardsEmpty")}</p>
             )}
           </CardContent>
         </Card>
 
         <Button onClick={onContinue} size="lg" disabled={busy} className="w-full mb-2">
-          ▶ Continuar capítol {nextChapter}
+          ▶ {t("story.chapterContinue", { n: nextChapter })}
         </Button>
         <Button variant="outline" onClick={onPause} disabled={busy} className="w-full">
-          ⏸ Pausar aventura
+          ⏸ {t("story.chapterPause")}
         </Button>
       </div>
     </div>
