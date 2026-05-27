@@ -119,8 +119,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
             <TabsContent value="items" className="mt-0 space-y-2">
               {grouped.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground italic">
-                  Encara no tens cap objecte.<br />
-                  Explora la història per trobar-ne!
+                  {t("inventory.emptyItems")}<br />
+                  {t("inventory.emptyItemsHint")}
                 </div>
               ) : (
                 grouped.map(({ item, count }) => {
