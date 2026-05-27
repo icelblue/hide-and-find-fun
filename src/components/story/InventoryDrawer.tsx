@@ -174,7 +174,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
             <TabsContent value="recipes" className="mt-0 space-y-2">
               {knownRecipes.length === 0 && unknownCount === 0 && (
                 <p className="text-xs text-muted-foreground italic text-center py-4">
-                  Encara no hi ha receptes definides.
+                  {t("inventory.noRecipes")}
                 </p>
               )}
 
