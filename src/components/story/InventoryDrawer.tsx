@@ -213,16 +213,16 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
               {unknownCount > 0 && (
                 <div className="space-y-2 pt-2">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                    {unknownCount} receptes per descobrir
+                    {t("inventory.toDiscover", { n: unknownCount })}
                   </p>
                   {Array.from({ length: Math.min(unknownCount, 5) }).map((_, i) => (
                     <div key={i} className="glass rounded-lg p-3 border border-border/20 opacity-60">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl grayscale">❓</span>
                         <div>
-                          <p className="text-sm font-bold text-muted-foreground">Recepta secreta</p>
+                          <p className="text-sm font-bold text-muted-foreground">{t("inventory.secretRecipe")}</p>
                           <p className="text-[10px] text-muted-foreground italic">
-                            Acumula els ingredients adequats i es revelarà sola.
+                            {t("inventory.secretRecipeHint")}
                           </p>
                         </div>
                       </div>
