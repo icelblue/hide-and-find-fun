@@ -11,6 +11,7 @@ import {
 import { getMyAccessories } from "@/lib/story-helpers";
 import { getJournal, type JournalSummary } from "@/lib/story-progression";
 import { toast } from "sonner";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   userId: string;
