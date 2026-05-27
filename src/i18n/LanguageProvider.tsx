@@ -22,7 +22,7 @@ const BUNDLES: Record<Lang, Record<string, unknown>> = {
 type Ctx = {
   lang: Lang;
   setLang: (l: Lang) => Promise<void>;
-  t: (key: string, fallback?: string) => string;
+  t: (key: string, varsOrFallback?: Record<string, string | number> | string, maybeFallback?: string) => string;
 };
 
 const LanguageContext = createContext<Ctx | null>(null);
