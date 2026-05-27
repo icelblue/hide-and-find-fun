@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { RewardOutcome } from "@/lib/story-runs";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   completedChapter: number;
