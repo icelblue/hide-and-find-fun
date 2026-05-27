@@ -9,7 +9,8 @@
     "retry": "Retry",
     "yes": "Yes",
     "no": "No",
-    "language": "Language"
+    "language": "Language",
+    "lobby": "Lobby"
   },
   "lang": {
     "ca": "Català",
@@ -49,7 +50,58 @@
     "hint": "Hint:",
     "hiddenWorldHint": "A faraway place awaits... keep growing.",
     "consequencesHint": "Consequences will be revealed after you choose",
-    "bonus": "Bonus"
+    "bonus": "Bonus",
+    "chapterComplete": "Chapter {n} complete",
+    "chapterContinue": "Continue chapter {n}",
+    "chapterPause": "Pause adventure",
+    "chapterSaved": "✓ Progress saved",
+    "chapterPauseHint": "You can continue or pause and come back later.",
+    "rewardsTitle": "Rewards from this chapter",
+    "rewardsEmpty": "No rewards this chapter.",
+    "endingTrack": "The story has reached its end.",
+    "playAgain": "🔄 Start a new adventure",
+    "deathTitle": "Tragic ending",
+    "deathHint": "You lost the pet, the accessories and all progress. You can start a new life.",
+    "adoptNew": "🥚 Adopt a new pet",
+    "endingType": {
+      "hero": "Hero",
+      "peaceful": "Peaceful",
+      "mystic": "Mystic",
+      "redeemed": "Redemption",
+      "adventure": "Adventure",
+      "lonely": "Loneliness",
+      "default": "Ending"
+    }
+  },
+  "inventory": {
+    "backpackOf": "{name}'s backpack",
+    "emptyItems": "You don't have any items yet.",
+    "emptyItemsHint": "Explore the story to find some!",
+    "materialOnly": "Crafting material",
+    "needs": "You need:",
+    "combineTo": "✨ Combine → {icon} {name}",
+    "missingIngredients": "Missing ingredients",
+    "noRecipes": "No recipes defined yet.",
+    "toDiscover": "{n} recipes to discover",
+    "secretRecipe": "Secret recipe",
+    "secretRecipeHint": "Gather the right ingredients and it will reveal itself.",
+    "noAccessories": "No accessories for {name} yet.",
+    "accessoriesHint": "Unlocked by completing chapters and special challenges.",
+    "alwaysEquipped": "Always equipped",
+    "accessoriesFooter": "Accessories are permanent and visible on {name}'s public profile.",
+    "noEndings": "You haven't reached any ending yet.",
+    "noEndingsHint": "Keep playing to discover them! ({n} total)",
+    "endingsProgress": "You discovered {seen} of {total} possible endings."
+  },
+  "stats": {
+    "bond": "Bond",
+    "hunger": "Fullness",
+    "sleep": "Rest",
+    "fear": "Calm",
+    "bondTip": "How much the pet loves you",
+    "hungerTip": "If full, it isn't hungry",
+    "sleepTip": "If full, it's well rested",
+    "fearTip": "If full, it's calm"
   },
   "auth": {
     "signIn": "Sign in",

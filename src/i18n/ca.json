@@ -6,10 +6,11 @@
     "close": "Tanca",
     "back": "Enrere",
     "continue": "Continua",
-    "retry": "Reintenta",
+    "retry": "Torna-ho a provar",
     "yes": "Sí",
     "no": "No",
-    "language": "Idioma"
+    "language": "Idioma",
+    "lobby": "Lobby"
   },
   "lang": {
     "ca": "Català",
@@ -27,8 +28,8 @@
     "stats": "Estadístiques",
     "level": "Nivell",
     "elo": "Puntuació",
-    "languagePreference": "Idioma de joc",
-    "languageHint": "Tria l'idioma per a la interfície i la narrativa"
+    "languagePreference": "Idioma del joc",
+    "languageHint": "Tria l'idioma de la interfície i la narrativa"
   },
   "story": {
     "title": "Mode història",
@@ -46,14 +47,65 @@
     "visits": "Visites",
     "endings": "Finals",
     "toUnlock": "Per desbloquejar:",
-    "hint": "Indici:",
+    "hint": "Pista:",
     "hiddenWorldHint": "Un lloc llunyà espera... continua creixent.",
-    "consequencesHint": "Les conseqüències es revelaran després de triar",
-    "bonus": "Bonus"
+    "consequencesHint": "Les conseqüències es revelaran quan triïs",
+    "bonus": "Bonus",
+    "chapterComplete": "Capítol {n} completat",
+    "chapterContinue": "Continuar capítol {n}",
+    "chapterPause": "Pausar aventura",
+    "chapterSaved": "✓ Aventura desada",
+    "chapterPauseHint": "Pots continuar o pausar i tornar més tard.",
+    "rewardsTitle": "Recompenses d'aquest capítol",
+    "rewardsEmpty": "Sense recompenses aquest capítol.",
+    "endingTrack": "La història ha arribat al final.",
+    "playAgain": "🔄 Començar nova aventura",
+    "deathTitle": "Final tràgic",
+    "deathHint": "Has perdut la mascota, els accessoris i el progrés. Pots començar una nova vida.",
+    "adoptNew": "🥚 Adoptar nova mascota",
+    "endingType": {
+      "hero": "Heroïna",
+      "peaceful": "Pacífic",
+      "mystic": "Místic",
+      "redeemed": "Redempció",
+      "adventure": "Aventura",
+      "lonely": "Solitud",
+      "default": "Final"
+    }
+  },
+  "inventory": {
+    "backpackOf": "Motxilla de {name}",
+    "emptyItems": "Encara no tens cap objecte.",
+    "emptyItemsHint": "Explora la història per trobar-ne!",
+    "materialOnly": "Material per combinar",
+    "needs": "Necessites:",
+    "combineTo": "✨ Combinar → {icon} {name}",
+    "missingIngredients": "Falten ingredients",
+    "noRecipes": "Encara no hi ha receptes definides.",
+    "toDiscover": "{n} receptes per descobrir",
+    "secretRecipe": "Recepta secreta",
+    "secretRecipeHint": "Acumula els ingredients adequats i es revelarà sola.",
+    "noAccessories": "Encara no tens cap accessori per a {name}.",
+    "accessoriesHint": "Es desbloquegen completant capítols i reptes especials.",
+    "alwaysEquipped": "Equipat sempre",
+    "accessoriesFooter": "Els accessoris són permanents i es veuen al perfil públic de {name}.",
+    "noEndings": "Encara no has arribat a cap final.",
+    "noEndingsHint": "Continua jugant per descobrir-los! ({n} totals)",
+    "endingsProgress": "Has descobert {seen} de {total} finals possibles."
+  },
+  "stats": {
+    "bond": "Vincle",
+    "hunger": "Sacietat",
+    "sleep": "Descans",
+    "fear": "Calma",
+    "bondTip": "Quant t'estima la mascota",
+    "hungerTip": "Si està plena, no té gana",
+    "sleepTip": "Si està plena, està descansada",
+    "fearTip": "Si està plena, està tranquil·la"
   },
   "auth": {
     "signIn": "Inicia sessió",
-    "signUp": "Crea un compte",
+    "signUp": "Crea compte",
     "email": "Correu",
     "password": "Contrasenya"
   }
