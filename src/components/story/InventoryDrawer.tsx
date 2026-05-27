@@ -141,16 +141,16 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                           <p className="text-[10px] text-muted-foreground">
                             {Object.entries(effect.delta).map(([k, v]) => {
                               const isGood = (k === "bond" && v! > 0) || (k !== "bond" && v! < 0);
-                              const labels: any = { hunger: "Gana", sleep: "Son", fear: "Por", bond: "Vincle" };
+                              const statKey = k === "fear" ? "stats.fear" : k === "hunger" ? "stats.hunger" : k === "sleep" ? "stats.sleep" : "stats.bond";
                               return (
                                 <span key={k} className={`mr-1.5 ${isGood ? "text-accent" : "text-amber-500"}`}>
-                                  {labels[k]} {v! > 0 ? "+" : ""}{v}
+                                  {t(statKey)} {v! > 0 ? "+" : ""}{v}
                                 </span>
                               );
                             })}
                           </p>
                         ) : (
-                          <p className="text-[10px] text-muted-foreground italic">Material per combinar</p>
+                          <p className="text-[10px] text-muted-foreground italic">{t("inventory.materialOnly")}</p>
                         )}
                       </div>
                       {effect && (
