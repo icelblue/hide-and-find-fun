@@ -191,7 +191,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       </div>
                     </div>
                     <div className="text-[10px] text-muted-foreground mb-2 flex flex-wrap gap-1 items-center">
-                      <span>Necessites:</span>
+                      <span>{t("inventory.needs")}</span>
                       {r.requires_items.map((id) => {
                         const it = inventory.find((i) => i.item_id === id);
                         const has = !!it;
@@ -203,7 +203,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       })}
                     </div>
                     <Button size="sm" disabled={!canCombine || busy} onClick={() => handleCombine(r)} className="w-full h-8 text-xs">
-                      {canCombine ? `✨ Combinar → ${r.result_item_icon} ${r.result_item_name}` : "Falten ingredients"}
+                      {canCombine ? t("inventory.combineTo", { icon: r.result_item_icon, name: r.result_item_name }) : t("inventory.missingIngredients")}
                     </Button>
                   </div>
                 );
