@@ -236,8 +236,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
             <TabsContent value="accessories" className="mt-0 space-y-2">
               {accessories.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground italic">
-                  Encara no tens cap accessori per a {petName}.<br />
-                  Es desbloquegen completant capítols i reptes especials.
+                  {t("inventory.noAccessories", { name: petName })}<br />
+                  {t("inventory.accessoriesHint")}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
@@ -246,14 +246,14 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       <span className="text-2xl">{a.accessory_icon}</span>
                       <div className="min-w-0">
                         <p className="text-xs font-bold truncate">{a.accessory_name}</p>
-                        <p className="text-[9px] text-muted-foreground">Equipat sempre</p>
+                        <p className="text-[9px] text-muted-foreground">{t("inventory.alwaysEquipped")}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground/70 italic text-center pt-2">
-                Els accessoris són permanents i es veuen al perfil públic de {petName}.
+                {t("inventory.accessoriesFooter", { name: petName })}
               </p>
             </TabsContent>
 
