@@ -23,7 +23,7 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
         <div className={`relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring}`}>
           <span className="text-5xl">{pet.pet_icon}</span>
           <span className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold">
-            Lv{level}
+            {t("evolution.level", { n: level })}
           </span>
         </div>
         <div className="flex-1 min-w-0">
@@ -33,8 +33,10 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
             <div className="h-1.5 rounded-full bg-accent transition-all duration-500" style={{ width: `${Math.min(xp / max * 100, 100)}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-0.5">
-            {level >= MAX_LEVEL ? "Nivell màxim!" : `${remaining} XP per pujar a Lv${level + 1}`}
+            {level >= MAX_LEVEL ? t("evolution.maxLevel") : t("evolution.xpToNext", { xp: remaining, n: level + 1 })}
           </p>
+        </div>
+
         </div>
       </div>
 
