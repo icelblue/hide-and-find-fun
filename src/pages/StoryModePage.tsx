@@ -290,12 +290,13 @@ export default function StoryModePage() {
         // 🧪 Auto-descobriment de receptes amb ingredients actuals
         const newlyDiscovered = await autoDiscoverRecipes(user.id, inv);
         if (newlyDiscovered.length > 0) {
-          setRecipeCount((c) => c + newlyDiscovered.length);
           newlyDiscovered.forEach((r) =>
-            toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`, {
-              description: "Obre la motxilla 🎒 per combinar-la.",
+            toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
+              description: t("storyPage.recipeDiscoveredDescDrawer"),
               duration: 5000,
             })
+          );
+
           );
         }
       }
