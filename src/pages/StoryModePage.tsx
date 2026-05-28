@@ -595,7 +595,8 @@ export default function StoryModePage() {
               // Re-trigger auto-discover after using/combining items (state may have changed)
               const newly = await autoDiscoverRecipes(user.id, inv);
               if (newly.length > 0) {
-                setRecipeCount((c) => c + newly.length);
+                newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
+
                 newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
               }
               // Refresh pet state too (using items affects it)
