@@ -107,7 +107,7 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
           size="sm"
           onClick={() => setOpen(true)}
           className="relative h-8 px-2"
-          title={`Repte diari: ${state.node.title}`}
+          title={`${t("daily.title")}: ${state.node.title}`}
         >
           <span className="text-xl">🌟</span>
           <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold animate-pulse">!</span>
@@ -118,9 +118,9 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
           onClick={() => setOpen(true)}
         >
           <CardContent className="py-3 px-4 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-accent font-bold mb-0.5">🌟 Repte diari · disponible</p>
+            <p className="text-[10px] uppercase tracking-wider text-accent font-bold mb-0.5">{t("daily.available")}</p>
             <p className="text-sm font-bold">{state.node.title}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Acaba en {countdown}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{t("daily.endsIn", { t: countdown })}</p>
           </CardContent>
         </Card>
       )}
@@ -129,7 +129,7 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
         <DialogContent className="max-w-sm">
           <div className="space-y-4">
             <div className="text-center">
-              <p className="text-[10px] uppercase tracking-wider text-accent font-bold">🌟 Repte diari</p>
+              <p className="text-[10px] uppercase tracking-wider text-accent font-bold">{t("daily.title")}</p>
               <h3 className="text-lg font-bold">{state.node.title}</h3>
             </div>
             <Card className="glass border-accent/20">
@@ -150,7 +150,7 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
                   <span className="text-sm flex-1">{fillPet(c.label)}</span>
                 </Button>
               ))}
-              <p className="text-[10px] text-center text-muted-foreground/70 italic">Les conseqüències es revelaran després de triar</p>
+              <p className="text-[10px] text-center text-muted-foreground/70 italic">{t("daily.consequencesHint")}</p>
             </div>
           </div>
         </DialogContent>
