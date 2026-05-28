@@ -49,7 +49,6 @@ export default function StoryModePage() {
   const navigate = useNavigate();
   const t = useT();
 
-  const navigate = useNavigate();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [pet, setPet] = useState<any>(null);
