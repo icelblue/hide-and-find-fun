@@ -400,7 +400,8 @@ export default function StoryModePage() {
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         {introStep === 0 && (
           <div className="text-center relative z-10">
-            <TypewriterText
+              text={t("storyPage.giftIntro", { name: playerName })}
+
               text={`Hola ${playerName}! Aquest regal 🎁 és per tu...`}
               speed={75}
               onComplete={() => setTimeout(() => setIntroStep(1), 1200)}
