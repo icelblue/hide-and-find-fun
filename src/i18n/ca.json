@@ -186,6 +186,39 @@
     "maxLevel": "Nivell màxim!",
     "xpToNext": "{xp} XP per pujar a Lv{n}",
     "skillLocked": "Lv{n}"
+  },
+  "storyPage": {
+    "greeting": "Hola, {name}",
+    "adventurer": "aventurer",
+    "statsLine": "🗺️ Mons {cw}/{tw} · 🏁 Finals {te}/6 · 🧪 Receptes {rc}",
+    "narrativeIntro": "\"{name} ha de viatjar de la Casa fins al Castell. Cada decisió forja qui esdevindrà.\"",
+    "chooseStart": "Tria on començar",
+    "startBtn": "📖 Començar a {icon} {name}",
+    "resetAll": "🔄 Reiniciar tot",
+    "resetConfirm": "Reiniciar tot el Mode Història? Perdràs mascota, objectes, habilitats i progrés.",
+    "adventureSaved": "✓ Aventura desada. Pots tornar quan vulguis.",
+    "giftIntro": "Hola {name}! Aquest regal 🎁 és per tu...",
+    "tapToOpen": "Toca per obrir!",
+    "aPet": "Un {name}!",
+    "namePrompt": "Com el vols dir?",
+    "petNamePlaceholder": "Nom de la mascota",
+    "adopt": "Adoptar {icon}",
+    "adoptedToast": "{icon} {name} és el teu company!",
+    "invalidName": "El nom ha de tenir entre 1 i 20 caràcters",
+    "startError": "No s'ha pogut començar: {msg}",
+    "choiceError": "Error: {msg}",
+    "loadError": "Error carregant: {msg}",
+    "recipeDiscovered": "💡 Recepta descoberta: {icon} {name}",
+    "recipeDiscoveredDesc": "Tens els ingredients! Obre la motxilla per combinar.",
+    "recipeDiscoveredDescDrawer": "Obre la motxilla 🎒 per combinar-la.",
+    "skillUnlocked": "🎉 Habilitat desbloquejada: {icon} {name}",
+    "traitBonus": "✨ {label}! Bonus XP ×{m}",
+    "chapterBadge": "✓ Cap. {n}/8",
+    "noNode": "No s'ha trobat el node inicial",
+    "nodeMissing": "Node inicial '{id}' no existeix",
+    "choiceFailed": "no s'ha pogut aplicar la decisió",
+    "unknownError": "error desconegut"
   }
 }
+
 
