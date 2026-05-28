@@ -597,21 +597,21 @@ export default function StoryModePage() {
               if (newly.length > 0) {
                 newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
 
-                newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
+                newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
               }
               // Refresh pet state too (using items affects it)
               const st = await getPetState(user.id);
               setPetState(st);
+            }} />}
+
             {run && (
               <span className="text-[10px] text-accent/80 font-medium">
                 {t("storyPage.chapterBadge", { n: node.chapter })}
               </span>
             )}
-
-              </span>
-            )}
           </div>
         </div>
+
 
         {/* Pet status mini */}
         <div className="flex items-center gap-3 mb-3 relative z-10 glass rounded-xl px-3 py-2 border border-border/30">
