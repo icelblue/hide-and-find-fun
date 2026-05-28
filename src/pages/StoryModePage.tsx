@@ -223,7 +223,8 @@ export default function StoryModePage() {
     try {
       const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
       setPet(p);
-      setPhase("ready");
+      toast.success(t("storyPage.adoptedToast", { icon: randomPet.icon, name: trimmed }));
+
       toast.success(`${randomPet.icon} ${trimmed} és el teu company!`);
     } catch (e: any) { toast.error(e?.message ?? "Error creant la mascota"); }
     finally { setNamingPet(false); }
