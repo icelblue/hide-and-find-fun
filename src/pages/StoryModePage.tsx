@@ -356,7 +356,8 @@ export default function StoryModePage() {
     } finally { setBusy(false); }
   };
 
-  const handlePauseAdventure = () => {
+    toast.success(t("storyPage.adventureSaved"));
+
     toast.success("✓ Aventura desada. Pots tornar quan vulguis.");
     navigate("/");
   };
