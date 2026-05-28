@@ -491,7 +491,8 @@ export default function StoryModePage() {
                     setPetState(st);
                     const newly = await autoDiscoverRecipes(user.id, inv);
                     if (newly.length > 0) {
-                      setRecipeCount((c) => c + newly.length);
+                      newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
+
                       newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
                     }
                   }}
