@@ -53,7 +53,8 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
               }`}
             >
               <span>{s.icon}</span>
-              <span className="font-medium">{s.name}</span>
+              {!unlocked && <span className="opacity-60">{t("evolution.skillLocked", { n: s.level })}</span>}
+
               {!unlocked && <span className="opacity-60">Lv{s.level}</span>}
             </div>
           );
