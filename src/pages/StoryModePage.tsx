@@ -290,16 +290,16 @@ export default function StoryModePage() {
         // 🧪 Auto-descobriment de receptes amb ingredients actuals
         const newlyDiscovered = await autoDiscoverRecipes(user.id, inv);
         if (newlyDiscovered.length > 0) {
+          setRecipeCount((c) => c + newlyDiscovered.length);
           newlyDiscovered.forEach((r) =>
             toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
               description: t("storyPage.recipeDiscoveredDescDrawer"),
               duration: 5000,
             })
           );
-
-          );
         }
       }
+
 
       // Reveal animation
       setReveal(rewardToReveal(result.reward));
