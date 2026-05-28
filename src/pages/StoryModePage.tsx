@@ -499,10 +499,10 @@ export default function StoryModePage() {
                 />
               )}
               {user && <DailyChallengeCard variant="icon" userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground text-center mb-2">{t("storyPage.greeting", { name: playerName })}</p>
 
-          </div>
-          <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
 
           <PetEvolutionCard
             pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
