@@ -7,14 +7,14 @@ import { useT } from "@/i18n/LanguageProvider";
 interface Props {
   pet: { pet_name: string; pet_icon: string; xp: number; max_xp: number };
   unlockedSkills: Set<string>;
+}
+
 export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
   const t = useT();
   const xp = pet.xp ?? 0;
   const max = pet.max_xp ?? MAX_PET_XP;
   const evo = getPetEvolution(xp, max);
   const level = levelFromXp(xp);
-  const { remaining } = xpToNextLevel(xp);
-
   const { remaining } = xpToNextLevel(xp);
 
   return (
