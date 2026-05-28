@@ -40,6 +40,8 @@ import { WhileAwayDialog } from "@/components/story/WhileAwayDialog";
 import { getPetPersonality, TRAIT_META, type Personality } from "@/lib/pet-personality";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 type Phase = "loading" | "intro" | "ready" | "playing" | "chapter_break" | "ended";
 
