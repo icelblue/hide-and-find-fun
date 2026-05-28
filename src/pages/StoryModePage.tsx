@@ -168,7 +168,8 @@ export default function StoryModePage() {
       if (synced.newlyUnlocked.length > 0) {
         const fresh = await getMySkills(user.id);
         setSkills(fresh);
-        synced.newlyUnlocked.forEach((s) => toast.success(`🎉 Habilitat desbloquejada: ${s.icon} ${s.name}`));
+        synced.newlyUnlocked.forEach((s) => toast.success(t("storyPage.skillUnlocked", { icon: s.icon, name: s.name })));
+
       }
       const ws = await getWorldStatuses(user.id, {
         bond: stateData.bond,
