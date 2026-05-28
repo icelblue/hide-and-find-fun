@@ -197,13 +197,12 @@ export default function StoryModePage() {
         setPhase("ready");
       }
     } catch (e: any) {
+      console.error("[StoryMode] loadAll error", e);
       toast.error(t("storyPage.loadError", { msg: String(e?.message ?? e) }));
-
-      toast.error(`Error carregant: ${e?.message ?? e}`);
+      setPhase("ready");
+    }
   }, [user, t]);
 
-    }
-  }, [user]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
