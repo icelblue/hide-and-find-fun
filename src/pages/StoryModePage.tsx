@@ -278,7 +278,8 @@ export default function StoryModePage() {
       if (result.traitBonus) {
         const { TRAIT_META } = await import("@/lib/pet-personality");
         const meta = TRAIT_META[result.traitBonus.trait as keyof typeof TRAIT_META];
-        toast.success(`✨ ${meta?.label ?? result.traitBonus.trait}! Bonus XP ×${result.traitBonus.multiplier}`);
+        toast.success(t("storyPage.traitBonus", { label: meta?.label ?? result.traitBonus.trait, m: result.traitBonus.multiplier }));
+
       }
 
       // Refresh inventory if item/recipe gained
