@@ -82,7 +82,7 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
   if (state.alreadyDone) {
     if (isIcon) {
       return (
-        <Button variant="ghost" size="sm" disabled className="relative h-8 px-2 opacity-60" title={`Repte completat · torna en ${countdown}`}>
+        <Button variant="ghost" size="sm" disabled className="relative h-8 px-2 opacity-60" title={`${t("daily.completed")} · ${t("daily.comeBackIn", { t: countdown })}`}>
           <span className="text-xl">🌟</span>
           <span className="absolute -top-1 -right-1 bg-muted text-muted-foreground text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">✓</span>
         </Button>
@@ -91,9 +91,9 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
     return (
       <Card className="glass border-muted/30 mt-4 opacity-80">
         <CardContent className="py-3 px-4 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">✓ Repte diari completat</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{t("daily.completed")}</p>
           <p className="text-sm font-medium">{rewardLabel(state.lastReward?.reward_type ?? null, state.lastReward?.reward_value)}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Torna en {countdown}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{t("daily.comeBackIn", { t: countdown })}</p>
         </CardContent>
       </Card>
     );
