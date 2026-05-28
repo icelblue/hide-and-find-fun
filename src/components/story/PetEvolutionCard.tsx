@@ -1,6 +1,8 @@
-// 🔒 Component v5 — Mode Història. Targeta evolució + nivell + habilitats.
+// 🔒 Component v6 — Mode Història. Targeta evolució + nivell + habilitats. i18n.
 import { getPetEvolution, MAX_PET_XP } from "@/lib/story-helpers";
 import { SKILLS, levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 interface Props {
   pet: { pet_name: string; pet_icon: string; xp: number; max_xp: number };
@@ -8,6 +10,7 @@ interface Props {
 }
 
 export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
+  const t = useT();
   const xp = pet.xp ?? 0;
   const max = pet.max_xp ?? MAX_PET_XP;
   const evo = getPetEvolution(xp, max);
@@ -20,7 +23,7 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
         <div className={`relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${evo.ring}`}>
           <span className="text-5xl">{pet.pet_icon}</span>
           <span className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold">
-            Lv{level}
+            {t("evolution.level", { n: level })}
           </span>
         </div>
         <div className="flex-1 min-w-0">
@@ -30,10 +33,11 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
             <div className="h-1.5 rounded-full bg-accent transition-all duration-500" style={{ width: `${Math.min(xp / max * 100, 100)}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-0.5">
-            {level >= MAX_LEVEL ? "Nivell màxim!" : `${remaining} XP per pujar a Lv${level + 1}`}
+            {level >= MAX_LEVEL ? t("evolution.maxLevel") : t("evolution.xpToNext", { xp: remaining, n: level + 1 })}
           </p>
         </div>
       </div>
+
 
       <div className="flex flex-wrap gap-1.5">
         {SKILLS.map((s) => {
@@ -49,7 +53,8 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
               }`}
             >
               <span>{s.icon}</span>
-              <span className="font-medium">{s.name}</span>
+              {!unlocked && <span className="opacity-60">{t("evolution.skillLocked", { n: s.level })}</span>}
+
               {!unlocked && <span className="opacity-60">Lv{s.level}</span>}
             </div>
           );
