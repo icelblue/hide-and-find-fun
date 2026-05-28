@@ -326,7 +326,8 @@ export default function StoryModePage() {
       }
     } catch (e: any) {
       console.error("[StoryMode] choice error", e);
-      toast.error(`Error: ${e?.message ?? "no s'ha pogut aplicar la decisió"}`);
+      toast.error(t("storyPage.choiceError", { msg: String(e?.message ?? t("storyPage.choiceFailed")) }));
+
     }
     finally { setBusy(false); }
   };
