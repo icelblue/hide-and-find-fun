@@ -520,7 +520,8 @@ export default function StoryModePage() {
 
           </div>
 
-          {/* World selector */}
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
+
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Tria on començar</p>
           <WorldMap worlds={worlds} selectedId={selectedWorld} onSelect={setSelectedWorld} />
 
