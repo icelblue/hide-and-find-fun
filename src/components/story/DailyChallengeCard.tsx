@@ -10,6 +10,7 @@ import {
 } from "@/lib/story-runs";
 import { RewardReveal } from "./RewardReveal";
 import { toast } from "sonner";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   userId: string;
