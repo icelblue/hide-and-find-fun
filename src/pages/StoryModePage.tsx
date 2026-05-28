@@ -200,7 +200,8 @@ export default function StoryModePage() {
       toast.error(t("storyPage.loadError", { msg: String(e?.message ?? e) }));
 
       toast.error(`Error carregant: ${e?.message ?? e}`);
-      setPhase("ready");
+  }, [user, t]);
+
     }
   }, [user]);
 
