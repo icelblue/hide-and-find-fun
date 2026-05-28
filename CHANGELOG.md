@@ -6,7 +6,24 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **PATCH**: correccions de bugs
 
 
+## [1.20.0] — 2026-05-28 — i18n: HelpDialog, WhileAwayDialog, DailyChallengeCard (MINOR)
+
+### Afegit
+- Claus `help.*` (5 tabs sencers), `whileAway.*`, `visitOutcome.*`, `daily.*` a `ca.json`/`en.json`.
+
+### Canviat
+- **`HelpDialog`**: tots els tabs (Bàsic, Necessitats, Receptes, Mons, Social) traduïts.
+- **`WhileAwayDialog`**: títol, headers, accions i etiquetes d'outcome (`friends/neutral/enemies`) via `useT()`.
+- **`DailyChallengeCard`**: títol, estat completat, countdown, toasts i hint final traduïts.
+
+### Pendent
+- `PetEvolutionCard` (CA hardcoded).
+- Seed EN real del contingut BD (story_nodes/choices/worlds/recipes): la taula `translations` només té CA.
+- Eina admin per editar traduccions sense desplegar.
+- Strings menors a `StoryModePage` (toasts, headers de tabs) si en queden.
+
 ## [1.19.0] — 2026-05-27 — i18n: pantalles de capítol, final, mort, motxilla i barres (MINOR)
+
 
 ### Afegit
 - **`t()` amb interpolació `{var}`**: el hook `useT` ara accepta vars (`t("story.chapterComplete", { n: 3 })`).
