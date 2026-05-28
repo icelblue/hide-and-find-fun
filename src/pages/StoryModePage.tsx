@@ -217,7 +217,8 @@ export default function StoryModePage() {
   const handleConfirmPetName = async () => {
     if (!user) return;
     const trimmed = petNameInput.trim();
-    if (!trimmed || trimmed.length > 20) { toast.error("El nom ha de tenir entre 1 i 20 caràcters"); return; }
+    if (!trimmed || trimmed.length > 20) { toast.error(t("storyPage.invalidName")); return; }
+
     setNamingPet(true);
     try {
       const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
