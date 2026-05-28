@@ -44,9 +44,11 @@ import { useT } from "@/i18n/LanguageProvider";
 
 
 type Phase = "loading" | "intro" | "ready" | "playing" | "chapter_break" | "ended";
-
 export default function StoryModePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const t = useT();
+
   const navigate = useNavigate();
 
   const [phase, setPhase] = useState<Phase>("loading");
