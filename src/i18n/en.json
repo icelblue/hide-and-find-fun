@@ -180,5 +180,12 @@
     "alreadyDone": "You already did today's challenge",
     "error": "Daily challenge error",
     "consequencesHint": "Consequences will be revealed after you choose"
+  },
+  "evolution": {
+    "level": "Lv{n}",
+    "maxLevel": "Max level!",
+    "xpToNext": "{xp} XP to reach Lv{n}",
+    "skillLocked": "Lv{n}"
   }
 }
+
