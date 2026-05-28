@@ -388,7 +388,8 @@ export default function StoryModePage() {
   if (phase === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground text-sm animate-pulse">Carregant...</p>
+        <p className="text-muted-foreground text-sm animate-pulse">{t("common.loading")}</p>
+
       </div>
     );
   }
