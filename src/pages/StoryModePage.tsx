@@ -130,12 +130,13 @@ export default function StoryModePage() {
       if (invData.length > 0) {
         const newly = await autoDiscoverRecipes(user.id, invData);
         if (newly.length > 0) {
-          setRecipeCount(rcCount + newly.length);
           newly.forEach((r) =>
-            toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`, {
-              description: "Tens els ingredients! Obre la motxilla per combinar.",
+            toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
+              description: t("storyPage.recipeDiscoveredDesc"),
               duration: 5000,
             })
+          );
+
           );
         }
       }
