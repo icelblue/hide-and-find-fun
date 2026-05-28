@@ -36,9 +36,8 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
             {level >= MAX_LEVEL ? t("evolution.maxLevel") : t("evolution.xpToNext", { xp: remaining, n: level + 1 })}
           </p>
         </div>
-
-        </div>
       </div>
+
 
       <div className="flex flex-wrap gap-1.5">
         {SKILLS.map((s) => {
