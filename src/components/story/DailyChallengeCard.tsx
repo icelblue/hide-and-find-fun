@@ -58,7 +58,7 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
     try {
       const { reward, alreadyDone } = await submitDailyChoice(userId, c);
       if (alreadyDone) {
-        toast.info("Ja has fet el repte d'avui");
+        toast.info(t("daily.alreadyDone"));
         setOpen(false);
         const fresh = await getTodayChallenge(userId);
         setState(fresh);
@@ -69,7 +69,7 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
       const fresh = await getTodayChallenge(userId);
       setState(fresh);
     } catch (e: any) {
-      toast.error(e.message ?? "Error al repte diari");
+      toast.error(e.message ?? t("daily.error"));
     } finally {
       setBusy(false);
     }
