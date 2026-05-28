@@ -522,34 +522,32 @@ export default function StoryModePage() {
 
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
 
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Tria on començar</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
           <WorldMap worlds={worlds} selectedId={selectedWorld} onSelect={setSelectedWorld} />
 
           {selected && (
             <p className="text-[11px] text-muted-foreground text-center mb-3 px-3">
               {selected.description?.split("{pet}").join(pet.pet_name)}
             </p>
+          )}
+
           <Button onClick={handleStartRun} size="lg" disabled={busy || !selected?.unlocked} className="w-full mb-2">
             {busy ? "..." : t("storyPage.startBtn", { icon: selected?.icon ?? "🏠", name: selected?.name ?? "Casa" })}
           </Button>
-
-            {busy ? "..." : `📖 Començar a ${selected?.icon ?? "🏠"} ${selected?.name ?? "Casa"}`}
-          </Button>
-
-          
 
           <Button
             variant="ghost"
             onClick={async () => {
               if (!user) return;
-              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota, objectes, habilitats i progrés.")) return;
+              if (!confirm(t("storyPage.resetConfirm"))) return;
               await killAndReset(user.id);
               loadAll();
             }}
             className="w-full text-[10px] text-destructive hover:text-destructive mt-3"
           >
-            🔄 Reiniciar tot
+            {t("storyPage.resetAll")}
           </Button>
+
         </div>
       </div>
     );
