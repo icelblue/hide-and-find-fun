@@ -602,11 +602,12 @@ export default function StoryModePage() {
               // Refresh pet state too (using items affects it)
               const st = await getPetState(user.id);
               setPetState(st);
-            }} />}
-            
             {run && (
               <span className="text-[10px] text-accent/80 font-medium">
-                ✓ Cap. {node.chapter}/8
+                {t("storyPage.chapterBadge", { n: node.chapter })}
+              </span>
+            )}
+
               </span>
             )}
           </div>
