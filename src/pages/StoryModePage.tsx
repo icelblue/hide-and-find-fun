@@ -529,9 +529,10 @@ export default function StoryModePage() {
             <p className="text-[11px] text-muted-foreground text-center mb-3 px-3">
               {selected.description?.split("{pet}").join(pet.pet_name)}
             </p>
-          )}
-
           <Button onClick={handleStartRun} size="lg" disabled={busy || !selected?.unlocked} className="w-full mb-2">
+            {busy ? "..." : t("storyPage.startBtn", { icon: selected?.icon ?? "🏠", name: selected?.name ?? "Casa" })}
+          </Button>
+
             {busy ? "..." : `📖 Començar a ${selected?.icon ?? "🏠"} ${selected?.name ?? "Casa"}`}
           </Button>
 
