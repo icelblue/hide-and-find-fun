@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { outcomeLabel, type ResolvedVisit, type PetNotification } from "@/lib/pet-social";
+import { useT } from "@/i18n/LanguageProvider";
 
 interface Props {
   open: boolean;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function WhileAwayDialog({ open, onClose, visits, notifications, petName }: Props) {
+  const t = useT();
   const total = visits.length + notifications.length;
   if (total === 0) return null;
 
@@ -22,14 +24,16 @@ export function WhileAwayDialog({ open, onClose, visits, notifications, petName 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-2xl">📬</span>
-            <span>Mentre no hi eres…</span>
+            <span>{t("whileAway.title")}</span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3 max-h-[60vh] overflow-y-auto">
           {notifications.length > 0 && (
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">🎁 Regals per {petName ?? "la teva mascota"}</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">
+                {t("whileAway.giftsHeader", { name: petName ?? t("whileAway.yourPet") })}
+              </p>
               <div className="space-y-1.5">
                 {notifications.map((n) => {
                   const p = n.payload ?? {};
@@ -40,8 +44,8 @@ export function WhileAwayDialog({ open, onClose, visits, notifications, petName 
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">{n.from_display_name}</p>
                           <p className="text-[11px] text-muted-foreground">
-                            Et va donar <strong>{p.consumable_name}</strong>
-                            {p.cured_event ? " · curat 🩹" : ""}
+                            {t("whileAway.gaveYou")} <strong>{p.consumable_name}</strong>
+                            {p.cured_event ? ` · ${t("whileAway.cured")}` : ""}
                           </p>
                         </div>
                       </div>
@@ -54,7 +58,7 @@ export function WhileAwayDialog({ open, onClose, visits, notifications, petName 
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">{n.from_display_name}</p>
                           <p className="text-[11px] text-muted-foreground">
-                            T'ha regalat <strong>{p.item_name}</strong>
+                            {t("whileAway.gifted")} <strong>{p.item_name}</strong>
                           </p>
                         </div>
                       </div>
@@ -68,18 +72,21 @@ export function WhileAwayDialog({ open, onClose, visits, notifications, petName 
 
           {visits.length > 0 && (
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">🐾 Visites de mascotes</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">
+                {t("whileAway.visitsHeader")}
+              </p>
               <div className="space-y-1.5">
                 {visits.map((v) => {
                   const o = outcomeLabel(v.outcome);
-                  const action = v.role === "host" ? "ha vingut a jugar" : "vas enviar-la a";
+                  const action = v.role === "host" ? t("whileAway.hostAction") : t("whileAway.visitorAction");
+                  const outcomeText = t(`visitOutcome.${v.outcome}`);
                   return (
                     <div key={v.id} className="glass rounded-lg px-3 py-2 text-sm flex items-center gap-2">
                       <span className="text-2xl">{v.other_pet_icon}</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold truncate">{v.other_pet_name}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {action} · <span className={`font-semibold ${o.color}`}>{o.icon} {o.text}</span>
+                          {action} · <span className={`font-semibold ${o.color}`}>{o.icon} {outcomeText}</span>
                         </p>
                       </div>
                     </div>
@@ -91,7 +98,7 @@ export function WhileAwayDialog({ open, onClose, visits, notifications, petName 
         </div>
 
         <DialogFooter>
-          <Button onClick={onClose} className="w-full">Continuar</Button>
+          <Button onClick={onClose} className="w-full">{t("whileAway.continue")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
