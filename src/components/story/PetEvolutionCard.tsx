@@ -1,6 +1,8 @@
-// 🔒 Component v5 — Mode Història. Targeta evolució + nivell + habilitats.
+// 🔒 Component v6 — Mode Història. Targeta evolució + nivell + habilitats. i18n.
 import { getPetEvolution, MAX_PET_XP } from "@/lib/story-helpers";
 import { SKILLS, levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 interface Props {
   pet: { pet_name: string; pet_icon: string; xp: number; max_xp: number };
