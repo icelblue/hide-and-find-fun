@@ -512,11 +512,12 @@ export default function StoryModePage() {
           {/* Narrative intro */}
           <div className="text-center mb-3 px-2">
             <p className="text-sm text-foreground/80 italic leading-relaxed">
-              "{pet.pet_name} ha de viatjar de la <b>Casa</b> fins al <b>Castell</b>. Cada decisió forja qui esdevindrà."
+              {t("storyPage.narrativeIntro", { name: pet.pet_name })}
             </p>
             <p className="text-[11px] text-muted-foreground mt-2">
-              🗺️ Mons {completedWorlds}/4 · 🏁 Finals {totalEndings}/6 · 🧪 Receptes {recipeCount}
+              {t("storyPage.statsLine", { cw: completedWorlds, tw: 4, te: totalEndings, rc: recipeCount })}
             </p>
+
           </div>
 
           {/* World selector */}
