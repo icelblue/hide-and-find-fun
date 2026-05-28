@@ -180,5 +180,12 @@
     "alreadyDone": "Ja has fet el repte d'avui",
     "error": "Error al repte diari",
     "consequencesHint": "Les conseqüències es revelaran després de triar"
+  },
+  "evolution": {
+    "level": "Lv{n}",
+    "maxLevel": "Nivell màxim!",
+    "xpToNext": "{xp} XP per pujar a Lv{n}",
+    "skillLocked": "Lv{n}"
   }
 }
+
