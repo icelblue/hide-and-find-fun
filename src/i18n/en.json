@@ -186,6 +186,39 @@
     "maxLevel": "Max level!",
     "xpToNext": "{xp} XP to reach Lv{n}",
     "skillLocked": "Lv{n}"
+  },
+  "storyPage": {
+    "greeting": "Hi, {name}",
+    "adventurer": "adventurer",
+    "statsLine": "🗺️ Worlds {cw}/{tw} · 🏁 Endings {te}/6 · 🧪 Recipes {rc}",
+    "narrativeIntro": "\"{name} must travel from Home to the Castle. Every choice shapes who they become.\"",
+    "chooseStart": "Choose where to start",
+    "startBtn": "📖 Start at {icon} {name}",
+    "resetAll": "🔄 Reset everything",
+    "resetConfirm": "Reset the entire Story Mode? You'll lose pet, items, skills and progress.",
+    "adventureSaved": "✓ Adventure saved. Come back anytime.",
+    "giftIntro": "Hi {name}! This gift 🎁 is for you...",
+    "tapToOpen": "Tap to open!",
+    "aPet": "A {name}!",
+    "namePrompt": "What's their name?",
+    "petNamePlaceholder": "Pet name",
+    "adopt": "Adopt {icon}",
+    "adoptedToast": "{icon} {name} is your companion!",
+    "invalidName": "Name must be 1 to 20 characters",
+    "startError": "Couldn't start: {msg}",
+    "choiceError": "Error: {msg}",
+    "loadError": "Loading error: {msg}",
+    "recipeDiscovered": "💡 Recipe discovered: {icon} {name}",
+    "recipeDiscoveredDesc": "You have the ingredients! Open the backpack to combine.",
+    "recipeDiscoveredDescDrawer": "Open the backpack 🎒 to combine it.",
+    "skillUnlocked": "🎉 Skill unlocked: {icon} {name}",
+    "traitBonus": "✨ {label}! XP bonus ×{m}",
+    "chapterBadge": "✓ Ch. {n}/8",
+    "noNode": "Starting node not found",
+    "nodeMissing": "Starting node '{id}' does not exist",
+    "choiceFailed": "couldn't apply choice",
+    "unknownError": "unknown error"
   }
 }
+
 

@@ -40,12 +40,15 @@ import { WhileAwayDialog } from "@/components/story/WhileAwayDialog";
 import { getPetPersonality, TRAIT_META, type Personality } from "@/lib/pet-personality";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 type Phase = "loading" | "intro" | "ready" | "playing" | "chapter_break" | "ended";
-
 export default function StoryModePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
+
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [pet, setPet] = useState<any>(null);
@@ -108,7 +111,8 @@ export default function StoryModePage() {
       ]);
       const name = profileRes.data?.display_name?.trim()
         || (user.email ? user.email.split("@")[0] : "")
-        || "aventurer";
+        || t("storyPage.adventurer");
+
       setPlayerName(name);
       setPet(petData);
       setPetState(stateData);
@@ -128,13 +132,14 @@ export default function StoryModePage() {
         if (newly.length > 0) {
           setRecipeCount(rcCount + newly.length);
           newly.forEach((r) =>
-            toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`, {
-              description: "Tens els ingredients! Obre la motxilla per combinar.",
+            toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
+              description: t("storyPage.recipeDiscoveredDesc"),
               duration: 5000,
             })
           );
         }
       }
+
 
       // 🐾 Resoldre visites pendents + notificacions de regals → popup "mentre no hi eres"
       try {
@@ -163,7 +168,8 @@ export default function StoryModePage() {
       if (synced.newlyUnlocked.length > 0) {
         const fresh = await getMySkills(user.id);
         setSkills(fresh);
-        synced.newlyUnlocked.forEach((s) => toast.success(`🎉 Habilitat desbloquejada: ${s.icon} ${s.name}`));
+        synced.newlyUnlocked.forEach((s) => toast.success(t("storyPage.skillUnlocked", { icon: s.icon, name: s.name })));
+
       }
       const ws = await getWorldStatuses(user.id, {
         bond: stateData.bond,
@@ -192,10 +198,11 @@ export default function StoryModePage() {
       }
     } catch (e: any) {
       console.error("[StoryMode] loadAll error", e);
-      toast.error(`Error carregant: ${e?.message ?? e}`);
+      toast.error(t("storyPage.loadError", { msg: String(e?.message ?? e) }));
       setPhase("ready");
     }
-  }, [user]);
+  }, [user, t]);
+
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -210,12 +217,14 @@ export default function StoryModePage() {
   const handleConfirmPetName = async () => {
     if (!user) return;
     const trimmed = petNameInput.trim();
-    if (!trimmed || trimmed.length > 20) { toast.error("El nom ha de tenir entre 1 i 20 caràcters"); return; }
+    if (!trimmed || trimmed.length > 20) { toast.error(t("storyPage.invalidName")); return; }
+
     setNamingPet(true);
     try {
       const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
       setPet(p);
-      setPhase("ready");
+      toast.success(t("storyPage.adoptedToast", { icon: randomPet.icon, name: trimmed }));
+
       toast.success(`${randomPet.icon} ${trimmed} és el teu company!`);
     } catch (e: any) { toast.error(e?.message ?? "Error creant la mascota"); }
     finally { setNamingPet(false); }
@@ -230,9 +239,9 @@ export default function StoryModePage() {
       const startNodeId = world?.start_node_id;
       const worldId = world?.id;
       const r = await startRun(user.id, startNodeId, worldId);
-      if (!r.current_node_id) throw new Error("No s'ha trobat el node inicial");
+      if (!r.current_node_id) throw new Error(t("storyPage.noNode"));
       const n = await getNode(r.current_node_id);
-      if (!n) throw new Error(`Node inicial '${r.current_node_id}' no existeix`);
+      if (!n) throw new Error(t("storyPage.nodeMissing", { id: r.current_node_id }));
       const c = await getChoices(r.current_node_id);
       setRun(r);
       setNode(n);
@@ -242,9 +251,10 @@ export default function StoryModePage() {
       setPhase("playing");
     } catch (e: any) {
       console.error("[StoryMode] startRun error", e);
-      toast.error(`No s'ha pogut començar: ${e?.message ?? "error desconegut"}`);
+      toast.error(t("storyPage.startError", { msg: String(e?.message ?? t("storyPage.unknownError")) }));
     }
     finally { setBusy(false); }
+
   };
 
   // ====== CHOICE ======
@@ -268,7 +278,8 @@ export default function StoryModePage() {
       if (result.traitBonus) {
         const { TRAIT_META } = await import("@/lib/pet-personality");
         const meta = TRAIT_META[result.traitBonus.trait as keyof typeof TRAIT_META];
-        toast.success(`✨ ${meta?.label ?? result.traitBonus.trait}! Bonus XP ×${result.traitBonus.multiplier}`);
+        toast.success(t("storyPage.traitBonus", { label: meta?.label ?? result.traitBonus.trait, m: result.traitBonus.multiplier }));
+
       }
 
       // Refresh inventory if item/recipe gained
@@ -281,13 +292,14 @@ export default function StoryModePage() {
         if (newlyDiscovered.length > 0) {
           setRecipeCount((c) => c + newlyDiscovered.length);
           newlyDiscovered.forEach((r) =>
-            toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`, {
-              description: "Obre la motxilla 🎒 per combinar-la.",
+            toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
+              description: t("storyPage.recipeDiscoveredDescDrawer"),
               duration: 5000,
             })
           );
         }
       }
+
 
       // Reveal animation
       setReveal(rewardToReveal(result.reward));
@@ -314,7 +326,8 @@ export default function StoryModePage() {
       }
     } catch (e: any) {
       console.error("[StoryMode] choice error", e);
-      toast.error(`Error: ${e?.message ?? "no s'ha pogut aplicar la decisió"}`);
+      toast.error(t("storyPage.choiceError", { msg: String(e?.message ?? t("storyPage.choiceFailed")) }));
+
     }
     finally { setBusy(false); }
   };
@@ -344,9 +357,10 @@ export default function StoryModePage() {
   };
 
   const handlePauseAdventure = () => {
-    toast.success("✓ Aventura desada. Pots tornar quan vulguis.");
+    toast.success(t("storyPage.adventureSaved"));
     navigate("/");
   };
+
 
   // ====== ENDING HANDLERS ======
   const handlePlayAgain = async () => {
@@ -374,7 +388,8 @@ export default function StoryModePage() {
   if (phase === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground text-sm animate-pulse">Carregant...</p>
+        <p className="text-muted-foreground text-sm animate-pulse">{t("common.loading")}</p>
+
       </div>
     );
   }
@@ -386,7 +401,7 @@ export default function StoryModePage() {
         {introStep === 0 && (
           <div className="text-center relative z-10">
             <TypewriterText
-              text={`Hola ${playerName}! Aquest regal 🎁 és per tu...`}
+              text={t("storyPage.giftIntro", { name: playerName })}
               speed={75}
               onComplete={() => setTimeout(() => setIntroStep(1), 1200)}
               className="text-lg font-medium mb-6"
@@ -399,28 +414,29 @@ export default function StoryModePage() {
               className="text-8xl hover:scale-110 transition-transform active:scale-95 animate-pulse cursor-pointer">
               🎁
             </button>
-            <p className="text-sm text-muted-foreground mt-4">Toca per obrir!</p>
+            <p className="text-sm text-muted-foreground mt-4">{t("storyPage.tapToOpen")}</p>
           </div>
         )}
         {giftOpened && (
           <div className="text-center relative z-10 animate-scale-in w-full max-w-xs">
             <div className="text-8xl mb-3">{randomPet.icon}</div>
-            <p className="text-lg font-bold mb-4">Un {randomPet.name}!</p>
-            <p className="text-sm text-muted-foreground mb-2">Com el vols dir?</p>
+            <p className="text-lg font-bold mb-4">{t("storyPage.aPet", { name: randomPet.name })}</p>
+            <p className="text-sm text-muted-foreground mb-2">{t("storyPage.namePrompt")}</p>
             <Input
               value={petNameInput}
               onChange={(e) => setPetNameInput(e.target.value)}
-              placeholder="Nom de la mascota"
+              placeholder={t("storyPage.petNamePlaceholder")}
               maxLength={20}
               className="text-center mb-3"
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && handleConfirmPetName()}
             />
             <Button onClick={handleConfirmPetName} disabled={namingPet || !petNameInput.trim()} className="w-full">
-              {namingPet ? "..." : `Adoptar ${randomPet.icon}`}
+              {namingPet ? "..." : t("storyPage.adopt", { icon: randomPet.icon })}
             </Button>
           </div>
         )}
+
       </div>
     );
   }
@@ -458,8 +474,9 @@ export default function StoryModePage() {
           {/* Header de navegació unificat */}
           <div className="flex items-center justify-between mb-3">
             <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← Lobby
+              ← {t("common.lobby")}
             </button>
+
             <div className="flex items-center gap-1">
               <HelpDialog />
               {user && (
@@ -474,7 +491,8 @@ export default function StoryModePage() {
                     setPetState(st);
                     const newly = await autoDiscoverRecipes(user.id, inv);
                     if (newly.length > 0) {
-                      setRecipeCount((c) => c + newly.length);
+                      newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
+
                       newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
                     }
                   }}
@@ -483,7 +501,8 @@ export default function StoryModePage() {
               {user && <DailyChallengeCard variant="icon" userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground text-center mb-2">Hola, {playerName}</p>
+          <p className="text-xs text-muted-foreground text-center mb-2">{t("storyPage.greeting", { name: playerName })}</p>
+
 
           <PetEvolutionCard
             pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
@@ -493,15 +512,17 @@ export default function StoryModePage() {
           {/* Narrative intro */}
           <div className="text-center mb-3 px-2">
             <p className="text-sm text-foreground/80 italic leading-relaxed">
-              "{pet.pet_name} ha de viatjar de la <b>Casa</b> fins al <b>Castell</b>. Cada decisió forja qui esdevindrà."
+              {t("storyPage.narrativeIntro", { name: pet.pet_name })}
             </p>
             <p className="text-[11px] text-muted-foreground mt-2">
-              🗺️ Mons {completedWorlds}/4 · 🏁 Finals {totalEndings}/6 · 🧪 Receptes {recipeCount}
+              {t("storyPage.statsLine", { cw: completedWorlds, tw: 4, te: totalEndings, rc: recipeCount })}
             </p>
+
           </div>
 
-          {/* World selector */}
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">Tria on començar</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
+
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
           <WorldMap worlds={worlds} selectedId={selectedWorld} onSelect={setSelectedWorld} />
 
           {selected && (
@@ -511,23 +532,22 @@ export default function StoryModePage() {
           )}
 
           <Button onClick={handleStartRun} size="lg" disabled={busy || !selected?.unlocked} className="w-full mb-2">
-            {busy ? "..." : `📖 Començar a ${selected?.icon ?? "🏠"} ${selected?.name ?? "Casa"}`}
+            {busy ? "..." : t("storyPage.startBtn", { icon: selected?.icon ?? "🏠", name: selected?.name ?? "Casa" })}
           </Button>
-
-          
 
           <Button
             variant="ghost"
             onClick={async () => {
               if (!user) return;
-              if (!confirm("Reiniciar tot el Mode Història? Perdràs mascota, objectes, habilitats i progrés.")) return;
+              if (!confirm(t("storyPage.resetConfirm"))) return;
               await killAndReset(user.id);
               loadAll();
             }}
             className="w-full text-[10px] text-destructive hover:text-destructive mt-3"
           >
-            🔄 Reiniciar tot
+            {t("storyPage.resetAll")}
           </Button>
+
         </div>
       </div>
     );
@@ -564,8 +584,9 @@ export default function StoryModePage() {
 
         <div className="flex items-center justify-between mb-3 relative z-10">
           <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            ← Lobby
+            ← {t("common.lobby")}
           </button>
+
           <div className="flex items-center gap-1">
             <HelpDialog />
             {user && <InventoryDrawer userId={user.id} petName={pet.pet_name} triggerCount={inventoryRefresh} onChange={async () => {
@@ -574,21 +595,23 @@ export default function StoryModePage() {
               // Re-trigger auto-discover after using/combining items (state may have changed)
               const newly = await autoDiscoverRecipes(user.id, inv);
               if (newly.length > 0) {
-                setRecipeCount((c) => c + newly.length);
-                newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
+                newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
+
+                newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
               }
               // Refresh pet state too (using items affects it)
               const st = await getPetState(user.id);
               setPetState(st);
             }} />}
-            
+
             {run && (
               <span className="text-[10px] text-accent/80 font-medium">
-                ✓ Cap. {node.chapter}/8
+                {t("storyPage.chapterBadge", { n: node.chapter })}
               </span>
             )}
           </div>
         </div>
+
 
         {/* Pet status mini */}
         <div className="flex items-center gap-3 mb-3 relative z-10 glass rounded-xl px-3 py-2 border border-border/30">
