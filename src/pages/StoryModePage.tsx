@@ -111,7 +111,8 @@ export default function StoryModePage() {
       ]);
       const name = profileRes.data?.display_name?.trim()
         || (user.email ? user.email.split("@")[0] : "")
-        || "aventurer";
+        || t("storyPage.adventurer");
+
       setPlayerName(name);
       setPet(petData);
       setPetState(stateData);
