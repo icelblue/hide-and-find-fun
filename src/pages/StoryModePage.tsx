@@ -474,8 +474,9 @@ export default function StoryModePage() {
           {/* Header de navegació unificat */}
           <div className="flex items-center justify-between mb-3">
             <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← Lobby
+              ← {t("common.lobby")}
             </button>
+
             <div className="flex items-center gap-1">
               <HelpDialog />
               {user && (
