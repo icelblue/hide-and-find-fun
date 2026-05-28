@@ -584,8 +584,9 @@ export default function StoryModePage() {
 
         <div className="flex items-center justify-between mb-3 relative z-10">
           <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            ← Lobby
+            ← {t("common.lobby")}
           </button>
+
           <div className="flex items-center gap-1">
             <HelpDialog />
             {user && <InventoryDrawer userId={user.id} petName={pet.pet_name} triggerCount={inventoryRefresh} onChange={async () => {
