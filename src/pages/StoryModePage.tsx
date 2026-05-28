@@ -130,16 +130,16 @@ export default function StoryModePage() {
       if (invData.length > 0) {
         const newly = await autoDiscoverRecipes(user.id, invData);
         if (newly.length > 0) {
+          setRecipeCount(rcCount + newly.length);
           newly.forEach((r) =>
             toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
               description: t("storyPage.recipeDiscoveredDesc"),
               duration: 5000,
             })
           );
-
-          );
         }
       }
+
 
       // 🐾 Resoldre visites pendents + notificacions de regals → popup "mentre no hi eres"
       try {
