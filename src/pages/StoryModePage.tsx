@@ -400,9 +400,8 @@ export default function StoryModePage() {
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
         {introStep === 0 && (
           <div className="text-center relative z-10">
+            <TypewriterText
               text={t("storyPage.giftIntro", { name: playerName })}
-
-              text={`Hola ${playerName}! Aquest regal 🎁 és per tu...`}
               speed={75}
               onComplete={() => setTimeout(() => setIntroStep(1), 1200)}
               className="text-lg font-medium mb-6"
@@ -415,28 +414,29 @@ export default function StoryModePage() {
               className="text-8xl hover:scale-110 transition-transform active:scale-95 animate-pulse cursor-pointer">
               🎁
             </button>
-            <p className="text-sm text-muted-foreground mt-4">Toca per obrir!</p>
+            <p className="text-sm text-muted-foreground mt-4">{t("storyPage.tapToOpen")}</p>
           </div>
         )}
         {giftOpened && (
           <div className="text-center relative z-10 animate-scale-in w-full max-w-xs">
             <div className="text-8xl mb-3">{randomPet.icon}</div>
-            <p className="text-lg font-bold mb-4">Un {randomPet.name}!</p>
-            <p className="text-sm text-muted-foreground mb-2">Com el vols dir?</p>
+            <p className="text-lg font-bold mb-4">{t("storyPage.aPet", { name: randomPet.name })}</p>
+            <p className="text-sm text-muted-foreground mb-2">{t("storyPage.namePrompt")}</p>
             <Input
               value={petNameInput}
               onChange={(e) => setPetNameInput(e.target.value)}
-              placeholder="Nom de la mascota"
+              placeholder={t("storyPage.petNamePlaceholder")}
               maxLength={20}
               className="text-center mb-3"
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && handleConfirmPetName()}
             />
             <Button onClick={handleConfirmPetName} disabled={namingPet || !petNameInput.trim()} className="w-full">
-              {namingPet ? "..." : `Adoptar ${randomPet.icon}`}
+              {namingPet ? "..." : t("storyPage.adopt", { icon: randomPet.icon })}
             </Button>
           </div>
         )}
+
       </div>
     );
   }
