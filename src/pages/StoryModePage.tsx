@@ -493,8 +493,6 @@ export default function StoryModePage() {
                     const newly = await autoDiscoverRecipes(user.id, inv);
                     if (newly.length > 0) {
                       newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
-
-                      newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
                     }
                   }}
                 />
@@ -523,7 +521,6 @@ export default function StoryModePage() {
 
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
 
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
           <WorldMap worlds={worlds} selectedId={selectedWorld} onSelect={setSelectedWorld} />
 
           {selected && (
