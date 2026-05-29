@@ -5,6 +5,19 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **MINOR**: funcionalitats noves (compatibles)
 - **PATCH**: correccions de bugs
 
+## [1.22.0] — 2026-05-29 — i18n: RewardReveal + seed EN contingut narratiu (MINOR)
+
+### Afegit
+- Claus `reveal.*` (tragicEnd, foundItem, recipe, damage, xp, nothing) a `ca.json`/`en.json`.
+- **Seed EN complet** a la taula `translations` (468 files): 9 mons (nom+descripció), 4 receptes, 100 nodes (títol+narrativa), 242 choices. Generat via Lovable AI Gateway (gemini-2.5-flash) amb preservació de placeholders.
+
+### Canviat
+- **`rewardToReveal(r, t?)`**: ara accepta `t` opcional per traduir labels. Fallback a CA si no s'hi passa.
+- **`StoryModePage`** i **`DailyChallengeCard`**: passen `t` a `rewardToReveal`.
+
+### Resultat
+Mode EN ara és totalment funcional: UI + contingut narratiu traduïts. Restants: eina admin per editar `translations` sense desplegar + QA visual EN.
+
 
 ## [1.20.0] — 2026-05-28 — i18n: HelpDialog, WhileAwayDialog, DailyChallengeCard (MINOR)
 
