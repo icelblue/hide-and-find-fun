@@ -302,7 +302,8 @@ export default function StoryModePage() {
 
 
       // Reveal animation
-      setReveal(rewardToReveal(result.reward));
+      setReveal(rewardToReveal(result.reward, t));
+
       setChapterRewards(prev => [...prev, result.reward]);
 
       if (result.runEnded) {

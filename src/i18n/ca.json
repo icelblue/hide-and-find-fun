@@ -218,7 +218,16 @@
     "nodeMissing": "Node inicial '{id}' no existeix",
     "choiceFailed": "no s'ha pogut aplicar la decisió",
     "unknownError": "error desconegut"
+  },
+  "reveal": {
+    "tragicEnd": "Final tràgic...",
+    "foundItem": "Has trobat {name}!",
+    "recipe": "Recepta: {name}",
+    "damage": "-{n} salut",
+    "xp": "+{n} XP",
+    "nothing": "Res aquesta vegada"
   }
 }
+
 
 
