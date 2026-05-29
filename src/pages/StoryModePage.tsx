@@ -493,8 +493,6 @@ export default function StoryModePage() {
                     const newly = await autoDiscoverRecipes(user.id, inv);
                     if (newly.length > 0) {
                       newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
-
-                      newly.forEach((r) => toast.success(`💡 Recepta descoberta: ${r.icon} ${r.name}`));
                     }
                   }}
                 />
