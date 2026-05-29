@@ -64,7 +64,8 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
         setState(fresh);
         return;
       }
-      setReveal(rewardToReveal(reward as RewardOutcome));
+      setReveal(rewardToReveal(reward as RewardOutcome, t));
+
       onRewardApplied?.();
       const fresh = await getTodayChallenge(userId);
       setState(fresh);
