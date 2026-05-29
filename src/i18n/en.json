@@ -218,7 +218,16 @@
     "nodeMissing": "Starting node '{id}' does not exist",
     "choiceFailed": "couldn't apply choice",
     "unknownError": "unknown error"
+  },
+  "reveal": {
+    "tragicEnd": "Tragic end...",
+    "foundItem": "You found {name}!",
+    "recipe": "Recipe: {name}",
+    "damage": "-{n} health",
+    "xp": "+{n} XP",
+    "nothing": "Nothing this time"
   }
 }
+
 
 
