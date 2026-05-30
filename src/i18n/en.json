@@ -37,6 +37,32 @@
   "notFound": {
     "message": "This page does not exist"
   },
+  "lobby": {
+    "myGames": "My games",
+    "openGames": "Open games",
+    "noGames": "No games available",
+    "noGamesHint": "Use 🎲 to find a rival automatically!",
+    "join": "Join",
+    "createGame": "Create game",
+    "randomRival": "Random rival",
+    "hide": "Hide",
+    "delete": "Delete",
+    "undo": "Undo",
+    "menu": "Menu",
+    "byPlayer": "by {name}",
+    "anonymous": "Anonymous",
+    "statusWaiting": "Waiting for rival",
+    "statusHiding": "Hiding object",
+    "statusPlaying": "Playing",
+    "statusFinished": "Finished",
+    "gameDeleted": "Game deleted",
+    "gameNotFound": "Game not found",
+    "gameAlreadyStarted": "This game has already started",
+    "challengeDeclined": "Challenge declined",
+    "noPlayerFound": "No player found",
+    "reportBug": "Report a bug",
+    "reportError": "Error sending report"
+  },
   "lang": {
     "ca": "Català",
     "en": "English"
