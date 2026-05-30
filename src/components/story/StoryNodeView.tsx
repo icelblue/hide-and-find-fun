@@ -106,12 +106,12 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
                     </p>
                     {usesTraits && c.requires_traits && (
                       <div className="flex flex-wrap gap-1">
-                        {Object.keys(c.requires_traits).map((t) => {
-                          const meta = TRAIT_META[t as Trait];
+                        {Object.keys(c.requires_traits).map((tr) => {
+                          const meta = TRAIT_META[tr as Trait];
                           if (!meta) return null;
                           return (
-                            <span key={t} className={`text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 ${meta.color} font-semibold`}>
-                              {meta.icon} {meta.label}
+                            <span key={tr} className={`text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 ${meta.color} font-semibold`}>
+                              {meta.icon} {t(`petTrait.${meta.key}`, meta.label)}
                             </span>
                           );
                         })}
@@ -119,7 +119,7 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
                     )}
                     {hasActiveBonus && traitBonus?.trait && (
                       <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-semibold`}>
-                        ✨ {t("story.bonus")} {TRAIT_META[traitBonus.trait as Trait]?.label} ×{traitBonus.multiplier}
+                        ✨ {t("story.bonus")} {t(`petTrait.${traitBonus.trait}`, TRAIT_META[traitBonus.trait as Trait]?.label ?? "")} ×{traitBonus.multiplier}
                       </span>
                     )}
                   </div>

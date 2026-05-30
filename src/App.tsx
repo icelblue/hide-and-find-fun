@@ -22,9 +22,13 @@ const ClaimReminderPage = lazy(() => import("./pages/ClaimReminderPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
+  // Llegim lang directament de localStorage per evitar dependència del context
+  // (PageLoader es renderitza també abans que LanguageProvider hidrati)
+  const lang = typeof window !== "undefined" && localStorage.getItem("lang") === "en" ? "en" : "ca";
+  const label = lang === "en" ? "Loading..." : "Carregant...";
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Carregant pàgina">
-      <p className="text-muted-foreground animate-pulse">Carregant...</p>
+    <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label={label}>
+      <p className="text-muted-foreground animate-pulse">{label}</p>
     </div>
   );
 }

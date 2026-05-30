@@ -28,7 +28,7 @@ export function PetEvolutionCard({ pet, unlockedSkills }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-base font-bold truncate">{pet.pet_name}</p>
-          <p className="text-[11px] text-muted-foreground">{evo.badge} {evo.label}</p>
+          <p className="text-[11px] text-muted-foreground">{evo.badge} {t(`petTier.${evo.key}`, evo.label)}</p>
           <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-1.5">
             <div className="h-1.5 rounded-full bg-accent transition-all duration-500" style={{ width: `${Math.min(xp / max * 100, 100)}%` }} />
           </div>

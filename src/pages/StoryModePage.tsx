@@ -278,7 +278,9 @@ export default function StoryModePage() {
       if (result.traitBonus) {
         const { TRAIT_META } = await import("@/lib/pet-personality");
         const meta = TRAIT_META[result.traitBonus.trait as keyof typeof TRAIT_META];
-        toast.success(t("storyPage.traitBonus", { label: meta?.label ?? result.traitBonus.trait, m: result.traitBonus.multiplier }));
+        const traitKey = result.traitBonus.trait as keyof typeof TRAIT_META;
+        const traitLabel = t(`petTrait.${traitKey}`, meta?.label ?? result.traitBonus.trait);
+        toast.success(t("storyPage.traitBonus", { label: traitLabel, m: result.traitBonus.multiplier }));
 
       }
 
@@ -634,15 +636,16 @@ export default function StoryModePage() {
         {/* FASE 1: Personalitat efectiva (espècie + estat actual) */}
         {personality && (
           <div className="relative z-10 flex flex-wrap gap-1.5 justify-center px-1">
-            {(["curious","loyal","brave","gluttonous","calm"] as const).map((t) => {
-              const meta = TRAIT_META[t];
-              const value = personality[t];
+            {(["curious","loyal","brave","gluttonous","calm"] as const).map((tr) => {
+              const meta = TRAIT_META[tr];
+              const value = personality[tr];
               const strong = value >= 7;
               const weak = value <= 3;
+              const traitLabel = t(`petTrait.${tr}`, meta.label);
               return (
                 <span
-                  key={t}
-                  title={`${meta.label}: ${value}/10`}
+                  key={tr}
+                  title={`${traitLabel}: ${value}/10`}
                   className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                     strong ? `bg-purple-500/20 ${meta.color} ring-1 ring-purple-400/40`
                     : weak ? "bg-muted/30 text-muted-foreground/60"

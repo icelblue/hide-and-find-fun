@@ -67,11 +67,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("lang-changed", { detail: l }));
       }
-      if (user) {
-        await supabase.from("profiles").update({ language: l } as never).eq("user_id", user.id);
-      }
+      // Sessió fresca: evita 403 quan el token de useAuth està stale (just després login)
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      if (!uid) return;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ language: l } as never)
+        .eq("user_id", uid);
+      if (error) console.warn("[i18n] persist language failed:", error.message);
     },
-    [user]
+    []
   );
 
   const t = useCallback(

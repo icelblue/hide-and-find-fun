@@ -30,6 +30,7 @@ import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
 import { PetActivityFeed } from "@/components/PetActivityFeed";
+import { useT } from "@/i18n/LanguageProvider";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
@@ -40,6 +41,7 @@ export default function PlayerProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const [profile, setProfile] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [trophies, setTrophies] = useState<any[]>([]);
@@ -254,7 +256,7 @@ export default function PlayerProfilePage() {
               <div className={`relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${sick ? "ring-destructive/50" : evo.ring}`}>
                 <span className="text-5xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
                 <span className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold">
-                  Lv{level}
+                  {t("evolution.level", { n: level })}
                 </span>
                 {sick && !evo.isDead && (
                   <span className="absolute -top-1 -right-1 text-base animate-pulse">🤒</span>
@@ -263,18 +265,18 @@ export default function PlayerProfilePage() {
               <div className="flex-1 min-w-0">
                 <p className="text-base font-bold truncate">{pet.pet_name}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {evo.badge} {evo.label}
+                  {evo.badge} {t(`petTier.${evo.key}`, evo.label)}
                   {evo.isDead
-                    ? <span className="text-destructive font-semibold ml-1">· Mort 🪦</span>
+                    ? <span className="text-destructive font-semibold ml-1">· {t("petStatus.dead")}</span>
                     : sick
-                      ? <span className="text-destructive font-semibold ml-1">· Malalt 🤒</span>
-                      : <span className="text-green-500 font-semibold ml-1">· Saludable ✅</span>}
+                      ? <span className="text-destructive font-semibold ml-1">· {t("petStatus.sick")}</span>
+                      : <span className="text-green-500 font-semibold ml-1">· {t("petStatus.healthy")}</span>}
                 </p>
                 <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-1.5">
                   <div className={`h-1.5 rounded-full transition-all duration-500 ${sick ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min((xp / max) * 100, 100)}%` }} />
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {level >= MAX_LEVEL ? "Nivell màxim!" : `${remaining} XP per pujar a Lv${level + 1}`}
+                  {level >= MAX_LEVEL ? t("evolution.maxLevel") : t("evolution.xpToNext", { xp: remaining, n: level + 1 })}
                 </p>
               </div>
               {petAccessories.length > 0 && (

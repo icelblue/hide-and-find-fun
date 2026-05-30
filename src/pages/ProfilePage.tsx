@@ -49,6 +49,7 @@ const RARITY_BORDER: Record<string, string> = {
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const [profile, setProfile] = useState<any>(null);
   const [rewards, setRewards] = useState<any[]>([]);
   const [scenarios, setScenarios] = useState<any[]>([]);
@@ -364,7 +365,7 @@ export default function ProfilePage() {
       )}
 
       <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-5 block transition-colors relative z-10">
-        ← Lobby
+        {t("common.lobbyShort")}
       </button>
 
       {/* Profile header */}

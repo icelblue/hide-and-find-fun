@@ -14,12 +14,13 @@ export const TRAITS = ["curious", "loyal", "brave", "gluttonous", "calm"] as con
 export type Trait = typeof TRAITS[number];
 export type Personality = Record<Trait, number>;
 
-export const TRAIT_META: Record<Trait, { label: string; icon: string; color: string }> = {
-  curious:    { label: "Curiós",   icon: "🔍", color: "text-blue-400" },
-  loyal:      { label: "Lleial",   icon: "🤝", color: "text-pink-400" },
-  brave:      { label: "Valent",   icon: "⚔️", color: "text-red-400" },
-  gluttonous: { label: "Gormand",  icon: "🍖", color: "text-amber-400" },
-  calm:       { label: "Calmat",   icon: "🌿", color: "text-emerald-400" },
+// `label` és el fallback CA. La UI hauria d'usar t(`petTrait.${key}`).
+export const TRAIT_META: Record<Trait, { key: Trait; label: string; icon: string; color: string }> = {
+  curious:    { key: "curious",    label: "Curiós",   icon: "🔍", color: "text-blue-400" },
+  loyal:      { key: "loyal",      label: "Lleial",   icon: "🤝", color: "text-pink-400" },
+  brave:      { key: "brave",      label: "Valent",   icon: "⚔️", color: "text-red-400" },
+  gluttonous: { key: "gluttonous", label: "Gormand",  icon: "🍖", color: "text-amber-400" },
+  calm:       { key: "calm",       label: "Calmat",   icon: "🌿", color: "text-emerald-400" },
 };
 
 const DEFAULT_BASE: Personality = { curious: 5, loyal: 5, brave: 5, gluttonous: 5, calm: 5 };
