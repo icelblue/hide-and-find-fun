@@ -100,23 +100,24 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
               card.style.transform = `translateX(80px)`;
               if (deleteIndicator) deleteIndicator.style.opacity = '1';
               setSwiped(true);
-              const actionLabel = canSwipeDelete ? "Eliminar partida?" : "Amagar partida?";
+              const actionLabel = canSwipeDelete ? t("lobby.deleteGame?") : t("lobby.hideGame?");
               toast(actionLabel, {
                 action: {
-                  label: "✓ Confirmar",
+                  label: t("lobby.confirm"),
                   onClick: async () => {
                     card.style.transform = `translateX(400px)`;
                     card.style.opacity = '0';
                     setTimeout(async () => {
                       if (canSwipeDelete) {
-                        try { await onDelete(game.id); toast.success("Partida eliminada"); }
+                        try { await onDelete(game.id); toast.success(t("lobby.gameDeleted")); }
                         catch (err: any) { toast.error(err.message); }
                       } else { onDismiss(game.id); }
                     }, 300);
                   },
                 },
                 cancel: {
-                  label: "Desfer",
+                  label: t("lobby.undo"),
+
                   onClick: () => {
                     card.style.transform = '';
                     if (deleteIndicator) deleteIndicator.style.opacity = '0';
