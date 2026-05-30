@@ -118,7 +118,7 @@ export default function SocialItemsPanel({
               setShowBarricadaPicker(false);
               setBarricadaTarget("");
             }}>
-            Barricadar camí
+            {t("game.social.barricadeBtn")}
           </Button>
         </div>
       )}
