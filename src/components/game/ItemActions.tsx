@@ -96,9 +96,10 @@ export default function ItemActions({
                     <span className="text-lg">{ia.action_icon}</span>
                     <span className="flex-1 text-left">{ia.action_label}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {alreadyUsed ? "✓ fet" : `${ia.cost}🪙`}
+                      {alreadyUsed ? t("game.items.done") : `${ia.cost}🪙`}
                     </span>
                   </button>
+
                 );
               })}
             </div>
