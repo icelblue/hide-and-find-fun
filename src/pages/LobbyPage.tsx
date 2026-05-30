@@ -70,7 +70,7 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
       {(canSwipeDelete || isFinished) && (
         <div data-delete-bg className="absolute inset-0 bg-destructive/20 rounded-xl flex items-center pl-4 opacity-0 transition-opacity pointer-events-none z-0">
           <span className="text-destructive text-sm font-semibold flex items-center gap-1">
-            🗑️ {canSwipeDelete ? "Eliminar" : "Amagar"}
+            🗑️ {canSwipeDelete ? t("lobby.delete") : t("lobby.hide")}
           </span>
         </div>
       )}
