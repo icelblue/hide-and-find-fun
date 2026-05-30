@@ -541,24 +541,25 @@ export default function LobbyPage() {
 
       {/* Bug Report Modal */}
       {showBugReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Reportar un bug" onClick={() => setShowBugReport(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={t("lobby.reportBug")} onClick={() => setShowBugReport(false)}>
           <Card className="mx-4 max-w-sm w-full glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-5">
-              <h3 className="text-lg font-bold mb-1">🐛 Reportar un bug</h3>
-              <p className="text-xs text-muted-foreground mb-3">Descriu el problema i l'arreglarem el més aviat possible.</p>
+              <h3 className="text-lg font-bold mb-1">🐛 {t("lobby.reportBug")}</h3>
+              <p className="text-xs text-muted-foreground mb-3">{t("lobby.reportDescribe")}</p>
               <textarea
                 value={bugMessage}
                 onChange={e => setBugMessage(e.target.value)}
-                placeholder="Què ha passat? On i quan?"
+                placeholder={t("lobby.reportPlaceholder")}
                 maxLength={500}
                 rows={4}
                 className="w-full rounded-lg bg-muted/50 border border-border/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{bugMessage.length}/500</p>
               <div className="flex gap-2 mt-3">
-                <Button variant="outline" className="flex-1" onClick={() => setShowBugReport(false)}>Cancel·lar</Button>
-                <Button className="flex-1" onClick={handleBugReport} disabled={!bugMessage.trim()}>Enviar 📩</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setShowBugReport(false)}>{t("common.cancel")}</Button>
+                <Button className="flex-1" onClick={handleBugReport} disabled={!bugMessage.trim()}>{t("lobby.send")} 📩</Button>
               </div>
+
             </CardContent>
           </Card>
         </div>
