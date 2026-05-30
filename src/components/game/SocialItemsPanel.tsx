@@ -142,7 +142,7 @@ export default function SocialItemsPanel({
               setShowTrampaPicker(false);
               setTrampaTarget("");
             }}>
-            Col·locar trampa
+            {t("game.social.placeTrapBtn")}
           </Button>
         </div>
       )}
