@@ -167,7 +167,7 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
           </div>
         </CardContent>
       </Card>
-      {(canSwipeDelete || isFinished) && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none z-0">→ llisca</div>}
+      {(canSwipeDelete || isFinished) && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none z-0">{t("lobby.swipeHint")}</div>}
     </div>
   );
 }
