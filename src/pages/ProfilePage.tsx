@@ -365,7 +365,7 @@ export default function ProfilePage() {
       )}
 
       <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-5 block transition-colors relative z-10">
-        ← Lobby
+        {t("common.lobbyShort")}
       </button>
 
       {/* Profile header */}
