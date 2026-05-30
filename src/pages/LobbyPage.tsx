@@ -417,7 +417,7 @@ export default function LobbyPage() {
         <CardContent className="pt-3 pb-3">
           <div className="flex gap-2 mb-2">
             <Input
-              placeholder="Buscar jugador per nom..."
+              placeholder={t("lobby.searchPlaceholder")}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="text-sm bg-muted/50 border-border/50"
