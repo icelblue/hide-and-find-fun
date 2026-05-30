@@ -278,7 +278,9 @@ export default function StoryModePage() {
       if (result.traitBonus) {
         const { TRAIT_META } = await import("@/lib/pet-personality");
         const meta = TRAIT_META[result.traitBonus.trait as keyof typeof TRAIT_META];
-        toast.success(t("storyPage.traitBonus", { label: meta?.label ?? result.traitBonus.trait, m: result.traitBonus.multiplier }));
+        const traitKey = result.traitBonus.trait as keyof typeof TRAIT_META;
+        const traitLabel = t(`petTrait.${traitKey}`, meta?.label ?? result.traitBonus.trait);
+        toast.success(t("storyPage.traitBonus", { label: traitLabel, m: result.traitBonus.multiplier }));
 
       }
 
