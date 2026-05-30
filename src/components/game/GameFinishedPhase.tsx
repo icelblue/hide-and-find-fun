@@ -34,6 +34,7 @@ interface ActionLogEntry {
 }
 
 export default function GameFinishedPhase({ game, user, rival, reward, navigate, objects, scenarios, gameId }: FinishedPhaseProps) {
+  const t = useT();
   const [rivalInfo, setRivalInfo] = useState<{
     obj: any; item: any; scenario: any; position: string;
     hideMessage: string | null; rivalName: string;
@@ -42,6 +43,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
   const [showRivalInfo, setShowRivalInfo] = useState(false);
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [showActionLog, setShowActionLog] = useState(false);
+
 
   useEffect(() => {
     if (!gameId || !user) return;
