@@ -978,7 +978,7 @@ export default function GamePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
         <button onClick={() => navigate(isStory ? "/story" : "/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-          {isStory ? "← Mode Història" : "← Lobby"}
+          {isStory ? (localStorage.getItem("lang") === "en" ? "← Story Mode" : "← Mode Història") : (localStorage.getItem("lang") === "en" ? "← Lobby" : "← Lobby")}
         </button>
         <div className="flex items-center gap-2">
           {isStory ? (
