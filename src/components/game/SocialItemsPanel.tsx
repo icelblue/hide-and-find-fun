@@ -35,7 +35,9 @@ export default function SocialItemsPanel({
   showPanel, setShowPanel, player, onSendSocial, messageInput, setMessageInput, actionLoading,
   connectedScenarios, currentScenarioId, currentScenarioItems,
 }: SocialItemsPanelProps) {
+  const t = useT();
   const [barricadaTarget, setBarricadaTarget] = useState<string>("");
+
   const [trampaTarget, setTrampaTarget] = useState<string>("");
   const [showBarricadaPicker, setShowBarricadaPicker] = useState(false);
   const [showTrampaPicker, setShowTrampaPicker] = useState(false);
