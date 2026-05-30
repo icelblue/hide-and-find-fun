@@ -49,6 +49,7 @@ const RARITY_BORDER: Record<string, string> = {
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const [profile, setProfile] = useState<any>(null);
   const [rewards, setRewards] = useState<any[]>([]);
   const [scenarios, setScenarios] = useState<any[]>([]);
