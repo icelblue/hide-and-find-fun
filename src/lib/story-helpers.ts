@@ -60,17 +60,19 @@ export const MAX_PET_XP = 5000;
 // Evolution tiers
 export const PET_EVOLUTION_TIERS: readonly {
   minXp: number;
+  key: "baby" | "young" | "adult" | "veteran" | "legendary";
   label: string;
   badge: string;
   glow: string;
   ring: string;
 }[] = [
-  { minXp: 0, label: "Bebè", badge: "🥚", glow: "from-gray-400/20 to-gray-300/10", ring: "ring-muted-foreground/30" },
-  { minXp: 500, label: "Jove", badge: "🌱", glow: "from-green-400/30 to-emerald-300/15", ring: "ring-green-500/40" },
-  { minXp: 1500, label: "Adult", badge: "⭐", glow: "from-blue-400/30 to-cyan-300/15", ring: "ring-blue-500/40" },
-  { minXp: 3000, label: "Veterà", badge: "🔥", glow: "from-orange-400/30 to-amber-300/15", ring: "ring-orange-500/50" },
+  { minXp: 0, key: "baby", label: "Bebè", badge: "🥚", glow: "from-gray-400/20 to-gray-300/10", ring: "ring-muted-foreground/30" },
+  { minXp: 500, key: "young", label: "Jove", badge: "🌱", glow: "from-green-400/30 to-emerald-300/15", ring: "ring-green-500/40" },
+  { minXp: 1500, key: "adult", label: "Adult", badge: "⭐", glow: "from-blue-400/30 to-cyan-300/15", ring: "ring-blue-500/40" },
+  { minXp: 3000, key: "veteran", label: "Veterà", badge: "🔥", glow: "from-orange-400/30 to-amber-300/15", ring: "ring-orange-500/50" },
   {
     minXp: 4500,
+    key: "legendary",
     label: "Llegendari",
     badge: "👑",
     glow: "from-purple-400/40 to-pink-300/20",
