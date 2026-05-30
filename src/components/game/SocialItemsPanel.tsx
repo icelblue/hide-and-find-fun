@@ -102,7 +102,7 @@ export default function SocialItemsPanel({
       {/* Barricada picker */}
       {showPanel && showBarricadaPicker && connectedScenarios && connectedScenarios.length > 0 && (
         <div className="mt-2 glass rounded-xl p-3">
-          <p className="text-xs font-semibold mb-2 text-muted-foreground">🚧 Quin camí vols barricadar?</p>
+          <p className="text-xs font-semibold mb-2 text-muted-foreground">{t("game.social.barricadeWhichPath")}</p>
           <div className="grid grid-cols-2 gap-1.5">
             {connectedScenarios.map(s => (
               <button key={s.id}
