@@ -4,6 +4,8 @@
 import { useState } from "react";
 import { getTagActions, TOKEN_COSTS } from "@/lib/supabase-helpers";
 import type { PlayerTools, Position } from "@/lib/game-types";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 interface ItemActionsProps {
   item: any;
