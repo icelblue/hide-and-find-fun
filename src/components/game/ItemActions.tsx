@@ -28,6 +28,7 @@ export default function ItemActions({
   item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot,
   interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems,
 }: ItemActionsProps) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const hasInteractions = interactions && interactions.length > 0;
   const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
@@ -37,7 +38,7 @@ export default function ItemActions({
 
   return (
     <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : isDirty ? "border-accent/20" : ""}`}>
-      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-label={`${item.icon} ${item.name} - ${expanded ? 'tancar' : 'obrir'} accions`}
+      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-label={`${item.icon} ${item.name} - ${expanded ? t("game.items.closeActions") : t("game.items.openActions")}`}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
         <span className="font-semibold text-sm">
           {item.icon} {item.name}
@@ -47,6 +48,7 @@ export default function ItemActions({
         </span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>
+
       {expanded && (
         <div className="border-t border-border/30 p-2.5">
           {/* Tag-based actions */}
