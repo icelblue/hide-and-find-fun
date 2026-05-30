@@ -245,7 +245,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       const game = await createGame(user.id);
-      toast.success(`Partida creada! Codi: ${game.code}`);
+      toast.success(`${t("lobby.createGame")}: ${game.code}`);
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -257,9 +257,9 @@ export default function LobbyPage() {
     try {
       const result = await findRandomMatch(user.id);
       if (result.type === "joined") {
-        toast.success("Rival trobat! 🎯");
+        toast.success(t("lobby.rivalFound"));
       } else {
-        toast.success("Repte enviat a un rival aleatori! Espera que accepti.");
+        toast.success(t("lobby.challengeSentRandom"));
       }
       navigate(`/game/${result.gameId}`);
     } catch (err: any) { toast.error(err.message); }
@@ -273,10 +273,10 @@ export default function LobbyPage() {
       const { data: game } = await supabase
         .from("games").select("id, status")
         .eq("code", joinCode.toUpperCase()).single();
-      if (!game) throw new Error("Partida no trobada");
-      if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
+      if (!game) throw new Error(t("lobby.gameNotFound"));
+      if (game.status !== "waiting") throw new Error(t("lobby.gameAlreadyStarted"));
       await joinGame(game.id, user.id);
-      toast.success("T'has unit a la partida!");
+      toast.success(t("lobby.joinedGame"));
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -287,7 +287,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       await joinGame(gameId, user.id);
-      toast.success("T'has unit a la partida!");
+      toast.success(t("lobby.joinedGame"));
       navigate(`/game/${gameId}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -298,7 +298,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       await deleteGame(gameId);
-      toast.success("Repte rebutjat");
+      toast.success(t("lobby.challengeDeclined"));
       invalidateLobby();
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -310,7 +310,7 @@ export default function LobbyPage() {
     try {
       const results = await searchPlayers(searchQuery, user.id);
       setSearchResults(results);
-      if (results.length === 0) toast.info("Cap jugador trobat");
+      if (results.length === 0) toast.info(t("lobby.noPlayerFound"));
     } catch (err: any) { toast.error(err.message); }
     finally { setSearching(false); }
   };
@@ -320,7 +320,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       const game = await challengePlayer(user.id, rivalUserId);
-      toast.success(`⚔️ Repte enviat a ${rivalName}! Codi: ${game.code}`);
+      toast.success(t("lobby.challengeSent").replace("{name}", rivalName).replace("{code}", game.code));
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -336,11 +336,12 @@ export default function LobbyPage() {
         url: window.location.href,
         user_agent: navigator.userAgent.slice(0, 500),
       });
-      toast.success("Gràcies pel report! 🐛");
+      toast.success(t("lobby.reportThanks"));
       setBugMessage("");
       setShowBugReport(false);
-    } catch { toast.error("Error enviant el report"); }
+    } catch { toast.error(t("lobby.reportError")); }
   };
+
 
   return (
     <main className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative" role="main">
