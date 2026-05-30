@@ -237,15 +237,15 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="mb-6">
           {!showRivalInfo ? (
             <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
-              👁️ Veure on era l'objecte
+              {t("game.results.seeWhere")}
             </Button>
           ) : (
             <Card className="mx-auto max-w-xs glass border-secondary/30">
               <CardContent className="py-4">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
                   {isWinner
-                    ? `🏆 Has trobat l'objecte de ${rivalInfo.rivalName}`
-                    : `📍 L'objecte de ${rivalInfo.rivalName}`}
+                    ? t("game.results.youFound", { name: rivalInfo.rivalName })
+                    : t("game.results.rivalsObject", { name: rivalInfo.rivalName })}
                 </p>
                 {rivalInfo.obj && (
                   <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
@@ -253,8 +253,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                 <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
                 {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
                   <p className="text-[10px] text-muted-foreground mb-2">
-                    Material: <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
-                    {rivalInfo.obj.size && <span> · Mida {rivalInfo.obj.size}</span>}
+                    {t("game.results.material")} <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
+                    {rivalInfo.obj.size && <span> · {t("game.results.size")} {rivalInfo.obj.size}</span>}
                   </p>
                 )}
                 <div className="text-sm text-muted-foreground space-y-1">
@@ -267,21 +267,22 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                 </div>
                 {rivalInfo.traits.length > 0 && (
                   <div className="mt-3 text-xs text-muted-foreground">
-                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">💡 Pistes que tenia:</p>
-                    {rivalInfo.traits.map((t, i) => (
-                      <p key={i} className="text-primary/80 italic">"{t}"</p>
+                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">{t("game.results.traitsHad")}</p>
+                    {rivalInfo.traits.map((tr, i) => (
+                      <p key={i} className="text-primary/80 italic">"{tr}"</p>
                     ))}
                   </div>
                 )}
                 {rivalInfo.specialType && (
-                  <p className="text-[10px] text-accent mt-2">⭐ Objecte especial ({rivalInfo.specialType})</p>
+                  <p className="text-[10px] text-accent mt-2">{t("game.results.specialObject", { type: rivalInfo.specialType })}</p>
                 )}
                 {rivalInfo.hideMessage && (
                   <div className="mt-3 p-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <p className="text-xs font-semibold text-accent mb-0.5">💌 Missatge del rival:</p>
+                    <p className="text-xs font-semibold text-accent mb-0.5">{t("game.results.rivalMessage")}</p>
                     <p className="text-sm italic text-foreground/80">"{rivalInfo.hideMessage}"</p>
                   </div>
                 )}
+
               </CardContent>
             </Card>
           )}
