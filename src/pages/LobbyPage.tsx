@@ -173,11 +173,13 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
 }
 
 export default function LobbyPage() {
+  const t = useT();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
+
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
