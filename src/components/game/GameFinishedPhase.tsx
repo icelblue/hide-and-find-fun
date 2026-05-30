@@ -217,7 +217,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       {reward?.reward_items && (
         <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
           <CardContent className="py-5 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🎁 Recompensa</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">{t("game.results.rewardLabel")}</p>
             <div className="text-5xl mb-2">{reward.reward_items.icon}</div>
             <p className="font-bold text-lg">{reward.reward_items.name}</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -225,8 +225,9 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
               {RARITY_CONFIG[reward.reward_items.rarity]?.label}
             </p>
             <p className="text-[10px] text-muted-foreground/60 mt-2">
-              Ves al perfil per col·locar-lo o vendre'l
+              {t("game.results.rewardHint")}
             </p>
+
           </CardContent>
         </Card>
       )}
