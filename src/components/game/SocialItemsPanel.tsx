@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SOCIAL_ITEMS, type SocialItemType } from "@/lib/supabase-helpers";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 interface SocialItemsPanelProps {
   showPanel: boolean;
@@ -33,7 +35,9 @@ export default function SocialItemsPanel({
   showPanel, setShowPanel, player, onSendSocial, messageInput, setMessageInput, actionLoading,
   connectedScenarios, currentScenarioId, currentScenarioItems,
 }: SocialItemsPanelProps) {
+  const t = useT();
   const [barricadaTarget, setBarricadaTarget] = useState<string>("");
+
   const [trampaTarget, setTrampaTarget] = useState<string>("");
   const [showBarricadaPicker, setShowBarricadaPicker] = useState(false);
   const [showTrampaPicker, setShowTrampaPicker] = useState(false);
@@ -62,7 +66,7 @@ export default function SocialItemsPanel({
       <Button variant="outline" className="w-full h-12 text-base" size="lg"
         onClick={() => setShowPanel(!showPanel)}
         disabled={allDisabled}>
-        {allDisabled ? "⏳ Ítems socials esgotats avui" : "⚡ Usar ítem social"}
+        {allDisabled ? t("game.social.exhausted") : t("game.social.useItemBtn")}
       </Button>
 
       {showPanel && (
@@ -87,7 +91,7 @@ export default function SocialItemsPanel({
                   </span>
                 )}
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border text-[10px] text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 max-w-[200px] text-wrap text-center">
-                  {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
+                  {isBombUsed ? t("game.social.alreadyUsed") : item.desc}
                 </span>
               </button>
             );
@@ -98,7 +102,7 @@ export default function SocialItemsPanel({
       {/* Barricada picker */}
       {showPanel && showBarricadaPicker && connectedScenarios && connectedScenarios.length > 0 && (
         <div className="mt-2 glass rounded-xl p-3">
-          <p className="text-xs font-semibold mb-2 text-muted-foreground">🚧 Quin camí vols barricadar?</p>
+          <p className="text-xs font-semibold mb-2 text-muted-foreground">{t("game.social.barricadeWhichPath")}</p>
           <div className="grid grid-cols-2 gap-1.5">
             {connectedScenarios.map(s => (
               <button key={s.id}
@@ -114,7 +118,7 @@ export default function SocialItemsPanel({
               setShowBarricadaPicker(false);
               setBarricadaTarget("");
             }}>
-            Barricadar camí
+            {t("game.social.barricadeBtn")}
           </Button>
         </div>
       )}
@@ -122,7 +126,7 @@ export default function SocialItemsPanel({
       {/* Trampa picker */}
       {showPanel && showTrampaPicker && currentScenarioItems && currentScenarioItems.length > 0 && (
         <div className="mt-2 glass rounded-xl p-3">
-          <p className="text-xs font-semibold mb-2 text-muted-foreground">🪤 On vols posar la trampa?</p>
+          <p className="text-xs font-semibold mb-2 text-muted-foreground">{t("game.social.trapWhichItem")}</p>
           <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
             {currentScenarioItems.map(item => (
               <button key={item.id}
@@ -138,7 +142,7 @@ export default function SocialItemsPanel({
               setShowTrampaPicker(false);
               setTrampaTarget("");
             }}>
-            Col·locar trampa
+            {t("game.social.placeTrapBtn")}
           </Button>
         </div>
       )}
@@ -148,10 +152,11 @@ export default function SocialItemsPanel({
           <div className="flex gap-1.5 items-center glass rounded-xl p-2">
             <span className="text-xl pl-1">💡</span>
             <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-              placeholder="Pista o farol pel rival..." maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
+              placeholder={t("game.social.messagePlaceholder")} maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
             <Button size="sm" disabled={!messageInput.trim() || actionLoading} onClick={() => onSendSocial("message")} className="shrink-0">
-              Enviar
+              {t("game.social.sendBtn")}
             </Button>
+
           </div>
         </div>
       )}

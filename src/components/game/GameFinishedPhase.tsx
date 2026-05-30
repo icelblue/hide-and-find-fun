@@ -9,6 +9,8 @@ import { getHideMessage } from "@/lib/object-specials";
 import { RARITY_CONFIG } from "@/lib/reward-helpers";
 import { POS_LABELS } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 interface FinishedPhaseProps {
   game: any;
@@ -32,6 +34,7 @@ interface ActionLogEntry {
 }
 
 export default function GameFinishedPhase({ game, user, rival, reward, navigate, objects, scenarios, gameId }: FinishedPhaseProps) {
+  const t = useT();
   const [rivalInfo, setRivalInfo] = useState<{
     obj: any; item: any; scenario: any; position: string;
     hideMessage: string | null; rivalName: string;
@@ -40,6 +43,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
   const [showRivalInfo, setShowRivalInfo] = useState(false);
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [showActionLog, setShowActionLog] = useState(false);
+
 
   useEffect(() => {
     if (!gameId || !user) return;
@@ -75,10 +79,10 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
 
       const scenarioMap = new Map((scenarioData ?? []).map(s => [s.id, s]));
       const itemMap = new Map((itemData ?? []).map(i => [i.id, i]));
-      const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? "Jugador"]));
+      const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? t("game.results.playerDefault")]));
 
       const log: ActionLogEntry[] = allMoves.map(m => {
-        const playerName = profileMap.get(m.player_id) ?? "Jugador";
+        const playerName = profileMap.get(m.player_id) ?? t("game.results.playerDefault");
         const isOwn = m.player_id === user.id;
         let description = "";
 
@@ -88,39 +92,41 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         if (bonusVal.startsWith("tag:light_off:")) {
           const scnId = bonusVal.replace("tag:light_off:", "");
           const scn = scenarioMap.get(scnId);
-          description = `🌑 Apaga el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+          description = t("game.results.logLightOff", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:light_on:")) {
           const scnId = bonusVal.replace("tag:light_on:", "");
           const scn = scenarioMap.get(scnId);
-          description = `💡 Encén el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+          description = t("game.results.logLightOn", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:break:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `💥 Trenca ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logBreak", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:clean:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `🧹 Neteja ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logClean", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:fix:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `🔧 Arregla ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logFix", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else if (m.action === "move") {
           const scn = scenarioMap.get(m.target_scenario_id ?? "");
-          description = `🚶 Es mou a ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+          description = t("game.results.logMoveTo", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
         } else if (m.action === "look" && m.target_item_id) {
           const itm = itemMap.get(m.target_item_id);
           const posLabel = m.target_position ? POS_LABELS[m.target_position] ?? m.target_position : "";
           const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
           const hint = m.hint_level != null ? ` ${hintIcons[m.hint_level] ?? ""}` : "";
+          const itmLabel = `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim();
           if (m.found_object) {
-            description = `🏆 TROBA l'objecte a ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}!`;
+            description = t("game.results.logFound", { name: itmLabel, pos: posLabel });
           } else {
-            description = `👀 Observa ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}${hint}`;
+            description = t("game.results.logObserve", { name: itmLabel, pos: posLabel, hint });
           }
         } else if (m.action === "confirm") {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `🎯 Confirma ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logConfirm", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else {
           description = `${m.action}`;
         }
+
 
         return {
           id: m.id,
@@ -182,7 +188,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         obj: displayObj, item: itm, scenario: scn,
         position: rival.hidden_position ?? "?",
         hideMessage: hideMsg,
-        rivalName: rivalProf?.display_name ?? "Rival",
+        rivalName: rivalProf?.display_name ?? t("game.results.rivalDefault"),
         specialType,
         traits,
       });
@@ -201,16 +207,17 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="text-7xl mb-4 opacity-60">😢</div>
       )}
       <h2 className="text-2xl font-bold mb-2">
-        {isWinner ? <span className="text-gradient">Victòria!</span> : "Derrota..."}
+        {isWinner ? <span className="text-gradient">{t("game.results.winLabel")}</span> : t("game.results.lossLabel")}
       </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        {isWinner ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
+        {isWinner ? t("game.results.eloUp") : t("game.results.eloDown")}
       </p>
+
 
       {reward?.reward_items && (
         <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
           <CardContent className="py-5 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🎁 Recompensa</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">{t("game.results.rewardLabel")}</p>
             <div className="text-5xl mb-2">{reward.reward_items.icon}</div>
             <p className="font-bold text-lg">{reward.reward_items.name}</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -218,8 +225,9 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
               {RARITY_CONFIG[reward.reward_items.rarity]?.label}
             </p>
             <p className="text-[10px] text-muted-foreground/60 mt-2">
-              Ves al perfil per col·locar-lo o vendre'l
+              {t("game.results.rewardHint")}
             </p>
+
           </CardContent>
         </Card>
       )}
@@ -229,15 +237,15 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="mb-6">
           {!showRivalInfo ? (
             <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
-              👁️ Veure on era l'objecte
+              {t("game.results.seeWhere")}
             </Button>
           ) : (
             <Card className="mx-auto max-w-xs glass border-secondary/30">
               <CardContent className="py-4">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
                   {isWinner
-                    ? `🏆 Has trobat l'objecte de ${rivalInfo.rivalName}`
-                    : `📍 L'objecte de ${rivalInfo.rivalName}`}
+                    ? t("game.results.youFound", { name: rivalInfo.rivalName })
+                    : t("game.results.rivalsObject", { name: rivalInfo.rivalName })}
                 </p>
                 {rivalInfo.obj && (
                   <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
@@ -245,8 +253,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                 <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
                 {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
                   <p className="text-[10px] text-muted-foreground mb-2">
-                    Material: <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
-                    {rivalInfo.obj.size && <span> · Mida {rivalInfo.obj.size}</span>}
+                    {t("game.results.material")} <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
+                    {rivalInfo.obj.size && <span> · {t("game.results.size")} {rivalInfo.obj.size}</span>}
                   </p>
                 )}
                 <div className="text-sm text-muted-foreground space-y-1">
@@ -259,21 +267,22 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                 </div>
                 {rivalInfo.traits.length > 0 && (
                   <div className="mt-3 text-xs text-muted-foreground">
-                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">💡 Pistes que tenia:</p>
-                    {rivalInfo.traits.map((t, i) => (
-                      <p key={i} className="text-primary/80 italic">"{t}"</p>
+                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">{t("game.results.traitsHad")}</p>
+                    {rivalInfo.traits.map((tr, i) => (
+                      <p key={i} className="text-primary/80 italic">"{tr}"</p>
                     ))}
                   </div>
                 )}
                 {rivalInfo.specialType && (
-                  <p className="text-[10px] text-accent mt-2">⭐ Objecte especial ({rivalInfo.specialType})</p>
+                  <p className="text-[10px] text-accent mt-2">{t("game.results.specialObject", { type: rivalInfo.specialType })}</p>
                 )}
                 {rivalInfo.hideMessage && (
                   <div className="mt-3 p-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <p className="text-xs font-semibold text-accent mb-0.5">💌 Missatge del rival:</p>
+                    <p className="text-xs font-semibold text-accent mb-0.5">{t("game.results.rivalMessage")}</p>
                     <p className="text-sm italic text-foreground/80">"{rivalInfo.hideMessage}"</p>
                   </div>
                 )}
+
               </CardContent>
             </Card>
           )}
@@ -285,15 +294,16 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="mb-6">
           {!showActionLog ? (
             <Button variant="outline" onClick={() => setShowActionLog(true)} className="mb-2">
-              📋 Veure historial d'accions ({actionLog.length})
+              {t("game.results.seeHistory", { count: actionLog.length })}
             </Button>
           ) : (
             <Card className="mx-auto max-w-sm glass border-border/30">
               <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                    📋 Historial de la partida
+                    {t("game.results.historyTitle")}
                   </p>
+
                   <button onClick={() => setShowActionLog(false)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
                 </div>
                 <div className="space-y-0.5 max-h-60 overflow-y-auto text-left" style={{ WebkitOverflowScrolling: "touch" }}>
@@ -318,8 +328,9 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       )}
 
       <div className="flex gap-2 justify-center">
-        <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
-        <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
+        <Button onClick={() => navigate("/")} variant="outline">{t("game.results.lobbyBtn")}</Button>
+        <Button onClick={() => navigate("/profile")}>{t("game.results.profileBtn")}</Button>
+
       </div>
     </div>
   );

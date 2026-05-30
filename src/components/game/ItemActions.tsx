@@ -4,6 +4,8 @@
 import { useState } from "react";
 import { getTagActions, TOKEN_COSTS } from "@/lib/supabase-helpers";
 import type { PlayerTools, Position } from "@/lib/game-types";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 interface ItemActionsProps {
   item: any;
@@ -26,6 +28,7 @@ export default function ItemActions({
   item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot,
   interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems,
 }: ItemActionsProps) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const hasInteractions = interactions && interactions.length > 0;
   const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
@@ -35,7 +38,7 @@ export default function ItemActions({
 
   return (
     <div className={`glass rounded-xl overflow-hidden ${isBroken ? "border-destructive/30" : isDirty ? "border-accent/20" : ""}`}>
-      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-label={`${item.icon} ${item.name} - ${expanded ? 'tancar' : 'obrir'} accions`}
+      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-label={`${item.icon} ${item.name} - ${expanded ? t("game.items.closeActions") : t("game.items.openActions")}`}
         className="w-full p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
         <span className="font-semibold text-sm">
           {item.icon} {item.name}
@@ -45,6 +48,7 @@ export default function ItemActions({
         </span>
         <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
       </button>
+
       {expanded && (
         <div className="border-t border-border/30 p-2.5">
           {/* Tag-based actions */}
@@ -63,9 +67,10 @@ export default function ItemActions({
                     {ta.label}
                     {ta.requiresTool && !ta.hasTool && (
                       <span className="text-[9px] text-muted-foreground ml-1">
-                        (cal {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : "🔧"})
+                        ({t("game.items.needs")} {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : "🔧"})
                       </span>
                     )}
+
                   </span>
                   <span className="text-[10px] text-muted-foreground">{ta.cost}🪙</span>
                 </button>
@@ -91,9 +96,10 @@ export default function ItemActions({
                     <span className="text-lg">{ia.action_icon}</span>
                     <span className="flex-1 text-left">{ia.action_label}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {alreadyUsed ? "✓ fet" : `${ia.cost}🪙`}
+                      {alreadyUsed ? t("game.items.done") : `${ia.cost}🪙`}
                     </span>
                   </button>
+
                 );
               })}
             </div>
@@ -112,10 +118,10 @@ export default function ItemActions({
               // Logical block: object too big for "dins" (capacity 0 = nothing fits)
               const blockedByCapacity = pos.value === "dins" && (item?.inner_capacity ?? 2) === 0;
               const isBlocked = blockedByDirty || blockedByBroken || blockedByBehind || blockedByCapacity;
-              const blockLabel = blockedByBroken ? "💥 Arregla primer"
-                : blockedByDirty ? "🧹 Neteja primer"
-                : blockedByBehind ? "🚫 No es pot"
-                : blockedByCapacity ? "🚫 No hi cap"
+              const blockLabel = blockedByBroken ? t("game.items.fixFirst")
+                : blockedByDirty ? t("game.items.cleanFirst")
+                : blockedByBehind ? t("game.items.cannot")
+                : blockedByCapacity ? t("game.items.noFit")
                 : "";
               return (
                 <button key={pos.value}
@@ -129,9 +135,10 @@ export default function ItemActions({
                   }`}>
                   {isBlocked ? blockLabel : isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
                   <span className="block text-[9px] text-muted-foreground mt-0.5">
-                    {isBlocked ? "bloquejat" : isBananaBlocked ? "bloquejat" : alreadyLooked ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                    {isBlocked ? t("game.items.blocked") : isBananaBlocked ? t("game.items.blocked") : alreadyLooked ? t("game.items.seen") : `${TOKEN_COSTS.look}🪙`}
                   </span>
                 </button>
+
               );
             })}
           </div>
