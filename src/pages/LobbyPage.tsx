@@ -480,8 +480,9 @@ export default function LobbyPage() {
       {myGames.length > 0 && (
         <div className="mb-5">
           <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-            Les meves partides
+            {t("lobby.myGames")}
           </h2>
+
           <div className="space-y-2">
             {myGames.filter((gp: any) => !dismissedGames.has(gp.game_id)).map((gp: any) => (
               <MyGameCard
