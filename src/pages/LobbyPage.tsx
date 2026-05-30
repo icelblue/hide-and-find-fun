@@ -46,19 +46,21 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
   onDecline: (id: string) => Promise<void>; onDelete: (id: string) => Promise<void>;
   onDismiss: (id: string) => void;
 }) {
+  const t = useT();
   const [swiped, setSwiped] = useState(false);
   const game = gp.games;
   const isPending = gp._pending;
   const statusMap: Record<string, { icon: string; label: string; color: string }> = {
-    waiting: { icon: "⏳", label: "Esperant rival", color: "text-warning" },
-    hiding: { icon: "🫣", label: "Amaga l'objecte", color: "text-accent" },
-    playing: { icon: "🎮", label: "En joc", color: "text-primary" },
-    finished: { icon: "🏁", label: "Acabada", color: "text-muted-foreground" },
+    waiting: { icon: "⏳", label: t("lobby.statusWaiting"), color: "text-warning" },
+    hiding: { icon: "🫣", label: t("lobby.statusHiding"), color: "text-accent" },
+    playing: { icon: "🎮", label: t("lobby.statusPlaying"), color: "text-primary" },
+    finished: { icon: "🏁", label: t("lobby.statusFinished"), color: "text-muted-foreground" },
   };
-  const creatorName = gp._creator_name ?? "Anònim";
+  const creatorName = gp._creator_name ?? t("lobby.anonymous");
   const s = isPending
-    ? { icon: "⚔️", label: `Repte pendent`, color: "text-accent" }
+    ? { icon: "⚔️", label: t("lobby.pendingChallenge"), color: "text-accent" }
     : (statusMap[game.status] ?? statusMap.waiting);
+
   const isOwner = game.created_by === userId;
   const canSwipeDelete = isOwner && (game.status === "waiting" || game.status === "finished");
   const isFinished = game.status === "finished";
@@ -68,7 +70,7 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
       {(canSwipeDelete || isFinished) && (
         <div data-delete-bg className="absolute inset-0 bg-destructive/20 rounded-xl flex items-center pl-4 opacity-0 transition-opacity pointer-events-none z-0">
           <span className="text-destructive text-sm font-semibold flex items-center gap-1">
-            🗑️ {canSwipeDelete ? "Eliminar" : "Amagar"}
+            🗑️ {canSwipeDelete ? t("lobby.delete") : t("lobby.hide")}
           </span>
         </div>
       )}
@@ -98,23 +100,24 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
               card.style.transform = `translateX(80px)`;
               if (deleteIndicator) deleteIndicator.style.opacity = '1';
               setSwiped(true);
-              const actionLabel = canSwipeDelete ? "Eliminar partida?" : "Amagar partida?";
+              const actionLabel = canSwipeDelete ? t("lobby.deleteGame?") : t("lobby.hideGame?");
               toast(actionLabel, {
                 action: {
-                  label: "✓ Confirmar",
+                  label: t("lobby.confirm"),
                   onClick: async () => {
                     card.style.transform = `translateX(400px)`;
                     card.style.opacity = '0';
                     setTimeout(async () => {
                       if (canSwipeDelete) {
-                        try { await onDelete(game.id); toast.success("Partida eliminada"); }
+                        try { await onDelete(game.id); toast.success(t("lobby.gameDeleted")); }
                         catch (err: any) { toast.error(err.message); }
                       } else { onDismiss(game.id); }
                     }, 300);
                   },
                 },
                 cancel: {
-                  label: "Desfer",
+                  label: t("lobby.undo"),
+
                   onClick: () => {
                     card.style.transform = '';
                     if (deleteIndicator) deleteIndicator.style.opacity = '0';
@@ -143,7 +146,7 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
           <div className="flex items-center gap-3">
             <span className="text-xl">{s.icon}</span>
             <div>
-              {isPending && <p className="text-sm font-bold text-accent">{creatorName} et reta!</p>}
+              {isPending && <p className="text-sm font-bold text-accent">{t("lobby.challengesYou").replace("{name}", creatorName)}</p>}
               <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
               {!isPending && gp._rival_name && (
                 <span className="ml-2 text-[11px] text-muted-foreground">vs <span className="text-foreground/70 font-medium">{gp._rival_name}</span></span>
@@ -154,7 +157,8 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
           <div className="flex items-center gap-2">
             {isPending && (
               <>
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); onJoin(game.id); }} disabled={loading}>Acceptar</Button>
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); onJoin(game.id); }} disabled={loading}>{t("lobby.accept")}</Button>
+
                 <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10"
                   onClick={(e) => { e.stopPropagation(); onDecline(game.id); }} disabled={loading}>✕</Button>
               </>
@@ -163,17 +167,19 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
           </div>
         </CardContent>
       </Card>
-      {(canSwipeDelete || isFinished) && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none z-0">→ llisca</div>}
+      {(canSwipeDelete || isFinished) && <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground/40 pointer-events-none z-0">{t("lobby.swipeHint")}</div>}
     </div>
   );
 }
 
 export default function LobbyPage() {
+  const t = useT();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
+
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -239,7 +245,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       const game = await createGame(user.id);
-      toast.success(`Partida creada! Codi: ${game.code}`);
+      toast.success(`${t("lobby.createGame")}: ${game.code}`);
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -251,9 +257,9 @@ export default function LobbyPage() {
     try {
       const result = await findRandomMatch(user.id);
       if (result.type === "joined") {
-        toast.success("Rival trobat! 🎯");
+        toast.success(t("lobby.rivalFound"));
       } else {
-        toast.success("Repte enviat a un rival aleatori! Espera que accepti.");
+        toast.success(t("lobby.challengeSentRandom"));
       }
       navigate(`/game/${result.gameId}`);
     } catch (err: any) { toast.error(err.message); }
@@ -267,10 +273,10 @@ export default function LobbyPage() {
       const { data: game } = await supabase
         .from("games").select("id, status")
         .eq("code", joinCode.toUpperCase()).single();
-      if (!game) throw new Error("Partida no trobada");
-      if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
+      if (!game) throw new Error(t("lobby.gameNotFound"));
+      if (game.status !== "waiting") throw new Error(t("lobby.gameAlreadyStarted"));
       await joinGame(game.id, user.id);
-      toast.success("T'has unit a la partida!");
+      toast.success(t("lobby.joinedGame"));
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -281,7 +287,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       await joinGame(gameId, user.id);
-      toast.success("T'has unit a la partida!");
+      toast.success(t("lobby.joinedGame"));
       navigate(`/game/${gameId}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -292,7 +298,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       await deleteGame(gameId);
-      toast.success("Repte rebutjat");
+      toast.success(t("lobby.challengeDeclined"));
       invalidateLobby();
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -304,7 +310,7 @@ export default function LobbyPage() {
     try {
       const results = await searchPlayers(searchQuery, user.id);
       setSearchResults(results);
-      if (results.length === 0) toast.info("Cap jugador trobat");
+      if (results.length === 0) toast.info(t("lobby.noPlayerFound"));
     } catch (err: any) { toast.error(err.message); }
     finally { setSearching(false); }
   };
@@ -314,7 +320,7 @@ export default function LobbyPage() {
     setLoading(true);
     try {
       const game = await challengePlayer(user.id, rivalUserId);
-      toast.success(`⚔️ Repte enviat a ${rivalName}! Codi: ${game.code}`);
+      toast.success(t("lobby.challengeSent").replace("{name}", rivalName).replace("{code}", game.code));
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -330,11 +336,12 @@ export default function LobbyPage() {
         url: window.location.href,
         user_agent: navigator.userAgent.slice(0, 500),
       });
-      toast.success("Gràcies pel report! 🐛");
+      toast.success(t("lobby.reportThanks"));
       setBugMessage("");
       setShowBugReport(false);
-    } catch { toast.error("Error enviant el report"); }
+    } catch { toast.error(t("lobby.reportError")); }
   };
+
 
   return (
     <main className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative" role="main">
@@ -354,15 +361,16 @@ export default function LobbyPage() {
           </p>
         </div>
         <div className="relative" ref={menuRef}>
-          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl" aria-label="Menú">☰</Button>
+          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl" aria-label={t("lobby.menu")}>☰</Button>
           {menuOpen && (
             <div className="absolute right-0 top-10 z-50 bg-card border border-border rounded-xl shadow-xl py-1 min-w-[180px] animate-scale-in">
-              <button onClick={() => { setMenuOpen(false); navigate("/profile"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">👤 Perfil</button>
-              <button onClick={() => { setMenuOpen(false); navigate("/story"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐾 Mode Història</button>
-              <button onClick={() => { setMenuOpen(false); setShowBugReport(true); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">🐛 Reportar bug</button>
+              <button onClick={() => { setMenuOpen(false); navigate("/profile"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">{t("lobby.profileMenu")}</button>
+              <button onClick={() => { setMenuOpen(false); navigate("/story"); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">{t("lobby.storyMenu")}</button>
+              <button onClick={() => { setMenuOpen(false); setShowBugReport(true); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">{t("lobby.reportBugMenu")}</button>
               <HelpButton variant="menu" />
               <div className="border-t border-border/30 my-1" />
-              <button onClick={() => { setMenuOpen(false); signOut(); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2 text-destructive">🚪 Sortir</button>
+              <button onClick={() => { setMenuOpen(false); signOut(); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2 text-destructive">{t("lobby.logout")}</button>
+
             </div>
           )}
         </div>
@@ -373,15 +381,16 @@ export default function LobbyPage() {
         <Button onClick={handleRandomMatch} size="lg" disabled={loading} className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">🎲</span>
-            <span className="text-xs mt-0.5">Rival aleatori</span>
+            <span className="text-xs mt-0.5">{t("lobby.randomRival")}</span>
           </span>
         </Button>
         <Button onClick={handleCreate} size="lg" disabled={loading} variant="secondary" className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">➕</span>
-            <span className="text-xs mt-0.5">Crear partida</span>
+            <span className="text-xs mt-0.5">{t("lobby.createGame")}</span>
           </span>
         </Button>
+
       </div>
 
       {/* New player recommendation */}
@@ -391,12 +400,13 @@ export default function LobbyPage() {
             <div className="flex items-center gap-3">
               <span className="text-2xl">🐾</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold">Primera vegada?</p>
-                <p className="text-[11px] text-muted-foreground">Aprèn a jugar amb el Mode Història — un tutorial interactiu pas a pas!</p>
+                <p className="text-sm font-bold">{t("lobby.firstTime")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("lobby.firstTimeHint")}</p>
               </div>
               <Button size="sm" onClick={() => navigate("/story")} className="shrink-0">
-                Anar-hi
+                {t("lobby.goThere")}
               </Button>
+
             </div>
           </CardContent>
         </Card>
@@ -407,7 +417,7 @@ export default function LobbyPage() {
         <CardContent className="pt-3 pb-3">
           <div className="flex gap-2 mb-2">
             <Input
-              placeholder="Buscar jugador per nom..."
+              placeholder={t("lobby.searchPlaceholder")}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="text-sm bg-muted/50 border-border/50"
@@ -436,8 +446,9 @@ export default function LobbyPage() {
                   <Button size="sm" variant="outline" className="text-xs shrink-0"
                     onClick={() => handleChallenge(p.user_id, p.display_name)}
                     disabled={loading}>
-                    ⚔️ Repte
+                    {t("lobby.challengeBtn")}
                   </Button>
+
                 </div>
               ))}
             </div>
@@ -448,7 +459,7 @@ export default function LobbyPage() {
       {/* Join by code */}
       <Card className="mb-5 glass">
         <CardContent className="pt-3 pb-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Unir-se amb codi</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("lobby.joinByCode")}</p>
           <div className="flex gap-2">
             <Input
               placeholder="Ex: A3B7K2"
@@ -458,8 +469,9 @@ export default function LobbyPage() {
               className="uppercase tracking-[0.25em] font-mono text-center text-lg bg-muted/50 border-border/50 h-11"
             />
             <Button onClick={handleJoinByCode} disabled={loading || joinCode.length < 4} variant="secondary">
-              Entrar
+              {t("lobby.enter")}
             </Button>
+
           </div>
         </CardContent>
       </Card>
@@ -468,8 +480,9 @@ export default function LobbyPage() {
       {myGames.length > 0 && (
         <div className="mb-5">
           <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-            Les meves partides
+            {t("lobby.myGames")}
           </h2>
+
           <div className="space-y-2">
             {myGames.filter((gp: any) => !dismissedGames.has(gp.game_id)).map((gp: any) => (
               <MyGameCard
@@ -492,15 +505,15 @@ export default function LobbyPage() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Partides obertes
+            {t("lobby.openGames")}
           </h2>
           <Button variant="ghost" size="sm" onClick={invalidateLobby} className="text-xs">🔄</Button>
         </div>
         {games.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-2 opacity-60">🏜️</div>
-            <p className="text-sm text-muted-foreground font-medium">Cap partida disponible</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Usa 🎲 per trobar rival automàticament!</p>
+            <p className="text-sm text-muted-foreground font-medium">{t("lobby.noGames")}</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">{t("lobby.noGamesHint")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -509,11 +522,12 @@ export default function LobbyPage() {
                 <CardContent className="py-3 flex items-center justify-between">
                   <div>
                     <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
-                    <span className="ml-2 text-[11px] text-muted-foreground">per {game.creator_name}</span>
+                    <span className="ml-2 text-[11px] text-muted-foreground">{t("lobby.byPlayer").replace("{name}", game.creator_name)}</span>
                   </div>
                   <Button size="sm" variant="secondary" onClick={() => handleJoinGame(game.id)} disabled={loading}>
-                    Unir-se
+                    {t("lobby.join")}
                   </Button>
+
                 </CardContent>
               </Card>
             ))}
@@ -527,24 +541,25 @@ export default function LobbyPage() {
 
       {/* Bug Report Modal */}
       {showBugReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Reportar un bug" onClick={() => setShowBugReport(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={t("lobby.reportBug")} onClick={() => setShowBugReport(false)}>
           <Card className="mx-4 max-w-sm w-full glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-5">
-              <h3 className="text-lg font-bold mb-1">🐛 Reportar un bug</h3>
-              <p className="text-xs text-muted-foreground mb-3">Descriu el problema i l'arreglarem el més aviat possible.</p>
+              <h3 className="text-lg font-bold mb-1">🐛 {t("lobby.reportBug")}</h3>
+              <p className="text-xs text-muted-foreground mb-3">{t("lobby.reportDescribe")}</p>
               <textarea
                 value={bugMessage}
                 onChange={e => setBugMessage(e.target.value)}
-                placeholder="Què ha passat? On i quan?"
+                placeholder={t("lobby.reportPlaceholder")}
                 maxLength={500}
                 rows={4}
                 className="w-full rounded-lg bg-muted/50 border border-border/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <p className="text-[9px] text-muted-foreground/50 text-right mt-1">{bugMessage.length}/500</p>
               <div className="flex gap-2 mt-3">
-                <Button variant="outline" className="flex-1" onClick={() => setShowBugReport(false)}>Cancel·lar</Button>
-                <Button className="flex-1" onClick={handleBugReport} disabled={!bugMessage.trim()}>Enviar 📩</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setShowBugReport(false)}>{t("common.cancel")}</Button>
+                <Button className="flex-1" onClick={handleBugReport} disabled={!bugMessage.trim()}>{t("lobby.send")} 📩</Button>
               </div>
+
             </CardContent>
           </Card>
         </div>
