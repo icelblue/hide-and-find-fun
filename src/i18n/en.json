@@ -82,8 +82,14 @@
     "swipeHint": "→ swipe",
     "reportBug": "Report a bug",
     "reportError": "Error sending report",
-    "reportThanks": "Thanks for the report! 🐛"
+    "reportThanks": "Thanks for the report! 🐛",
+    "reportDescribe": "Describe the issue and we'll fix it as soon as possible.",
+    "reportPlaceholder": "What happened? Where and when?",
+    "send": "Send",
+    "rivalFound": "Rival found! 🎯",
+    "challengeSentRandom": "Challenge sent to a random rival! Wait for them to accept."
   },
+
   "lang": {
     "ca": "Català",
     "en": "English"
