@@ -188,7 +188,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         obj: displayObj, item: itm, scenario: scn,
         position: rival.hidden_position ?? "?",
         hideMessage: hideMsg,
-        rivalName: rivalProf?.display_name ?? "Rival",
+        rivalName: rivalProf?.display_name ?? t("game.results.rivalDefault"),
         specialType,
         traits,
       });
