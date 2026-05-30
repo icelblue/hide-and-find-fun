@@ -459,7 +459,7 @@ export default function LobbyPage() {
       {/* Join by code */}
       <Card className="mb-5 glass">
         <CardContent className="pt-3 pb-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Unir-se amb codi</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("lobby.joinByCode")}</p>
           <div className="flex gap-2">
             <Input
               placeholder="Ex: A3B7K2"
@@ -469,8 +469,9 @@ export default function LobbyPage() {
               className="uppercase tracking-[0.25em] font-mono text-center text-lg bg-muted/50 border-border/50 h-11"
             />
             <Button onClick={handleJoinByCode} disabled={loading || joinCode.length < 4} variant="secondary">
-              Entrar
+              {t("lobby.enter")}
             </Button>
+
           </div>
         </CardContent>
       </Card>
