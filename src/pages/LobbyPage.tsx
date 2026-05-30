@@ -146,7 +146,7 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
           <div className="flex items-center gap-3">
             <span className="text-xl">{s.icon}</span>
             <div>
-              {isPending && <p className="text-sm font-bold text-accent">{creatorName} et reta!</p>}
+              {isPending && <p className="text-sm font-bold text-accent">{t("lobby.challengesYou").replace("{name}", creatorName)}</p>}
               <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
               {!isPending && gp._rival_name && (
                 <span className="ml-2 text-[11px] text-muted-foreground">vs <span className="text-foreground/70 font-medium">{gp._rival_name}</span></span>
@@ -157,7 +157,8 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
           <div className="flex items-center gap-2">
             {isPending && (
               <>
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); onJoin(game.id); }} disabled={loading}>Acceptar</Button>
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); onJoin(game.id); }} disabled={loading}>{t("lobby.accept")}</Button>
+
                 <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10"
                   onClick={(e) => { e.stopPropagation(); onDecline(game.id); }} disabled={loading}>✕</Button>
               </>
