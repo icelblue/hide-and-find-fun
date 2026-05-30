@@ -446,8 +446,9 @@ export default function LobbyPage() {
                   <Button size="sm" variant="outline" className="text-xs shrink-0"
                     onClick={() => handleChallenge(p.user_id, p.display_name)}
                     disabled={loading}>
-                    ⚔️ Repte
+                    {t("lobby.challengeBtn")}
                   </Button>
+
                 </div>
               ))}
             </div>
