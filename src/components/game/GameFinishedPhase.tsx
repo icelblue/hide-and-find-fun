@@ -207,11 +207,12 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="text-7xl mb-4 opacity-60">😢</div>
       )}
       <h2 className="text-2xl font-bold mb-2">
-        {isWinner ? <span className="text-gradient">Victòria!</span> : "Derrota..."}
+        {isWinner ? <span className="text-gradient">{t("game.results.winLabel")}</span> : t("game.results.lossLabel")}
       </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        {isWinner ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
+        {isWinner ? t("game.results.eloUp") : t("game.results.eloDown")}
       </p>
+
 
       {reward?.reward_items && (
         <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
