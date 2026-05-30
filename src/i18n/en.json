@@ -10,7 +10,24 @@
     "yes": "Yes",
     "no": "No",
     "language": "Language",
-    "lobby": "Lobby"
+    "lobby": "Lobby",
+    "backToLobby": "← Back to Lobby",
+    "lobbyShort": "← Lobby",
+    "storyModeShort": "← Story Mode"
+  },
+  "petTier": {
+    "baby": "Baby",
+    "young": "Young",
+    "adult": "Adult",
+    "veteran": "Veteran",
+    "legendary": "Legendary"
+  },
+  "petTrait": {
+    "curious": "Curious",
+    "loyal": "Loyal",
+    "brave": "Brave",
+    "gluttonous": "Gluttonous",
+    "calm": "Calm"
   },
   "lang": {
     "ca": "Català",
