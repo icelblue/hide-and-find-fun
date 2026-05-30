@@ -111,7 +111,7 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
                           if (!meta) return null;
                           return (
                             <span key={t} className={`text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 ${meta.color} font-semibold`}>
-                              {meta.icon} {(useT())(`petTrait.${meta.key}`, meta.label)}
+                              {meta.icon} {t(`petTrait.${meta.key}`, meta.label)}
                             </span>
                           );
                         })}
