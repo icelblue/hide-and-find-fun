@@ -400,12 +400,13 @@ export default function LobbyPage() {
             <div className="flex items-center gap-3">
               <span className="text-2xl">🐾</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold">Primera vegada?</p>
-                <p className="text-[11px] text-muted-foreground">Aprèn a jugar amb el Mode Història — un tutorial interactiu pas a pas!</p>
+                <p className="text-sm font-bold">{t("lobby.firstTime")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("lobby.firstTimeHint")}</p>
               </div>
               <Button size="sm" onClick={() => navigate("/story")} className="shrink-0">
-                Anar-hi
+                {t("lobby.goThere")}
               </Button>
+
             </div>
           </CardContent>
         </Card>
