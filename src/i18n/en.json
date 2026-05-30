@@ -34,6 +34,9 @@
     "sick": "Sick 🤒",
     "healthy": "Healthy ✅"
   },
+  "notFound": {
+    "message": "This page does not exist"
+  },
   "lang": {
     "ca": "Català",
     "en": "English"
