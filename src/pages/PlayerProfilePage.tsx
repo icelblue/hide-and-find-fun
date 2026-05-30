@@ -41,6 +41,7 @@ export default function PlayerProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const [profile, setProfile] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [trophies, setTrophies] = useState<any[]>([]);
