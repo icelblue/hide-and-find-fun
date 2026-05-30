@@ -91,7 +91,7 @@ export default function SocialItemsPanel({
                   </span>
                 )}
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border text-[10px] text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 max-w-[200px] text-wrap text-center">
-                  {isBombUsed ? "Ja usat en aquesta partida" : item.desc}
+                  {isBombUsed ? t("game.social.alreadyUsed") : item.desc}
                 </span>
               </button>
             );
