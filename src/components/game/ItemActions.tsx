@@ -118,10 +118,10 @@ export default function ItemActions({
               // Logical block: object too big for "dins" (capacity 0 = nothing fits)
               const blockedByCapacity = pos.value === "dins" && (item?.inner_capacity ?? 2) === 0;
               const isBlocked = blockedByDirty || blockedByBroken || blockedByBehind || blockedByCapacity;
-              const blockLabel = blockedByBroken ? "💥 Arregla primer"
-                : blockedByDirty ? "🧹 Neteja primer"
-                : blockedByBehind ? "🚫 No es pot"
-                : blockedByCapacity ? "🚫 No hi cap"
+              const blockLabel = blockedByBroken ? t("game.items.fixFirst")
+                : blockedByDirty ? t("game.items.cleanFirst")
+                : blockedByBehind ? t("game.items.cannot")
+                : blockedByCapacity ? t("game.items.noFit")
                 : "";
               return (
                 <button key={pos.value}
@@ -135,9 +135,10 @@ export default function ItemActions({
                   }`}>
                   {isBlocked ? blockLabel : isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
                   <span className="block text-[9px] text-muted-foreground mt-0.5">
-                    {isBlocked ? "bloquejat" : isBananaBlocked ? "bloquejat" : alreadyLooked ? "✓ vist" : `${TOKEN_COSTS.look}🪙`}
+                    {isBlocked ? t("game.items.blocked") : isBananaBlocked ? t("game.items.blocked") : alreadyLooked ? t("game.items.seen") : `${TOKEN_COSTS.look}🪙`}
                   </span>
                 </button>
+
               );
             })}
           </div>
