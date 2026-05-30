@@ -29,6 +29,11 @@
     "gluttonous": "Gluttonous",
     "calm": "Calm"
   },
+  "petStatus": {
+    "dead": "Dead 🪦",
+    "sick": "Sick 🤒",
+    "healthy": "Healthy ✅"
+  },
   "lang": {
     "ca": "Català",
     "en": "English"
