@@ -82,8 +82,14 @@
     "swipeHint": "→ llisca",
     "reportBug": "Reportar un bug",
     "reportError": "Error enviant el report",
-    "reportThanks": "Gràcies pel report! 🐛"
+    "reportThanks": "Gràcies pel report! 🐛",
+    "reportDescribe": "Descriu el problema i l'arreglarem el més aviat possible.",
+    "reportPlaceholder": "Què ha passat? On i quan?",
+    "send": "Enviar",
+    "rivalFound": "Rival trobat! 🎯",
+    "challengeSentRandom": "Repte enviat a un rival aleatori! Espera que accepti."
   },
+
   "lang": {
     "ca": "Català",
     "en": "English"
