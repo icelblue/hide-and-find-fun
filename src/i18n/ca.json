@@ -37,6 +37,32 @@
   "notFound": {
     "message": "Aquesta pàgina no existeix"
   },
+  "lobby": {
+    "myGames": "Les meves partides",
+    "openGames": "Partides obertes",
+    "noGames": "Cap partida disponible",
+    "noGamesHint": "Usa 🎲 per trobar rival automàticament!",
+    "join": "Unir-se",
+    "createGame": "Crear partida",
+    "randomRival": "Rival aleatori",
+    "hide": "Amagar",
+    "delete": "Eliminar",
+    "undo": "Desfer",
+    "menu": "Menú",
+    "byPlayer": "per {name}",
+    "anonymous": "Anònim",
+    "statusWaiting": "Esperant rival",
+    "statusHiding": "Amaga l'objecte",
+    "statusPlaying": "En joc",
+    "statusFinished": "Acabada",
+    "gameDeleted": "Partida eliminada",
+    "gameNotFound": "Partida no trobada",
+    "gameAlreadyStarted": "Aquesta partida ja ha començat",
+    "challengeDeclined": "Repte rebutjat",
+    "noPlayerFound": "Cap jugador trobat",
+    "reportBug": "Reportar un bug",
+    "reportError": "Error enviant el report"
+  },
   "lang": {
     "ca": "Català",
     "en": "English"
