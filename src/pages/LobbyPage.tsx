@@ -505,15 +505,15 @@ export default function LobbyPage() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Partides obertes
+            {t("lobby.openGames")}
           </h2>
           <Button variant="ghost" size="sm" onClick={invalidateLobby} className="text-xs">🔄</Button>
         </div>
         {games.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-2 opacity-60">🏜️</div>
-            <p className="text-sm text-muted-foreground font-medium">Cap partida disponible</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Usa 🎲 per trobar rival automàticament!</p>
+            <p className="text-sm text-muted-foreground font-medium">{t("lobby.noGames")}</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">{t("lobby.noGamesHint")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -522,11 +522,12 @@ export default function LobbyPage() {
                 <CardContent className="py-3 flex items-center justify-between">
                   <div>
                     <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
-                    <span className="ml-2 text-[11px] text-muted-foreground">per {game.creator_name}</span>
+                    <span className="ml-2 text-[11px] text-muted-foreground">{t("lobby.byPlayer").replace("{name}", game.creator_name)}</span>
                   </div>
                   <Button size="sm" variant="secondary" onClick={() => handleJoinGame(game.id)} disabled={loading}>
-                    Unir-se
+                    {t("lobby.join")}
                   </Button>
+
                 </CardContent>
               </Card>
             ))}
