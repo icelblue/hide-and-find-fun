@@ -79,10 +79,10 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
 
       const scenarioMap = new Map((scenarioData ?? []).map(s => [s.id, s]));
       const itemMap = new Map((itemData ?? []).map(i => [i.id, i]));
-      const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? "Jugador"]));
+      const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? t("game.results.playerDefault")]));
 
       const log: ActionLogEntry[] = allMoves.map(m => {
-        const playerName = profileMap.get(m.player_id) ?? "Jugador";
+        const playerName = profileMap.get(m.player_id) ?? t("game.results.playerDefault");
         const isOwn = m.player_id === user.id;
         let description = "";
 
@@ -92,39 +92,41 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         if (bonusVal.startsWith("tag:light_off:")) {
           const scnId = bonusVal.replace("tag:light_off:", "");
           const scn = scenarioMap.get(scnId);
-          description = `🌑 Apaga el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+          description = t("game.results.logLightOff", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:light_on:")) {
           const scnId = bonusVal.replace("tag:light_on:", "");
           const scn = scenarioMap.get(scnId);
-          description = `💡 Encén el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+          description = t("game.results.logLightOn", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:break:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `💥 Trenca ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logBreak", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:clean:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `🧹 Neteja ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logClean", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else if (bonusVal.startsWith("tag:fix:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `🔧 Arregla ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logFix", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else if (m.action === "move") {
           const scn = scenarioMap.get(m.target_scenario_id ?? "");
-          description = `🚶 Es mou a ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
+          description = t("game.results.logMoveTo", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
         } else if (m.action === "look" && m.target_item_id) {
           const itm = itemMap.get(m.target_item_id);
           const posLabel = m.target_position ? POS_LABELS[m.target_position] ?? m.target_position : "";
           const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
           const hint = m.hint_level != null ? ` ${hintIcons[m.hint_level] ?? ""}` : "";
+          const itmLabel = `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim();
           if (m.found_object) {
-            description = `🏆 TROBA l'objecte a ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}!`;
+            description = t("game.results.logFound", { name: itmLabel, pos: posLabel });
           } else {
-            description = `👀 Observa ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}${hint}`;
+            description = t("game.results.logObserve", { name: itmLabel, pos: posLabel, hint });
           }
         } else if (m.action === "confirm") {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = `🎯 Confirma ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
+          description = t("game.results.logConfirm", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
         } else {
           description = `${m.action}`;
         }
+
 
         return {
           id: m.id,
