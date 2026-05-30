@@ -30,6 +30,7 @@ import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
 import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
 import { PetActivityFeed } from "@/components/PetActivityFeed";
+import { useT } from "@/i18n/LanguageProvider";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
