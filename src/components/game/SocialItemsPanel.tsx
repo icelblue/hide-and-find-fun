@@ -66,7 +66,7 @@ export default function SocialItemsPanel({
       <Button variant="outline" className="w-full h-12 text-base" size="lg"
         onClick={() => setShowPanel(!showPanel)}
         disabled={allDisabled}>
-        {allDisabled ? "⏳ Ítems socials esgotats avui" : "⚡ Usar ítem social"}
+        {allDisabled ? t("game.social.exhausted") : t("game.social.useItemBtn")}
       </Button>
 
       {showPanel && (
