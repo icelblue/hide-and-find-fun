@@ -126,7 +126,7 @@ export default function SocialItemsPanel({
       {/* Trampa picker */}
       {showPanel && showTrampaPicker && currentScenarioItems && currentScenarioItems.length > 0 && (
         <div className="mt-2 glass rounded-xl p-3">
-          <p className="text-xs font-semibold mb-2 text-muted-foreground">🪤 On vols posar la trampa?</p>
+          <p className="text-xs font-semibold mb-2 text-muted-foreground">{t("game.social.trapWhichItem")}</p>
           <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
             {currentScenarioItems.map(item => (
               <button key={item.id}
