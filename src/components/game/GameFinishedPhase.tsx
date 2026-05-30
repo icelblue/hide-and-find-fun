@@ -294,15 +294,16 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="mb-6">
           {!showActionLog ? (
             <Button variant="outline" onClick={() => setShowActionLog(true)} className="mb-2">
-              📋 Veure historial d'accions ({actionLog.length})
+              {t("game.results.seeHistory", { count: actionLog.length })}
             </Button>
           ) : (
             <Card className="mx-auto max-w-sm glass border-border/30">
               <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                    📋 Historial de la partida
+                    {t("game.results.historyTitle")}
                   </p>
+
                   <button onClick={() => setShowActionLog(false)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
                 </div>
                 <div className="space-y-0.5 max-h-60 overflow-y-auto text-left" style={{ WebkitOverflowScrolling: "touch" }}>
