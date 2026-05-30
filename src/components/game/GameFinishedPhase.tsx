@@ -9,6 +9,8 @@ import { getHideMessage } from "@/lib/object-specials";
 import { RARITY_CONFIG } from "@/lib/reward-helpers";
 import { POS_LABELS } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
+import { useT } from "@/i18n/LanguageProvider";
+
 
 interface FinishedPhaseProps {
   game: any;
