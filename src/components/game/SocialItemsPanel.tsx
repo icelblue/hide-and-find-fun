@@ -152,10 +152,11 @@ export default function SocialItemsPanel({
           <div className="flex gap-1.5 items-center glass rounded-xl p-2">
             <span className="text-xl pl-1">💡</span>
             <Input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-              placeholder="Pista o farol pel rival..." maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
+              placeholder={t("game.social.messagePlaceholder")} maxLength={80} className="text-sm bg-transparent border-0 focus-visible:ring-0 shadow-none h-9" />
             <Button size="sm" disabled={!messageInput.trim() || actionLoading} onClick={() => onSendSocial("message")} className="shrink-0">
-              Enviar
+              {t("game.social.sendBtn")}
             </Button>
+
           </div>
         </div>
       )}
