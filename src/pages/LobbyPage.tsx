@@ -46,19 +46,21 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
   onDecline: (id: string) => Promise<void>; onDelete: (id: string) => Promise<void>;
   onDismiss: (id: string) => void;
 }) {
+  const t = useT();
   const [swiped, setSwiped] = useState(false);
   const game = gp.games;
   const isPending = gp._pending;
   const statusMap: Record<string, { icon: string; label: string; color: string }> = {
-    waiting: { icon: "⏳", label: "Esperant rival", color: "text-warning" },
-    hiding: { icon: "🫣", label: "Amaga l'objecte", color: "text-accent" },
-    playing: { icon: "🎮", label: "En joc", color: "text-primary" },
-    finished: { icon: "🏁", label: "Acabada", color: "text-muted-foreground" },
+    waiting: { icon: "⏳", label: t("lobby.statusWaiting"), color: "text-warning" },
+    hiding: { icon: "🫣", label: t("lobby.statusHiding"), color: "text-accent" },
+    playing: { icon: "🎮", label: t("lobby.statusPlaying"), color: "text-primary" },
+    finished: { icon: "🏁", label: t("lobby.statusFinished"), color: "text-muted-foreground" },
   };
-  const creatorName = gp._creator_name ?? "Anònim";
+  const creatorName = gp._creator_name ?? t("lobby.anonymous");
   const s = isPending
-    ? { icon: "⚔️", label: `Repte pendent`, color: "text-accent" }
+    ? { icon: "⚔️", label: t("lobby.pendingChallenge"), color: "text-accent" }
     : (statusMap[game.status] ?? statusMap.waiting);
+
   const isOwner = game.created_by === userId;
   const canSwipeDelete = isOwner && (game.status === "waiting" || game.status === "finished");
   const isFinished = game.status === "finished";
