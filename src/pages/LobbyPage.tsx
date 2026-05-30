@@ -381,15 +381,16 @@ export default function LobbyPage() {
         <Button onClick={handleRandomMatch} size="lg" disabled={loading} className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">🎲</span>
-            <span className="text-xs mt-0.5">Rival aleatori</span>
+            <span className="text-xs mt-0.5">{t("lobby.randomRival")}</span>
           </span>
         </Button>
         <Button onClick={handleCreate} size="lg" disabled={loading} variant="secondary" className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">➕</span>
-            <span className="text-xs mt-0.5">Crear partida</span>
+            <span className="text-xs mt-0.5">{t("lobby.createGame")}</span>
           </span>
         </Button>
+
       </div>
 
       {/* New player recommendation */}
