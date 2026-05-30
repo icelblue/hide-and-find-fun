@@ -328,8 +328,9 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       )}
 
       <div className="flex gap-2 justify-center">
-        <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
-        <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
+        <Button onClick={() => navigate("/")} variant="outline">{t("game.results.lobbyBtn")}</Button>
+        <Button onClick={() => navigate("/profile")}>{t("game.results.profileBtn")}</Button>
+
       </div>
     </div>
   );
