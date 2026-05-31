@@ -1366,9 +1366,9 @@ export default function GamePage() {
               <CardContent className="py-3">
                 <p className="text-xs font-semibold mb-1">{t("game.search.tutorialTitle")}</p>
                 <div className="space-y-1 text-[11px] text-muted-foreground">
-                  <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
-                  <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
-                  <p>🎯 Si encertes moble + posició, <strong>trobes l'objecte i guanyes!</strong></p>
+                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial1") }} />
+                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial2") }} />
+                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial3") }} />
                 </div>
               </CardContent>
             </Card>
