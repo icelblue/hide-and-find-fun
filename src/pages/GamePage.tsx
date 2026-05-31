@@ -813,8 +813,8 @@ export default function GamePage() {
               objectName: isCustomFound ? rivalSD.custom_name : foundObj?.name,
               itemIcon: item?.icon,
               itemName: item?.name,
-              positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
-              rivalName: rivalProf?.display_name ?? "Rival",
+              positionLabel: pos ? `${POS_LABELS[pos as keyof typeof POS_LABELS]?.split(" ")[0] ?? ""} ${posLabel(pos)}`.trim() : undefined,
+              rivalName: rivalProf?.display_name ?? t("game.results.rivalDefault"),
             });
           }
 
