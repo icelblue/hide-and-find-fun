@@ -12,35 +12,8 @@ import { toast } from "sonner";
 import { translateAuthError, validateAuthForm } from "@/lib/auth-errors";
 import { savePendingReferralCode, getPendingReferralCode } from "@/lib/referral-helpers";
 import { useLanguage, useT, type Lang } from "@/i18n/LanguageProvider";
+import { LanguageSwitcherCompact } from "@/i18n/LanguageSwitcher";
 
-/** Compact CA/EN switcher — el mateix component s'usa a Lobby */
-export function LanguageSwitcherCompact({ className = "" }: { className?: string }) {
-  const { lang, setLang } = useLanguage();
-  const t = useT();
-  return (
-    <div
-      role="group"
-      aria-label={t("lobby.languageToggle")}
-      className={`inline-flex items-center rounded-lg border border-border/50 bg-muted/40 p-0.5 text-[11px] font-semibold ${className}`}
-    >
-      {(["ca", "en"] as Lang[]).map((l) => (
-        <button
-          key={l}
-          type="button"
-          onClick={() => setLang(l)}
-          aria-pressed={lang === l}
-          className={`px-2 py-1 rounded-md transition-colors uppercase tracking-wider ${
-            lang === l
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {l}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export default function AuthPage() {
   const t = useT();
