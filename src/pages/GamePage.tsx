@@ -1436,7 +1436,7 @@ export default function GamePage() {
                   className="w-full flex items-center justify-between text-left"
                 >
                   <span className="text-[11px] font-semibold text-muted-foreground">
-                    🤫 El meu amagatall {showMyHideout ? "(amagar)" : "(toca per recordar)"}
+                    {t("game.search.myHideoutLabel")} {showMyHideout ? t("game.search.myHideoutHide") : t("game.search.myHideoutShow")}
                   </span>
                   <span className="text-xs text-muted-foreground">{showMyHideout ? "▲" : "▼"}</span>
                 </button>
