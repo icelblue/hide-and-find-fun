@@ -360,7 +360,8 @@ export default function LobbyPage() {
             )}
           </p>
         </div>
-        <div className="relative" ref={menuRef}>
+        <div className="flex items-center gap-2 relative" ref={menuRef}>
+          <LanguageSwitcherCompact />
           <Button variant="ghost" size="icon" onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl" aria-label={t("lobby.menu")}>☰</Button>
           {menuOpen && (
             <div className="absolute right-0 top-10 z-50 bg-card border border-border rounded-xl shadow-xl py-1 min-w-[180px] animate-scale-in">
