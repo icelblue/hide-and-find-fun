@@ -1016,7 +1016,7 @@ export default function GamePage() {
                 <button
                   onClick={() => { setBonusAmount(Math.min(bonusAvailable, 0.5)); setShowBonusPicker(true); }}
                   className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2.5 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[11px] font-bold"
-                  title={`Tens ${bonusAvailable} bonus tokens disponibles`}
+                  title={t("game.header.bonusAvailable", { n: bonusAvailable })}
                 >
                   💰+{bonusAvailable}
                 </button>
