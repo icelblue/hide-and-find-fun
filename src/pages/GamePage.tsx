@@ -1277,7 +1277,7 @@ export default function GamePage() {
                       onClick={() => !blocked && handleSelectPosition(pos.value)}>
                       <CardContent className="py-6 text-center">
                         <div className="text-4xl mb-2">{pos.icon}</div>
-                        <div className="text-sm font-semibold">{pos.icon} {posLabel(pos.value)}</div>
+                        <div className="text-sm font-semibold">{posLabel(pos.value)}</div>
                         {blocked && <div className="text-[9px] text-destructive mt-1">{blockReason}</div>}
                       </CardContent>
                     </Card>
