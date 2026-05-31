@@ -87,7 +87,8 @@
     "reportPlaceholder": "Què ha passat? On i quan?",
     "send": "Enviar",
     "rivalFound": "Rival trobat! 🎯",
-    "challengeSentRandom": "Repte enviat a un rival aleatori! Espera que accepti."
+    "challengeSentRandom": "Repte enviat a un rival aleatori! Espera que accepti.",
+    "languageToggle": "Idioma"
   },
   "lang": {
     "ca": "Català",
@@ -184,7 +185,47 @@
     "signIn": "Inicia sessió",
     "signUp": "Crea compte",
     "email": "Correu",
-    "password": "Contrasenya"
+    "password": "Contrasenya",
+    "title": "DEDUCTION DUEL",
+    "tagline": "El joc de deducció PvP on la lògica guanya a la sort. Amaga, investiga i dedueix! 🧠",
+    "referralLabel": "Codi convidat:",
+    "referralBonus": "+5 tokens de benvinguda en registrar-te",
+    "howTitle": "Com funciona?",
+    "how1": "Amaga un objecte en un moble d’una habitació",
+    "how2": "Observa posicions per rebre pistes (fred/calent/molt calent)",
+    "how3": "Quan ho tinguis clar, confirma per trobar l’objecte i guanyar!",
+    "feat1Title": "Deducció pura",
+    "feat1Desc": "Res de sort. Observa, dedueix i troba!",
+    "feat2Title": "PvP en temps real",
+    "feat2Desc": "Amaga el teu objecte i busca el del rival",
+    "feat3Title": "Pistes progressives",
+    "feat3Desc": "Fred... Calent... MOLT CALENT! 🔥",
+    "feat4Title": "Elo i Lligues",
+    "feat4Desc": "Puja de Bronze a Diamond amb cada victòria",
+    "displayNamePlaceholder": "Nom de jugador",
+    "emailPlaceholder": "Correu electrònic",
+    "passwordPlaceholder": "Contrasenya",
+    "passwordHint": "Mínim 6 caràcters. Tria una contrasenya segura.",
+    "signInBtn": "Entrar 🎮",
+    "signUpBtn": "Crear compte 🚀",
+    "loading": "...",
+    "or": "o",
+    "google": "Continuar amb Google",
+    "googleError": "Error amb Google",
+    "forgot": "Has oblidat la contrasenya?",
+    "noAccount": "No tens compte? Registra’t",
+    "hasAccount": "Ja tens compte? Entra",
+    "welcome": "Benvingut/da!",
+    "accountCreated": "Compte creat! Revisa el teu email per confirmar.",
+    "footerTag": "🧠 No és qüestió de sort. És qüestió de lògica.",
+    "emailInvalid": "Introdueix un email vàlid.",
+    "resetSent": "Email enviat! Revisa la safata d’entrada (i el correu brossa).",
+    "resetTitle": "Recuperar contrasenya",
+    "resetDesc": "Introdueix el teu email i t’enviarem un enllaç per restablir la contrasenya.",
+    "cancel": "Cancel·lar",
+    "send": "Enviar",
+    "formSignIn": "Formulari d’inici de sessió",
+    "formSignUp": "Formulari de registre"
   },
   "help": {
     "trigger": "Com funciona",
@@ -319,7 +360,12 @@
       "alreadyHidden": "Esperant rival...",
       "objectHidden": "Objecte amagat!"
     },
-    "steps": { "object": "🎯 Objecte", "scenario": "📍 Escenari", "item": "🪑 Moble", "position": "📌 Posició" },
+    "steps": {
+      "object": "🎯 Objecte",
+      "scenario": "📍 Escenari",
+      "item": "🪑 Moble",
+      "position": "📌 Posició"
+    },
     "hide": {
       "whatTitle": "Què amagues?",
       "whatTip": "Escull un objecte o crea'n un de personalitzat. ⭐ = objecte especial!",
@@ -365,7 +411,12 @@
       "doneTitle": "Objecte amagat!",
       "doneWaiting": "Esperant que el rival amagui..."
     },
-    "pos": { "sobre": "Sobre", "sota": "Sota", "dins": "Dins", "darrere": "Darrere" },
+    "pos": {
+      "sobre": "Sobre",
+      "sota": "Sota",
+      "dins": "Dins",
+      "darrere": "Darrere"
+    },
     "search": {
       "tutorialTitle": "🎮 Com jugar:",
       "tutorial1": "🚶 <strong>Mou-te</strong> entre habitacions per explorar",

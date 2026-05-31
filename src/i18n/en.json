@@ -87,7 +87,8 @@
     "reportPlaceholder": "What happened? Where and when?",
     "send": "Send",
     "rivalFound": "Rival found! 🎯",
-    "challengeSentRandom": "Challenge sent to a random rival! Wait for them to accept."
+    "challengeSentRandom": "Challenge sent to a random rival! Wait for them to accept.",
+    "languageToggle": "Language"
   },
   "lang": {
     "ca": "Català",
@@ -184,7 +185,47 @@
     "signIn": "Sign in",
     "signUp": "Sign up",
     "email": "Email",
-    "password": "Password"
+    "password": "Password",
+    "title": "DEDUCTION DUEL",
+    "tagline": "The PvP deduction game where logic beats luck. Hide, investigate and deduce! 🧠",
+    "referralLabel": "Invite code:",
+    "referralBonus": "+5 welcome tokens when you sign up",
+    "howTitle": "How does it work?",
+    "how1": "Hide an object in a piece of furniture in a room",
+    "how2": "Observe positions to get hints (cold/warm/very hot)",
+    "how3": "When you’re sure, confirm to find the object and win!",
+    "feat1Title": "Pure deduction",
+    "feat1Desc": "No luck. Observe, deduce and find!",
+    "feat2Title": "Realtime PvP",
+    "feat2Desc": "Hide your object and search for your rival’s",
+    "feat3Title": "Progressive hints",
+    "feat3Desc": "Cold... Warm... VERY HOT! 🔥",
+    "feat4Title": "Elo & Leagues",
+    "feat4Desc": "Climb from Bronze to Diamond with every win",
+    "displayNamePlaceholder": "Player name",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "passwordHint": "Minimum 6 characters. Pick a strong password.",
+    "signInBtn": "Sign in 🎮",
+    "signUpBtn": "Create account 🚀",
+    "loading": "...",
+    "or": "or",
+    "google": "Continue with Google",
+    "googleError": "Google sign-in error",
+    "forgot": "Forgot your password?",
+    "noAccount": "No account? Sign up",
+    "hasAccount": "Already have an account? Sign in",
+    "welcome": "Welcome!",
+    "accountCreated": "Account created! Check your email to confirm.",
+    "footerTag": "🧠 It’s not about luck. It’s about logic.",
+    "emailInvalid": "Enter a valid email.",
+    "resetSent": "Email sent! Check your inbox (and spam folder).",
+    "resetTitle": "Reset password",
+    "resetDesc": "Enter your email and we’ll send you a link to reset your password.",
+    "cancel": "Cancel",
+    "send": "Send",
+    "formSignIn": "Sign in form",
+    "formSignUp": "Sign up form"
   },
   "help": {
     "trigger": "How it works",
@@ -319,7 +360,12 @@
       "alreadyHidden": "Waiting for rival...",
       "objectHidden": "Object hidden!"
     },
-    "steps": { "object": "🎯 Object", "scenario": "📍 Scenario", "item": "🪑 Furniture", "position": "📌 Position" },
+    "steps": {
+      "object": "🎯 Object",
+      "scenario": "📍 Scenario",
+      "item": "🪑 Furniture",
+      "position": "📌 Position"
+    },
     "hide": {
       "whatTitle": "What are you hiding?",
       "whatTip": "Choose an object or create your own. ⭐ = special object!",
@@ -365,7 +411,12 @@
       "doneTitle": "Object hidden!",
       "doneWaiting": "Waiting for your rival to hide..."
     },
-    "pos": { "sobre": "On", "sota": "Under", "dins": "Inside", "darrere": "Behind" },
+    "pos": {
+      "sobre": "On",
+      "sota": "Under",
+      "dins": "Inside",
+      "darrere": "Behind"
+    },
     "search": {
       "tutorialTitle": "🎮 How to play:",
       "tutorial1": "🚶 <strong>Move</strong> between rooms to explore",
