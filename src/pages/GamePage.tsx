@@ -48,6 +48,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
+import { useT } from "@/i18n/LanguageProvider";
 
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
@@ -61,6 +62,13 @@ export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
+  const posLabel = (p: string) => t(`game.pos.${p}`, p);
+  const toolKey = (tool: string) => `🔧 ${t(`game.toolNames.${tool}`, tool)}`;
+  const getToolName = (tool: string) =>
+    tool === "drap" ? "🧹 Drap" :
+    tool === "martell" ? "🔨 Martell" :
+    tool === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
 
   // Core game state
   const [game, setGame] = useState<any>(null);
@@ -279,7 +287,7 @@ export default function GamePage() {
             supabase.from("game_players").update({ tools }).eq("id", playerData.id).then(() => {});
             playerData.tools = tools;
             setPlayerTools({ ...tools });
-            toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
+            toast.info(t("game.toasts.foundDrap"), { duration: 4000 });
           }
         }
         // Load interactions now that we have item IDs (single extra query)
@@ -361,7 +369,7 @@ export default function GamePage() {
         const markPromises: Promise<any>[] = [];
         for (const blocked of blockedItems) {
           const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
-          toast.success(`🛡️ El teu escut ha bloquejat ${info?.icon} ${info?.name} del rival!`, { duration: 5000 });
+          toast.success(t("game.toasts.shieldBlocked", { item: `${info?.icon} ${info?.name}` }), { duration: 5000 });
           markPromises.push(markSocialItemProcessed(blocked.id));
         }
 
@@ -375,14 +383,14 @@ export default function GamePage() {
               const randomItem = loadedItems[Math.floor(Math.random() * loadedItems.length)];
               setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
               setBananaEffect(true);
-              toast.warning("🍌 El rival t'ha enviat un plàtan podrit! Una posició està bloquejada!", { duration: 5000 });
+              toast.warning(t("game.toasts.bananaHit"), { duration: 5000 });
               setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
               setTimeout(() => setTrollEffect(null), 4000);
             }
           } else if (item.item_type === "smoke_bomb") {
-            toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+            toast.warning(t("game.toasts.smokeBombUsed"), { duration: 5000 });
           } else if (item.item_type === "swap") {
-            toast.warning("🔄 El rival ha usat un Intercanvi! Heu intercanviat posicions!", { duration: 5000 });
+            toast.warning(t("game.toasts.swapUsed"), { duration: 5000 });
           } else if (item.item_type === "message" && item.message_text) {
             setReceivedMessage(item.message_text);
           }
@@ -432,7 +440,7 @@ export default function GamePage() {
       }
 
       setBananaEffect(true);
-      toast.warning("🍌 El rival t'ha enviat un plàtan podrit! Una posició està bloquejada!", { duration: 5000 });
+      toast.warning(t("game.toasts.bananaHit"), { duration: 5000 });
       setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
       setTimeout(() => setTrollEffect(null), 4000);
       await markSocialItemProcessed(item.id);
@@ -446,7 +454,7 @@ export default function GamePage() {
     }
 
     if (item.item_type === "smoke_bomb") {
-      toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+      toast.warning(t("game.toasts.smokeBombUsed"), { duration: 5000 });
       await markSocialItemProcessed(item.id);
     }
   }, [currentScenarioItems, player?.current_scenario_id, user]);
@@ -457,8 +465,8 @@ export default function GamePage() {
   useEffect(() => {
     if (!gameId || !user) return;
     void loadGame();
-    getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
-    getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
+    getScenarios().then(setScenarios).catch(() => toast.error(t("game.errors.loadScenarios")));
+    getObjects().then(setObjects).catch(() => toast.error(t("game.errors.loadObjects")));
 
     if (isStory) return;
 
@@ -499,7 +507,7 @@ export default function GamePage() {
       setHideMessage("");
       setHideStep(1);
     } catch (err: any) {
-      toast.error("Error carregant objecte especial");
+      toast.error(t("game.errors.loadSpecial"));
       logError(err.message, err.stack, "GamePage:handleSelectObject");
     } finally {
       setActionLoading(false);
@@ -518,7 +526,7 @@ export default function GamePage() {
     };
     const v = validateCustomObject(input);
     if (!v.ok) {
-      toast.error(v.error || "Objecte personalitzat no vàlid");
+      toast.error(v.error || t("game.errors.invalidCustomObject"));
       return;
     }
     setSelectedObject(CUSTOM_OBJECT_SENTINEL_ID);
@@ -540,19 +548,19 @@ export default function GamePage() {
       const objSize = (obj as any)?.size ?? 2;
       const capacity = (itm as any)?.inner_capacity ?? 2;
       if (objSize > capacity) {
-        toast.error(`${obj?.icon} ${obj?.name} és massa gran per amagar dins de ${itm?.icon} ${itm?.name}!`);
+        toast.error(t("game.errors.objectTooBig", { obj: `${obj?.icon} ${obj?.name}`, itm: `${itm?.icon} ${itm?.name}` }));
         return;
       }
     }
     if (pos === "darrere" && (itm as any)?.can_behind === false) {
-      toast.error(`No es pot amagar darrere de ${itm?.icon} ${itm?.name}!`);
+      toast.error(t("game.errors.cannotHideBehind", { itm: `${itm?.icon} ${itm?.name}` }));
       return;
     }
     const material = (obj as any)?.material ?? "generic";
     const environment = (itm as any)?.environment ?? "generic";
     const blockReason = getMaterialBlockReason(material, environment);
     if (blockReason) {
-      toast.error(`🚫 ${obj?.icon} ${obj?.name}: ${blockReason}`);
+      toast.error(t("game.errors.materialBlocked", { obj: `${obj?.icon} ${obj?.name}`, reason: blockReason }));
       return;
     }
     setSelectedPosition(pos);
@@ -595,10 +603,10 @@ export default function GamePage() {
       }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
       setHideStep(4);
-      toast.success("Objecte amagat! 🫣");
+      toast.success(t("game.toasts.objectHidden"));
       if (await checkBothPlayersHidden(gameId)) {
         await startGame(gameId);
-        toast.success("Comença la cerca! 🔍");
+        toast.success(t("game.toasts.searchStarted"));
       }
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
@@ -621,9 +629,9 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
       const s = scenarios.find(s => s.id === scenarioId);
       if (result.barricade_hit) {
-        toast.warning(`🚧 Camí barricadat! Has pagat ${result.barricade_extra_cost}🪙 extra per forçar el pas.`, { duration: 5000 });
+        toast.warning(t("game.toasts.barricadeHit", { extra: result.barricade_extra_cost }), { duration: 5000 });
       }
-      toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move}🪙)`}`);
+      toast.success(isStory ? t("game.toasts.moveTo", { icon: s?.icon ?? "", name: s?.name ?? "" }) : t("game.toasts.moveToWithCost", { icon: s?.icon ?? "", name: s?.name ?? "", cost: result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move }));
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -636,16 +644,16 @@ export default function GamePage() {
       m.action === "look" && m.target_item_id === interaction.item_id &&
       (m as any).bonus_value === `interact:${interaction.action_name}`
     );
-    if (interaction.one_time && alreadyUsed) { toast.error("Ja has fet aquesta acció!"); return; }
-    if (player.tokens_remaining < interaction.cost) { toast.error("No tens prou tokens!"); return; }
+    if (interaction.one_time && alreadyUsed) { toast.error(t("game.errors.actionAlreadyDone")); return; }
+    if (player.tokens_remaining < interaction.cost) { toast.error(t("game.errors.notEnoughTokens")); return; }
     setActionLoading(true);
     try {
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
       const data = interaction.effect_data as any;
-      if (interaction.effect_type === "reveal_items") toast.success(`${interaction.action_icon} ${data.message || "Nous mobles revelats!"}`, { duration: 6000 });
+      if (interaction.effect_type === "reveal_items") toast.success(t("game.toasts.revealItems", { icon: interaction.action_icon, msg: data.message || t("game.toasts.revealItemsDefault") }), { duration: 6000 });
       else if (interaction.effect_type === "reveal_content") toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
-      else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
-      else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
+      else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || t("game.toasts.hintReceived")}`, { duration: 5000 });
+      else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || t("game.toasts.posUnlocked")}`, { duration: 4000 });
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -661,12 +669,12 @@ export default function GamePage() {
       const item = currentScenarioItems.find(i => i.id === itemId);
       const getToolName = (t: string) => t === "drap" ? "🧹 Drap" : t === "martell" ? "🔨 Martell" : t === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
 
-      if (actionType === "clean") toast.success(`🧹 Has netejat ${item?.icon} ${item?.name}!`, { duration: 4000 });
-      else if (actionType === "break") toast.success(`💥 Has trencat ${item?.icon} ${item?.name}! El rival ho sabrà... 🔧+1`, { duration: 5000 });
-      else if (actionType === "fix") toast.success(`🔧 Has arreglat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      if (actionType === "clean") toast.success(t("game.toasts.itemCleaned", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
+      else if (actionType === "break") toast.success(t("game.toasts.itemBroken", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 5000 });
+      else if (actionType === "fix") toast.success(t("game.toasts.itemFixed", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
 
-      if (result.bonusResult) toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
-      if (result.toolFound) toast.info(`🔍 Has trobat un ${getToolName(result.toolFound)}!`, { duration: 4000 });
+      if (result.bonusResult) toast.success(t("game.toasts.bonusTokens", { n: result.bonusResult.amount }), { duration: 3000 });
+      if (result.toolFound) toast.info(t("game.toasts.toolFound", { tool: getToolName(result.toolFound) }), { duration: 4000 });
 
       clearBanana();
       await loadGame();
@@ -687,20 +695,20 @@ export default function GamePage() {
       const result = await toggleLight(gameId, user.id, player.current_scenario_id, !isCurrentlyDark, scenarioName);
       if (isOutdoor) {
         if (isCurrentlyDark) {
-          toast.success("🔦 La llanterna il·lumina la zona! Nous mobles revelats!", { duration: 5000 });
+          toast.success(t("game.toasts.flashlightOn"), { duration: 5000 });
         } else {
-          toast.success("🌑 Has apagat la il·luminació de la zona.", { duration: 4000 });
+          toast.success(t("game.toasts.flashlightOff"), { duration: 4000 });
         }
       } else {
         if (!isCurrentlyDark) {
-          toast.success("🌑 Has apagat el llum! Ningú veu els mobles.", { duration: 4000 });
+          toast.success(t("game.toasts.lightsOff"), { duration: 4000 });
         } else {
-          toast.success("💡 Has encès el llum! Tots els mobles visibles.", { duration: 4000 });
+          toast.success(t("game.toasts.lightsOn"), { duration: 4000 });
         }
       }
       if (result.toolFound) {
         const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
-        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+        toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
       }
       clearBanana();
       await loadGame();
@@ -715,7 +723,7 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
       const item = currentScenarioItems.find(i => i.id === itemId);
       if (result.trapHit) {
-        toast.warning(`🪤 Trampa! Has perdut ${result.trapPenalty}🪙`, { duration: 4000 });
+        toast.warning(t("game.toasts.trapHit", { n: result.trapPenalty }), { duration: 4000 });
       }
       if (result.foundObject) {
         if (isStory && storyChapter) {
@@ -753,10 +761,10 @@ export default function GamePage() {
             healthEvent = await rollHealthEvent(user.id);
           }
           setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
-          toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
+          toast.success(t("game.story.foundXp", { xp: storyRes.xp }), { duration: 6000 });
           if (healthEvent) {
             setTimeout(() => {
-              toast.warning(`${healthEvent.icon} La mascota ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
+              toast.warning(t("game.story.healthEvent", { icon: healthEvent.icon, desc: healthEvent.desc, xp: healthEvent.xpDamage }), { duration: 8000 });
             }, 2000);
           }
         } else {
@@ -805,27 +813,27 @@ export default function GamePage() {
               objectName: isCustomFound ? rivalSD.custom_name : foundObj?.name,
               itemIcon: item?.icon,
               itemName: item?.name,
-              positionLabel: pos ? (POS_LABELS[pos as keyof typeof POS_LABELS] ?? pos) : undefined,
-              rivalName: rivalProf?.display_name ?? "Rival",
+              positionLabel: pos ? `${POS_LABELS[pos as keyof typeof POS_LABELS]?.split(" ")[0] ?? ""} ${posLabel(pos)}`.trim() : undefined,
+              rivalName: rivalProf?.display_name ?? t("game.results.rivalDefault"),
             });
           }
 
           const hideMsg = getHideMessage(resolvedRival?.special_data);
-          if (hideMsg) toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
+          if (hideMsg) toast.info(t("game.toasts.rivalHideMsg", { msg: hideMsg }), { duration: 8000 });
         }
       } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
         const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
-        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
-      } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
-      else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
+        toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
+      } else if (result.foundBonus === "extra_token") toast.success(t("game.toasts.extraToken", { val: result.bonusValue }));
+      else if (result.foundBonus) toast.info(t("game.toasts.magic", { val: result.bonusValue }));
       else {
         const level = result.hintLevel ?? 0;
         const noisy = (result as any).hintNoisy ? " ⚠️" : "";
-        if (level === 0) toast.info(`❄️ Glaçat${noisy}. Estàs molt lluny. (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 1) toast.info(`🥶 Fred${noisy}. T'acostes, però no t'hi escalfes encara. (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 2) toast.info(`🌬️ Fresc${noisy}. Hi ha alguna cosa per aquí... (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 3) toast.warning(`🌡️ Tebi${noisy}. Mires en una zona similar a la correcta. (-${TOKEN_COSTS.look}🪙)`);
-        else toast.success(`🔥 Calent${noisy}! Aquest moble cou! Prova una altra posició. (-${TOKEN_COSTS.look}🪙)`);
+        if (level === 0) toast.info(t("game.toasts.hintFrozen", { noisy, cost: TOKEN_COSTS.look }));
+        else if (level === 1) toast.info(t("game.toasts.hintCold", { noisy, cost: TOKEN_COSTS.look }));
+        else if (level === 2) toast.info(t("game.toasts.hintCool", { noisy, cost: TOKEN_COSTS.look }));
+        else if (level === 3) toast.warning(t("game.toasts.hintWarm", { noisy, cost: TOKEN_COSTS.look }));
+        else toast.success(t("game.toasts.hintHot", { noisy, cost: TOKEN_COSTS.look }));
       }
       clearBanana();
       await loadGame();
@@ -853,7 +861,7 @@ export default function GamePage() {
         .select("id").eq("user_id", user.id).eq("game_id", gameId)
         .eq("item_type", "special_trophy").limit(1);
       if (existing && existing.length > 0) {
-        toast.info("🏆 Ja tens el trofeu d'aquesta partida!");
+        toast.info(t("game.toasts.trophyAlready"));
         setShowSpecialFoundPopup(null);
         setSpecialFoundInput("");
         setSpecialFoundVariant(null);
@@ -867,12 +875,12 @@ export default function GamePage() {
         special_data: specialData,
       }]);
       if (insErr) throw insErr;
-      toast.success(`🏆 Trofeu desat!`);
+      toast.success(t("game.toasts.trophySaved"));
       setShowSpecialFoundPopup(null);
       setSpecialFoundInput("");
       setSpecialFoundVariant(null);
     } catch (err: any) {
-      toast.error(`No s'ha pogut desar el trofeu: ${err.message ?? "error desconegut"}`);
+      toast.error(t("game.toasts.trophyError", { msg: err.message ?? t("game.toasts.errorUnknown") }));
       logError(err.message ?? String(err), err.stack, "GamePage.handleSpecialFoundSubmit");
     } finally {
       setSavingTrophy(false);
@@ -886,19 +894,19 @@ export default function GamePage() {
       const msg = type === "message" ? messageInput : undefined;
       const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg, extraData);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
-      if (result.blocked) toast.error(`🛡️ Bloquejat per l'escort del rival!`);
-      else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
+      if (result.blocked) toast.error(t("game.toasts.blockedShield"));
+      else if (result.espiaResult) toast.success(t("game.toasts.espiaResult", { name: result.espiaResult }), { duration: 8000 });
       else if (type === "smoke_bomb" && (result as any).smokeBombResult) {
         const sb = (result as any).smokeBombResult;
-        toast.success(`💣 Bomba de fum! Objecte mogut a ${sb.new_scenario_name} → ${sb.new_item_name} (${sb.new_position})`, { duration: 6000 });
+        toast.success(t("game.toasts.smokeBombResult", { scen: sb.new_scenario_name, item: sb.new_item_name, pos: sb.new_position }), { duration: 6000 });
       } else if (type === "barricada" && (result as any).barricadaResult) {
         const br = (result as any).barricadaResult;
-        toast.success(`🚧 Barricada col·locada: ${br.from_name} ↔ ${br.to_name} (3 torns)`, { duration: 6000 });
+        toast.success(t("game.toasts.barricadaResult", { from: br.from_name, to: br.to_name }), { duration: 6000 });
       } else if (type === "trampa" && (result as any).trampaResult) {
         const tr = (result as any).trampaResult;
-        toast.success(`🪤 Trampa col·locada a ${tr.item_name}!`, { duration: 5000 });
+        toast.success(t("game.toasts.trampaResult", { item: tr.item_name }), { duration: 5000 });
       }
-      else toast.success(`${info?.icon} ${info?.name} enviat!`);
+      else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info?.name ?? "" }));
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
@@ -911,7 +919,7 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       const amount = await redeemBonusTokens(gameId, user.id, bonusAmount);
-      toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
+      toast.success(t("game.toasts.bonusTokensAdded", { n: amount }));
       setShowBonusPicker(false);
       setBonusAmount(1);
       await loadGame();
@@ -943,12 +951,12 @@ export default function GamePage() {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="text-5xl mb-3 animate-pulse">🔍</div>
-        <p className="text-muted-foreground text-sm">Carregant partida...</p>
+        <p className="text-muted-foreground text-sm">{t("game.loading")}</p>
       </div>
     </div>;
   }
 
-  const hideSteps = ["🎯 Objecte", "📍 Escenari", "🪑 Moble", "📌 Posició"];
+  const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.steps.item"), t("game.steps.position")];
 
   // ============================================
   // RENDER
@@ -978,12 +986,12 @@ export default function GamePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
         <button onClick={() => navigate(isStory ? "/story" : "/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-          {isStory ? (localStorage.getItem("lang") === "en" ? "← Story Mode" : "← Mode Història") : (localStorage.getItem("lang") === "en" ? "← Lobby" : "← Lobby")}
+          {isStory ? t("game.header.backStory") : t("game.header.backLobby")}
         </button>
         <div className="flex items-center gap-2">
           {isStory ? (
             <span className="text-[11px] bg-accent/10 text-accent px-3 py-1.5 rounded-full border border-accent/20 font-semibold">
-              🐾 Capítol {storyChapter}
+              {t("game.header.chapter", { n: storyChapter ?? "" })}
             </span>
           ) : (
             <>
@@ -991,7 +999,7 @@ export default function GamePage() {
               {rival && (
                 <button onClick={() => navigate(`/player/${rival.user_id}`)}
                   className="text-[11px] bg-secondary/10 text-secondary px-2.5 py-1.5 rounded-full border border-secondary/20 hover:bg-secondary/20 transition-colors font-medium">
-                  👤 Rival
+                  {t("game.header.rivalBtn")}
                 </button>
               )}
             </>
@@ -1008,7 +1016,7 @@ export default function GamePage() {
                 <button
                   onClick={() => { setBonusAmount(Math.min(bonusAvailable, 0.5)); setShowBonusPicker(true); }}
                   className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2.5 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[11px] font-bold"
-                  title={`Tens ${bonusAvailable} bonus tokens disponibles`}
+                  title={t("game.header.bonusAvailable", { n: bonusAvailable })}
                 >
                   💰+{bonusAvailable}
                 </button>
@@ -1028,9 +1036,9 @@ export default function GamePage() {
       {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
         <Card className="glass glow-primary mb-4">
           <CardContent className="py-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
+            <p className="text-xs text-muted-foreground mb-1">{t("game.waiting.shareCode")}</p>
             <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
-            <p className="text-[11px] text-muted-foreground/60 mt-2">Mentre esperes, amaga el teu objecte! 👇</p>
+            <p className="text-[11px] text-muted-foreground/60 mt-2">{t("game.waiting.whileWaiting")}</p>
           </CardContent>
         </Card>
       )}
@@ -1039,8 +1047,8 @@ export default function GamePage() {
       {phase === "waiting" && player.has_hidden && (
         <div className="text-center py-16">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
-          <h2 className="text-xl font-bold mb-2">Objecte amagat!</h2>
-          <p className="text-sm text-muted-foreground mb-4">Esperant rival...</p>
+          <h2 className="text-xl font-bold mb-2">{t("game.hide.doneTitle")}</h2>
+          <p className="text-sm text-muted-foreground mb-4">{t("game.waiting.alreadyHidden")}</p>
           <Card className="glass glow-primary">
             <CardContent className="py-4">
               <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient text-center">{game.code}</div>
@@ -1083,35 +1091,35 @@ export default function GamePage() {
             const customReady = isSingleEmoji(customObjectIcon) && customNameValid && customTrait1Valid && customTrait2Valid;
             return (
               <div>
-                <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
-                <Tip>Escull un objecte o crea'n un de personalitzat. ⭐ = objecte especial!</Tip>
+                <h2 className="text-lg font-bold mb-1">{t("game.hide.whatTitle")}</h2>
+                <Tip>{t("game.hide.whatTip")}</Tip>
                 <div className="h-3" />
                 <Tabs defaultValue="specials" className="w-full">
                   <TabsList className="grid w-full grid-cols-3 mb-3">
-                    <TabsTrigger value="specials">⭐ Especials</TabsTrigger>
-                    <TabsTrigger value="basics">📦 Bàsics</TabsTrigger>
-                    <TabsTrigger value="custom">✨ El teu</TabsTrigger>
+                    <TabsTrigger value="specials">{t("game.hide.tabSpecials")}</TabsTrigger>
+                    <TabsTrigger value="basics">{t("game.hide.tabBasics")}</TabsTrigger>
+                    <TabsTrigger value="custom">{t("game.hide.tabCustom")}</TabsTrigger>
                   </TabsList>
                   <TabsContent value="specials">
                     {specials.length > 0 ? (
                       <div className="grid grid-cols-3 gap-2">{specials.map(renderCard)}</div>
                     ) : (
-                      <p className="text-xs text-muted-foreground text-center py-4">Cap objecte especial disponible.</p>
+                      <p className="text-xs text-muted-foreground text-center py-4">{t("game.hide.noSpecials")}</p>
                     )}
                   </TabsContent>
                   <TabsContent value="basics">
                     {basics.length > 0 ? (
                       <div className="grid grid-cols-3 gap-2">{basics.map(renderCard)}</div>
                     ) : (
-                      <p className="text-xs text-muted-foreground text-center py-4">Cap objecte bàsic disponible.</p>
+                      <p className="text-xs text-muted-foreground text-center py-4">{t("game.hide.noBasics")}</p>
                     )}
                   </TabsContent>
                   <TabsContent value="custom">
                     <Card className="glass">
                       <CardContent className="py-4 space-y-3">
-                        <p className="text-[11px] text-muted-foreground">Crea el teu propi objecte. La icona ha de ser <strong>1 sol emoji</strong>.</p>
+                        <p className="text-[11px] text-muted-foreground"><span dangerouslySetInnerHTML={{__html: t("game.hide.customDesc")}} /></p>
                         <div>
-                          <label className="text-[11px] font-semibold mb-1 block">Icona (1 emoji)</label>
+                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.iconLabel")}</label>
                           <Input
                             value={customObjectIcon}
                             onChange={e => setCustomObjectIcon(e.target.value)}
@@ -1119,31 +1127,31 @@ export default function GamePage() {
                             maxLength={8}
                             className={customIconValid ? "" : "border-destructive"}
                           />
-                          {!customIconValid && <p className="text-[10px] text-destructive mt-1">Ha de ser exactament 1 emoji</p>}
+                          {!customIconValid && <p className="text-[10px] text-destructive mt-1">{t("game.hide.iconError")}</p>}
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold mb-1 block">Nom (màx. 20)</label>
+                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.nameLabel")}</label>
                           <Input
                             value={customObjectName}
                             onChange={e => setCustomObjectName(e.target.value.slice(0, 20))}
-                            placeholder="Unicorn de peluix"
+                            placeholder={t("game.hide.namePlaceholder")}
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-[11px] font-semibold mb-1 block">Mida</label>
+                            <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.sizeLabel")}</label>
                             <select
                               value={customObjectSize}
                               onChange={e => setCustomObjectSize(Number(e.target.value) as CustomObjectSize)}
                               className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
                             >
                               {CUSTOM_OBJECT_SIZES.map(s => (
-                                <option key={s} value={s}>{s === 1 ? "1 · Petit" : s === 2 ? "2 · Mitjà" : "3 · Gran"}</option>
+                                <option key={s} value={s}>{s === 1 ? t("game.hide.sizeSmall") : s === 2 ? t("game.hide.sizeMed") : t("game.hide.sizeLarge")}</option>
                               ))}
                             </select>
                           </div>
                           <div>
-                            <label className="text-[11px] font-semibold mb-1 block">Material</label>
+                            <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.materialLabel")}</label>
                             <select
                               value={customObjectMaterial}
                               onChange={e => setCustomObjectMaterial(e.target.value as CustomObjectMaterial)}
@@ -1156,21 +1164,21 @@ export default function GamePage() {
                           </div>
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold mb-1 block">Pista 1 (visible al rival al torn 2)</label>
+                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.trait1Label")}</label>
                           <Input
                             value={customObjectTrait1}
                             onChange={e => setCustomObjectTrait1(e.target.value.slice(0, 60))}
-                            placeholder="Ex: Fa olor de xocolata"
+                            placeholder={t("game.hide.trait1Placeholder")}
                             maxLength={60}
                           />
                           <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait1.trim().length}/60</p>
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold mb-1 block">Pista 2 (visible al rival al torn 5)</label>
+                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.trait2Label")}</label>
                           <Input
                             value={customObjectTrait2}
                             onChange={e => setCustomObjectTrait2(e.target.value.slice(0, 60))}
-                            placeholder="Ex: Es pot trencar fàcilment"
+                            placeholder={t("game.hide.trait2Placeholder")}
                             maxLength={60}
                           />
                           <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait2.trim().length}/60</p>
@@ -1186,7 +1194,7 @@ export default function GamePage() {
                           disabled={!customReady || actionLoading}
                           onClick={handleSelectCustomObject}
                         >
-                          Amagar aquest objecte →
+                          {t("game.hide.submitCustom")}
                         </Button>
                       </CardContent>
                     </Card>
@@ -1198,8 +1206,8 @@ export default function GamePage() {
 
           {hideStep === 1 && (
             <div>
-              <h2 className="text-lg font-bold mb-1">On amagues?</h2>
-              <Tip>Tria l'habitació on el rival haurà de buscar. Un bon lloc és on hi ha molts mobles!</Tip>
+              <h2 className="text-lg font-bold mb-1">{t("game.hide.whereTitle")}</h2>
+              <Tip>{t("game.hide.whereTip")}</Tip>
               <div className="h-3" />
               <div className="grid grid-cols-2 gap-2.5">
                 {scenarios.map(s => (
@@ -1211,14 +1219,14 @@ export default function GamePage() {
                   </Card>
                 ))}
               </div>
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(0)}>← Canviar objecte</Button>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(0)}>{t("game.hide.backToObject")}</Button>
             </div>
           )}
 
           {hideStep === 2 && (
             <div>
-              <h2 className="text-lg font-bold mb-1">A quin moble?</h2>
-              <Tip>Amaga'l en un moble de l'escenari. 🚫 = incompatible amb el material.</Tip>
+              <h2 className="text-lg font-bold mb-1">{t("game.hide.whichItemTitle")}</h2>
+              <Tip>{t("game.hide.whichItemTip")}</Tip>
               <div className="h-3" />
               <div className="grid grid-cols-2 gap-2.5">
                 {items.map(item => {
@@ -1241,14 +1249,14 @@ export default function GamePage() {
                   );
                 })}
               </div>
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(1)}>← Canviar escenari</Button>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(1)}>{t("game.hide.backToScenario")}</Button>
             </div>
           )}
 
           {hideStep === 3 && (
             <div>
-              <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
-              <Tip>Sobre, sota, dins o darrere del moble. Alerta: alguns mobles no permeten totes les posicions!</Tip>
+              <h2 className="text-lg font-bold mb-1">{t("game.hide.whichPosTitle")}</h2>
+              <Tip>{t("game.hide.whichPosTip")}</Tip>
               <div className="h-3" />
 
 
@@ -1262,21 +1270,21 @@ export default function GamePage() {
                   const blockedDins = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
                   const blockedDarrere = pos.value === "darrere" && (itm as any)?.can_behind === false;
                   const blocked = blockedDins || blockedDarrere;
-                  const blockReason = blockedDins ? "🚫 No hi cap" : blockedDarrere ? "🚫 No es pot" : "";
+                  const blockReason = blockedDins ? t("game.hide.noFit") : blockedDarrere ? t("game.hide.cannot") : "";
                   return (
                     <Card key={pos.value}
                       className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
                       onClick={() => !blocked && handleSelectPosition(pos.value)}>
                       <CardContent className="py-6 text-center">
                         <div className="text-4xl mb-2">{pos.icon}</div>
-                        <div className="text-sm font-semibold">{pos.label}</div>
+                        <div className="text-sm font-semibold">{posLabel(pos.value)}</div>
                         {blocked && <div className="text-[9px] text-destructive mt-1">{blockReason}</div>}
                       </CardContent>
                     </Card>
                   );
                 })}
               </div>
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>← Canviar moble</Button>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>{t("game.hide.backToItem")}</Button>
             </div>
           )}
         </div>
@@ -1288,16 +1296,16 @@ export default function GamePage() {
           <Card className="glass glow-accent">
             <CardContent className="py-6 text-center">
               <div className="text-4xl mb-3">{objects.find((o: any) => o.id === selectedObject)?.icon}</div>
-              <p className="font-bold mb-1">⭐ Objecte especial!</p>
+              <p className="font-bold mb-1">{t("game.hide.specialTitle")}</p>
               <p className="text-sm text-muted-foreground mb-4">{objectSpecial.prompt_text}</p>
 
               {objectSpecial.special_type === "custom_name" && (
                 <div className="space-y-3">
                   <Input value={specialInput} onChange={e => setSpecialInput(e.target.value)}
-                    placeholder="Nom personalitzat..." maxLength={40} className="text-center bg-muted/50" />
+                    placeholder={t("game.hide.customNamePlaceholder")} maxLength={40} className="text-center bg-muted/50" />
                   <Button disabled={!specialInput.trim() || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "custom_name", name: specialInput.trim() })}>
-                    Amagar amb nom ✨
+                    {t("game.hide.hideWithName")}
                   </Button>
                 </div>
               )}
@@ -1305,10 +1313,10 @@ export default function GamePage() {
               {objectSpecial.special_type === "custom_message" && (
                 <div className="space-y-3">
                   <Input value={specialInput} onChange={e => setSpecialInput(e.target.value)}
-                    placeholder="El teu missatge..." maxLength={100} className="text-center bg-muted/50" />
+                    placeholder={t("game.hide.customMessagePlaceholder")} maxLength={100} className="text-center bg-muted/50" />
                   <Button disabled={!specialInput.trim() || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "custom_message", message: specialInput.trim() })}>
-                    Amagar amb missatge ✉️
+                    {t("game.hide.hideWithMessage")}
                   </Button>
                 </div>
               )}
@@ -1329,12 +1337,12 @@ export default function GamePage() {
                   </div>
                   <Button disabled={!selectedVariant || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "choose_variant", variant: selectedVariant })}>
-                    Amagar {selectedVariant?.icon ?? "⚽"}
+                    {t("game.hide.hideVariant", { icon: selectedVariant?.icon ?? "⚽" })}
                   </Button>
                 </div>
               )}
 
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(3)}>← Canviar posició</Button>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(3)}>{t("game.hide.backToPos")}</Button>
             </CardContent>
           </Card>
         </div>
@@ -1344,8 +1352,8 @@ export default function GamePage() {
       {phase === "hiding" && player.has_hidden && (
         <div className="text-center py-16">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
-          <h2 className="text-xl font-bold mb-2">Objecte amagat!</h2>
-          <p className="text-sm text-muted-foreground animate-pulse">Esperant que el rival amagui...</p>
+          <h2 className="text-xl font-bold mb-2">{t("game.hide.doneTitle")}</h2>
+          <p className="text-sm text-muted-foreground animate-pulse">{t("game.hide.doneWaiting")}</p>
         </div>
       )}
 
@@ -1356,11 +1364,11 @@ export default function GamePage() {
           {moveHistory.length === 0 && (
             <Card className="glass border-primary/30 glow-primary">
               <CardContent className="py-3">
-                <p className="text-xs font-semibold mb-1">🎮 Com jugar:</p>
+                <p className="text-xs font-semibold mb-1">{t("game.search.tutorialTitle")}</p>
                 <div className="space-y-1 text-[11px] text-muted-foreground">
-                  <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
-                  <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
-                  <p>🎯 Si encertes moble + posició, <strong>trobes l'objecte i guanyes!</strong></p>
+                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial1") }} />
+                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial2") }} />
+                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial3") }} />
                 </div>
               </CardContent>
             </Card>
@@ -1370,12 +1378,12 @@ export default function GamePage() {
           <Card className="glass">
             <CardContent className="py-3 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Ubicació</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("game.search.locationLabel")}</span>
                 <div className="font-bold text-lg leading-tight">{currentScenario?.icon} {currentScenario?.name}</div>
               </div>
               {!isStory && (
                 <div className="text-right">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Tokens</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("game.search.tokensLabel")}</span>
                   <div className="font-bold text-lg leading-tight text-accent">🪙 {player.tokens_remaining}</div>
                 </div>
               )}
@@ -1386,14 +1394,14 @@ export default function GamePage() {
           <div className="flex gap-2 flex-wrap">
             {!isStory && rivalNearby && (
               <span className="bg-destructive/15 text-destructive text-[11px] font-semibold px-3 py-1 rounded-full animate-pulse border border-destructive/30">
-                ⚠️ Rival a prop del teu objecte!
+                {t("game.search.rivalNearby")}
               </span>
             )}
             {!isStory && player.shield_active && (
-              <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
+              <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">{t("game.search.shieldActive")}</span>
             )}
             {noTokens && (
-              <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
+              <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">{t("game.search.noTokens")}</span>
             )}
             {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0 || playerTools.llanterna > 0) && (
               <span className="bg-secondary/10 text-secondary text-[11px] font-semibold px-3 py-1 rounded-full border border-secondary/20">
@@ -1428,7 +1436,7 @@ export default function GamePage() {
                   className="w-full flex items-center justify-between text-left"
                 >
                   <span className="text-[11px] font-semibold text-muted-foreground">
-                    🤫 El meu amagatall {showMyHideout ? "(amagar)" : "(toca per recordar)"}
+                    {t("game.search.myHideoutLabel")} {showMyHideout ? t("game.search.myHideoutHide") : t("game.search.myHideoutShow")}
                   </span>
                   <span className="text-xs text-muted-foreground">{showMyHideout ? "▲" : "▼"}</span>
                 </button>
@@ -1443,7 +1451,7 @@ export default function GamePage() {
                         <span className="font-bold text-primary">{player.hidden_position}</span>
                       </p>
                     ) : (
-                      <p className="text-muted-foreground">Carregant…</p>
+                      <p className="text-muted-foreground">{t("game.search.loadingHideout")}</p>
                     )}
                   </div>
                 )}
@@ -1454,15 +1462,15 @@ export default function GamePage() {
           {!isStory && (rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes de l'objecte rival</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">{t("game.search.rivalTraitsTitle")}</p>
                 {rivalTraits.trait1 && <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalTraits.trait1}"</span></p>}
                 {rivalTraits.trait2 && <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalTraits.trait2}"</span></p>}
-                {!rivalTraits.trait2 && rivalTraits.trait1 && <p className="text-[10px] text-muted-foreground mt-1">🔒 2a pista al torn 5</p>}
+                {!rivalTraits.trait2 && rivalTraits.trait1 && <p className="text-[10px] text-muted-foreground mt-1">{t("game.search.trait2Locked")}</p>}
               </CardContent>
             </Card>
           )}
           {!isStory && !rivalTraits.trait1 && moveHistory.length < 2 && (
-            <p className="text-[10px] text-center text-muted-foreground">💡 Pista de l'objecte rival al torn 2</p>
+            <p className="text-[10px] text-center text-muted-foreground">{t("game.search.trait1Locked")}</p>
           )}
 
           {/* Move — hidden in story chapter 1 (tutorial: search in same room) */}
@@ -1471,9 +1479,9 @@ export default function GamePage() {
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               🚶 Moure's {!isStory && `· ${TOKEN_COSTS.move}🪙`}
             </h3>
-            <Tip>Ves a una habitació adjacent (cada sala té 2 portes)</Tip>
+            <Tip>{t("game.search.moveTip")}</Tip>
             {isStory && storyChapter === 2 && moveHistory.length === 0 && (
-              <p className="text-[11px] text-accent mb-1">💡 Ara aprèn a moure't entre habitacions!</p>
+              <p className="text-[11px] text-accent mb-1">{t("game.search.moveStoryHint")}</p>
             )}
             <div className="grid grid-cols-2 gap-1.5 mt-2">
               {connectedScenarios.map(s => (
@@ -1482,14 +1490,14 @@ export default function GamePage() {
                   className="glass rounded-xl p-3 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
                   <div className="text-2xl">{s.icon}</div>
                   <div className="text-[11px] leading-tight font-medium mt-1">{s.name}</div>
-                  <div className="text-[9px] text-muted-foreground mt-0.5">🚪 porta</div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">{t("game.search.doorLabel")}</div>
                 </button>
               ))}
             </div>
           </div>
           )}
           {isStory && storyChapter === 1 && (
-            <p className="text-[11px] text-muted-foreground text-center py-2">📍 Capítol 1: Busca l'objecte en aquesta habitació!</p>
+            <p className="text-[11px] text-muted-foreground text-center py-2">{t("game.search.storyCh1Hint")}</p>
           )}
 
           {/* Unified Light/Illumination toggle */}
@@ -1518,15 +1526,15 @@ export default function GamePage() {
                       <div className="flex-1 text-left">
                         <div className="text-sm font-semibold">
                           {isCurrentlyDark
-                            ? (isOutdoor ? "Usar llanterna" : "Encendre el llum")
-                            : "Apagar el llum"}
+                            ? (isOutdoor ? t("game.search.useFlashlight") : t("game.search.turnLightOn"))
+                            : t("game.search.turnLightOff")}
                         </div>
                         <div className="text-[11px] text-muted-foreground">
                           {isCurrentlyDark
                             ? (isOutdoor
-                              ? (hasLlanterna ? "⚡ Il·lumina la zona i revela mobles ocults!" : "Necessites una 🔦 Llanterna")
-                              : "Encén per veure els mobles")
-                            : "Apaga perquè ningú vegi els mobles"}
+                              ? (hasLlanterna ? t("game.search.flashlightDesc") : t("game.search.needFlashlight"))
+                              : t("game.search.turnLightDesc"))
+                            : t("game.search.turnOffLightDesc")}
                         </div>
                       </div>
                       <span className="text-[10px] text-muted-foreground">0.2🪙</span>
@@ -1542,9 +1550,9 @@ export default function GamePage() {
             <Card className="glass border-yellow-500/30">
               <CardContent className="py-3 text-center">
                 <div className="text-3xl mb-1">{isOutdoor ? "🌙" : "🌑"}</div>
-                <p className="text-sm font-semibold">{isOutdoor ? "Zona fosca!" : "El llum està apagat!"}</p>
+                <p className="text-sm font-semibold">{isOutdoor ? t("game.search.darkZoneTitle") : t("game.search.lightOffTitle")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {isOutdoor ? "Usa la llanterna per il·luminar." : "No pots veure cap moble. Encén el llum per investigar."}
+                  {isOutdoor ? t("game.search.darkZoneSubtitle") : t("game.search.lightOffSubtitle")}
                 </p>
               </CardContent>
             </Card>
@@ -1556,9 +1564,9 @@ export default function GamePage() {
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               👀 Investigar mobles {!isStory && `· ${TOKEN_COSTS.look}🪙`}
             </h3>
-            <Tip>Observa posicions per rebre pistes (❄️/🌡️/🔥). Si encertes moble + posició, trobes l'objecte i guanyes!</Tip>
+            <Tip>{t("game.search.investigateTip")}</Tip>
             {bananaEffect && bananaBlockedSpot && (
-              <p className="text-xs text-destructive mt-1 animate-pulse">🍌 Una posició està bloquejada! Fes una altra acció per desbloquejar-la.</p>
+              <p className="text-xs text-destructive mt-1 animate-pulse">{t("game.search.bananaBlocked")}</p>
             )}
             <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
@@ -1634,13 +1642,13 @@ export default function GamePage() {
             {storyResult.isDead ? "💫" : "🎉"}
           </div>
           <h2 className="text-2xl font-bold mb-2">
-            {storyResult.isDead ? "Màxim XP assolit!" : <span className="text-gradient">Capítol {storyChapter} completat!</span>}
+            {storyResult.isDead ? t("game.story.maxXp") : <span className="text-gradient">{t("game.story.chapterDone", { n: storyChapter ?? "" })}</span>}
           </h2>
-          <p className="text-lg text-accent font-bold mb-1">+{storyResult.xp} XP ⭐</p>
-          <p className="text-sm text-muted-foreground mb-2">Moviments: {moveHistory.length}</p>
+          <p className="text-lg text-accent font-bold mb-1">{t("game.story.xpGained", { xp: storyResult.xp })}</p>
+          <p className="text-sm text-muted-foreground mb-2">{t("game.story.movesCount", { n: moveHistory.length })}</p>
           {storyResult.accessory && (
             <p className="text-lg font-bold text-primary mb-2">
-              Nou accessori: {storyResult.accessory.icon} {storyResult.accessory.name}!
+              {t("game.story.newAccessory", { icon: storyResult.accessory.icon, name: storyResult.accessory.name })}
             </p>
           )}
           {storyResult.consumable && (
@@ -1650,11 +1658,11 @@ export default function GamePage() {
           )}
           {storyResult.isDead && (
             <p className="text-sm text-muted-foreground mb-2">
-              La teva mascota ha viscut una vida plena. Podràs adoptar-ne una de nova.
+              {t("game.story.petDied")}
             </p>
           )}
           <div className="flex gap-2 justify-center mt-4">
-            <Button onClick={() => navigate("/story")}>📖 Mode Història</Button>
+            <Button onClick={() => navigate("/story")}>{t("game.story.storyModeBtn")}</Button>
           </div>
         </div>
       )}
