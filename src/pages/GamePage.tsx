@@ -951,12 +951,12 @@ export default function GamePage() {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="text-5xl mb-3 animate-pulse">🔍</div>
-        <p className="text-muted-foreground text-sm">Carregant partida...</p>
+        <p className="text-muted-foreground text-sm">{t("game.loading")}</p>
       </div>
     </div>;
   }
 
-  const hideSteps = ["🎯 Objecte", "📍 Escenari", "🪑 Moble", "📌 Posició"];
+  const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.steps.item"), t("game.steps.position")];
 
   // ============================================
   // RENDER
