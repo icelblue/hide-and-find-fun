@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { APP_VERSION } from "@/lib/constants";
 import { InstallBanner } from "@/components/InstallBanner";
 import { useT } from "@/i18n/LanguageProvider";
+import { LanguageSwitcherCompact } from "@/pages/AuthPage";
 
 
 const DISMISSED_GAMES_KEY = "dd_dismissed_games";
