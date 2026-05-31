@@ -1337,7 +1337,7 @@ export default function GamePage() {
                   </div>
                   <Button disabled={!selectedVariant || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "choose_variant", variant: selectedVariant })}>
-                    Amagar {selectedVariant?.icon ?? "⚽"}
+                    {t("game.hide.hideVariant", { icon: selectedVariant?.icon ?? "⚽" })}
                   </Button>
                 </div>
               )}
