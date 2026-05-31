@@ -1642,13 +1642,13 @@ export default function GamePage() {
             {storyResult.isDead ? "💫" : "🎉"}
           </div>
           <h2 className="text-2xl font-bold mb-2">
-            {storyResult.isDead ? t("game.story.maxXp") : <span className="text-gradient">Capítol {storyChapter} completat!</span>}
+            {storyResult.isDead ? t("game.story.maxXp") : <span className="text-gradient">{t("game.story.chapterDone", { n: storyChapter ?? "" })}</span>}
           </h2>
-          <p className="text-lg text-accent font-bold mb-1">+{storyResult.xp} XP ⭐</p>
-          <p className="text-sm text-muted-foreground mb-2">Moviments: {moveHistory.length}</p>
+          <p className="text-lg text-accent font-bold mb-1">{t("game.story.xpGained", { xp: storyResult.xp })}</p>
+          <p className="text-sm text-muted-foreground mb-2">{t("game.story.movesCount", { n: moveHistory.length })}</p>
           {storyResult.accessory && (
             <p className="text-lg font-bold text-primary mb-2">
-              Nou accessori: {storyResult.accessory.icon} {storyResult.accessory.name}!
+              {t("game.story.newAccessory", { icon: storyResult.accessory.icon, name: storyResult.accessory.name })}
             </p>
           )}
           {storyResult.consumable && (
