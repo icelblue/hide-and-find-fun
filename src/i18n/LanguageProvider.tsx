@@ -144,17 +144,21 @@ export async function fetchTranslations(
     byType.set(e.entity_type, list);
   }
 
-  for (const [entity_type, ids] of byType) {
+  // Paral·lel: una query per type, totes alhora (evita N round-trips seqüencials)
+  const queries = Array.from(byType.entries()).map(async ([entity_type, ids]) => {
     const { data } = await supabase
       .from("translations")
       .select("entity_id, lang, value")
       .eq("entity_type", entity_type)
       .in("entity_id", ids)
       .in("lang", lang === "en" ? ["en", "ca"] : ["ca"]);
+    return { entity_type, data };
+  });
 
+  const responses = await Promise.all(queries);
+
+  for (const { entity_type, data } of responses) {
     if (!data) continue;
-
-    // Prioritzem lang triat; si no, fallback CA
     const byId = new Map<string, { en?: string; ca?: string }>();
     for (const row of data as Array<{ entity_id: string; lang: string; value: string }>) {
       const e = byId.get(row.entity_id) ?? {};
