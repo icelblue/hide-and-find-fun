@@ -42,22 +42,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pushInitRef = useRef(false);
 
   useEffect(() => {
-    // Subscripció reactiva a canvis d'autenticació
+    let initialized = false;
+
+    // Subscripció reactiva — única font de veritat de la sessió.
+    // onAuthStateChange emet INITIAL_SESSION un cop hidratada localStorage,
+    // així evitem la race amb getSession() (dos setState simultanis).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      initialized = true;
     });
 
-    // Carrega sessió existent (cookie/localStorage)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Safety net: si onAuthStateChange no dispara en 2s (edge case), forcem fi del loading.
+    const fallback = setTimeout(() => {
+      if (!initialized) setLoading(false);
+    }, 2000);
 
-    // Register service worker on mount
     registerServiceWorker();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(fallback);
+    };
   }, []);
 
   // Auto-subscribe to push when user logs in + apply pending referral
