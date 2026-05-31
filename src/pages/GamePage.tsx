@@ -1146,7 +1146,7 @@ export default function GamePage() {
                               className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
                             >
                               {CUSTOM_OBJECT_SIZES.map(s => (
-                                <option key={s} value={s}>{s === 1 ? "1 · Petit" : s === 2 ? "2 · Mitjà" : "3 · Gran"}</option>
+                                <option key={s} value={s}>{s === 1 ? t("game.hide.sizeSmall") : s === 2 ? t("game.hide.sizeMed") : t("game.hide.sizeLarge")}</option>
                               ))}
                             </select>
                           </div>
