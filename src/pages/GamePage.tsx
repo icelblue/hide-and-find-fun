@@ -48,6 +48,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
+import { useT } from "@/i18n/LanguageProvider";
 
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
