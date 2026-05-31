@@ -986,12 +986,12 @@ export default function GamePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
         <button onClick={() => navigate(isStory ? "/story" : "/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-          {isStory ? (localStorage.getItem("lang") === "en" ? "← Story Mode" : "← Mode Història") : (localStorage.getItem("lang") === "en" ? "← Lobby" : "← Lobby")}
+          {isStory ? t("game.header.backStory") : t("game.header.backLobby")}
         </button>
         <div className="flex items-center gap-2">
           {isStory ? (
             <span className="text-[11px] bg-accent/10 text-accent px-3 py-1.5 rounded-full border border-accent/20 font-semibold">
-              🐾 Capítol {storyChapter}
+              {t("game.header.chapter", { n: storyChapter ?? "" })}
             </span>
           ) : (
             <>
@@ -999,7 +999,7 @@ export default function GamePage() {
               {rival && (
                 <button onClick={() => navigate(`/player/${rival.user_id}`)}
                   className="text-[11px] bg-secondary/10 text-secondary px-2.5 py-1.5 rounded-full border border-secondary/20 hover:bg-secondary/20 transition-colors font-medium">
-                  👤 Rival
+                  {t("game.header.rivalBtn")}
                 </button>
               )}
             </>
