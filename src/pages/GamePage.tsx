@@ -1034,27 +1034,12 @@ export default function GamePage() {
 
       {/* WAITING — show code + allow hiding */}
       {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
-        <Card className="glass glow-primary mb-4">
-          <CardContent className="py-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">{t("game.waiting.shareCode")}</p>
-            <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
-            <p className="text-[11px] text-muted-foreground/60 mt-2">{t("game.waiting.whileWaiting")}</p>
-          </CardContent>
-        </Card>
+        <WaitingScreen code={game.code} hasHidden={false} />
       )}
 
       {/* WAITING — already hidden */}
       {phase === "waiting" && player.has_hidden && (
-        <div className="text-center py-16">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
-          <h2 className="text-xl font-bold mb-2">{t("game.hide.doneTitle")}</h2>
-          <p className="text-sm text-muted-foreground mb-4">{t("game.waiting.alreadyHidden")}</p>
-          <Card className="glass glow-primary">
-            <CardContent className="py-4">
-              <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient text-center">{game.code}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <WaitingScreen code={game.code} hasHidden={true} />
       )}
 
       {/* HIDING PHASE */}
