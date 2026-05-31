@@ -369,7 +369,7 @@ export default function GamePage() {
         const markPromises: Promise<any>[] = [];
         for (const blocked of blockedItems) {
           const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
-          toast.success(`🛡️ El teu escut ha bloquejat ${info?.icon} ${info?.name} del rival!`, { duration: 5000 });
+          toast.success(t("game.toasts.shieldBlocked", { item: `${info?.icon} ${info?.name}` }), { duration: 5000 });
           markPromises.push(markSocialItemProcessed(blocked.id));
         }
 
@@ -388,9 +388,9 @@ export default function GamePage() {
               setTimeout(() => setTrollEffect(null), 4000);
             }
           } else if (item.item_type === "smoke_bomb") {
-            toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+            toast.warning(t("game.toasts.smokeBombUsed"), { duration: 5000 });
           } else if (item.item_type === "swap") {
-            toast.warning("🔄 El rival ha usat un Intercanvi! Heu intercanviat posicions!", { duration: 5000 });
+            toast.warning(t("game.toasts.swapUsed"), { duration: 5000 });
           } else if (item.item_type === "message" && item.message_text) {
             setReceivedMessage(item.message_text);
           }
@@ -454,7 +454,7 @@ export default function GamePage() {
     }
 
     if (item.item_type === "smoke_bomb") {
-      toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+      toast.warning(t("game.toasts.smokeBombUsed"), { duration: 5000 });
       await markSocialItemProcessed(item.id);
     }
   }, [currentScenarioItems, player?.current_scenario_id, user]);
@@ -548,19 +548,19 @@ export default function GamePage() {
       const objSize = (obj as any)?.size ?? 2;
       const capacity = (itm as any)?.inner_capacity ?? 2;
       if (objSize > capacity) {
-        toast.error(`${obj?.icon} ${obj?.name} és massa gran per amagar dins de ${itm?.icon} ${itm?.name}!`);
+        toast.error(t("game.errors.objectTooBig", { obj: `${obj?.icon} ${obj?.name}`, itm: `${itm?.icon} ${itm?.name}` }));
         return;
       }
     }
     if (pos === "darrere" && (itm as any)?.can_behind === false) {
-      toast.error(`No es pot amagar darrere de ${itm?.icon} ${itm?.name}!`);
+      toast.error(t("game.errors.cannotHideBehind", { itm: `${itm?.icon} ${itm?.name}` }));
       return;
     }
     const material = (obj as any)?.material ?? "generic";
     const environment = (itm as any)?.environment ?? "generic";
     const blockReason = getMaterialBlockReason(material, environment);
     if (blockReason) {
-      toast.error(`🚫 ${obj?.icon} ${obj?.name}: ${blockReason}`);
+      toast.error(t("game.errors.materialBlocked", { obj: `${obj?.icon} ${obj?.name}`, reason: blockReason }));
       return;
     }
     setSelectedPosition(pos);
@@ -629,9 +629,9 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
       const s = scenarios.find(s => s.id === scenarioId);
       if (result.barricade_hit) {
-        toast.warning(`🚧 Camí barricadat! Has pagat ${result.barricade_extra_cost}🪙 extra per forçar el pas.`, { duration: 5000 });
+        toast.warning(t("game.toasts.barricadeHit", { extra: result.barricade_extra_cost }), { duration: 5000 });
       }
-      toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move}🪙)`}`);
+      toast.success(isStory ? t("game.toasts.moveTo", { icon: s?.icon ?? "", name: s?.name ?? "" }) : t("game.toasts.moveToWithCost", { icon: s?.icon ?? "", name: s?.name ?? "", cost: result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move }));
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -650,10 +650,10 @@ export default function GamePage() {
     try {
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
       const data = interaction.effect_data as any;
-      if (interaction.effect_type === "reveal_items") toast.success(`${interaction.action_icon} ${data.message || "Nous mobles revelats!"}`, { duration: 6000 });
+      if (interaction.effect_type === "reveal_items") toast.success(t("game.toasts.revealItems", { icon: interaction.action_icon, msg: data.message || t("game.toasts.revealItemsDefault") }), { duration: 6000 });
       else if (interaction.effect_type === "reveal_content") toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
-      else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
-      else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
+      else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || t("game.toasts.hintReceived")}`, { duration: 5000 });
+      else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || t("game.toasts.posUnlocked")}`, { duration: 4000 });
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -669,12 +669,12 @@ export default function GamePage() {
       const item = currentScenarioItems.find(i => i.id === itemId);
       const getToolName = (t: string) => t === "drap" ? "🧹 Drap" : t === "martell" ? "🔨 Martell" : t === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
 
-      if (actionType === "clean") toast.success(`🧹 Has netejat ${item?.icon} ${item?.name}!`, { duration: 4000 });
-      else if (actionType === "break") toast.success(`💥 Has trencat ${item?.icon} ${item?.name}! El rival ho sabrà... 🔧+1`, { duration: 5000 });
-      else if (actionType === "fix") toast.success(`🔧 Has arreglat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      if (actionType === "clean") toast.success(t("game.toasts.itemCleaned", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
+      else if (actionType === "break") toast.success(t("game.toasts.itemBroken", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 5000 });
+      else if (actionType === "fix") toast.success(t("game.toasts.itemFixed", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
 
-      if (result.bonusResult) toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
-      if (result.toolFound) toast.info(`🔍 Has trobat un ${getToolName(result.toolFound)}!`, { duration: 4000 });
+      if (result.bonusResult) toast.success(t("game.toasts.bonusTokens", { n: result.bonusResult.amount }), { duration: 3000 });
+      if (result.toolFound) toast.info(t("game.toasts.toolFound", { tool: getToolName(result.toolFound) }), { duration: 4000 });
 
       clearBanana();
       await loadGame();
@@ -708,7 +708,7 @@ export default function GamePage() {
       }
       if (result.toolFound) {
         const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
-        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+        toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
       }
       clearBanana();
       await loadGame();
@@ -723,7 +723,7 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
       const item = currentScenarioItems.find(i => i.id === itemId);
       if (result.trapHit) {
-        toast.warning(`🪤 Trampa! Has perdut ${result.trapPenalty}🪙`, { duration: 4000 });
+        toast.warning(t("game.toasts.trapHit", { n: result.trapPenalty }), { duration: 4000 });
       }
       if (result.foundObject) {
         if (isStory && storyChapter) {
@@ -761,10 +761,10 @@ export default function GamePage() {
             healthEvent = await rollHealthEvent(user.id);
           }
           setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
-          toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
+          toast.success(t("game.story.foundXp", { xp: storyRes.xp }), { duration: 6000 });
           if (healthEvent) {
             setTimeout(() => {
-              toast.warning(`${healthEvent.icon} La mascota ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
+              toast.warning(t("game.story.healthEvent", { icon: healthEvent.icon, desc: healthEvent.desc, xp: healthEvent.xpDamage }), { duration: 8000 });
             }, 2000);
           }
         } else {
@@ -819,21 +819,21 @@ export default function GamePage() {
           }
 
           const hideMsg = getHideMessage(resolvedRival?.special_data);
-          if (hideMsg) toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
+          if (hideMsg) toast.info(t("game.toasts.rivalHideMsg", { msg: hideMsg }), { duration: 8000 });
         }
       } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
         const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
-        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
-      } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
-      else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
+        toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
+      } else if (result.foundBonus === "extra_token") toast.success(t("game.toasts.extraToken", { val: result.bonusValue }));
+      else if (result.foundBonus) toast.info(t("game.toasts.magic", { val: result.bonusValue }));
       else {
         const level = result.hintLevel ?? 0;
         const noisy = (result as any).hintNoisy ? " ⚠️" : "";
-        if (level === 0) toast.info(`❄️ Glaçat${noisy}. Estàs molt lluny. (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 1) toast.info(`🥶 Fred${noisy}. T'acostes, però no t'hi escalfes encara. (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 2) toast.info(`🌬️ Fresc${noisy}. Hi ha alguna cosa per aquí... (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 3) toast.warning(`🌡️ Tebi${noisy}. Mires en una zona similar a la correcta. (-${TOKEN_COSTS.look}🪙)`);
-        else toast.success(`🔥 Calent${noisy}! Aquest moble cou! Prova una altra posició. (-${TOKEN_COSTS.look}🪙)`);
+        if (level === 0) toast.info(t("game.toasts.hintFrozen", { noisy, cost: TOKEN_COSTS.look }));
+        else if (level === 1) toast.info(t("game.toasts.hintCold", { noisy, cost: TOKEN_COSTS.look }));
+        else if (level === 2) toast.info(t("game.toasts.hintCool", { noisy, cost: TOKEN_COSTS.look }));
+        else if (level === 3) toast.warning(t("game.toasts.hintWarm", { noisy, cost: TOKEN_COSTS.look }));
+        else toast.success(t("game.toasts.hintHot", { noisy, cost: TOKEN_COSTS.look }));
       }
       clearBanana();
       await loadGame();
@@ -880,7 +880,7 @@ export default function GamePage() {
       setSpecialFoundInput("");
       setSpecialFoundVariant(null);
     } catch (err: any) {
-      toast.error(`No s'ha pogut desar el trofeu: ${err.message ?? "error desconegut"}`);
+      toast.error(t("game.toasts.trophyError", { msg: err.message ?? t("game.toasts.errorUnknown") }));
       logError(err.message ?? String(err), err.stack, "GamePage.handleSpecialFoundSubmit");
     } finally {
       setSavingTrophy(false);
@@ -894,19 +894,19 @@ export default function GamePage() {
       const msg = type === "message" ? messageInput : undefined;
       const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg, extraData);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
-      if (result.blocked) toast.error(`🛡️ Bloquejat per l'escort del rival!`);
-      else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
+      if (result.blocked) toast.error(t("game.toasts.blockedShield"));
+      else if (result.espiaResult) toast.success(t("game.toasts.espiaResult", { name: result.espiaResult }), { duration: 8000 });
       else if (type === "smoke_bomb" && (result as any).smokeBombResult) {
         const sb = (result as any).smokeBombResult;
-        toast.success(`💣 Bomba de fum! Objecte mogut a ${sb.new_scenario_name} → ${sb.new_item_name} (${sb.new_position})`, { duration: 6000 });
+        toast.success(t("game.toasts.smokeBombResult", { scen: sb.new_scenario_name, item: sb.new_item_name, pos: sb.new_position }), { duration: 6000 });
       } else if (type === "barricada" && (result as any).barricadaResult) {
         const br = (result as any).barricadaResult;
-        toast.success(`🚧 Barricada col·locada: ${br.from_name} ↔ ${br.to_name} (3 torns)`, { duration: 6000 });
+        toast.success(t("game.toasts.barricadaResult", { from: br.from_name, to: br.to_name }), { duration: 6000 });
       } else if (type === "trampa" && (result as any).trampaResult) {
         const tr = (result as any).trampaResult;
-        toast.success(`🪤 Trampa col·locada a ${tr.item_name}!`, { duration: 5000 });
+        toast.success(t("game.toasts.trampaResult", { item: tr.item_name }), { duration: 5000 });
       }
-      else toast.success(`${info?.icon} ${info?.name} enviat!`);
+      else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info?.name ?? "" }));
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
@@ -919,7 +919,7 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       const amount = await redeemBonusTokens(gameId, user.id, bonusAmount);
-      toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
+      toast.success(t("game.toasts.bonusTokensAdded", { n: amount }));
       setShowBonusPicker(false);
       setBonusAmount(1);
       await loadGame();
