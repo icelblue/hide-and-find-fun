@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { translateAuthError, validateAuthForm } from "@/lib/auth-errors";
 import { savePendingReferralCode, getPendingReferralCode } from "@/lib/referral-helpers";
-import { useLanguage, useT, type Lang } from "@/i18n/LanguageProvider";
+import { useT } from "@/i18n/LanguageProvider";
 import { LanguageSwitcherCompact } from "@/i18n/LanguageSwitcher";
 
 
