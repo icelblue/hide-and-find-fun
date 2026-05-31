@@ -62,6 +62,13 @@ export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
+  const posLabel = (p: string) => t(`game.pos.${p}`, p);
+  const toolKey = (tool: string) => `🔧 ${t(`game.toolNames.${tool}`, tool)}`;
+  const getToolName = (tool: string) =>
+    tool === "drap" ? "🧹 Drap" :
+    tool === "martell" ? "🔨 Martell" :
+    tool === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
 
   // Core game state
   const [game, setGame] = useState<any>(null);
