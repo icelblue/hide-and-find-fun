@@ -22,7 +22,8 @@ function ScenarioPickerInner({ scenarios, onSelect, onBack }: Props) {
   return (
     <div>
       <h2 className="text-lg font-bold mb-1">{t("game.hide.whereTitle")}</h2>
-      <p className="text-xs text-muted-foreground mb-3">{t("game.hide.whereTip")}</p>
+      <Tip>{t("game.hide.whereTip")}</Tip>
+      <div className="h-3" />
       <div className="grid grid-cols-2 gap-2.5">
         {scenarios.map(s => (
           <Card
