@@ -6,6 +6,7 @@
 import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tip } from "@/components/HelpButton";
 import { useT } from "@/i18n/LanguageProvider";
 
 type Scenario = { id: string; name: string; icon: string };
