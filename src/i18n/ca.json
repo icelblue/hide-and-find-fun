@@ -601,6 +601,206 @@
       "materialBlocked": "🚫 {obj}: {reason}",
       "actionAlreadyDone": "Ja has fet aquesta acció!",
       "notEnoughTokens": "No tens prou tokens!"
+    },
+    "materials": {
+      "generic": "Genèric",
+      "paper": "Paper",
+      "glass": "Vidre",
+      "metal": "Metall",
+      "plastic": "Plàstic",
+      "fabric": "Roba",
+      "wood": "Fusta",
+      "cardboard": "Cartró",
+      "rubber": "Goma",
+      "ceramic": "Ceràmica",
+      "electronic": "Electrònic",
+      "leather": "Cuir",
+      "stone": "Pedra",
+      "food": "Menjar"
+    },
+    "environments": {
+      "wet": "💧 Mullat",
+      "hot": "🔥 Cremat",
+      "dirty": "🗑️ Brut",
+      "frozen": "🧊 Congelat",
+      "outdoor": "🌿 A l'exterior",
+      "sorrenc": "🏖️ Ple de sorra",
+      "submergit": "🌊 Submergit",
+      "químic": "☣️ Contaminat",
+      "ventós": "💨 Ventós"
+    },
+    "socialItems": {
+      "banana": {
+        "name": "Plàtan",
+        "desc": "Bloqueja 1 posició del rival"
+      },
+      "smoke_bomb": {
+        "name": "Bomba de fum",
+        "desc": "Mou el teu objecte a altra posició"
+      },
+      "shield": {
+        "name": "Escut",
+        "desc": "Bloqueja el pròxim atac (1 ús)"
+      },
+      "swap": {
+        "name": "Intercanvi",
+        "desc": "Intercanvia la teva sala amb la del rival"
+      },
+      "espia": {
+        "name": "Espia",
+        "desc": "Descobreix on és el rival ara"
+      },
+      "barricada": {
+        "name": "Barricada",
+        "desc": "Bloqueja un camí al rival. Pot forçar pagant +1🪙 (peatge únic) — 2/dia"
+      },
+      "trampa": {
+        "name": "Trampa",
+        "desc": "Col·loca trampa en un moble (-1🪙 al rival si mira) — 2/dia"
+      },
+      "message": {
+        "name": "Pista personalitzada",
+        "desc": "Envia una pista o farol al rival"
+      },
+      "robar_tornavis": {
+        "name": "Robar tornavís",
+        "desc": "Roba 1 tornavís al rival"
+      }
+    }
+  },
+  "helpPvp": {
+    "menuLabel": "❓ Com jugar",
+    "ariaLabel": "Com jugar",
+    "title": "📖 Com jugar",
+    "tabs": {
+      "basics": "🌟 Bàsic",
+      "rules": "📖 Regles",
+      "rewards": "🏆 Premis"
+    },
+    "firstTime": {
+      "title": "👋 Primer cop?",
+      "body": "Llegeix aquests 7 passos i podràs jugar la teva primera partida en 3 minuts!"
+    },
+    "tipText": "💡 Truc: A la teva partida, toca 🤫 El meu amagatall si oblides on has amagat el teu objecte.",
+    "basics": {
+      "s1": {
+        "title": "🎯 Què és el joc?",
+        "text": "Tu i el rival amagueu cadascú UN objecte en un escenari (casa amb habitacions). Guanya qui trobi primer l'objecte de l'altre!"
+      },
+      "s2": {
+        "title": "🫣 Amaga el teu objecte",
+        "text": "Tries: HABITACIÓ → OBJECTE (una clau, un anell...) → MOBLE on amagar-lo → POSICIÓ (sobre, sota o dins). Pots deixar un missatge divertit que veurà el rival quan el trobi."
+      },
+      "s3": {
+        "title": "🚶 Mou-te per la casa",
+        "text": "Cada habitació té portes a 1-2 habitacions adjacents. Moure costa pocs tokens. Has d'anar a la mateixa habitació on creus que el rival ha amagat el seu objecte."
+      },
+      "s4": {
+        "title": "👀 Mira als mobles",
+        "text": "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes de 5 nivells:\n❄️ Glaçat → Molt lluny\n🥶 Fred → Habitació veïna\n🌬️ Fresc → Bona habitació, moble no relacionat\n🌡️ Tebi → Bona habitació, moble similar\n🔥 Calent → Moble correcte! Prova altra posició\n\n⚠️ 20% de pistes poden enganyar-te (±1 nivell). La victòria mai és falsa."
+      },
+      "s5": {
+        "title": "🏆 Guanyar",
+        "text": "Si encertes MOBLE + POSICIÓ exactes, trobes l'objecte i guanyes la partida! T'emportes una recompensa (un moble per la teva col·lecció)."
+      },
+      "s6": {
+        "title": "🪙 Tokens",
+        "text": "Tens 5 tokens al dia (es reinicien sols). Cada acció gasta una mica. Si t'acabes els tokens, has d'esperar a demà o convidar amics per guanyar bonus tokens."
+      },
+      "s7": {
+        "title": "⚡ Trucs i ítems socials",
+        "text": "Pots fastidiar el rival! Plàtans 🍌 (li bloqueges una posició), bombes de fum 💣 (mous el teu objecte!), trampes 🪤, escuts 🛡️... Mira la pestanya 'Regles completes' per a tots."
+      }
+    },
+    "rules": {
+      "r1": {
+        "title": "🎯 Objectiu",
+        "text": "Amaga un objecte i busca el del rival. El primer que el trobi, guanya!"
+      },
+      "r2": {
+        "title": "🫣 Fase d'amagar",
+        "text": "Tria escenari → objecte → moble → posició (sobre/sota/dins). Pots escriure un missatge opcional que es mostrarà quan el rival trobi l'objecte. Tots dos amaguen alhora."
+      },
+      "r3": {
+        "title": "🪙 Tokens",
+        "text": "Tens 5 tokens al dia, es reinicien automàticament. Pots gastar bonus tokens guanyats de recompenses. Administra'ls bé!"
+      },
+      "r4": {
+        "title": "🚶 Moure's · {cost}🪙",
+        "text": "Canvia d'habitació. Cada sala té portes que connecten amb altres sales."
+      },
+      "r5": {
+        "title": "👀 Observar · {cost}🪙",
+        "text": "Mira una posició d'un moble (⬆️ sobre, ⬇️ sota, 📦 dins, 🔙 darrere). Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista de 5 nivells:\n❄️ Glaçat → Habitació molt lluny.\n🥶 Fred → Habitació pròxima a la correcta.\n🌬️ Fresc → Bona habitació, però el moble no té res a veure.\n🌡️ Tebi → Bona habitació, moble d'una categoria similar a la correcta.\n🔥 Calent → Moble correcte! Prova altra posició.\n\n⚠️ Atenció: hi ha un 20% de probabilitat que la pista t'enganyi amb un nivell adjacent. La victòria, però, mai és falsa.\n\nℹ️ Alguns mobles no permeten totes les posicions (una catifa no té 'dins', un arbre no té 'darrere'…). Els botons bloquejats t'ho indiquen."
+      },
+      "r6": {
+        "title": "💡 Pistes de l'objecte rival",
+        "text": "Al torn 2 reps la 1a pista sobre l'objecte que busques. Al torn 5, la 2a pista. Serveixen per deduir QUÈ busques."
+      },
+      "r7": {
+        "title": "⚡ Ítems socials",
+        "text": "Un cop al dia pots usar un ítem (excepte barricada i trampa que es poden usar 2 cops/dia):\n🍌 Plàtan — Bloqueja 1 posició del rival.\n💣 Bomba de fum — Mou el TEU objecte a altra habitació (1 ús/partida).\n🛡️ Escut — Protegeix del pròxim atac.\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix on és el rival.\n🚧 Barricada (2/dia) — Bloqueja un camí. El rival pot forçar pagant +1🪙 (peatge d'un sol ús: després cau).\n🪤 Trampa (2/dia) — Col·loca trampa en un moble. Si el rival mira, perd 1🪙 (mínim 0).\n🔧 Robar tornavís — Roba 1 tornavís al rival.\n💡 Pista — Envia un missatge o farol."
+      },
+      "r8": {
+        "title": "🎁 Bonus i eines",
+        "text": "Quan observes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap (×2) — netejar mobles bruts.\n🔨 Martell (×5) — trencar mobles fràgils.\n🔧 Tornavís (×5 extra, tothom comença amb 1).\n🔦 Llanterna (×1) — zones fosques.\n⚠️ POOL COMPARTIT: Qui la troba se la queda! El rival es queda sense!"
+      },
+      "r9": {
+        "title": "💡 Llum i llanterna",
+        "text": "🏠 Interiors: Pots apagar el llum (0.2🪙) perquè ningú vegi els mobles.\n🌿 Exteriors: Usa 🔦 Llanterna (0.2🪙) per revelar mobles ocults."
+      },
+      "r10": {
+        "title": "⚡ Mobles interactius",
+        "text": "🧹 Netejar (bruts) — 0.3🪙, cal Drap. Desbloqueja la posició \"dins\".\n💥 Trencar (fràgils) — 0.4🪙, cal Martell, notifica el rival! Bloqueja \"sobre\" + \"dins\".\n🔧 Arreglar (trencats) — 0.3🪙, cal Tornavís. Restaura posicions.\n⚠️ Quasi tots els mobles es poden trencar si tens martell!"
+      },
+      "r11": {
+        "title": "📈 Elo i Lligues",
+        "text": "Guanyar: +25 Elo · Perdre: -20 Elo.\n🥉 Bronze → 🥈 Silver → 🥇 Gold → 💎 Platinum → 👑 Diamond."
+      },
+      "r12": {
+        "title": "🐾 Mode Història",
+        "text": "Juga sol contra la CPU per aprendre el joc. Adopta una mascota virtual que evoluciona amb XP!\n🥚 Bebè → 🌱 Jove → ⭐ Adult → 🔥 Veterà → 👑 Llegendari\nSi l'XP arriba a 5000, la mascota mor (🪦) i cal reiniciar."
+      },
+      "r13": {
+        "title": "🤒 Salut de la mascota",
+        "text": "Al completar capítols hi ha un 25% de probabilitat d'un event de salut:\n🤒 Virus: +200 XP | 🤕 Caiguda: +150 XP | 🫠 Febre: +100 XP\nEls events pugen l'XP ràpidament! Usa consumibles per curar:\n🍖 Menjar: -100 XP | 💧 Aigua: -50 XP | 💉 Vacuna: -200 XP\nEls consumibles es desbloquegen després d'obtenir tots els accesoris."
+      },
+      "r14": {
+        "title": "💊 Regalar consumibles",
+        "text": "Pots regalar consumibles a les mascotes d'altres jugadors! Ves al seu perfil → si tens consumibles disponibles, apareixerà un botó per curar la seva mascota."
+      },
+      "r15": {
+        "title": "🏆 Vitrina pública",
+        "text": "Al perfil de cada jugador pots veure la seva col·lecció de mobles guanyats (vitrina). Els mobles no obtinguts apareixen en gris."
+      }
+    },
+    "mapTitle": "🗺️ Mapa d'habitacions",
+    "mapBody": "Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.",
+    "mapNone": "Sense connexions",
+    "rewardsTitle": "🏆 Catàleg de recompenses",
+    "rewardsBody": "Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:",
+    "rewardsTotal": "Total: {count} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus",
+    "rarity": {
+      "common": {
+        "label": "Comú",
+        "pct": "50%"
+      },
+      "uncommon": {
+        "label": "Poc comú",
+        "pct": "30%"
+      },
+      "rare": {
+        "label": "Rar",
+        "pct": "13%"
+      },
+      "epic": {
+        "label": "Èpic",
+        "pct": "5%"
+      },
+      "legendary": {
+        "label": "Llegendari",
+        "pct": "2%"
+      }
     }
   }
 }
