@@ -82,12 +82,13 @@ export async function sellRewardItem(playerRewardId: string): Promise<number> {
   return data as number;
 }
 
-/** Catàleg complet de mobles-premi disponibles al joc */
+/** Catàleg complet de mobles-premi disponibles al joc (traduït segons idioma actual) */
 export async function getRewardCatalog() {
   const { data, error } = await supabase
     .from("reward_items")
     .select("*")
     .order("rarity");
   if (error) throw error;
-  return data ?? [];
+  const { translateRows } = await import("@/i18n/translate-data");
+  return translateRows(data ?? [], "reward_item_name", "id", "name");
 }
