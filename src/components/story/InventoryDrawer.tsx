@@ -206,8 +206,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                     <div className="flex items-start gap-2 mb-2">
                       <span className="text-2xl">{r.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold">{r.name}</p>
-                        {r.description && <p className="text-[10px] text-muted-foreground">{r.description.split("{pet}").join(petName)}</p>}
+                        <p className="text-sm font-bold">{recipeNameT(r.id, r.name)}</p>
+                        {r.description && <p className="text-[10px] text-muted-foreground">{recipeDescT(r.id, r.description).split("{pet}").join(petName)}</p>}
                       </div>
                     </div>
                     <div className="text-[10px] text-muted-foreground mb-2 flex flex-wrap gap-1 items-center">
@@ -215,15 +215,16 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       {r.requires_items.map((id) => {
                         const it = inventory.find((i) => i.item_id === id);
                         const has = !!it;
+                        const nm = it ? itemNameT(it.item_id, it.item_name) : itemNameT(id, id);
                         return (
                           <span key={id} className={`px-1.5 py-0.5 rounded ${has ? "bg-accent/20 text-accent" : "bg-muted/50 text-destructive/80"}`}>
-                            {has ? `${it!.item_icon} ${it!.item_name}` : `❓ ${id}`}
+                            {has ? `${it!.item_icon} ${nm}` : `❓ ${nm}`}
                           </span>
                         );
                       })}
                     </div>
                     <Button size="sm" disabled={!canCombine || busy} onClick={() => handleCombine(r)} className="w-full h-8 text-xs">
-                      {canCombine ? t("inventory.combineTo", { icon: r.result_item_icon, name: r.result_item_name }) : t("inventory.missingIngredients")}
+                      {canCombine ? t("inventory.combineTo", { icon: r.result_item_icon, name: itemNameT(r.result_item_id, r.result_item_name) }) : t("inventory.missingIngredients")}
                     </Button>
                   </div>
                 );
