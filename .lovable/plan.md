@@ -6,13 +6,13 @@
 |---|-------|-------|-------|
 | 1 | Fix pestanyes "How to play" al Lobby | ✅ Fet | `onMouseDown stopPropagation` a l'overlay de HelpButton |
 | 2 | Story mode: motxilla tradueix objectes a EN | ✅ Fet | `story_item_name` + `fetchTranslations` a `InventoryDrawer.tsx`, 25 traduccions EN inserides |
-| 3 | Receptes i ítems Story: més freqüents i variats | 🔲 Pendent | Necessito confirmació de l'usuari (nous ítems, % drop, receptes, tema) |
+| 3 | Receptes i ítems Story: més freqüents i variats | ❌ Cancel·lat | Usuari no vol canvis de moment |
 | 4 | PvP: botó compartir + enllaç segur a partida | 🔲 Pendent | Ruta `/join/:gameId` + RPC `join_game_by_link` + botó compartir |
-| 5 | Mode Demo / Guest sense registre | 🔲 Pendent | Sandbox client-side 100%, requereix disseny |
+| 5 | Mode Demo / Guest sense registre | 🔲 Pendent | Pendent decisió arquitectònica (tutorial guiat vs sandbox PvP complet) |
 | 6 | Bug pistes EN (sobre/sota/dins/darrere) | ✅ Fet | `posLabel()` a `GamePage.tsx` + `t("game.pos.*")` a `ItemActions.tsx` |
 | 7 | PetEvolutionCard "Lv Lv" duplicat | ✅ Fet | Eliminat duplicat de label a `PetEvolutionCard.tsx` |
-| 8 | Traducció completa tabs HelpButton (Bàsic/Regles/Premis) | 🔲 Pendent | ~50 strings nous a `ca.json`/`en.json`, no fet per pressupost de temps |
-| 9 | Constants hardcoded: MATERIAL_LABELS, ENVIRONMENT_LABELS, SOCIAL_ITEMS, errors | 🔲 Pendent | A `supabase-helpers.ts`, cal moure a i18n JSON |
+| 8 | Traducció completa tabs HelpButton (Bàsic/Regles/Premis) | 🔲 Pendent | ~50 strings nous a `ca.json`/`en.json` |
+| 9 | Constants hardcoded: MATERIAL_LABELS, ENVIRONMENT_LABELS, SOCIAL_ITEMS, errors | ✅ Fet | Constants ja eren i18n keys; 9 errors `throw new Error(...)` ara via `tt()` (nou `lib/i18n-helpers.ts`) |
 | 10 | Posicions dins mobles no traduïdes | ✅ Fet | Corregit a `ItemActions.tsx` (línies 128, 136) |
 | 11 | `getObjects()` no tradueix | 🔲 Pendent | Només l'usen alguns punts; traduir a fase següent |
 
