@@ -154,7 +154,7 @@ export default function ProfilePage() {
         // Apply lightweight translation via translateRows for consistency.
         const { translateRows } = await import("@/i18n/translate-data");
         const tObjs = await translateRows((objs ?? []) as any[], "pvp_object_name", "id", "name");
-        const tItms = await translateRows((itms ?? []) as any[], "pvp_furniture_name", "id", "name");
+        const tItms = await translateRows((itms ?? []) as any[], "pvp_item_name", "id", "name");
         const tScen = await translateRows(scen as any[], "pvp_scenario_name", "id", "name");
 
         const objMap = new Map(tObjs.map((o: any) => [o.id, o] as [string, any]));
