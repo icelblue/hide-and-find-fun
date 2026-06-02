@@ -263,7 +263,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                     <p>{rivalInfo.scenario.icon} <strong>{rivalInfo.scenario.name}</strong></p>
                   )}
                   {rivalInfo.item && (
-                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {POS_LABELS[rivalInfo.position] ?? rivalInfo.position}</p>
+                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {t(`game.pos.${rivalInfo.position}`, rivalInfo.position)}</p>
                   )}
                 </div>
                 {rivalInfo.traits.length > 0 && (
