@@ -69,6 +69,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
       if (r.result_item_id && !seenItems.has(r.result_item_id)) { seenItems.add(r.result_item_id); entries.push({ entity_type: "story_item_name", entity_id: r.result_item_id }); }
       for (const reqId of r.requires_items) if (!seenItems.has(reqId)) { seenItems.add(reqId); entries.push({ entity_type: "story_item_name", entity_id: reqId }); }
     }
+    for (const e of jour?.endingsSeen ?? []) entries.push({ entity_type: "story_node_title", entity_id: e.id });
     const map = await fetchTranslations(lang, entries);
     setTx(map);
   };
