@@ -151,15 +151,21 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const rivalSD: any = rival.special_data;
       const isCustom = rivalSD?.is_custom === true;
 
-      const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
+      const [{ data: objRaw }, { data: itmRaw }, { data: rivalProf }] = await Promise.all([
         rival.hidden_object_id && !isCustom
-          ? supabase.from("objects").select("name, icon, material, size").eq("id", rival.hidden_object_id).single()
+          ? supabase.from("objects").select("id, name, icon, material, size").eq("id", rival.hidden_object_id).single()
           : { data: null },
         rival.hidden_item_id
-          ? supabase.from("items").select("name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
+          ? supabase.from("items").select("id, name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
           : { data: null },
         supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
       ]);
+      const [objArr, itmArr] = await Promise.all([
+        objRaw ? translateRows([objRaw as any], "pvp_object_name", "id", "name") : Promise.resolve([null]),
+        itmRaw ? translateRows([itmRaw as any], "pvp_item_name", "id", "name") : Promise.resolve([null]),
+      ]);
+      const obj = objArr[0] as any;
+      const itm = itmArr[0] as any;
       let scn = null;
       if (itm?.scenario_id) {
         scn = scenarios.find((s: any) => s.id === itm.scenario_id) ?? null;
@@ -180,10 +186,11 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         if (rivalSD.custom_trait2) traits.push(rivalSD.custom_trait2);
       } else if (rival.hidden_object_id) {
         const [{ data: traitData }, { data: specialData }] = await Promise.all([
-          supabase.from("object_traits").select("trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
+          supabase.from("object_traits").select("id, trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
           supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
         ]);
-        traits = (traitData ?? []).map((t: any) => t.trait_text);
+        const translatedTraits = await translateRows((traitData ?? []) as any[], "pvp_object_trait", "id", "trait_text");
+        traits = translatedTraits.map((t: any) => t.trait_text);
         specialType = specialData?.special_type ?? null;
       }
 
