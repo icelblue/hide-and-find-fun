@@ -311,7 +311,34 @@
     "accessoriesFooter": "Els accessoris són permanents i es veuen al perfil públic de {name}.",
     "noEndings": "Encara no has arribat a cap final.",
     "noEndingsHint": "Continua jugant per descobrir-los! ({n} totals)",
-    "endingsProgress": "Has descobert {seen} de {total} finals possibles."
+    "endingsProgress": "Has descobert {seen} de {total} finals possibles.",
+    "toastNotUsable": "Aquest objecte no es pot fer servir directament. Prova de combinar-lo!",
+    "toastUsed": "{icon} {pet} {verb} {item}!",
+    "toastNoIngredients": "No tens tots els ingredients!",
+    "toastCombined": "✨ Has creat {icon} {name}!",
+    "help": {
+      "whatTitle": "🎒 Què és la motxilla?",
+      "whatBody": "Aquí guardes els objectes que trobes durant la història. Pots <b>donar-los</b> a {name} per cuidar les seves necessitats, o <b>combinar-los</b> seguint receptes per crear-ne de més potents.",
+      "barsTitle": "📊 Barres = més plenes, millor",
+      "barsBody": "<b>Sacietat</b>, <b>Descans</b>, <b>Calma</b> i <b>Vincle</b>: com més plenes, més feliç està {name}. Els objectes amb números en verd milloren l'estat; els grocs el desgasten.",
+      "combineTitle": "🧪 Combinar",
+      "combineBody": "A la pestanya <b>Receptes</b>, si tens els ingredients d'una recepta es marca verda i pots prémer \"Combinar\". Les receptes es <b>descobreixen automàticament</b> quan acumules els ingredients a la motxilla.",
+      "needsTitle": "⏰ Necessitats canvien soles",
+      "needsBody": "Cada 12h sense jugar, la <b>Sacietat</b>, el <b>Descans</b> i el <b>Vincle</b> baixen una mica. Torna i dona-li el que necessita per mantenir-la feliç!",
+      "visitsTitle": "🐾 Visites i regals",
+      "visitsBody": "Des del perfil d'un altre jugador pots <b>enviar la teva mascota a jugar</b> amb la seva (cooldown 4h) o <b>regalar-li un objecte</b> de la teva motxilla."
+    }
+  },
+  "storyEffect": {
+    "eat": { "label": "{icon} Donar menjar", "verb": "menja" },
+    "devour": { "label": "{icon} Donar", "verb": "devora" },
+    "taste": { "label": "{icon} Donar", "verb": "tasta" },
+    "drink": { "label": "{icon} Donar de beure", "verb": "beu" },
+    "rest": { "label": "{icon} Acotxar", "verb": "es relaxa amb" },
+    "play": { "label": "{icon} Jugar", "verb": "juga amb" },
+    "calm": { "label": "{icon} Calmar", "verb": "pren" },
+    "gift": { "label": "{icon} Regalar", "verb": "rep" },
+    "music": { "label": "{icon} Calmar amb música", "verb": "escolta" }
   },
   "stats": {
     "bond": "Vincle",
