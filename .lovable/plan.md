@@ -1,27 +1,26 @@
-
 # Pla de millores (auditat, peça a peça)
 
-## 1. Bug: pestanyes "How to play" no clicables al Lobby
+## Estat de les tasques
 
-**Causa real (auditada)**: `HelpButton variant="menu"` està dins de `{menuOpen && (...)}` al dropdown de LobbyPage. Quan el modal s'obre i fas clic a una pestanya, el listener d'outside-click del menú detecta el clic fora del dropdown → `setMenuOpen(false)` → React desmunta `HelpButton` → el portal del modal també desapareix. Sembla que "les pestanyes no es seleccionen" però en realitat el modal s'està tancant.
+| # | Tasca | Estat | Notes |
+|---|-------|-------|-------|
+| 1 | Fix pestanyes "How to play" al Lobby | ✅ Fet | `onMouseDown stopPropagation` a l'overlay de HelpButton |
+| 2 | Story mode: motxilla tradueix objectes a EN | ✅ Fet | `story_item_name` + `fetchTranslations` a `InventoryDrawer.tsx`, 25 traduccions EN inserides |
+| 3 | Receptes i ítems Story: més freqüents i variats | 🔲 Pendent | Necessito confirmació de l'usuari (nous ítems, % drop, receptes, tema) |
+| 4 | PvP: botó compartir + enllaç segur a partida | 🔲 Pendent | Ruta `/join/:gameId` + RPC `join_game_by_link` + botó compartir |
+| 5 | Mode Demo / Guest sense registre | 🔲 Pendent | Sandbox client-side 100%, requereix disseny |
+| 6 | Bug pistes EN (sobre/sota/dins/darrere) | ✅ Fet | `posLabel()` a `GamePage.tsx` + `t("game.pos.*")` a `ItemActions.tsx` |
+| 7 | PetEvolutionCard "Lv Lv" duplicat | ✅ Fet | Eliminat duplicat de label a `PetEvolutionCard.tsx` |
+| 8 | Traducció completa tabs HelpButton (Bàsic/Regles/Premis) | 🔲 Pendent | ~50 strings nous a `ca.json`/`en.json`, no fet per pressupost de temps |
+| 9 | Constants hardcoded: MATERIAL_LABELS, ENVIRONMENT_LABELS, SOCIAL_ITEMS, errors | 🔲 Pendent | A `supabase-helpers.ts`, cal moure a i18n JSON |
+| 10 | Posicions dins mobles no traduïdes | ✅ Fet | Corregit a `ItemActions.tsx` (línies 128, 136) |
+| 11 | `getObjects()` no tradueix | 🔲 Pendent | Només l'usen alguns punts; traduir a fase següent |
 
-**Fix**:
-- Aixecar el `HelpButton` fora del bloc `{menuOpen && ...}`: muntar-lo sempre al Lobby, i exposar una API perquè el botó del menú l'obri.
-- Solució neta: convertir el modal de HelpButton en estat controlat opcional (`open`, `onOpenChange`), o exposar una ref `helpButtonRef.openHelp()`. Decisió: afegir prop opcional `controlled` amb `useImperativeHandle` + un wrapper invisible quan `variant="menu"` només renderitza l'item del menú però el modal viu al pare.
-- Implementació mínima: separar `HelpButton` en `<HelpMenuItem onClick={openHelp}/>` (dins el menú) + `<HelpModal open={open} onClose={…}/>` (sempre muntat a Lobby/GamePage).
+---
 
-## 2. Story Mode: motxilla no tradueix objectes a EN
+## 3. Receptes i ítems Story: més freqüents i variats [PENDENT]
 
-**Auditoria**: `InventoryDrawer.tsx` mostra items però `loadItems()`/render no passa pels noms per `translateRows`. Els items venen de `story_items` (entity `story_item_name`).
-
-**Fix**:
-- Afegir entity_type `story_item_name` (i `story_item_description` si cal) al sistema i18n.
-- Migració: inserir traduccions EN existents dels ítems story (via Lovable AI Gateway si calen massives, o manual per als ~20-40 ítems).
-- `InventoryDrawer` + qualsevol lloc on es mostri nom d'ítem story → passar per `translateRows` o `translateContent`.
-
-## 3. Receptes i ítems Story: més freqüents i variats
-
-**Estat actual** (per memòria pet-personality + story-mode): probabilitat baixa de drop, poca varietat percebuda.
+**Estat actual**: probabilitat baixa de drop, poca varietat percebuda.
 
 **Pla de balanç (sense trencar saves)**:
 - Auditar `story_nodes` choices que donen items: pujar pes de drop d'ítems comuns 1.5–2x.
@@ -30,7 +29,15 @@
 - Tot via migració de dades (UPDATE story_choices SET item_drop_weight, INSERT story_recipes). Sense canvis d'esquema.
 - Traduir els ítems/receptes nous a EN dins la mateixa migració.
 
-## 4. PvP: botó compartir + enllaç segur a partida
+**Decisions pendents de l'usuari**:
+- Quants ítems comuns nous? (suggereixo 8-10)
+- % d'augment de drop rate? (suggereixo +50% per comuns, +20% per rars)
+- Quantes receptes noves? (suggereixo 3-5 senzilles de 2 ingredients)
+- Tema preferent? (cuina, alquímia, natura, màgia…)
+
+---
+
+## 4. PvP: botó compartir + enllaç segur a partida [PENDENT]
 
 **Requisits del usuari**:
 - Botó "Compartir" a partida PvP → genera enllaç (WhatsApp, copia, etc.).
@@ -49,7 +56,9 @@
 - Seguretat: la RPC és `security definer` amb `set search_path = public`, valida amb `auth.uid()` (no client-side). RLS de `games` ja restringeix lectura; afegim política de UPDATE per `rival_user_id` només quan és NULL.
 - Edge cases: partida finished/expired → bloquejar join amb missatge clar.
 
-## 5. Mode Demo / Guest sense registre
+---
+
+## 5. Mode Demo / Guest sense registre [PENDENT]
 
 **Objectiu**: provar el joc abans de registrar-se.
 
@@ -61,28 +70,40 @@
 
 **Per què no anonymous auth**: la política del projecte ho prohibeix explícitament i obriria forat de seguretat (creació massiva de comptes). El mode demo client-side és més segur, no consumeix recursos i és immediat.
 
-## 6. Bug menor (screenshot): historial pistes en català
+---
 
-Confirmar a `GamePopups.tsx` o on es renderitza l'historial que els labels `sobre`/`sota`/etc. passen per `t()`. Probablement venen de constants posicionals no traduïdes.
+## 8. Traducció completa tabs HelpButton [PENDENT]
 
-## 7. Actualització de documentació
+**Àmbit**: Pests "Bàsic / Regles / Premis" dins del modal HelpButton (variant PvP).
 
-Al final, actualitzar:
-- `.lovable/memory/features/i18n.md`: afegir `story_item_name`, share-link, mode demo.
-- `.lovable/memory/features/game-mechanics-v2.md`: documentar share-link RPC.
-- Nou: `.lovable/memory/features/demo-mode.md` amb com afegir nous escenaris al sandbox.
-- `CHANGELOG.md`: entrada amb totes les millores.
+**Tasca**: ~50 strings nous a `ca.json`/`en.json`. No fet per pressupost de temps a torn anterior.
+
+---
+
+## 9. Constants hardcoded a supabase-helpers.ts [PENDENT]
+
+**Llista de constants**:
+- `MATERIAL_LABELS` — traduir a i18n keys
+- `ENVIRONMENT_LABELS` — traduir a i18n keys
+- `SOCIAL_ITEMS` — traduir a i18n keys
+- Errors hardcoded — traduir a i18n keys
+
+---
+
+## 11. getObjects() traducció [PENDENT]
+
+**Nota**: Només l'usen alguns punts aïllats del joc. Traducció planificada per a fase posterior.
 
 ---
 
 ## Ordre d'execució proposat (commits separats per seguretat)
 
-1. **Fix Lobby tabs** (frontend, 1 fitxer) — risc nul.
-2. **Bug pistes EN** (sobre/sota) — risc nul.
-3. **Story items i18n + motxilla** (migració dades + frontend) — risc baix.
-4. **Share-link PvP** (migració RPC + ruta nova + botó) — risc mitjà, requereix tests.
-5. **Mode demo** (ruta nova, sandbox aïllat) — risc nul (no toca BD).
-6. **Balanç receptes/ítems** (migració dades) — risc mitjà, reversible.
+1. **Traducció tabs HelpButton** (frontend, JSONs) — risc nul.
+2. **Constants hardcoded supabase-helpers** (frontend, refactor) — risc nul.
+3. **Share-link PvP** (migració RPC + ruta nova + botó) — risc mitjà, requereix tests.
+4. **Mode demo** (ruta nova, sandbox aïllat) — risc nul (no toca BD).
+5. **Balanç receptes/ítems** (migració dades) — risc mitjà, reversible. Necessita confirmació prèvia.
+6. **getObjects() traducció** (frontend) — risc nul.
 7. **Docs + memory updates**.
 
 ## Validacions abans de tancar
@@ -90,7 +111,3 @@ Al final, actualitzar:
 - Tests existents passen (`regressions.test.ts` ja cobreix REG-015 tabs HelpButton).
 - Linter Supabase net.
 - Manual QA: alternar CA/EN a Lobby, Story, PvP; provar enllaç PvP amb 2 usuaris i amb un no-rival; provar /demo sense login.
-
-## Confirmació necessària
-
-És un pla gran (6 àrees). Vols que executi **tot** en aquest torn, o prefereixes que comenci pels punts 1-3 (fix bugs + traducció) i en el següent torn fem 4-6 (share-link, demo, balanç)? Recomano dividir per mantenir cada canvi auditable.
