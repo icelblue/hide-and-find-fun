@@ -130,6 +130,33 @@ export default function AuthPage() {
           )}
         </header>
 
+        <button
+          type="button"
+          onClick={() => (window.location.href = "/demo")}
+          className="group relative w-full overflow-hidden rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/15 via-primary/10 to-secondary/15 p-4 text-left transition-all hover:border-primary/70 hover:from-primary/25 hover:via-primary/15 hover:to-secondary/25 hover:shadow-xl hover:shadow-primary/20 active:scale-[0.98] glow-primary"
+          aria-label={t("auth.demoCtaTitle")}
+        >
+          <span className="absolute -top-1.5 right-3 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-primary-foreground shadow-md">
+            {t("auth.demoCtaBadge")}
+          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-2xl shadow-inner transition-transform group-hover:scale-110">
+              🎮
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-foreground leading-tight">
+                {t("auth.demoCtaTitle")}
+              </div>
+              <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                {t("auth.demoCtaSubtitle")}
+              </div>
+            </div>
+            <div className="text-xl text-primary transition-transform group-hover:translate-x-1" aria-hidden="true">
+              →
+            </div>
+          </div>
+        </button>
+
         <div className="space-y-2">
           <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider text-center">{t("auth.howTitle")}</h2>
           <div className="flex gap-2" role="list">
