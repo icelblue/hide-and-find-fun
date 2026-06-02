@@ -1023,16 +1023,19 @@
     "scenario": {
       "title": "Tria un escenari",
       "body": "Cada escenari té llocs únics on amagar objectes.",
+      "bodyPick": "Toca un escenari per triar-lo. Cadascun té el seu tauler.",
       "kitchen": "Cuina",
       "library": "Biblioteca",
       "garage": "Garatge",
-      "picked": "✓ Has triat la Cuina"
+      "picked": "✓ Has triat la Cuina",
+      "pickedDynamic": "✓ Has triat: {name}"
     },
     "hide": {
       "title": "Amaga el teu objecte",
       "body": "Tries un objecte i un lloc. El rival no veu on és.",
       "object": "El teu objecte: La clau",
       "placed": "Amagada darrere de l'armari",
+      "placedAt": "Amagat al {place}",
       "tip": "💡 El rival haurà de deduir on és gastant tokens."
     },
     "search": {
@@ -1042,15 +1045,27 @@
       "empty": "Buit",
       "attempts": "Intents: {n}"
     },
+    "obj": {
+      "key": "La clau",
+      "scroll": "El pergamí",
+      "wrench": "La clau anglesa"
+    },
     "pos": {
       "fridge": "Nevera",
       "drawer": "Calaix",
       "cupboard": "Armari",
-      "oven": "Forn"
+      "oven": "Forn",
+      "shelf": "Prestatge",
+      "chest": "Bagul",
+      "globe": "Globus terraqüi",
+      "toolbox": "Caixa d'eines",
+      "rack": "Prestatgeria",
+      "car": "Cotxe"
     },
     "win": {
       "title": "Has guanyat!",
       "body": "Has trobat l'objecte en {n} intent(s). En el joc real, cada acció gasta tokens i la velocitat decideix la victòria.",
+      "bodyDynamic": "Has trobat {obj} al {place} en {n} intent(s). En el joc real, cada acció gasta tokens i la velocitat decideix la victòria.",
       "realFeatures": "Al joc real tindràs:",
       "feat1": "3 escenaris amb dotzenes de llocs",
       "feat2": "Pistes, ítems socials i trampes",

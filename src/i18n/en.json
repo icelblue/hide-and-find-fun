@@ -1023,16 +1023,19 @@
     "scenario": {
       "title": "Pick a scenario",
       "body": "Each scenario has unique spots to hide objects in.",
+      "bodyPick": "Tap a scenario to pick it. Each has its own board.",
       "kitchen": "Kitchen",
       "library": "Library",
       "garage": "Garage",
-      "picked": "✓ You picked the Kitchen"
+      "picked": "✓ You picked the Kitchen",
+      "pickedDynamic": "✓ You picked: {name}"
     },
     "hide": {
       "title": "Hide your object",
       "body": "Pick an object and a spot. Your rival can't see where it is.",
       "object": "Your object: The Key",
       "placed": "Hidden behind the cupboard",
+      "placedAt": "Hidden in the {place}",
       "tip": "💡 Your rival will have to deduce where it is by spending tokens."
     },
     "search": {
@@ -1042,15 +1045,27 @@
       "empty": "Empty",
       "attempts": "Attempts: {n}"
     },
+    "obj": {
+      "key": "The Key",
+      "scroll": "The Scroll",
+      "wrench": "The Wrench"
+    },
     "pos": {
       "fridge": "Fridge",
       "drawer": "Drawer",
       "cupboard": "Cupboard",
-      "oven": "Oven"
+      "oven": "Oven",
+      "shelf": "Shelf",
+      "chest": "Chest",
+      "globe": "Globe",
+      "toolbox": "Toolbox",
+      "rack": "Rack",
+      "car": "Car"
     },
     "win": {
       "title": "You won!",
       "body": "You found the object in {n} attempt(s). In the real game, every action spends tokens and speed decides the win.",
+      "bodyDynamic": "You found {obj} in the {place} in {n} attempt(s). In the real game, every action spends tokens and speed decides the win.",
       "realFeatures": "In the real game you'll get:",
       "feat1": "3 scenarios with dozens of spots",
       "feat2": "Hints, social items and traps",
