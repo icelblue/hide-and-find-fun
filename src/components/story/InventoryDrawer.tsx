@@ -77,8 +77,9 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
     setBusy(true);
     try {
       const result = await useItemOnPet(userId, item);
-      if (!result) { toast.error("Aquest objecte no es pot fer servir directament. Prova de combinar-lo!"); return; }
-      toast.success(`${item.item_icon} ${petName} ${result.effect.verb} ${item.item_name}!`);
+      if (!result) { toast.error(t("inventory.toastNotUsable")); return; }
+      const verb = t(`storyEffect.${result.effect.kind}.verb`, result.effect.verb);
+      toast.success(t("inventory.toastUsed", { icon: item.item_icon, pet: petName, verb, item: itemNameT(item.item_id, item.item_name) }));
       await load();
       onChange?.();
     } catch (e: any) { toast.error(e.message); }
@@ -89,8 +90,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
     setBusy(true);
     try {
       const result = await combineRecipe(userId, recipe, inventory);
-      if (!result) { toast.error("No tens tots els ingredients!"); return; }
-      toast.success(`✨ Has creat ${result.item_icon} ${result.item_name}!`);
+      if (!result) { toast.error(t("inventory.toastNoIngredients")); return; }
+      toast.success(t("inventory.toastCombined", { icon: result.item_icon, name: itemNameT(result.item_id, result.item_name) }));
       await load();
       onChange?.();
     } catch (e: any) { toast.error(e.message); }
