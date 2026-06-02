@@ -998,6 +998,18 @@
       }
     }
   },
+  "join": {
+    "joining": "Entrant a la partida...",
+    "errors": {
+      "notAuth": "Cal iniciar sessió per entrar a la partida.",
+      "notFound": "Aquesta partida no existeix o ja s'ha esborrat.",
+      "story": "No es pot entrar a una partida del Mode Història.",
+      "notJoinable": "Aquesta partida ja ha començat o ha acabat.",
+      "private": "Aquesta partida és un repte privat per a un altre jugador.",
+      "full": "La partida ja està plena.",
+      "generic": "No s'ha pogut entrar a la partida. Torna-ho a provar."
+    }
+  },
   "demo": {
     "exit": "Surt",
     "signupCta": "Registra't gratis",
