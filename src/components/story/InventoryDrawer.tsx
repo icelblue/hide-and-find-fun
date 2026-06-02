@@ -182,7 +182,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                           onClick={() => handleUseItem(item)}
                           className="h-8 text-[11px] px-2 shrink-0"
                         >
-                          {effect.label}
+                          {t(`storyEffect.${effect.kind}.label`, effect.label).replace("{icon}", item.item_icon)}
                         </Button>
                       )}
                     </div>
