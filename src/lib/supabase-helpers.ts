@@ -141,13 +141,13 @@ export function generateGameCode(): string {
 export async function getScenarios() {
   const { data, error } = await supabase.from("scenarios").select("*").order("display_order");
   if (error) throw error;
-  return data;
+  return translateRows(data ?? [], "pvp_scenario_name", "id", "name");
 }
 
 export async function getItemsByScenario(scenarioId: string) {
   const { data, error } = await supabase.from("items").select("*").eq("scenario_id", scenarioId).order("display_order");
   if (error) throw error;
-  return data;
+  return translateRows(data ?? [], "pvp_item_name", "id", "name");
 }
 
 export async function getItemInteractions(itemIds: string[]) {
@@ -158,7 +158,7 @@ export async function getItemInteractions(itemIds: string[]) {
     .in("item_id", itemIds)
     .order("display_order");
   if (error) throw error;
-  return data ?? [];
+  return translateRows(data ?? [], "pvp_item_interaction_label", "id", "action_label");
 }
 
 // ============================================
