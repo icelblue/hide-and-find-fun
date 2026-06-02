@@ -66,6 +66,7 @@ const App = () => (
               <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
               <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
               <Route path="/claim" element={<ClaimReminderPage />} />
+              <Route path="/demo" element={<DemoPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
