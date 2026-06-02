@@ -22,6 +22,7 @@ interface Props {
 
 export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Props) {
   const t = useT();
+  const { lang } = useLanguage();
   const [open, setOpen] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -29,6 +30,12 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [accessories, setAccessories] = useState<any[]>([]);
   const [journal, setJournal] = useState<JournalSummary | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tx, setTx] = useState<Map<string, string>>(new Map());
+
+  // Helpers de traducció (fallback al text CA original)
+  const itemNameT = (id: string, fallback: string) => translateContent(tx, "story_item_name", id, fallback);
+  const recipeNameT = (id: string, fallback: string) => translateContent(tx, "story_recipe_name", id, fallback);
+  const recipeDescT = (id: string, fallback: string) => translateContent(tx, "story_recipe_description", id, fallback);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
   const grouped = Object.values(
@@ -49,9 +56,22 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
     setKnownIds(known);
     setAccessories(accs);
     setJournal(jour);
+
+    // Carrega traduccions per a tot el contingut dinàmic
+    const entries: Array<{ entity_type: any; entity_id: string }> = [];
+    const seenItems = new Set<string>();
+    for (const it of inv) if (!seenItems.has(it.item_id)) { seenItems.add(it.item_id); entries.push({ entity_type: "story_item_name", entity_id: it.item_id }); }
+    for (const r of recs) {
+      entries.push({ entity_type: "story_recipe_name", entity_id: r.id });
+      entries.push({ entity_type: "story_recipe_description", entity_id: r.id });
+      if (r.result_item_id && !seenItems.has(r.result_item_id)) { seenItems.add(r.result_item_id); entries.push({ entity_type: "story_item_name", entity_id: r.result_item_id }); }
+      for (const reqId of r.requires_items) if (!seenItems.has(reqId)) { seenItems.add(reqId); entries.push({ entity_type: "story_item_name", entity_id: reqId }); }
+    }
+    const map = await fetchTranslations(lang, entries);
+    setTx(map);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount, lang]);
 
   const handleUseItem = async (item: InventoryItem) => {
     setBusy(true);
