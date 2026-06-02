@@ -395,6 +395,7 @@
     "forgot": "Forgot your password?",
     "noAccount": "No account? Sign up",
     "hasAccount": "Already have an account? Sign in",
+    "tryDemo": "🎮 Try the game without signing up →",
     "welcome": "Welcome!",
     "accountCreated": "Account created! Check your email to confirm.",
     "footerTag": "🧠 It’s not about luck. It’s about logic.",
@@ -991,6 +992,51 @@
         "label": "Legendary",
         "pct": "2%"
       }
+    }
+  },
+  "demo": {
+    "exit": "Exit",
+    "signupCta": "Sign up free",
+    "intro": {
+      "title": "Welcome to Deduction Duel!",
+      "body": "A hide-and-seek game against a rival. You hide an object, they hide another, and you both search at the same time. First to find wins."
+    },
+    "scenario": {
+      "title": "Pick a scenario",
+      "body": "Each scenario has unique spots to hide objects in.",
+      "kitchen": "Kitchen",
+      "library": "Library",
+      "garage": "Garage",
+      "picked": "✓ You picked the Kitchen"
+    },
+    "hide": {
+      "title": "Hide your object",
+      "body": "Pick an object and a spot. Your rival can't see where it is.",
+      "object": "Your object: The Key",
+      "placed": "Hidden behind the cupboard",
+      "tip": "💡 Your rival will have to deduce where it is by spending tokens."
+    },
+    "search": {
+      "title": "Find the rival's object",
+      "body": "Tap a spot to investigate it. Every attempt counts!",
+      "found": "Found!",
+      "empty": "Empty",
+      "attempts": "Attempts: {n}"
+    },
+    "pos": {
+      "fridge": "Fridge",
+      "drawer": "Drawer",
+      "cupboard": "Cupboard",
+      "oven": "Oven"
+    },
+    "win": {
+      "title": "You won!",
+      "body": "You found the object in {n} attempt(s). In the real game, every action spends tokens and speed decides the win.",
+      "realFeatures": "In the real game you'll get:",
+      "feat1": "3 scenarios with dozens of spots",
+      "feat2": "Hints, social items and traps",
+      "feat3": "Elo system and competitive leagues",
+      "feat4": "Story mode with pet and evolution"
     }
   }
 }
