@@ -90,42 +90,43 @@ export function getMaterialBlockReason(material: string, environment: string): s
   return reason;
 }
 
-/** Display name for materials in UI */
+/** Display name for materials in UI — values are i18n KEYS (use t(MATERIAL_LABELS[m])) */
 export const MATERIAL_LABELS: Record<string, string> = {
-  generic: "Genèric",
-  paper: "Paper",
-  glass: "Vidre",
-  metal: "Metall",
-  plastic: "Plàstic",
-  fabric: "Roba",
-  wood: "Fusta",
-  cardboard: "Cartró",
-  rubber: "Goma",
-  ceramic: "Ceràmica",
-  electronic: "Electrònic",
-  leather: "Cuir",
-  stone: "Pedra",
-  food: "Menjar",
+  generic: "game.materials.generic",
+  paper: "game.materials.paper",
+  glass: "game.materials.glass",
+  metal: "game.materials.metal",
+  plastic: "game.materials.plastic",
+  fabric: "game.materials.fabric",
+  wood: "game.materials.wood",
+  cardboard: "game.materials.cardboard",
+  rubber: "game.materials.rubber",
+  ceramic: "game.materials.ceramic",
+  electronic: "game.materials.electronic",
+  leather: "game.materials.leather",
+  stone: "game.materials.stone",
+  food: "game.materials.food",
 };
 
-/** Contextual label when an object is placed in a specific environment */
+/** Contextual label key when an object is placed in a specific environment (use t(ENVIRONMENT_LABELS[e])) */
 export const ENVIRONMENT_LABELS: Record<string, string> = {
-  wet: "💧 Mullat",
-  hot: "🔥 Cremat",
-  dirty: "🗑️ Brut",
-  frozen: "🧊 Congelat",
-  outdoor: "🌿 A l'exterior",
-  sorrenc: "🏖️ Ple de sorra",
-  submergit: "🌊 Submergit",
-  químic: "☣️ Contaminat",
-  ventós: "💨 Ventós",
+  wet: "game.environments.wet",
+  hot: "game.environments.hot",
+  dirty: "game.environments.dirty",
+  frozen: "game.environments.frozen",
+  outdoor: "game.environments.outdoor",
+  sorrenc: "game.environments.sorrenc",
+  submergit: "game.environments.submergit",
+  químic: "game.environments.químic",
+  ventós: "game.environments.ventós",
 };
 
-/** Get contextual label for an object hidden in a specific item environment */
+/** Get contextual i18n key for an object hidden in a specific item environment */
 export function getEnvironmentLabel(environment: string): string | null {
   if (environment === "generic") return null;
   return ENVIRONMENT_LABELS[environment] ?? null;
 }
+
 
 // ============================================
 // DATA FETCHING
@@ -833,16 +834,20 @@ export async function performMove(
 
 export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap" | "robar_tornavis" | "barricada" | "trampa";
 
+/**
+ * Social item catalog. `nameKey`/`descKey` are i18n keys — translate at render with t().
+ * `name`/`desc` keep CA fallback for places that build toast messages without i18n context.
+ */
 export const SOCIAL_ITEMS = [
-  { type: "banana" as const, icon: "🍌", name: "Plàtan", desc: "Bloqueja 1 posició del rival" },
-  { type: "smoke_bomb" as const, icon: "💣", name: "Bomba de fum", desc: "Mou el teu objecte a altra posició" },
-  { type: "shield" as const, icon: "🛡️", name: "Escut", desc: "Bloqueja el pròxim atac (1 ús)" },
-  { type: "swap" as const, icon: "🔄", name: "Intercanvi", desc: "Intercanvia la teva sala amb la del rival" },
-  { type: "espia" as const, icon: "🕵️", name: "Espia", desc: "Descobreix on és el rival ara" },
-  { type: "barricada" as const, icon: "🚧", name: "Barricada", desc: "Bloqueja un camí al rival. Pot forçar pagant +1🪙 (peatge únic) — 2/dia", multiUse: true },
-  { type: "trampa" as const, icon: "🪤", name: "Trampa", desc: "Col·loca trampa en un moble (-1🪙 al rival si mira) — 2/dia", multiUse: true },
-  { type: "message" as const, icon: "💡", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
-  { type: "robar_tornavis" as const, icon: "🔧", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
+  { type: "banana" as const, icon: "🍌", nameKey: "game.socialItems.banana.name", descKey: "game.socialItems.banana.desc", name: "Plàtan", desc: "Bloqueja 1 posició del rival" },
+  { type: "smoke_bomb" as const, icon: "💣", nameKey: "game.socialItems.smoke_bomb.name", descKey: "game.socialItems.smoke_bomb.desc", name: "Bomba de fum", desc: "Mou el teu objecte a altra posició" },
+  { type: "shield" as const, icon: "🛡️", nameKey: "game.socialItems.shield.name", descKey: "game.socialItems.shield.desc", name: "Escut", desc: "Bloqueja el pròxim atac (1 ús)" },
+  { type: "swap" as const, icon: "🔄", nameKey: "game.socialItems.swap.name", descKey: "game.socialItems.swap.desc", name: "Intercanvi", desc: "Intercanvia la teva sala amb la del rival" },
+  { type: "espia" as const, icon: "🕵️", nameKey: "game.socialItems.espia.name", descKey: "game.socialItems.espia.desc", name: "Espia", desc: "Descobreix on és el rival ara" },
+  { type: "barricada" as const, icon: "🚧", nameKey: "game.socialItems.barricada.name", descKey: "game.socialItems.barricada.desc", name: "Barricada", desc: "Bloqueja un camí al rival. Pot forçar pagant +1🪙 (peatge únic) — 2/dia", multiUse: true },
+  { type: "trampa" as const, icon: "🪤", nameKey: "game.socialItems.trampa.name", descKey: "game.socialItems.trampa.desc", name: "Trampa", desc: "Col·loca trampa en un moble (-1🪙 al rival si mira) — 2/dia", multiUse: true },
+  { type: "message" as const, icon: "💡", nameKey: "game.socialItems.message.name", descKey: "game.socialItems.message.desc", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
+  { type: "robar_tornavis" as const, icon: "🔧", nameKey: "game.socialItems.robar_tornavis.name", descKey: "game.socialItems.robar_tornavis.desc", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
 ] as const;
 
 export async function sendSocialItem(

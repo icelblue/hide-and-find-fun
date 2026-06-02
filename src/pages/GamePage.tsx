@@ -371,7 +371,8 @@ export default function GamePage() {
         const markPromises: Promise<any>[] = [];
         for (const blocked of blockedItems) {
           const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
-          toast.success(t("game.toasts.shieldBlocked", { item: `${info?.icon} ${info?.name}` }), { duration: 5000 });
+          const itemName = info ? `${info.icon} ${t(info.nameKey)}` : "";
+          toast.success(t("game.toasts.shieldBlocked", { item: itemName }), { duration: 5000 });
           markPromises.push(markSocialItemProcessed(blocked.id));
         }
 
@@ -908,7 +909,7 @@ export default function GamePage() {
         const tr = (result as any).trampaResult;
         toast.success(t("game.toasts.trampaResult", { item: tr.item_name }), { duration: 5000 });
       }
-      else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info?.name ?? "" }));
+      else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info ? t(info.nameKey) : "" }));
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
@@ -1145,7 +1146,7 @@ export default function GamePage() {
                               className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
                             >
                               {CUSTOM_OBJECT_MATERIALS.map(m => (
-                                <option key={m} value={m}>{MATERIAL_LABELS[m] ?? m}</option>
+                                <option key={m} value={m}>{t(MATERIAL_LABELS[m] ?? m, m)}</option>
                               ))}
                             </select>
                           </div>

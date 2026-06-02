@@ -601,6 +601,206 @@
       "materialBlocked": "🚫 {obj}: {reason}",
       "actionAlreadyDone": "You've already done this action!",
       "notEnoughTokens": "Not enough tokens!"
+    },
+    "materials": {
+      "generic": "Generic",
+      "paper": "Paper",
+      "glass": "Glass",
+      "metal": "Metal",
+      "plastic": "Plastic",
+      "fabric": "Fabric",
+      "wood": "Wood",
+      "cardboard": "Cardboard",
+      "rubber": "Rubber",
+      "ceramic": "Ceramic",
+      "electronic": "Electronic",
+      "leather": "Leather",
+      "stone": "Stone",
+      "food": "Food"
+    },
+    "environments": {
+      "wet": "💧 Wet",
+      "hot": "🔥 Burnt",
+      "dirty": "🗑️ Dirty",
+      "frozen": "🧊 Frozen",
+      "outdoor": "🌿 Outdoors",
+      "sorrenc": "🏖️ Sandy",
+      "submergit": "🌊 Submerged",
+      "químic": "☣️ Contaminated",
+      "ventós": "💨 Windy"
+    },
+    "socialItems": {
+      "banana": {
+        "name": "Banana",
+        "desc": "Blocks 1 rival position"
+      },
+      "smoke_bomb": {
+        "name": "Smoke Bomb",
+        "desc": "Moves your object to another position"
+      },
+      "shield": {
+        "name": "Shield",
+        "desc": "Blocks the next attack (1 use)"
+      },
+      "swap": {
+        "name": "Swap",
+        "desc": "Swaps your room with the rival's"
+      },
+      "espia": {
+        "name": "Spy",
+        "desc": "Reveals where the rival is now"
+      },
+      "barricada": {
+        "name": "Barricade",
+        "desc": "Blocks a path. Rival can force it paying +1🪙 (single toll) — 2/day"
+      },
+      "trampa": {
+        "name": "Trap",
+        "desc": "Place a trap on furniture (-1🪙 to rival if they look) — 2/day"
+      },
+      "message": {
+        "name": "Custom hint",
+        "desc": "Send a hint or bluff to the rival"
+      },
+      "robar_tornavis": {
+        "name": "Steal screwdriver",
+        "desc": "Steals 1 screwdriver from the rival"
+      }
+    }
+  },
+  "helpPvp": {
+    "menuLabel": "❓ How to play",
+    "ariaLabel": "How to play",
+    "title": "📖 How to play",
+    "tabs": {
+      "basics": "🌟 Basics",
+      "rules": "📖 Rules",
+      "rewards": "🏆 Rewards"
+    },
+    "firstTime": {
+      "title": "👋 First time?",
+      "body": "Read these 7 steps and you'll be playing your first game in 3 minutes!"
+    },
+    "tipText": "💡 Tip: in your game, tap 🤫 My hiding spot if you forget where you hid your object.",
+    "basics": {
+      "s1": {
+        "title": "🎯 What's the game?",
+        "text": "You and the rival each hide ONE object in a scenario (a house with rooms). Whoever finds the other's object first wins!"
+      },
+      "s2": {
+        "title": "🫣 Hide your object",
+        "text": "Pick: ROOM → OBJECT (a key, a ring...) → FURNITURE to hide it on → POSITION (on top, under, inside). You can leave a funny message the rival will see when they find it."
+      },
+      "s3": {
+        "title": "🚶 Move around the house",
+        "text": "Each room has doors to 1-2 adjacent rooms. Moving costs few tokens. You need to reach the room where you think the rival hid their object."
+      },
+      "s4": {
+        "title": "👀 Look at the furniture",
+        "text": "In a room, observe the furniture (0.3🪙 per look). You get 5-level hints:\n❄️ Frozen → Very far\n🥶 Cold → Neighboring room\n🌬️ Cool → Right room, unrelated furniture\n🌡️ Warm → Right room, similar furniture\n🔥 Hot → Correct furniture! Try another position\n\n⚠️ 20% of hints can mislead you (±1 level). The victory is never fake."
+      },
+      "s5": {
+        "title": "🏆 Winning",
+        "text": "If you guess the exact FURNITURE + POSITION, you find the object and win! You take a reward (a piece of furniture for your collection)."
+      },
+      "s6": {
+        "title": "🪙 Tokens",
+        "text": "You have 5 tokens per day (they reset on their own). Each action costs a bit. If you run out, wait until tomorrow or invite friends for bonus tokens."
+      },
+      "s7": {
+        "title": "⚡ Tricks and social items",
+        "text": "You can mess with the rival! Bananas 🍌 (block a position), smoke bombs 💣 (move your object!), traps 🪤, shields 🛡️... See the 'Full rules' tab for all of them."
+      }
+    },
+    "rules": {
+      "r1": {
+        "title": "🎯 Goal",
+        "text": "Hide an object and look for the rival's. First to find it wins!"
+      },
+      "r2": {
+        "title": "🫣 Hiding phase",
+        "text": "Choose scenario → object → furniture → position (on/under/inside). You can write an optional message shown when the rival finds your object. Both hide at the same time."
+      },
+      "r3": {
+        "title": "🪙 Tokens",
+        "text": "You have 5 tokens per day, they reset automatically. You can spend bonus tokens earned from rewards. Manage them well!"
+      },
+      "r4": {
+        "title": "🚶 Move · {cost}🪙",
+        "text": "Change room. Each room has doors connecting to others."
+      },
+      "r5": {
+        "title": "👀 Look · {cost}🪙",
+        "text": "Look at one furniture position (⬆️ on, ⬇️ under, 📦 inside, 🔙 behind). If you guess furniture + position, you find the object and win! Otherwise, you get a 5-level hint:\n❄️ Frozen → Very far room.\n🥶 Cold → Room near the correct one.\n🌬️ Cool → Right room, but unrelated furniture.\n🌡️ Warm → Right room, similar furniture category.\n🔥 Hot → Correct furniture! Try another position.\n\n⚠️ Heads up: there's a 20% chance the hint misleads you with an adjacent level. Victory is never fake.\n\nℹ️ Some furniture doesn't allow all positions (a rug has no 'inside', a tree has no 'behind'…). Disabled buttons tell you."
+      },
+      "r6": {
+        "title": "💡 Hints about the rival's object",
+        "text": "On turn 2 you get the 1st hint about the object you're looking for. On turn 5, the 2nd. They help you deduce WHAT you're looking for."
+      },
+      "r7": {
+        "title": "⚡ Social items",
+        "text": "Once a day you can use an item (except barricade and trap which can be used 2x/day):\n🍌 Banana — Blocks 1 rival position.\n💣 Smoke bomb — Moves YOUR object to another room (1 use/game).\n🛡️ Shield — Protects from the next attack.\n🔄 Swap — Swaps your location with the rival's.\n🕵️ Spy — Reveals where the rival is.\n🚧 Barricade (2/day) — Blocks a path. Rival can force it paying +1🪙 (single-use toll: then it falls).\n🪤 Trap (2/day) — Place a trap on furniture. If rival looks, they lose 1🪙 (min 0).\n🔧 Steal screwdriver — Steals 1 screwdriver from the rival.\n💡 Hint — Send a message or bluff."
+      },
+      "r8": {
+        "title": "🎁 Bonus and tools",
+        "text": "When you look, there's a 20% chance to find extra tokens or tools:\n🧹 Rag (×2) — clean dirty furniture.\n🔨 Hammer (×5) — break fragile furniture.\n🔧 Screwdriver (×5 extra, everyone starts with 1).\n🔦 Flashlight (×1) — dark zones.\n⚠️ SHARED POOL: Whoever finds it keeps it! The rival gets none!"
+      },
+      "r9": {
+        "title": "💡 Light and flashlight",
+        "text": "🏠 Indoors: You can turn off the light (0.2🪙) so nobody sees the furniture.\n🌿 Outdoors: Use 🔦 Flashlight (0.2🪙) to reveal hidden furniture."
+      },
+      "r10": {
+        "title": "⚡ Interactive furniture",
+        "text": "🧹 Clean (dirty) — 0.3🪙, needs Rag. Unlocks the \"inside\" position.\n💥 Break (fragile) — 0.4🪙, needs Hammer, notifies the rival! Blocks \"on\" + \"inside\".\n🔧 Repair (broken) — 0.3🪙, needs Screwdriver. Restores positions.\n⚠️ Almost all furniture can be broken if you have a hammer!"
+      },
+      "r11": {
+        "title": "📈 Elo and Leagues",
+        "text": "Win: +25 Elo · Lose: -20 Elo.\n🥉 Bronze → 🥈 Silver → 🥇 Gold → 💎 Platinum → 👑 Diamond."
+      },
+      "r12": {
+        "title": "🐾 Story Mode",
+        "text": "Play solo against the CPU to learn the game. Adopt a virtual pet that evolves with XP!\n🥚 Baby → 🌱 Young → ⭐ Adult → 🔥 Veteran → 👑 Legendary\nIf XP reaches 5000, the pet dies (🪦) and must restart."
+      },
+      "r13": {
+        "title": "🤒 Pet health",
+        "text": "Completing chapters has a 25% chance of a health event:\n🤒 Virus: +200 XP | 🤕 Fall: +150 XP | 🫠 Fever: +100 XP\nEvents raise XP quickly! Use consumables to heal:\n🍖 Food: -100 XP | 💧 Water: -50 XP | 💉 Vaccine: -200 XP\nConsumables unlock after collecting all accessories."
+      },
+      "r14": {
+        "title": "💊 Gift consumables",
+        "text": "You can gift consumables to other players' pets! Visit their profile → if you have consumables, a button appears to heal their pet."
+      },
+      "r15": {
+        "title": "🏆 Public showcase",
+        "text": "On each player's profile you can see their collection of won furniture (showcase). Items not yet won appear in grey."
+      }
+    },
+    "mapTitle": "🗺️ Room map",
+    "mapBody": "Each room is connected to others by doors. You can move between adjacent rooms.",
+    "mapNone": "No connections",
+    "rewardsTitle": "🏆 Rewards catalog",
+    "rewardsBody": "Win games to obtain decorative furniture. Each victory gives a random piece with probability:",
+    "rewardsTotal": "Total: {count} pieces · Place them in scenarios or sell them for bonus tokens",
+    "rarity": {
+      "common": {
+        "label": "Common",
+        "pct": "50%"
+      },
+      "uncommon": {
+        "label": "Uncommon",
+        "pct": "30%"
+      },
+      "rare": {
+        "label": "Rare",
+        "pct": "13%"
+      },
+      "epic": {
+        "label": "Epic",
+        "pct": "5%"
+      },
+      "legendary": {
+        "label": "Legendary",
+        "pct": "2%"
+      }
     }
   }
 }

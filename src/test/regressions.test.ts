@@ -248,11 +248,10 @@ describe("REG-010: Trampa funcional", () => {
 // Bug: No es mostrava context visual (mullat/brut/cremat) al amagar objectes.
 // ============================================
 describe("REG-011: Etiquetes contextuals", () => {
-  it("getEnvironmentLabel retorna label per wet", () => {
-    expect(getEnvironmentLabel("wet")).toContain("Mullat");
-    expect(getEnvironmentLabel("hot")).toContain("Cremat");
-    expect(getEnvironmentLabel("hot")).toContain("Cremat");
-    expect(getEnvironmentLabel("dirty")).toContain("Brut");
+  it("getEnvironmentLabel retorna i18n key per wet i null per generic", () => {
+    expect(getEnvironmentLabel("wet")).toBe("game.environments.wet");
+    expect(getEnvironmentLabel("hot")).toBe("game.environments.hot");
+    expect(getEnvironmentLabel("dirty")).toBe("game.environments.dirty");
     expect(getEnvironmentLabel("generic")).toBeNull();
   });
 });
