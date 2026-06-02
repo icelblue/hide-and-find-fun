@@ -11,7 +11,7 @@ import {
 import { getMyAccessories } from "@/lib/story-helpers";
 import { getJournal, type JournalSummary } from "@/lib/story-progression";
 import { toast } from "sonner";
-import { useT } from "@/i18n/LanguageProvider";
+import { useT, useLanguage, fetchTranslations, translateContent } from "@/i18n/LanguageProvider";
 
 interface Props {
   userId: string;
@@ -22,6 +22,7 @@ interface Props {
 
 export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Props) {
   const t = useT();
+  const { lang } = useLanguage();
   const [open, setOpen] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -29,6 +30,12 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [accessories, setAccessories] = useState<any[]>([]);
   const [journal, setJournal] = useState<JournalSummary | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tx, setTx] = useState<Map<string, string>>(new Map());
+
+  // Helpers de traducció (fallback al text CA original)
+  const itemNameT = (id: string, fallback: string) => translateContent(tx, "story_item_name", id, fallback);
+  const recipeNameT = (id: string, fallback: string) => translateContent(tx, "story_recipe_name", id, fallback);
+  const recipeDescT = (id: string, fallback: string) => translateContent(tx, "story_recipe_description", id, fallback);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
   const grouped = Object.values(
@@ -49,9 +56,22 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
     setKnownIds(known);
     setAccessories(accs);
     setJournal(jour);
+
+    // Carrega traduccions per a tot el contingut dinàmic
+    const entries: Array<{ entity_type: any; entity_id: string }> = [];
+    const seenItems = new Set<string>();
+    for (const it of inv) if (!seenItems.has(it.item_id)) { seenItems.add(it.item_id); entries.push({ entity_type: "story_item_name", entity_id: it.item_id }); }
+    for (const r of recs) {
+      entries.push({ entity_type: "story_recipe_name", entity_id: r.id });
+      entries.push({ entity_type: "story_recipe_description", entity_id: r.id });
+      if (r.result_item_id && !seenItems.has(r.result_item_id)) { seenItems.add(r.result_item_id); entries.push({ entity_type: "story_item_name", entity_id: r.result_item_id }); }
+      for (const reqId of r.requires_items) if (!seenItems.has(reqId)) { seenItems.add(reqId); entries.push({ entity_type: "story_item_name", entity_id: reqId }); }
+    }
+    const map = await fetchTranslations(lang, entries);
+    setTx(map);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount, lang]);
 
   const handleUseItem = async (item: InventoryItem) => {
     setBusy(true);
@@ -136,7 +156,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{item.item_name}</p>
+                        <p className="text-sm font-bold truncate">{itemNameT(item.item_id, item.item_name)}</p>
                         {effect ? (
                           <p className="text-[10px] text-muted-foreground">
                             {Object.entries(effect.delta).map(([k, v]) => {
@@ -186,8 +206,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                     <div className="flex items-start gap-2 mb-2">
                       <span className="text-2xl">{r.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold">{r.name}</p>
-                        {r.description && <p className="text-[10px] text-muted-foreground">{r.description.split("{pet}").join(petName)}</p>}
+                        <p className="text-sm font-bold">{recipeNameT(r.id, r.name)}</p>
+                        {r.description && <p className="text-[10px] text-muted-foreground">{recipeDescT(r.id, r.description).split("{pet}").join(petName)}</p>}
                       </div>
                     </div>
                     <div className="text-[10px] text-muted-foreground mb-2 flex flex-wrap gap-1 items-center">
@@ -195,15 +215,16 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                       {r.requires_items.map((id) => {
                         const it = inventory.find((i) => i.item_id === id);
                         const has = !!it;
+                        const nm = it ? itemNameT(it.item_id, it.item_name) : itemNameT(id, id);
                         return (
                           <span key={id} className={`px-1.5 py-0.5 rounded ${has ? "bg-accent/20 text-accent" : "bg-muted/50 text-destructive/80"}`}>
-                            {has ? `${it!.item_icon} ${it!.item_name}` : `❓ ${id}`}
+                            {has ? `${it!.item_icon} ${nm}` : `❓ ${nm}`}
                           </span>
                         );
                       })}
                     </div>
                     <Button size="sm" disabled={!canCombine || busy} onClick={() => handleCombine(r)} className="w-full h-8 text-xs">
-                      {canCombine ? t("inventory.combineTo", { icon: r.result_item_icon, name: r.result_item_name }) : t("inventory.missingIngredients")}
+                      {canCombine ? t("inventory.combineTo", { icon: r.result_item_icon, name: itemNameT(r.result_item_id, r.result_item_name) }) : t("inventory.missingIngredients")}
                     </Button>
                   </div>
                 );

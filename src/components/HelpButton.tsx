@@ -66,6 +66,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const modal = open ? createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/30 backdrop-blur-sm"
+      onMouseDown={(e) => e.stopPropagation()}
       onClick={() => setOpen(false)}
       style={{
         touchAction: "none",
