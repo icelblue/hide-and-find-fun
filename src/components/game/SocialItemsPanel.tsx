@@ -84,14 +84,14 @@ export default function SocialItemsPanel({
                 disabled={isDisabled}
                 className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isDisabled ? "opacity-30" : ""}`}>
                 <span className="text-3xl block mb-1.5">{item.icon}</span>
-                <span className="text-[11px] font-semibold block leading-tight">{item.name}</span>
+                <span className="text-[11px] font-semibold block leading-tight">{t(item.nameKey)}</span>
                 {isMultiUse && (
                   <span className="text-[9px] text-muted-foreground block mt-0.5">
                     {multiRemaining}/2
                   </span>
                 )}
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border text-[10px] text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 max-w-[200px] text-wrap text-center">
-                  {isBombUsed ? t("game.social.alreadyUsed") : item.desc}
+                  {isBombUsed ? t("game.social.alreadyUsed") : t(item.descKey)}
                 </span>
               </button>
             );
