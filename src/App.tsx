@@ -44,7 +44,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    const redirect = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+    const safe = redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/";
+    return <Navigate to={safe} replace />;
+  }
   return <>{children}</>;
 }
 
