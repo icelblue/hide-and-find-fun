@@ -909,7 +909,7 @@ export default function GamePage() {
         const tr = (result as any).trampaResult;
         toast.success(t("game.toasts.trampaResult", { item: tr.item_name }), { duration: 5000 });
       }
-      else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info?.name ?? "" }));
+      else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info ? t(info.nameKey) : "" }));
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
