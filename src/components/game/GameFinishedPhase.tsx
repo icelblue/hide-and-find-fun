@@ -263,7 +263,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                 <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
                 {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
                   <p className="text-[10px] text-muted-foreground mb-2">
-                    {t("game.results.material")} <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
+                    {t("game.results.material")} <span className="font-medium text-foreground/70">{t(MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material, rivalInfo.obj.material)}</span>
                     {rivalInfo.obj.size && <span> · {t("game.results.size")} {rivalInfo.obj.size}</span>}
                   </p>
                 )}
