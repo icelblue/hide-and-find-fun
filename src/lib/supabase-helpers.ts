@@ -171,8 +171,16 @@ export const TAG_ACTIONS = {
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
 } as const;
 
-// Outdoor scenarios: start dark (need illumination)
-export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó"];
+// Outdoor scenarios: start dark (need illumination).
+// 🔒 Backwards-compatible CA name list (now deprecated — prefer scenarios.is_outdoor flag from BD).
+export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó", "Garden", "Balcony"];
+
+/** Returns true if a scenario object is outdoor (dark by default). Uses BD flag with name fallback. */
+export function isScenarioOutdoor(scenario: { name?: string; is_outdoor?: boolean | null } | null | undefined): boolean {
+  if (!scenario) return false;
+  if (scenario.is_outdoor === true) return true;
+  return scenario.name ? OUTDOOR_SCENARIOS.includes(scenario.name) : false;
+}
 
 /**
  * Deterministic hash from gameId to decide which items are dirty per game.
