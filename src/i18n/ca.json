@@ -101,13 +101,155 @@
     "logout": "Tanca sessió"
   },
   "profile": {
+    "tabs": {
+      "overview": "Resum",
+      "games": "Partides",
+      "collection": "Col·lecció",
+      "social": "Social",
+      "settings": "Ajustos"
+    },
     "title": "El meu perfil",
     "displayName": "Nom",
     "stats": "Estadístiques",
     "level": "Nivell",
     "elo": "Puntuació",
     "languagePreference": "Idioma del joc",
-    "languageHint": "Tria l'idioma de la interfície i la narrativa"
+    "languageHint": "Tria l'idioma per a la interfície i la narrativa",
+    "loading": "Carregant perfil...",
+    "leagueSuffix": "Lliga",
+    "editNameAria": "Editar nom",
+    "editName": {
+      "title": "✏️ Canvia el teu nom",
+      "hint": "Així et veuran els altres jugadors. Entre 2 i 20 caràcters.",
+      "placeholder": "El teu àlies",
+      "save": "Desar",
+      "saving": "Desant…",
+      "cancel": "Cancel·lar",
+      "minError": "El nom ha de tenir almenys 2 caràcters",
+      "maxError": "Màxim 20 caràcters",
+      "invalidChars": "Caràcters no vàlids",
+      "savedToast": "Nom actualitzat ✨",
+      "saveError": "No s'ha pogut desar: "
+    },
+    "placeReward": {
+      "where": "On vols col·locar-lo?",
+      "cancel": "Cancel·lar",
+      "placedToast": "col·locat!"
+    },
+    "sellReward": {
+      "confirm": "Vendre",
+      "willReceive": "Rebràs",
+      "bonusTokens": "tokens bonus",
+      "bonusNote": "(s'afegiran al pròxim reset diari)",
+      "cancel": "Cancel·lar",
+      "sell": "Vendre",
+      "soldToast": "tokens bonus! 🪙"
+    },
+    "statsLabels": {
+      "played": "Partides",
+      "won": "Victòries",
+      "winRate": "Win rate",
+      "streak": "Ratxa"
+    },
+    "pet": {
+      "maxLevel": "Nivell màxim!",
+      "xpToNext": "XP per pujar a Lv",
+      "dead": "· Mort 🪦",
+      "sick": "· Malalt 🤒",
+      "healthy": "· Saludable ✅"
+    },
+    "topRival": {
+      "label": "Rival favorit",
+      "games": "partides"
+    },
+    "eloCard": {
+      "label": "Elo Rating",
+      "toNext": "per",
+      "maxRank": "Rang màxim!",
+      "bonus": "bonus"
+    },
+    "activeGames": {
+      "title": "🎮 Partides actives",
+      "statusWaiting": "⏳ Esperant",
+      "statusHiding": "🫣 Amagant",
+      "statusPlaying": "🔍 Jugant",
+      "posSobre": "⬆️ Sobre",
+      "posSota": "⬇️ Sota",
+      "posDins": "📦 Dins",
+      "notHidden": "Encara no has amagat cap objecte",
+      "tokens": "tokens",
+      "vs": "vs"
+    },
+    "trophies": {
+      "title": "🏆 Trofeus",
+      "confirmDelete": "Segur que vols eliminar aquest trofeu?",
+      "deletedToast": "Trofeu eliminat",
+      "deleteTitle": "Eliminar trofeu"
+    },
+    "vitrina": {
+      "title": "🏆 Vitrina",
+      "tip": "Mobles guanyats en partides. Els grisos encara no els tens!"
+    },
+    "inventory": {
+      "title": "🎒 Inventari",
+      "tip": "📍 Col·loca mobles en escenaris per ampliar el joc · 🪙 Ven-los per tokens bonus",
+      "empty": "Cap objecte.",
+      "emptyHint": "Guanya partides per obtenir mobles!"
+    },
+    "wall": {
+      "title": "💬 El teu mur",
+      "subtitle": "missatges de 22h",
+      "empty": "Cap missatge recent"
+    },
+    "referrals": {
+      "title": "🎁 Convida amics",
+      "tip": "Comparteix el teu codi. Tots dos guanyeu tokens i ítems especials!",
+      "yourCode": "El teu codi",
+      "copyLink": "🔗 Copiar enllaç",
+      "whatsapp": "💬 WhatsApp",
+      "copiedCode": "Codi copiat!",
+      "copiedLink": "Enllaç copiat!",
+      "copyError": "No s'ha pogut copiar",
+      "shareMsg": "🕵️ Vine a jugar a Deduction Duel amb mi! Registra't amb el meu codi i guanya 5 tokens de benvinguda:",
+      "perFriend": "Per cada amic registrat",
+      "firstGame": "Si juga 1a partida",
+      "fivePlus": "Si juga 5+ partides",
+      "threeActive": "3 amics actius",
+      "fiveActive": "5 amics actius",
+      "rewardRare": "+1 ítem rar 🔵",
+      "rewardEpic": "+1 ítem èpic 🟣",
+      "rewardLegendary": "+1 llegendari 🟡",
+      "activeFriends": "Amics actius:",
+      "forEpic": "per èpic",
+      "forLegendary": "per llegendari",
+      "statusActive": "🔵 actiu",
+      "statusFirstGame": "🎮 1a partida",
+      "statusRegistered": "✋ registrat",
+      "more": "més"
+    },
+    "signOut": "🚪 Tancar sessió",
+    "danger": {
+      "title": "⚠️ Zona perillosa",
+      "tip": "Acció irreversible. Totes les teves dades s'esborraran permanentment.",
+      "deleteBtn": "🗑️ Eliminar el meu compte",
+      "willDelete": "S'esborrarà definitivament:",
+      "item1": "Perfil, lliga, Elo i estadístiques",
+      "item2": "Mascota, accessoris i inventari",
+      "item3": "Recompenses i mobles col·locats",
+      "item4": "Progrés del mode història",
+      "item5": "Referrals i partides en curs",
+      "anonNote": "Les partides finalitzades es mantindran",
+      "anonNoteBold": "anonimitzades",
+      "anonNoteEnd": "per preservar l'històric dels rivals.",
+      "confirmLabel": "Escriu",
+      "confirmEnd": "per confirmar:",
+      "noName": "(sense nom)",
+      "cancel": "Cancel·lar",
+      "confirmDelete": "Eliminar definitivament",
+      "deleting": "Eliminant...",
+      "deletedToast": "Compte eliminat. Adéu! 👋",
+      "deleteError": "No s'ha pogut eliminar:"
+    }
   },
   "story": {
     "title": "Mode història",

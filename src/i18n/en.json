@@ -101,13 +101,155 @@
     "logout": "Sign out"
   },
   "profile": {
+    "tabs": {
+      "overview": "Overview",
+      "games": "Games",
+      "collection": "Collection",
+      "social": "Social",
+      "settings": "Settings"
+    },
     "title": "My profile",
     "displayName": "Name",
     "stats": "Stats",
     "level": "Level",
     "elo": "Rating",
     "languagePreference": "Game language",
-    "languageHint": "Choose the language for the interface and narrative"
+    "languageHint": "Choose the language for the interface and narrative",
+    "loading": "Loading profile...",
+    "leagueSuffix": "League",
+    "editNameAria": "Edit name",
+    "editName": {
+      "title": "✏️ Change your name",
+      "hint": "This is how other players will see you. Between 2 and 20 characters.",
+      "placeholder": "Your alias",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "minError": "Name must be at least 2 characters",
+      "maxError": "Max 20 characters",
+      "invalidChars": "Invalid characters",
+      "savedToast": "Name updated ✨",
+      "saveError": "Could not save: "
+    },
+    "placeReward": {
+      "where": "Where do you want to place it?",
+      "cancel": "Cancel",
+      "placedToast": "placed!"
+    },
+    "sellReward": {
+      "confirm": "Sell",
+      "willReceive": "You'll receive",
+      "bonusTokens": "bonus tokens",
+      "bonusNote": "(added on the next daily reset)",
+      "cancel": "Cancel",
+      "sell": "Sell",
+      "soldToast": "bonus tokens! 🪙"
+    },
+    "statsLabels": {
+      "played": "Games",
+      "won": "Wins",
+      "winRate": "Win rate",
+      "streak": "Streak"
+    },
+    "pet": {
+      "maxLevel": "Max level!",
+      "xpToNext": "XP to reach Lv",
+      "dead": "· Dead 🪦",
+      "sick": "· Sick 🤒",
+      "healthy": "· Healthy ✅"
+    },
+    "topRival": {
+      "label": "Favorite rival",
+      "games": "games"
+    },
+    "eloCard": {
+      "label": "Elo Rating",
+      "toNext": "to",
+      "maxRank": "Top rank!",
+      "bonus": "bonus"
+    },
+    "activeGames": {
+      "title": "🎮 Active games",
+      "statusWaiting": "⏳ Waiting",
+      "statusHiding": "🫣 Hiding",
+      "statusPlaying": "🔍 Playing",
+      "posSobre": "⬆️ On top",
+      "posSota": "⬇️ Under",
+      "posDins": "📦 Inside",
+      "notHidden": "You haven't hidden an object yet",
+      "tokens": "tokens",
+      "vs": "vs"
+    },
+    "trophies": {
+      "title": "🏆 Trophies",
+      "confirmDelete": "Are you sure you want to remove this trophy?",
+      "deletedToast": "Trophy removed",
+      "deleteTitle": "Remove trophy"
+    },
+    "vitrina": {
+      "title": "🏆 Display case",
+      "tip": "Furniture won in matches. Greyed-out ones you don't have yet!"
+    },
+    "inventory": {
+      "title": "🎒 Inventory",
+      "tip": "📍 Place furniture in scenarios to expand the game · 🪙 Sell them for bonus tokens",
+      "empty": "No items.",
+      "emptyHint": "Win matches to get furniture!"
+    },
+    "wall": {
+      "title": "💬 Your wall",
+      "subtitle": "22h messages",
+      "empty": "No recent messages"
+    },
+    "referrals": {
+      "title": "🎁 Invite friends",
+      "tip": "Share your code. You both earn tokens and special items!",
+      "yourCode": "Your code",
+      "copyLink": "🔗 Copy link",
+      "whatsapp": "💬 WhatsApp",
+      "copiedCode": "Code copied!",
+      "copiedLink": "Link copied!",
+      "copyError": "Could not copy",
+      "shareMsg": "🕵️ Come play Deduction Duel with me! Sign up with my code and get 5 welcome tokens:",
+      "perFriend": "Per registered friend",
+      "firstGame": "If they play 1st game",
+      "fivePlus": "If they play 5+ games",
+      "threeActive": "3 active friends",
+      "fiveActive": "5 active friends",
+      "rewardRare": "+1 rare item 🔵",
+      "rewardEpic": "+1 epic item 🟣",
+      "rewardLegendary": "+1 legendary 🟡",
+      "activeFriends": "Active friends:",
+      "forEpic": "to epic",
+      "forLegendary": "to legendary",
+      "statusActive": "🔵 active",
+      "statusFirstGame": "🎮 1st game",
+      "statusRegistered": "✋ registered",
+      "more": "more"
+    },
+    "signOut": "🚪 Sign out",
+    "danger": {
+      "title": "⚠️ Danger zone",
+      "tip": "Irreversible action. All your data will be permanently deleted.",
+      "deleteBtn": "🗑️ Delete my account",
+      "willDelete": "Will be permanently deleted:",
+      "item1": "Profile, league, Elo and stats",
+      "item2": "Pet, accessories and inventory",
+      "item3": "Rewards and placed furniture",
+      "item4": "Story mode progress",
+      "item5": "Referrals and ongoing games",
+      "anonNote": "Finished matches will be kept",
+      "anonNoteBold": "anonymized",
+      "anonNoteEnd": "to preserve rivals' history.",
+      "confirmLabel": "Type",
+      "confirmEnd": "to confirm:",
+      "noName": "(no name)",
+      "cancel": "Cancel",
+      "confirmDelete": "Delete permanently",
+      "deleting": "Deleting...",
+      "deletedToast": "Account deleted. Bye! 👋",
+      "deleteError": "Could not delete:"
+    }
   },
   "story": {
     "title": "Story mode",
