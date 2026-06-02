@@ -309,6 +309,17 @@
     "accessoriesHint": "Es desbloquegen completant capítols i reptes especials.",
     "alwaysEquipped": "Equipat sempre",
     "accessoriesFooter": "Els accessoris són permanents i es veuen al perfil públic de {name}.",
+    "accessoryName": {
+      "Collar": "Collar",
+      "Llaç": "Llaç",
+      "Pilota": "Pilota",
+      "Os": "Os",
+      "Manta": "Manta",
+      "Joguina": "Joguina",
+      "Corona de petxines": "Corona de petxines",
+      "Ala blava": "Ala blava",
+      "Bandana valenta": "Bandana valenta"
+    },
     "noEndings": "Encara no has arribat a cap final.",
     "noEndingsHint": "Continua jugant per descobrir-los! ({n} totals)",
     "endingsProgress": "Has descobert {seen} de {total} finals possibles.",
