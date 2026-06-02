@@ -36,6 +36,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const itemNameT = (id: string, fallback: string) => translateContent(tx, "story_item_name", id, fallback);
   const recipeNameT = (id: string, fallback: string) => translateContent(tx, "story_recipe_name", id, fallback);
   const recipeDescT = (id: string, fallback: string) => translateContent(tx, "story_recipe_description", id, fallback);
+  const endingTitleT = (id: string, fallback: string) => translateContent(tx, "story_node_title", id, fallback);
+  const accessoryNameT = (name: string) => t(`inventory.accessoryName.${name}`, name);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
   const grouped = Object.values(
