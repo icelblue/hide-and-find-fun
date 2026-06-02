@@ -998,6 +998,18 @@
       }
     }
   },
+  "join": {
+    "joining": "Joining the game...",
+    "errors": {
+      "notAuth": "You must sign in to join the game.",
+      "notFound": "This game doesn't exist or has been deleted.",
+      "story": "You can't join a Story Mode game.",
+      "notJoinable": "This game has already started or ended.",
+      "private": "This game is a private challenge for another player.",
+      "full": "The game is already full.",
+      "generic": "Couldn't join the game. Try again."
+    }
+  },
   "demo": {
     "exit": "Exit",
     "signupCta": "Sign up free",
