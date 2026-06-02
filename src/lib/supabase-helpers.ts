@@ -29,6 +29,7 @@
 // ============================================================
 import { supabase } from "@/integrations/supabase/client";
 import { parseTools, type PlayerTools, type ToolType, type Position } from "@/lib/game-types";
+import { translateRows } from "@/i18n/translate-data";
 
 // Re-export for backwards compatibility
 export { parseTools, type ToolType } from "@/lib/game-types";
