@@ -241,6 +241,13 @@ export default function AuthPage() {
             >
               {isLogin ? t("auth.noAccount") : t("auth.hasAccount")}
             </button>
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/demo")}
+              className="mt-2 w-full text-center text-xs text-primary/80 hover:text-primary underline-offset-2 hover:underline transition-colors"
+            >
+              {t("auth.tryDemo")}
+            </button>
           </CardContent>
         </Card>
 
