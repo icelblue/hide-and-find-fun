@@ -105,26 +105,29 @@ export async function resetPetState(userId: string) {
 // 🎯 EFECTES D'OBJECTES — donar items a la mascota
 // ============================================
 
+export type EffectKind = "eat" | "devour" | "taste" | "drink" | "rest" | "play" | "calm" | "gift" | "music";
+
 export interface ItemEffect {
   delta: Partial<PetState>;
-  label: string;     // botó "Donar..."
-  verb: string;      // toast verb
+  kind: EffectKind;   // i18n key under storyEffect.<kind>
+  label: string;      // fallback CA label (botó)
+  verb: string;       // fallback CA verb (toast)
 }
 
 /** Mapping per item_id base. Si no hi és, fallback genèric per paraules clau al nom. */
 const ITEM_EFFECTS_BY_ID: Record<string, ItemEffect> = {
-  apple:    { delta: { hunger: -40, bond: 5 },   label: "🍎 Donar menjar", verb: "menja" },
-  bread:    { delta: { hunger: -50, bond: 5 },   label: "🍞 Donar pa",     verb: "menja" },
-  meat:     { delta: { hunger: -60 },             label: "🍖 Donar carn",   verb: "devora" },
-  fish:     { delta: { hunger: -50, bond: 5 },   label: "🐟 Donar peix",   verb: "menja" },
-  berries:  { delta: { hunger: -25, bond: 10 }, label: "🫐 Donar baies",  verb: "tasta" },
-  water:    { delta: { sleep: -15, hunger: -10 }, label: "💧 Donar aigua",  verb: "beu" },
-  blanket:  { delta: { sleep: -45, fear: -15 },  label: "🛏️ Acotxar",      verb: "es relaxa amb" },
-  toy:      { delta: { bond: 25, fear: -20 },    label: "🧸 Jugar",        verb: "juga amb" },
-  ball:     { delta: { bond: 20, fear: -15 },    label: "⚽ Jugar a pilota", verb: "juga amb" },
-  potion:   { delta: { fear: -50, bond: 10 },    label: "🧪 Calmar",       verb: "pren" },
-  flower:   { delta: { bond: 15, fear: -10 },    label: "🌸 Regalar flor",  verb: "olora" },
-  music:    { delta: { fear: -30, sleep: -10 },  label: "🎵 Calmar amb música", verb: "escolta" },
+  apple:    { delta: { hunger: -40, bond: 5 },   kind: "eat",    label: "🍎 Donar menjar", verb: "menja" },
+  bread:    { delta: { hunger: -50, bond: 5 },   kind: "eat",    label: "🍞 Donar pa",     verb: "menja" },
+  meat:     { delta: { hunger: -60 },             kind: "devour", label: "🍖 Donar carn",   verb: "devora" },
+  fish:     { delta: { hunger: -50, bond: 5 },   kind: "eat",    label: "🐟 Donar peix",   verb: "menja" },
+  berries:  { delta: { hunger: -25, bond: 10 }, kind: "taste",  label: "🫐 Donar baies",  verb: "tasta" },
+  water:    { delta: { sleep: -15, hunger: -10 }, kind: "drink",  label: "💧 Donar aigua",  verb: "beu" },
+  blanket:  { delta: { sleep: -45, fear: -15 },  kind: "rest",   label: "🛏️ Acotxar",      verb: "es relaxa amb" },
+  toy:      { delta: { bond: 25, fear: -20 },    kind: "play",   label: "🧸 Jugar",        verb: "juga amb" },
+  ball:     { delta: { bond: 20, fear: -15 },    kind: "play",   label: "⚽ Jugar a pilota", verb: "juga amb" },
+  potion:   { delta: { fear: -50, bond: 10 },    kind: "calm",   label: "🧪 Calmar",       verb: "pren" },
+  flower:   { delta: { bond: 15, fear: -10 },    kind: "gift",   label: "🌸 Regalar flor",  verb: "olora" },
+  music:    { delta: { fear: -30, sleep: -10 },  kind: "music",  label: "🎵 Calmar amb música", verb: "escolta" },
 };
 
 /** Inferred fallback by name keyword (català/castellà). */
@@ -133,17 +136,17 @@ function inferEffect(item: InventoryItem): ItemEffect | null {
   if (direct) return direct;
   const n = item.item_name.toLowerCase();
   if (/poma|fruita|menj|comid|pa\b|pan\b|carn|peix|pesc|baia|baya|llaminadu|caram|honey|mel|miel/.test(n))
-    return { delta: { hunger: -40, bond: 5 }, label: `${item.item_icon} Donar a menjar`, verb: "menja" };
+    return { delta: { hunger: -40, bond: 5 }, kind: "eat", label: `${item.item_icon} Donar a menjar`, verb: "menja" };
   if (/aigu|agua|beguda|bebid/.test(n))
-    return { delta: { sleep: -15, hunger: -10 }, label: `${item.item_icon} Donar de beure`, verb: "beu" };
+    return { delta: { sleep: -15, hunger: -10 }, kind: "drink", label: `${item.item_icon} Donar de beure`, verb: "beu" };
   if (/manta|coix|coj|llit|cama|dormir/.test(n))
-    return { delta: { sleep: -40, fear: -10 }, label: `${item.item_icon} Acotxar`, verb: "descansa amb" };
+    return { delta: { sleep: -40, fear: -10 }, kind: "rest", label: `${item.item_icon} Acotxar`, verb: "descansa amb" };
   if (/jogui|joc|peluix|pilota|pelota|toy|ball/.test(n))
-    return { delta: { bond: 20, fear: -15 }, label: `${item.item_icon} Jugar`, verb: "juga amb" };
+    return { delta: { bond: 20, fear: -15 }, kind: "play", label: `${item.item_icon} Jugar`, verb: "juga amb" };
   if (/poci|elixir|tonic|calm|cur|medic/.test(n))
-    return { delta: { fear: -40, bond: 5 }, label: `${item.item_icon} Calmar`, verb: "pren" };
+    return { delta: { fear: -40, bond: 5 }, kind: "calm", label: `${item.item_icon} Calmar`, verb: "pren" };
   if (/flor|flower|ram|regal/.test(n))
-    return { delta: { bond: 15 }, label: `${item.item_icon} Regalar`, verb: "rep" };
+    return { delta: { bond: 15 }, kind: "gift", label: `${item.item_icon} Regalar`, verb: "rep" };
   return null;
 }
 
