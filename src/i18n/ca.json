@@ -993,5 +993,50 @@
         "pct": "2%"
       }
     }
+  },
+  "demo": {
+    "exit": "Surt",
+    "signupCta": "Registra't gratis",
+    "intro": {
+      "title": "Benvingut a Deduction Duel!",
+      "body": "Un joc d'amagar i buscar contra un rival. Tu amagues un objecte, ell n'amaga un altre, i us busqueu simultàniament. Guanya qui troba primer."
+    },
+    "scenario": {
+      "title": "Tria un escenari",
+      "body": "Cada escenari té llocs únics on amagar objectes.",
+      "kitchen": "Cuina",
+      "library": "Biblioteca",
+      "garage": "Garatge",
+      "picked": "✓ Has triat la Cuina"
+    },
+    "hide": {
+      "title": "Amaga el teu objecte",
+      "body": "Tries un objecte i un lloc. El rival no veu on és.",
+      "object": "El teu objecte: La clau",
+      "placed": "Amagada darrere de l'armari",
+      "tip": "💡 El rival haurà de deduir on és gastant tokens."
+    },
+    "search": {
+      "title": "Busca l'objecte del rival",
+      "body": "Toca un lloc per investigar-lo. Cada intent compta!",
+      "found": "Trobat!",
+      "empty": "Buit",
+      "attempts": "Intents: {n}"
+    },
+    "pos": {
+      "fridge": "Nevera",
+      "drawer": "Calaix",
+      "cupboard": "Armari",
+      "oven": "Forn"
+    },
+    "win": {
+      "title": "Has guanyat!",
+      "body": "Has trobat l'objecte en {n} intent(s). En el joc real, cada acció gasta tokens i la velocitat decideix la victòria.",
+      "realFeatures": "Al joc real tindràs:",
+      "feat1": "3 escenaris amb dotzenes de llocs",
+      "feat2": "Pistes, ítems socials i trampes",
+      "feat3": "Sistema Elo i lligues competitives",
+      "feat4": "Mode Història amb mascota i evolució"
+    }
   }
 }
