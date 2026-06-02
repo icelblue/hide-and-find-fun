@@ -7,7 +7,7 @@
 | 1 | Fix pestanyes "How to play" al Lobby | ✅ Fet | `onMouseDown stopPropagation` a l'overlay de HelpButton |
 | 2 | Story mode: motxilla tradueix objectes a EN | ✅ Fet | `story_item_name` + `fetchTranslations` a `InventoryDrawer.tsx`, 25 traduccions EN inserides |
 | 3 | Receptes i ítems Story: més freqüents i variats | ❌ Cancel·lat | Usuari no vol canvis de moment |
-| 4 | PvP: botó compartir + enllaç segur a partida | 🔲 Pendent | Ruta `/join/:gameId` + RPC `join_game_by_link` + botó compartir |
+| 4 | PvP: botó compartir + enllaç segur a partida | ✅ Fet | RPC `join_game_by_link` (revoked anon), ruta `/join/:gameId`, botó 🔗 a `GamePage` (Web Share + clipboard + WhatsApp fallback), redirect post-login a `AuthRoute` |
 | 5 | Mode Demo / Guest sense registre | ✅ Fet | Opció A (tutorial guiat 5 pantalles) a `/demo`, sandbox client-side, sense Supabase. Botó "Prova sense registre" a `AuthPage` |
 | 6 | Bug pistes EN (sobre/sota/dins/darrere) | ✅ Fet | `posLabel()` a `GamePage.tsx` + `t("game.pos.*")` a `ItemActions.tsx` |
 | 7 | PetEvolutionCard "Lv Lv" duplicat | ✅ Fet | Eliminat duplicat de label a `PetEvolutionCard.tsx` |
