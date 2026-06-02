@@ -371,7 +371,8 @@ export default function GamePage() {
         const markPromises: Promise<any>[] = [];
         for (const blocked of blockedItems) {
           const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
-          toast.success(t("game.toasts.shieldBlocked", { item: `${info?.icon} ${info?.name}` }), { duration: 5000 });
+          const itemName = info ? `${info.icon} ${t(info.nameKey)}` : "";
+          toast.success(t("game.toasts.shieldBlocked", { item: itemName }), { duration: 5000 });
           markPromises.push(markSocialItemProcessed(blocked.id));
         }
 
