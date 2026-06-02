@@ -1145,7 +1145,7 @@ export default function GamePage() {
                               className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
                             >
                               {CUSTOM_OBJECT_MATERIALS.map(m => (
-                                <option key={m} value={m}>{MATERIAL_LABELS[m] ?? m}</option>
+                                <option key={m} value={m}>{t(MATERIAL_LABELS[m] ?? m, m)}</option>
                               ))}
                             </select>
                           </div>
