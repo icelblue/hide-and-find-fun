@@ -533,7 +533,11 @@
       "backLobby": "← Lobby",
       "chapter": "🐾 Capítol {n}",
       "rivalBtn": "👤 Rival",
-      "bonusAvailable": "Tens {n} bonus tokens disponibles"
+      "bonusAvailable": "Tens {n} bonus tokens disponibles",
+      "share": "Comparteix la partida",
+      "shareTitle": "Vine a jugar a Deduction Duel!",
+      "shareText": "T'he reptat a una partida (codi {code}). Entra aquí:",
+      "shareCopied": "Enllaç copiat al porta-retalls! 📋"
     },
     "waiting": {
       "shareCode": "Comparteix el codi:",
@@ -992,6 +996,18 @@
         "label": "Llegendari",
         "pct": "2%"
       }
+    }
+  },
+  "join": {
+    "joining": "Entrant a la partida...",
+    "errors": {
+      "notAuth": "Cal iniciar sessió per entrar a la partida.",
+      "notFound": "Aquesta partida no existeix o ja s'ha esborrat.",
+      "story": "No es pot entrar a una partida del Mode Història.",
+      "notJoinable": "Aquesta partida ja ha començat o ha acabat.",
+      "private": "Aquesta partida és un repte privat per a un altre jugador.",
+      "full": "La partida ja està plena.",
+      "generic": "No s'ha pogut entrar a la partida. Torna-ho a provar."
     }
   },
   "demo": {

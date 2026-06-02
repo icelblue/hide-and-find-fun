@@ -1031,6 +1031,29 @@ export default function GamePage() {
               )}
             </div>
           )}
+          {!isStory && game.status !== "finished" && (
+            <button
+              onClick={async () => {
+                const url = `${window.location.origin}/join/${game.id}`;
+                const title = t("game.header.shareTitle");
+                const text = t("game.header.shareText", { code: game.code });
+                if (navigator.share) {
+                  try { await navigator.share({ title, text, url }); return; } catch { /* user cancelled */ }
+                }
+                try {
+                  await navigator.clipboard.writeText(`${text} ${url}`);
+                  toast.success(t("game.header.shareCopied"));
+                } catch {
+                  window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, "_blank");
+                }
+              }}
+              className="text-[11px] bg-primary/15 text-primary px-2.5 py-1.5 rounded-full border border-primary/30 hover:bg-primary/25 transition-colors font-semibold"
+              title={t("game.header.share")}
+              aria-label={t("game.header.share")}
+            >
+              🔗
+            </button>
+          )}
           <HelpButton />
         </div>
       </div>

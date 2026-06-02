@@ -20,6 +20,7 @@ const PlayerProfilePage = lazy(() => import("./pages/PlayerProfilePage"));
 const StoryModePage = lazy(() => import("./pages/StoryModePage"));
 const ClaimReminderPage = lazy(() => import("./pages/ClaimReminderPage"));
 const DemoPage = lazy(() => import("./pages/DemoPage"));
+const JoinGamePage = lazy(() => import("./pages/JoinGamePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
@@ -44,7 +45,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    const redirect = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+    const safe = redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/";
+    return <Navigate to={safe} replace />;
+  }
   return <>{children}</>;
 }
 
@@ -67,6 +72,7 @@ const App = () => (
               <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
               <Route path="/claim" element={<ClaimReminderPage />} />
               <Route path="/demo" element={<DemoPage />} />
+              <Route path="/join/:gameId" element={<JoinGamePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

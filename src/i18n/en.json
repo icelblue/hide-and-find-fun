@@ -533,7 +533,11 @@
       "backLobby": "← Lobby",
       "chapter": "🐾 Chapter {n}",
       "rivalBtn": "👤 Rival",
-      "bonusAvailable": "You have {n} bonus tokens available"
+      "bonusAvailable": "You have {n} bonus tokens available",
+      "share": "Share the game",
+      "shareTitle": "Come play Deduction Duel!",
+      "shareText": "I've challenged you to a game (code {code}). Join here:",
+      "shareCopied": "Link copied to clipboard! 📋"
     },
     "waiting": {
       "shareCode": "Share the code:",
@@ -992,6 +996,18 @@
         "label": "Legendary",
         "pct": "2%"
       }
+    }
+  },
+  "join": {
+    "joining": "Joining the game...",
+    "errors": {
+      "notAuth": "You must sign in to join the game.",
+      "notFound": "This game doesn't exist or has been deleted.",
+      "story": "You can't join a Story Mode game.",
+      "notJoinable": "This game has already started or ended.",
+      "private": "This game is a private challenge for another player.",
+      "full": "The game is already full.",
+      "generic": "Couldn't join the game. Try again."
     }
   },
   "demo": {

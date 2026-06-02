@@ -1741,6 +1741,7 @@ export type Database = {
         Args: { _game_id: string; _user_id: string }
         Returns: boolean
       }
+      join_game_by_link: { Args: { _game_id: string }; Returns: Json }
       place_reward_item: {
         Args: { _player_reward_id: string; _scenario_id: string }
         Returns: undefined
