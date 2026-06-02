@@ -533,7 +533,11 @@
       "backLobby": "← Lobby",
       "chapter": "🐾 Chapter {n}",
       "rivalBtn": "👤 Rival",
-      "bonusAvailable": "You have {n} bonus tokens available"
+      "bonusAvailable": "You have {n} bonus tokens available",
+      "share": "Share the game",
+      "shareTitle": "Come play Deduction Duel!",
+      "shareText": "I've challenged you to a game (code {code}). Join here:",
+      "shareCopied": "Link copied to clipboard! 📋"
     },
     "waiting": {
       "shareCode": "Share the code:",
