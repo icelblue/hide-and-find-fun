@@ -533,7 +533,11 @@
       "backLobby": "← Lobby",
       "chapter": "🐾 Capítol {n}",
       "rivalBtn": "👤 Rival",
-      "bonusAvailable": "Tens {n} bonus tokens disponibles"
+      "bonusAvailable": "Tens {n} bonus tokens disponibles",
+      "share": "Comparteix la partida",
+      "shareTitle": "Vine a jugar a Deduction Duel!",
+      "shareText": "T'he reptat a una partida (codi {code}). Entra aquí:",
+      "shareCopied": "Enllaç copiat al porta-retalls! 📋"
     },
     "waiting": {
       "shareCode": "Comparteix el codi:",
