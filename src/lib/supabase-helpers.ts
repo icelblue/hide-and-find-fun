@@ -407,14 +407,12 @@ export async function getObjects() {
     .select("*, object_specials(id)")
     .order("display_order");
   if (error) throw error;
-  // Normalize: add boolean is_special flag, keep all original fields untouched.
-  // PostgREST may return the embedded relation as an array, a single object, or null
-  // depending on how it detects the relationship cardinality — handle all shapes.
-  return (data ?? []).map((o: any) => {
+  const normalized = (data ?? []).map((o: any) => {
     const os = o.object_specials;
     const isSpecial = Array.isArray(os) ? os.length > 0 : os != null;
     return { ...o, is_special: isSpecial };
   });
+  return translateRows(normalized, "pvp_object_name", "id", "name");
 }
 
 export async function getConnectedScenarios(scenarioId: string) {
