@@ -72,6 +72,7 @@ const App = () => (
               <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
               <Route path="/claim" element={<ClaimReminderPage />} />
               <Route path="/demo" element={<DemoPage />} />
+              <Route path="/join/:gameId" element={<JoinGamePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
