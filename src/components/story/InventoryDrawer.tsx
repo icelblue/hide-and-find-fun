@@ -299,7 +299,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                   {journal.endingsSeen.map((e) => (
                     <div key={e.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
                       <span className="text-2xl">🏁</span>
-                      <p className="text-sm font-medium">{e.title}</p>
+                      <p className="text-sm font-medium">{endingTitleT(e.id, e.title)}</p>
                     </div>
                   ))}
                 </>
