@@ -133,7 +133,7 @@ export default function ItemActions({
                     alreadyLooked ? "bg-muted/20 opacity-40 line-through" :
                     "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
                   }`}>
-                  {isBlocked ? blockLabel : isBananaBlocked ? "🍌" : `${pos.icon} ${pos.label}`}
+                  {isBlocked ? blockLabel : isBananaBlocked ? "🍌" : `${pos.icon} ${t(`game.pos.${pos.value}`, pos.label)}`}
                   <span className="block text-[9px] text-muted-foreground mt-0.5">
                     {isBlocked ? t("game.items.blocked") : isBananaBlocked ? t("game.items.blocked") : alreadyLooked ? t("game.items.seen") : `${TOKEN_COSTS.look}🪙`}
                   </span>
