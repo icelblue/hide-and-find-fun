@@ -1205,6 +1205,7 @@ export type Database = {
           display_order: number
           icon: string
           id: string
+          is_outdoor: boolean
           max_items: number
           name: string
         }
@@ -1213,6 +1214,7 @@ export type Database = {
           display_order?: number
           icon: string
           id?: string
+          is_outdoor?: boolean
           max_items?: number
           name: string
         }
@@ -1221,6 +1223,7 @@ export type Database = {
           display_order?: number
           icon?: string
           id?: string
+          is_outdoor?: boolean
           max_items?: number
           name?: string
         }

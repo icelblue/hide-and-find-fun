@@ -1,140 +1,114 @@
-# Mode Història v6 — "Vincles entre mascotes"
+# Pla complet — Traducció EN restant + ProfilePage a pestanyes
 
-Tot el que demanes són **7 peces** que encaixen entre elles. Abans de construir, vull tancar decisions per evitar marge d'error. Després ho faig **tot d'una tirada**, sense tocar PvP.
+## Diagnòstic (què vas veure i per què)
 
----
+Tens raó: **el sistema EN està a mig fer**. La traducció anterior (Mode Història) està al 100%, però **tot el PvP, el botó d'Ajuda principal, els ítems socials, els materials i molta part del Perfil estan hardcoded en català**. A més, **cap entitat de PvP** (escenaris, mobles, objectes, pistes, interaccions) té files a la taula `translations`.
 
-## 1) Barres de necessitats — INVERTIR la semàntica
+### Les 5 forats principals
+1. **Constants hardcoded en codi**: `POS_LABELS`, `getToolName()`, `MATERIAL_LABELS`, `ENVIRONMENT_LABELS`, `TAG_ACTIONS`, `SOCIAL_ITEMS`, raons de bloqueig de material.
+2. **`HelpButton.tsx` (PvP)** — 0 crides a `t()`. Tot el modal (Bàsic / Regles / Premis) en català.
+3. **Contingut BD del PvP** — `scenarios.name`, `items.name`, `objects.name`, `object_traits.trait_text`, `object_specials.prompt_text`/`find_prompt_text`, `item_interactions.action_label`. Cap té entrades a `translations`.
+4. **Historial de pistes i finished screen** — `GameFinishedPhase` importa `POS_LABELS` directament (no passa per `t()`).
+5. **ProfilePage** — gran part de strings encara en català + estructura monolítica amb scroll molt llarg.
 
-**Problema actual**: `hunger=100` = molt famolenc (barra plena = malament). És contraintuïtiu.
-
-**Decisió proposada**: Invertir-ho tot. Les barres es llegeixen com **"benestar"**:
-- 🍗 Sacietat (100 = ple, 0 = famolenc)
-- 😴 Descans (100 = descansat, 0 = esgotat)
-- 🛡️ Calma (100 = tranquil, 0 = aterrit)
-- ❤️ Vincle (100 = inseparable, 0 = fred)
-
-Decay invers (cada 6h: sacietat −15, descans −12, calma +5, vincle −3). Tots els efectes d'items i `state_delta` de la BD s'inverteixen un sol cop via migració.
-
----
-
-## 2) Més mons amb desbloqueig progressiu (ocult → visible)
-
-**Estat actual**: 4 mons (Casa, Carrer, Bosc, Castell). Carrer i Bosc fixos com a bloquejats.
-
-**Proposta**: 7 mons en 3 capes:
-
-| Capa | Mons | Estat |
-|------|------|-------|
-| **Visibles d'inici** | 🏠 Casa, 🌳 Carrer | Sempre |
-| **Ocults → es revelen** | 🌲 Bosc (revelat amb vincle ≥ 30), 🏖️ Platja (revelat amb nivell ≥ 4), 🏰 Castell (revelat amb 3+ receptes) | "???" fins desbloquejar pista |
-| **Secrets profunds** | 🌋 Volcà, 🌌 Somnis | Apareixen només quan compleixes condicions especials (ex: 5 mons visitats) |
-
-**Visual**: mons ocults mostren `???` amb pista críptica ("Algú parla d'un lloc on el sol crema..."). En desbloquejar, animació de revel·lació.
+### Riscos crítics detectats (NO trencar)
+- **`OUTDOOR_SCENARIOS = ["Jardí", "Balcó"]`** a `supabase-helpers.ts:174` compara `scenario.name` per decidir si cal llanterna. Si traduïm `scenarios.name` a la BD, aquesta lògica es trenca silenciosament → 🔴 cal migrar a un camp `is_outdoor` boolean o a `scenario.id`.
+- **`ToolType`** (`drap`/`tornavis`/`martell`/`llanterna`) són **claus JSONB** de `game_players.tools` → mai traduir, només etiquetes.
+- **`position_type` enum** (`sobre`/`sota`/`dins`/`darrere`) són valors de BD → mai traduir, només labels.
+- **`item_interactions.action_name`** és identificador lògic → només traduir `action_label`.
+- **`TAG_ACTIONS` keys** (`dirty`/`breakable`/`broken`) es matchegen contra `items.tags[]` → només traduir `label`.
 
 ---
 
-## 3) Recompenses més generoses + reparar reptes diaris trencats
+## Pla per fases (segur, incremental, testable)
 
-**Problema reportat**: Repte diari diu "perxina" però no apareix a la motxilla.
+Cada fase es pot tirar i verificar **independentment**. PvP segueix funcionant igual durant tot el procés.
 
-**Causa probable**: El `reward_value` d'aquell choice té un `item_id` que no es processa correctament o el toast diu el nom però no s'insereix.
+### Fase 0 — Pre-flight (sense codi)
+- Afegir claus i18n necessàries a `ca.json` + `en.json` per Fases 1-4 d'una tacada (`game.pos.*`, `game.tools.*`, `game.materials.*`, `game.env.*`, `game.tagActions.*`, `socialItems.*`, `help.*`, `profile.*`).
+- Crear migració que **afegeix `is_outdoor BOOLEAN`** a `scenarios` i el marca a `true` per Jardí/Balcó. Refactoritzar `supabase-helpers.ts` per usar aquest camp en comptes de `OUTDOOR_SCENARIOS`. **Aquesta és la única peça que toca lògica de joc** — desbloqueja poder traduir `scenarios.name` sense por.
+- Test: `bunx vitest run` ha de passar 171 tests + verificar manualment que la llanterna encara és necessària a Jardí.
 
-**Acció**:
-- Auditar `daily_challenge_log` i verificar que tot `reward_type='item'` insereix realment a `story_inventory`.
-- Millorar recompenses: cada 3 nodes completats → ítem extra aleatori; cada final de capítol → recepta descoberta + 1 item raro.
-- Tooltip a cada ítem de la motxilla: "Per què serveix" (ja existeix parcialment, ho ampliem).
+### Fase 1 — Constants UI hardcoded (frontend pur, risc 0)
+Substituir per `t()`:
+- `src/lib/game-types.ts` → eliminar Catalan de `POSITIONS[].label`, `POS_LABELS`, `getToolName()`. Convertir en helpers que reben `t` o esborrar i moure als consumidors.
+- `src/components/HelpButton.tsx` → reescriure `RULES`, `BASICS`, `DROP_RATES`, tab labels amb `useT()`.
+- `src/lib/supabase-helpers.ts` → `MATERIAL_LABELS`, `ENVIRONMENT_LABELS`, `TAG_ACTIONS.label`, `SOCIAL_ITEMS.name/desc`, `getMaterialBlockReason()`, totes les `toast.error()` i missatges throw.
+- `src/lib/custom-object.ts` → 2 missatges de validació.
+- `GamePage.tsx` → eliminar les 4 duplicacions de `getToolName()`, usar el helper `posLabel` ja existent també a `m.target_position` del historial.
+- `GameFinishedPhase.tsx` → afegir `useT()` i traduir `POS_LABELS` via `t("game.pos.{p}")`.
+- `ItemActions.tsx` → traduir labels de posició.
 
----
+Tot 100% frontend. Tests existents validen comportament.
 
-## 4) Reset de mascota en adoptar nova
+### Fase 2 — ProfilePage a pestanyes (UI pur)
+Reestructurar `ProfilePage.tsx` amb el component `Tabs` de shadcn. Proposta de 4 pestanyes (mobile-first, 390px):
 
-Quan la mascota mor i n'adoptes una nova:
-- `pet_state` → DEFAULT (50/50/50/50 amb nova semàntica)
-- `pet_skills` → buidat (skills són de cada mascota)
-- `story_inventory` → es manté (és teu, no de la mascota)
-- `story_recipe_book` → es manté (coneixement del jugador)
-- `player_pets.level/xp` → reset a 1/0
+| Pestanya | Conté |
+|---|---|
+| **🏠 Resum** | Header (nom + lliga), stats grid, Elo bar, mascota, rival favorit |
+| **🎮 Joc** | Partides actives, historial recent |
+| **🎒 Col·lecció** | Inventari, Vitrina, Trofeus |
+| **⚙️ Compte** | Mur, Convida amics, Idioma, Tancar sessió, Zona perillosa |
 
----
+Traduir totes les strings de Profile amb `t("profile.*")` com a part d'aquest pas.
 
-## 5) Allargar vida + Skills amb utilitat real
+Risc: 0 lògica. Només mou JSX dins de `<TabsContent>`. Conservar tots els `useEffect`, fetches i state al nivell pare.
 
-**Vida més llarga**: Decay actual és massa agressiu. Reduir a meitat (cada 12h enlloc de 6h). Mascota pot viure ~3 setmanes amb cures normals.
+### Fase 3 — Esquema de traduccions PvP (BD)
+Migració que estén `translations.entity_type` amb 6 nous valors:
+- `pvp_scenario_name`
+- `pvp_item_name`
+- `pvp_object_name`
+- `pvp_object_trait`
+- `pvp_object_special_prompt`
+- `pvp_item_interaction_label`
 
-**Skills útils** (5 skills actuals: 👃 Olfacte, 💪 Força, ✨ Empatia, 🔥 Coratge, 👑 Llegenda):
-- A `story_choices` ja hi ha `requires_skill`. Ampliarem **seeds** perquè cada capítol tingui 1-2 choices exclusius per skill, donant **rutes narratives diferents** segons el caràcter de la mascota.
-- Exemple: amb 👃 pots descobrir un objecte amagat al node; amb ✨ pots calmar un NPC enlloc de barallar-t'hi.
+**Sense tocar les taules originals.** El català es queda com a fallback; EN viu només a `translations`.
 
----
+### Fase 4 — Helpers de traducció contingut PvP
+Estendre `src/i18n/translate-data.ts` amb:
+- `translateScenarios(list, lang)`
+- `translateItems(list, lang)`
+- `translateObjects(list, lang)`
+- `translateTraits(list, lang)` (per `object_traits.trait_text` mostrat als torns 2 i 5)
+- `translateInteractions(list, lang)` (només `action_label`, `action_name` intacte)
 
-## 6) **NOU: Sistema de visites entre mascotes (Pet Playdate)**
+Aplicar als punts de càrrega: `ScenarioPicker`, `ItemActions`, hide flow, hint history, finished phase.
 
-La peça gran. Arquitectura:
+### Fase 5 — Seed EN de contingut PvP (BD)
+Script (estil `/tmp/i18n/translate.mjs`) que:
+1. Llegeix totes les files de les 6 taules.
+2. Crida Lovable AI Gateway (`google/gemini-2.5-flash`) en batch amb prompt curador (terminologia consistent: "Sofà" → "Sofa", "Prestatgeria" → "Bookshelf", etc.).
+3. Insereix a `translations` amb `ON CONFLICT DO NOTHING`.
+4. Logs de cada batch + report final amb total per `entity_type`.
 
-### Taula nova: `pet_visits`
-```
-id, visitor_user_id, host_user_id, started_at, ends_at (started+30min),
-outcome (null | 'friends' | 'enemies' | 'neutral'),
-visitor_delta jsonb (canvis a estats de la mascota visitant),
-host_delta jsonb (canvis a estats de la mascota amfitriona),
-seen_by_host boolean (per notificar)
-```
+Volum estimat: ~3 escenaris + ~30-50 ítems + ~50-100 objectes + ~200 traits + ~30 specials + ~10 interactions = **~400-500 traduccions noves**. Cost mínim amb Flash.
 
-### Taula nova: `pet_relationships`
-```
-user_a, user_b (sempre ordenats alfabèticament), status ('friends'|'enemies'|'neutral'),
-interactions_count, last_interaction_at
-```
-
-### Flux:
-1. Vas al perfil de @evilreef → botó **"Enviar mascota a jugar"** (cooldown 4h).
-2. Es crea `pet_visits` amb `ends_at = now() + 30min`.
-3. **Resolució** (via RPC `resolve_pet_visit`, cridada al consultar visites caducades):
-   - Compatibilitat = (vincle visitant + vincle amfitrió) / 2 + random(−20, +20).
-   - >60 → `friends`: vincle +10 a tots dos, calma +5.
-   - 30-60 → `neutral`: vincle +3.
-   - <30 → `enemies`: calma −10, vincle −5 a tots dos.
-4. Es crea entrada a `pet_relationships` (acumulativa).
-5. **Notificacions**:
-   - Al perfil públic: badge "🐾 La mascota de @X està jugant aquí" (durant els 30min).
-   - Al teu perfil: secció **"Visites recents"** amb qui ha vingut i el resultat.
-   - Llista de **"Amics"** i **"Rivals"** al perfil públic (mostra les 5 mascotes amb status més fort).
-
-### Regals (peça extra que has demanat):
-- Botó al perfil de @X: **"Regalar item"** → tria un ítem de la teva motxilla (jogui­na/manta/menjar) → es transfereix amb un missatge opcional.
-- Crea entrada a `player_inventory` amb `gifted_to` (taula ja existeix!) + notificació.
-- L'amfitrió rep notif "@Tu t'ha regalat 🧸 Pilota!" i pot reclamar-lo.
+### Fase 6 — QA visual EN end-to-end
+- Canvi d'idioma a EN al perfil.
+- Recórrer: Lobby → Triar escenari (noms EN) → Amagar (materials EN, posicions EN, ítems EN) → Buscar (pistes EN, historial EN) → Finished (posicions EN, eines EN) → Help (totes 5 tabs EN) → Social items EN → Profile (4 pestanyes EN).
+- Llista de regressió: 5 escenaris × 2 idiomes, verificar zero strings en català.
 
 ---
 
-## 7) Detalls UX
+## Ordre proposat d'execució
 
-- Helpdialog ampliat amb pestanya **"Social"** explicant visites i regals.
-- Al perfil propi: secció "🐾 Activitat de la mascota" amb historial de visites rebudes i fetes.
-- Tooltip permanent sobre cada barra: "Què vol dir cada barra".
+Tiro **Fase 0** (pre-flight `is_outdoor` + claus i18n massives) i **Fase 1** (constants UI) juntes en aquest torn perquè són la base. Després pares, jugues una partida en EN per validar, i tirem Fase 2 (Profile a pestanyes). BD i seed (3-5) es fan en un tercer bloc per limitar el blast radius.
 
----
+## Tests / verificació per fase
+| Fase | Verificació |
+|---|---|
+| 0 | `bunx vitest run` + jugar 1 partida a Jardí amb llanterna |
+| 1 | Veure tot en EN al canviar idioma; partida funciona |
+| 2 | Profile carrega, totes 4 pestanyes mostren contingut, sense scroll horitzontal |
+| 3 | `supabase--linter` net |
+| 4 | Visualment EN apareix a tots els llocs de PvP |
+| 5 | Query: `SELECT entity_type, count(*) FROM translations WHERE lang='en' GROUP BY 1` mostra 6 noves files |
+| 6 | Llista de regressió manual + actualitzar `i18n.md` memory |
 
-## Tècnic (per a tu, no és narratiu)
+## Documentació a actualitzar al final
+- `.lovable/memory/features/i18n.md` (afegir 6 nous entity_types + checklist completa)
+- `CHANGELOG.md` (v1.23.0 — Full EN coverage + Profile tabs)
 
-**Migracions**: 
-- Invertir semàntica de `pet_state` (UPDATE: hunger = 100 - hunger, etc.) i renombrar columnes? → **Decisió: NO renombrar** per no trencar PvP-adjacent code. Només invertir valors i tot el codi de `story-state.ts` + UI llegeix la nova convenció.
-- Crear `pet_visits`, `pet_relationships`.
-- Nous mons a `story_worlds` (platja, volcà, somnis) + nodes seed mínims (3 nodes per món nou + 1 ending per món).
-- Reduir decay a /12h.
-- Funció `resolve_pet_visit` (RPC).
-
-**Tests**: Mantenir 171 tests + afegir 3 nous (resolve_visit logic, gift transfer, state semantics inversion).
-
-**Aïllament**: 0 canvis a `games/game_*/execute_*/scenarios/items/objects`.
-
----
-
-## Pregunta de tancament (1 sola, crítica)
-
-Abans de tirar endavant amb les 7 peces, vull confirmar:
-
-**Reset de mascota nova (punt 4)**: Quan adoptes una nova mascota, vols mantenir les **amistats/rivalitats** que tenia l'anterior amb altres jugadors (les hereta la nova), o tot a zero? Jo recomanaria **reset total** — cada mascota fa les seves pròpies relacions, més coherent narrativament. Confirma o digues si prefereixes que s'heretin.
-
-Si dius "tira" assumeixo **reset total de relacions** i construeixo les 7 peces sense més preguntes.
+**Confirmes el pla i començo per Fase 0+1?**
