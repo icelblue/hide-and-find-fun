@@ -156,7 +156,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{item.item_name}</p>
+                        <p className="text-sm font-bold truncate">{itemNameT(item.item_id, item.item_name)}</p>
                         {effect ? (
                           <p className="text-[10px] text-muted-foreground">
                             {Object.entries(effect.delta).map(([k, v]) => {
