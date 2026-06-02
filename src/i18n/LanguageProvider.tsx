@@ -123,6 +123,7 @@ export type ContentEntityType =
   | "story_world_description"
   | "story_recipe_name"
   | "story_recipe_description"
+  | "story_item_name"
   | "reward_item_name"
   // PvP content (v1.23.0)
   | "pvp_scenario_name"
