@@ -270,7 +270,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                     <div key={a.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
                       <span className="text-2xl">{a.accessory_icon}</span>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold truncate">{a.accessory_name}</p>
+                        <p className="text-xs font-bold truncate">{accessoryNameT(a.accessory_name)}</p>
                         <p className="text-[9px] text-muted-foreground">{t("inventory.alwaysEquipped")}</p>
                       </div>
                     </div>
