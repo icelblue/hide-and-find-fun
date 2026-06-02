@@ -865,14 +865,14 @@ export async function sendSocialItem(
     .eq("game_id", gameId)
     .eq("user_id", fromPlayerId)
     .single();
-  if (!fromPlayer) throw new Error("Jugador no trobat");
+  if (!fromPlayer) throw new Error(tt("game.errors.playerNotFound"));
 
   const today = new Date().toISOString().split("T")[0];
   const isBarricadaOrTrampa = itemType === "barricada" || itemType === "trampa";
 
   // Barricada/trampa have their own 2x/day limit checked in the RPC
   if (!isBarricadaOrTrampa && fromPlayer.tokens_last_reset === today && fromPlayer.social_item_used_today) {
-    throw new Error("Ja has usat el teu ítem social avui! 😉");
+    throw new Error(tt("game.errors.socialItemUsedToday"));
   }
 
   // Use safe RPC to read opponent data (SELECT restricted to own rows)
