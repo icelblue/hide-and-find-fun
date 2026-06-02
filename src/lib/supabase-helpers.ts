@@ -90,42 +90,43 @@ export function getMaterialBlockReason(material: string, environment: string): s
   return reason;
 }
 
-/** Display name for materials in UI */
+/** Display name for materials in UI — values are i18n KEYS (use t(MATERIAL_LABELS[m])) */
 export const MATERIAL_LABELS: Record<string, string> = {
-  generic: "Genèric",
-  paper: "Paper",
-  glass: "Vidre",
-  metal: "Metall",
-  plastic: "Plàstic",
-  fabric: "Roba",
-  wood: "Fusta",
-  cardboard: "Cartró",
-  rubber: "Goma",
-  ceramic: "Ceràmica",
-  electronic: "Electrònic",
-  leather: "Cuir",
-  stone: "Pedra",
-  food: "Menjar",
+  generic: "game.materials.generic",
+  paper: "game.materials.paper",
+  glass: "game.materials.glass",
+  metal: "game.materials.metal",
+  plastic: "game.materials.plastic",
+  fabric: "game.materials.fabric",
+  wood: "game.materials.wood",
+  cardboard: "game.materials.cardboard",
+  rubber: "game.materials.rubber",
+  ceramic: "game.materials.ceramic",
+  electronic: "game.materials.electronic",
+  leather: "game.materials.leather",
+  stone: "game.materials.stone",
+  food: "game.materials.food",
 };
 
-/** Contextual label when an object is placed in a specific environment */
+/** Contextual label key when an object is placed in a specific environment (use t(ENVIRONMENT_LABELS[e])) */
 export const ENVIRONMENT_LABELS: Record<string, string> = {
-  wet: "💧 Mullat",
-  hot: "🔥 Cremat",
-  dirty: "🗑️ Brut",
-  frozen: "🧊 Congelat",
-  outdoor: "🌿 A l'exterior",
-  sorrenc: "🏖️ Ple de sorra",
-  submergit: "🌊 Submergit",
-  químic: "☣️ Contaminat",
-  ventós: "💨 Ventós",
+  wet: "game.environments.wet",
+  hot: "game.environments.hot",
+  dirty: "game.environments.dirty",
+  frozen: "game.environments.frozen",
+  outdoor: "game.environments.outdoor",
+  sorrenc: "game.environments.sorrenc",
+  submergit: "game.environments.submergit",
+  químic: "game.environments.químic",
+  ventós: "game.environments.ventós",
 };
 
-/** Get contextual label for an object hidden in a specific item environment */
+/** Get contextual i18n key for an object hidden in a specific item environment */
 export function getEnvironmentLabel(environment: string): string | null {
   if (environment === "generic") return null;
   return ENVIRONMENT_LABELS[environment] ?? null;
 }
+
 
 // ============================================
 // DATA FETCHING
