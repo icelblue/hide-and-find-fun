@@ -125,7 +125,7 @@ export default function ItemActions({
                 : "";
               return (
                 <button key={pos.value}
-                  onClick={() => onLook(item.id, pos.value)} aria-label={`${pos.label} ${item.name}`}
+                  onClick={() => onLook(item.id, pos.value)} aria-label={`${t(`game.pos.${pos.value}`, pos.label)} ${item.name}`}
                   disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked || isBlocked}
                   className={`w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${
                     isBlocked ? "bg-muted/20 opacity-50 border border-accent/30" :
