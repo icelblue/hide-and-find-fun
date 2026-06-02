@@ -1575,7 +1575,7 @@ export default function GamePage() {
           {moveHistory.length > 0 && (
             <details className="group">
               <summary className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 cursor-pointer select-none flex items-center gap-1">
-                📋 Historial ({moveHistory.length})
+                {t("game.historyTitle", { count: moveHistory.length })}
                 <span className="text-[9px] group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
@@ -1596,7 +1596,7 @@ export default function GamePage() {
                         {m.action === "move" && `🚶→ ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
                         {m.action === "look" && (
                           <>
-                            👀 {(m.items as any)?.icon} {m.target_position}
+                            👀 {(m.items as any)?.icon} {m.target_position ? posLabel(m.target_position) : ""}
                             {hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}
                           </>
                         )}
