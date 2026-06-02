@@ -788,7 +788,9 @@
       "cannotHideBehindThis": "No es pot amagar darrere d'aquest moble! Tria una altra posició.",
       "socialItemUsedToday": "Ja has usat el teu ítem social avui! 😉",
       "mustSelectPath": "Has de seleccionar un camí!",
-      "playerNotFound": "Jugador no trobat"
+      "playerNotFound": "Jugador no trobat",
+      "alreadyInGame": "Ja ets a aquesta partida!",
+      "gameNotFound": "Partida no trobada"
     },
     "materials": {
       "generic": "Genèric",
