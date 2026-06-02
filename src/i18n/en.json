@@ -780,7 +780,17 @@
       "cannotHideBehind": "You can't hide behind {itm}!",
       "materialBlocked": "🚫 {obj}: {reason}",
       "actionAlreadyDone": "You've already done this action!",
-      "notEnoughTokens": "Not enough tokens!"
+      "notEnoughTokens": "Not enough tokens!",
+      "gameAlreadyStarted": "This game has already started",
+      "gameIsPrivate": "This game is a private challenge!",
+      "gameFull": "The game is already full!",
+      "objectTooBigInside": "The object is too big to hide inside this piece of furniture! Pick another position.",
+      "cannotHideBehindThis": "You can't hide behind this piece of furniture! Pick another position.",
+      "socialItemUsedToday": "You've already used your social item today! 😉",
+      "mustSelectPath": "You must select a path!",
+      "playerNotFound": "Player not found",
+      "alreadyInGame": "You're already in this game!",
+      "gameNotFound": "Game not found"
     },
     "materials": {
       "generic": "Generic",

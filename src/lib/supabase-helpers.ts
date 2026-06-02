@@ -30,6 +30,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { parseTools, type PlayerTools, type ToolType, type Position } from "@/lib/game-types";
 import { translateRows } from "@/i18n/translate-data";
+import { tt } from "@/lib/i18n-helpers";
 
 // Re-export for backwards compatibility
 export { parseTools, type ToolType } from "@/lib/game-types";
@@ -476,18 +477,18 @@ export async function joinGame(gameId: string, userId: string) {
     .eq("game_id", gameId)
     .eq("user_id", userId)
     .maybeSingle();
-  if (existing) throw new Error("Ja ets a aquesta partida!");
+  if (existing) throw new Error(tt("game.errors.alreadyInGame"));
 
   const { data: game } = await supabase.from("games").select("id, status, invited_user_id, created_by").eq("id", gameId).single();
-  if (!game) throw new Error("Partida no trobada");
-  if (game.status !== "waiting") throw new Error("Aquesta partida ja ha començat");
+  if (!game) throw new Error(tt("game.errors.gameNotFound"));
+  if (game.status !== "waiting") throw new Error(tt("game.errors.gameAlreadyStarted"));
 
   if (game.invited_user_id && game.invited_user_id !== userId) {
-    throw new Error("Aquesta partida és un repte privat!");
+    throw new Error(tt("game.errors.gameIsPrivate"));
   }
 
   const { data: playerCount } = await supabase.rpc("count_game_players" as any, { _game_id: gameId });
-  if ((playerCount ?? 0) >= 2) throw new Error("La partida ja està plena!");
+  if ((playerCount ?? 0) >= 2) throw new Error(tt("game.errors.gameFull"));
 
   const { error } = await supabase.from("game_players").insert({ game_id: gameId, user_id: userId });
   if (error) throw error;
@@ -702,12 +703,12 @@ export async function hideObject(
     const objSize = (obj as any)?.size ?? 2;
     const capacity = (itm as any)?.inner_capacity ?? 2;
     if (objSize > capacity) {
-      throw new Error("L'objecte és massa gran per amagar-lo dins d'aquest moble! Tria una altra posició.");
+      throw new Error(tt("game.errors.objectTooBigInside"));
     }
   }
 
   if (position === "darrere" && (itm as any)?.can_behind === false) {
-    throw new Error("No es pot amagar darrere d'aquest moble! Tria una altra posició.");
+    throw new Error(tt("game.errors.cannotHideBehindThis"));
   }
 
   const material = (obj as any)?.material ?? "generic";
@@ -864,14 +865,14 @@ export async function sendSocialItem(
     .eq("game_id", gameId)
     .eq("user_id", fromPlayerId)
     .single();
-  if (!fromPlayer) throw new Error("Jugador no trobat");
+  if (!fromPlayer) throw new Error(tt("game.errors.playerNotFound"));
 
   const today = new Date().toISOString().split("T")[0];
   const isBarricadaOrTrampa = itemType === "barricada" || itemType === "trampa";
 
   // Barricada/trampa have their own 2x/day limit checked in the RPC
   if (!isBarricadaOrTrampa && fromPlayer.tokens_last_reset === today && fromPlayer.social_item_used_today) {
-    throw new Error("Ja has usat el teu ítem social avui! 😉");
+    throw new Error(tt("game.errors.socialItemUsedToday"));
   }
 
   // Use safe RPC to read opponent data (SELECT restricted to own rows)
@@ -923,7 +924,7 @@ export async function sendSocialItem(
       const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
     } else if (itemType === "barricada") {
-      if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error("Has de seleccionar un camí!");
+      if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error(tt("game.errors.mustSelectPath"));
       const { data: barResult, error: barErr } = await supabase.rpc("execute_barricada" as any, {
         _game_id: gameId, _scenario_from: extraData.scenarioFrom, _scenario_to: extraData.scenarioTo,
       });
