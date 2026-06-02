@@ -1,26 +1,13 @@
 // ============================================================
-// ProfilePage.tsx — Perfil propi del jugador (474 línies)
+// ProfilePage.tsx — Perfil del jugador (amb pestanyes)
 // ============================================================
-// Seccions:
-//   - Header amb lliga, icona i nom
-//   - Stats grid: partides, victòries, win rate, ratxa
-//   - Rival favorit (jugador amb més partides compartides)
-//   - Barra Elo amb progrés cap a la pròxima lliga
-//   - Partides actives (amb detall de l'objecte amagat)
-//   - Trofeus (objectes especials trobats)
-//   - Inventari de recompenses (col·locar o vendre)
-//   - Mur de missatges (TTL 22h)
-//   - Botó tancar sessió
-//
-// Modals: Col·locar moble en escenari / Confirmar venda
-// ============================================================
-
 import { useState, useEffect, useCallback } from "react";
 import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
@@ -34,7 +21,6 @@ import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
 import { levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
 import { PetActivityFeed } from "@/components/PetActivityFeed";
 import { useLanguage, useT, type Lang } from "@/i18n/LanguageProvider";
-
 
 const WALL_TTL_HOURS = 22;
 
@@ -50,6 +36,7 @@ export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const t = useT();
+  const { lang } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [rewards, setRewards] = useState<any[]>([]);
   const [scenarios, setScenarios] = useState<any[]>([]);
@@ -71,32 +58,16 @@ export default function ProfilePage() {
   const handleSaveName = async () => {
     if (!user) return;
     const trimmed = newName.trim();
-    if (trimmed.length < 2) {
-      toast.error("El nom ha de tenir almenys 2 caràcters");
-      return;
-    }
-    if (trimmed.length > 20) {
-      toast.error("Màxim 20 caràcters");
-      return;
-    }
-    // Validació bàsica: només lletres, números, espais, guions, punt i emojis comuns
-    if (!/^[\p{L}\p{N}\p{Emoji}\s._-]+$/u.test(trimmed)) {
-      toast.error("Caràcters no vàlids");
-      return;
-    }
+    if (trimmed.length < 2) { toast.error(t("profile.editName.minError")); return; }
+    if (trimmed.length > 20) { toast.error(t("profile.editName.maxError")); return; }
+    if (!/^[\p{L}\p{N}\p{Emoji}\s._-]+$/u.test(trimmed)) { toast.error(t("profile.editName.invalidChars")); return; }
     setSavingName(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ display_name: trimmed })
-      .eq("user_id", user.id);
+    const { error } = await supabase.from("profiles").update({ display_name: trimmed }).eq("user_id", user.id);
     setSavingName(false);
-    if (error) {
-      toast.error("No s'ha pogut desar: " + error.message);
-      return;
-    }
+    if (error) { toast.error(t("profile.editName.saveError") + error.message); return; }
     setProfile((p: any) => ({ ...p, display_name: trimmed }));
     setEditingName(false);
-    toast.success("Nom actualitzat ✨");
+    toast.success(t("profile.editName.savedToast"));
   };
 
   const loadData = useCallback(async () => {
@@ -105,9 +76,7 @@ export default function ProfilePage() {
       supabase.from("profiles").select("*").eq("user_id", user.id).single().then(r => r.data),
       getMyRewards(user.id).catch(() => []),
       getScenarios().catch(() => []),
-      supabase.from("wall_messages")
-        .select("*")
-        .eq("target_user_id", user.id)
+      supabase.from("wall_messages").select("*").eq("target_user_id", user.id)
         .gte("created_at", new Date(Date.now() - WALL_TTL_HOURS * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false }),
       getMyPet(user.id).catch(() => null),
@@ -122,10 +91,8 @@ export default function ProfilePage() {
     setPetEvents(events);
     getRecentVisits(user.id).then(setRecentVisits).catch(() => setRecentVisits([]));
 
-    // Find top rival (exclude CPU and anonymous)
     const CPU_ID = "00000000-0000-0000-0000-000000000001";
-    const { data: myGames } = await supabase
-      .from("game_players").select("game_id").eq("user_id", user.id);
+    const { data: myGames } = await supabase.from("game_players").select("game_id").eq("user_id", user.id);
     if (myGames && myGames.length > 0) {
       const gameIds = myGames.map(g => g.game_id);
       const { data: allPlayers } = await supabase.rpc("get_game_participants" as any, { _game_ids: gameIds });
@@ -133,54 +100,39 @@ export default function ProfilePage() {
       if (filteredPlayers && filteredPlayers.length > 0) {
         const counts: Record<string, number> = {};
         for (const p of filteredPlayers) {
-          // Skip CPU player
           if (p.user_id === CPU_ID) continue;
           counts[p.user_id] = (counts[p.user_id] || 0) + 1;
         }
         const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
         const topId = entries[0];
         if (topId) {
-          const { data: rivalProf } = await supabase
-            .from("profiles").select("display_name").eq("user_id", topId[0]).single();
+          const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", topId[0]).single();
           const rivalName = rivalProf?.display_name;
-          // Only show if we have a real name (not null/empty/Anònim)
           if (rivalName && rivalName !== "Anònim" && rivalName.trim()) {
             setTopRival({ name: rivalName, count: topId[1], userId: topId[0] });
-          } else {
-            setTopRival(null);
-          }
+          } else { setTopRival(null); }
         }
       }
     }
 
-    // Fetch author names
     const wallMsgs: any[] = msgs ?? [];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
-      const { data: authors } = await supabase
-        .from("profiles").select("user_id, display_name").in("user_id", authorIds);
+      const { data: authors } = await supabase.from("profiles").select("user_id, display_name").in("user_id", authorIds);
       const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
-      for (const m of wallMsgs) {
-        m._author_name = authorMap.get(m.author_user_id) ?? "Anònim";
-      }
+      for (const m of wallMsgs) { m._author_name = authorMap.get(m.author_user_id) ?? "Anònim"; }
     }
     setWallMessages(wallMsgs);
 
-    // Load active games with hidden object info
-    const { data: myGamePlayers } = await supabase
-      .from("game_players")
+    const { data: myGamePlayers } = await supabase.from("game_players")
       .select("game_id, hidden_object_id, hidden_item_id, hidden_position, has_hidden, special_data, tokens_remaining")
       .eq("user_id", user.id);
     if (myGamePlayers && myGamePlayers.length > 0) {
       const gpGameIds = myGamePlayers.map(gp => gp.game_id);
-      const { data: activeGameData } = await supabase
-        .from("games").select("id, code, status, created_at")
-        .in("id", gpGameIds)
-        .in("status", ["waiting", "hiding", "playing"])
-        .order("created_at", { ascending: false });
+      const { data: activeGameData } = await supabase.from("games").select("id, code, status, created_at")
+        .in("id", gpGameIds).in("status", ["waiting", "hiding", "playing"]).order("created_at", { ascending: false });
       if (activeGameData && activeGameData.length > 0) {
         const activeGameIds = activeGameData.map(g => g.id);
-        // Get object and item names + rival players
         const objIds = myGamePlayers.filter(gp => gp.hidden_object_id).map(gp => gp.hidden_object_id!);
         const itmIds = myGamePlayers.filter(gp => gp.hidden_item_id).map(gp => gp.hidden_item_id!);
         const [{ data: objs }, { data: itms }, rivalParticipants] = await Promise.all([
@@ -189,7 +141,6 @@ export default function ProfilePage() {
           supabase.rpc("get_game_participants" as any, { _game_ids: activeGameIds }),
         ]);
         const rivalPlayers = ((rivalParticipants.data as any[]) ?? []).filter((rp: any) => rp.user_id !== user.id);
-        // Resolve rival display names
         const rivalUserIds = [...new Set(rivalPlayers.map((rp: any) => rp.user_id as string))];
         let rivalNameMap = new Map<string, string>();
         if (rivalUserIds.length > 0) {
@@ -197,13 +148,18 @@ export default function ProfilePage() {
           rivalNameMap = new Map((rivalProfs ?? []).map(p => [p.user_id, p.display_name ?? "Anònim"]));
         }
         const gameRivalMap = new Map<string, string>();
-        for (const rp of rivalPlayers) {
-          gameRivalMap.set(rp.game_id, rivalNameMap.get(rp.user_id) ?? "Anònim");
-        }
+        for (const rp of rivalPlayers) { gameRivalMap.set(rp.game_id, rivalNameMap.get(rp.user_id) ?? "Anònim"); }
 
-        const objMap = new Map((objs ?? []).map((o: any) => [o.id, o] as [string, any]));
-        const itmMap = new Map((itms ?? []).map((i: any) => [i.id, i] as [string, any]));
-        const scenMap = new Map(scen.map((s: any) => [s.id, s] as [string, any]));
+        // Translate object/item/scenario names via supabase-helpers? They go via direct queries here.
+        // Apply lightweight translation via translateRows for consistency.
+        const { translateRows } = await import("@/i18n/translate-data");
+        const tObjs = await translateRows((objs ?? []) as any[], "pvp_object_name", "id", "name");
+        const tItms = await translateRows((itms ?? []) as any[], "pvp_furniture_name", "id", "name");
+        const tScen = await translateRows(scen as any[], "pvp_scenario_name", "id", "name");
+
+        const objMap = new Map(tObjs.map((o: any) => [o.id, o] as [string, any]));
+        const itmMap = new Map(tItms.map((i: any) => [i.id, i] as [string, any]));
+        const scenMap = new Map(tScen.map((s: any) => [s.id, s] as [string, any]));
 
         const enriched = activeGameData.map(g => {
           const gp = myGamePlayers.find(p => p.game_id === g.id);
@@ -211,29 +167,20 @@ export default function ProfilePage() {
           const itm = gp?.hidden_item_id ? itmMap.get(gp.hidden_item_id) : null;
           const scn = itm ? scenMap.get((itm as any).scenario_id) : null;
           return {
-            ...g, 
-            hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
+            ...g, hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
             hiddenPosition: gp?.hidden_position, hasHidden: gp?.has_hidden,
-            tokens: gp?.tokens_remaining,
-            rivalName: gameRivalMap.get(g.id) ?? null,
+            tokens: gp?.tokens_remaining, rivalName: gameRivalMap.get(g.id) ?? null,
           };
         });
         setActiveGames(enriched);
-      } else {
-        setActiveGames([]);
-      }
+      } else { setActiveGames([]); }
     }
 
-    // Load trophies
-    const { data: trophyData } = await supabase
-      .from("player_inventory")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("item_type", "special_trophy")
-      .is("gifted_to", null)
+    const { data: trophyData } = await supabase.from("player_inventory").select("*")
+      .eq("user_id", user.id).eq("item_type", "special_trophy").is("gifted_to", null)
       .order("collected_at", { ascending: false });
     setTrophies(trophyData ?? []);
-  }, [user]);
+  }, [user, lang]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -242,7 +189,7 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       await placeRewardItem(placingReward.id, scenarioId);
-      toast.success(`${placingReward.reward_items.icon} ${placingReward.reward_items.name} col·locat!`);
+      toast.success(`${placingReward.reward_items.icon} ${placingReward.reward_items.name} ${t("profile.placeReward.placedToast")}`);
       setPlacingReward(null);
       await loadData();
     } catch (err: any) { toast.error(err.message); }
@@ -254,7 +201,7 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       const tokens = await sellRewardItem(sellingReward.id);
-      toast.success(`+${tokens} tokens bonus! 🪙`);
+      toast.success(`+${tokens} ${t("profile.sellReward.soldToast")}`);
       setSellingReward(null);
       await loadData();
     } catch (err: any) { toast.error(err.message); }
@@ -265,7 +212,7 @@ export default function ProfilePage() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="text-5xl mb-3 animate-pulse">👤</div>
-        <p className="text-muted-foreground text-sm">Carregant perfil...</p>
+        <p className="text-muted-foreground text-sm">{t("profile.loading")}</p>
       </div>
     </div>
   );
@@ -279,18 +226,18 @@ export default function ProfilePage() {
   };
 
   const league = leagueInfo[profile.league] ?? leagueInfo.bronze;
-  const winRate = profile.games_played > 0
-    ? Math.round((profile.games_won / profile.games_played) * 100)
-    : 0;
+  const winRate = profile.games_played > 0 ? Math.round((profile.games_won / profile.games_played) * 100) : 0;
   const bonusTokens = profile.bonus_tokens ?? 0;
   const eloProgress = Math.min(((profile.elo % 200) / 200) * 100, 100);
 
+  const posKey = (p: string) => p === "sobre" ? t("profile.activeGames.posSobre") : p === "sota" ? t("profile.activeGames.posSota") : p === "dins" ? t("profile.activeGames.posDins") : p;
+  const statusLabel = (s: string) => s === "waiting" ? t("profile.activeGames.statusWaiting") : s === "hiding" ? t("profile.activeGames.statusHiding") : s === "playing" ? t("profile.activeGames.statusPlaying") : s;
+
   return (
     <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative">
-      {/* BG */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
 
-      {/* Modals */}
+      {/* Place modal */}
       {placingReward && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setPlacingReward(null)}>
           <Card className="mx-4 max-w-sm w-full glass" onClick={e => e.stopPropagation()}>
@@ -298,65 +245,59 @@ export default function ProfilePage() {
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">{placingReward.reward_items.icon}</div>
                 <p className="font-bold">{placingReward.reward_items.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">On vols col·locar-lo?</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("profile.placeReward.where")}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {scenarios.map((s: any) => (
-                  <button key={s.id} onClick={() => handlePlace(s.id)}
-                    disabled={loading}
+                  <button key={s.id} onClick={() => handlePlace(s.id)} disabled={loading}
                     className="bg-muted/50 rounded-xl p-3 text-center hover:bg-primary/10 transition-all disabled:opacity-30 active:scale-[0.97] border border-border/30">
                     <div className="text-2xl">{s.icon}</div>
                     <div className="text-xs mt-1 font-medium">{s.name}</div>
                   </button>
                 ))}
               </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3" onClick={() => setPlacingReward(null)}>Cancel·lar</Button>
+              <Button variant="ghost" size="sm" className="w-full mt-3" onClick={() => setPlacingReward(null)}>{t("profile.placeReward.cancel")}</Button>
             </CardContent>
           </Card>
         </div>
       )}
 
+      {/* Sell modal */}
       {sellingReward && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-md" onClick={() => setSellingReward(null)}>
           <Card className="mx-4 max-w-sm glass" onClick={e => e.stopPropagation()}>
             <CardContent className="py-6 text-center">
               <div className="text-4xl mb-3">{sellingReward.reward_items.icon}</div>
-              <p className="font-bold mb-1">Vendre {sellingReward.reward_items.name}?</p>
+              <p className="font-bold mb-1">{t("profile.sellReward.confirm")} {sellingReward.reward_items.name}?</p>
               <p className="text-sm text-muted-foreground mb-4">
-                Rebràs <span className="font-bold text-accent">+{sellingReward.reward_items.sell_value} tokens bonus 🪙</span>
-                <br /><span className="text-[10px]">(s'afegiran al pròxim reset diari)</span>
+                {t("profile.sellReward.willReceive")} <span className="font-bold text-accent">+{sellingReward.reward_items.sell_value} {t("profile.sellReward.bonusTokens")} 🪙</span>
+                <br /><span className="text-[10px]">{t("profile.sellReward.bonusNote")}</span>
               </p>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setSellingReward(null)}>Cancel·lar</Button>
-                <Button className="flex-1" onClick={handleSell} disabled={loading}>Vendre</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setSellingReward(null)}>{t("profile.sellReward.cancel")}</Button>
+                <Button className="flex-1" onClick={handleSell} disabled={loading}>{t("profile.sellReward.sell")}</Button>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Modal: editar nom */}
+      {/* Edit name modal */}
       {editingName && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={() => !savingName && setEditingName(false)}>
           <Card className="glass max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-5 space-y-3">
-              <h3 className="text-lg font-bold">✏️ Canvia el teu nom</h3>
-              <p className="text-xs text-muted-foreground">Així et veuran els altres jugadors. Entre 2 i 20 caràcters.</p>
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+              <h3 className="text-lg font-bold">{t("profile.editName.title")}</h3>
+              <p className="text-xs text-muted-foreground">{t("profile.editName.hint")}</p>
+              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
-                maxLength={20}
-                autoFocus
-                placeholder="El teu àlies"
-                className="w-full px-3 py-2 rounded-xl border border-border/50 bg-muted/30 text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
+                maxLength={20} autoFocus placeholder={t("profile.editName.placeholder")}
+                className="w-full px-3 py-2 rounded-xl border border-border/50 bg-muted/30 text-base focus:outline-none focus:ring-2 focus:ring-primary/40" />
               <div className="text-[10px] text-muted-foreground text-right">{newName.trim().length}/20</div>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setEditingName(false)} disabled={savingName}>Cancel·lar</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setEditingName(false)} disabled={savingName}>{t("profile.editName.cancel")}</Button>
                 <Button className="flex-1" onClick={handleSaveName} disabled={savingName || newName.trim().length < 2}>
-                  {savingName ? "Desant…" : "Desar"}
+                  {savingName ? t("profile.editName.saving") : t("profile.editName.save")}
                 </Button>
               </div>
             </CardContent>
@@ -368,371 +309,326 @@ export default function ProfilePage() {
         {t("common.lobbyShort")}
       </button>
 
-      {/* Profile header */}
-      <div className="text-center mb-6 relative z-10">
+      {/* Profile header (always visible) */}
+      <div className="text-center mb-4 relative z-10">
         <div className={`w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${league.gradient} flex items-center justify-center shadow-lg text-4xl`}>
           {league.icon}
         </div>
         <div className="flex items-center justify-center gap-2">
           <h1 className="text-2xl font-bold">{profile.display_name}</h1>
-          <button
-            onClick={() => { setNewName(profile.display_name ?? ""); setEditingName(true); }}
+          <button onClick={() => { setNewName(profile.display_name ?? ""); setEditingName(true); }}
             className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted/40"
-            aria-label="Editar nom"
-            title="Editar nom"
-          >
-            ✏️
-          </button>
+            aria-label={t("profile.editNameAria")} title={t("profile.editNameAria")}>✏️</button>
         </div>
-        <p className="text-sm font-semibold text-primary capitalize mt-0.5">{profile.league} League</p>
+        <p className="text-sm font-semibold text-primary capitalize mt-0.5">{profile.league} {t("profile.leagueSuffix")}</p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
-        {[
-          { val: profile.games_played, label: "Partides" },
-          { val: profile.games_won, label: "Victòries" },
-          { val: `${winRate}%`, label: "Win rate" },
-          { val: `${profile.best_streak}🔥`, label: "Ratxa" },
-        ].map((stat, i) => (
-          <Card key={i} className="glass">
-            <CardContent className="py-2.5 px-1 text-center">
-              <div className="text-lg font-bold leading-tight">{stat.val}</div>
-              <div className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">{stat.label}</div>
+      <Tabs defaultValue="overview" className="relative z-10">
+        <TabsList className="grid grid-cols-5 w-full mb-4">
+          <TabsTrigger value="overview" className="text-[11px] px-1">{t("profile.tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="games" className="text-[11px] px-1">{t("profile.tabs.games")}</TabsTrigger>
+          <TabsTrigger value="collection" className="text-[11px] px-1">{t("profile.tabs.collection")}</TabsTrigger>
+          <TabsTrigger value="social" className="text-[11px] px-1">{t("profile.tabs.social")}</TabsTrigger>
+          <TabsTrigger value="settings" className="text-[11px] px-1">{t("profile.tabs.settings")}</TabsTrigger>
+        </TabsList>
+
+        {/* ───── OVERVIEW ───── */}
+        <TabsContent value="overview" className="space-y-4 mt-0">
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { val: profile.games_played, label: t("profile.statsLabels.played") },
+              { val: profile.games_won, label: t("profile.statsLabels.won") },
+              { val: `${winRate}%`, label: t("profile.statsLabels.winRate") },
+              { val: `${profile.best_streak}🔥`, label: t("profile.statsLabels.streak") },
+            ].map((stat, i) => (
+              <Card key={i} className="glass">
+                <CardContent className="py-2.5 px-1 text-center">
+                  <div className="text-lg font-bold leading-tight">{stat.val}</div>
+                  <div className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">{stat.label}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {pet && (() => {
+            const xp = pet.xp ?? 0;
+            const max = pet.max_xp ?? MAX_PET_XP;
+            const evo = getPetEvolution(xp, max);
+            const level = levelFromXp(xp);
+            const { remaining } = xpToNextLevel(xp);
+            const sick = petEvents.length > 0;
+            return (
+              <div className={`glass rounded-2xl p-4 border ${sick ? "border-destructive/40" : "border-border/30"}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${sick ? "ring-destructive/50" : evo.ring}`}>
+                    <span className="text-5xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
+                    <span className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold">Lv{level}</span>
+                    {sick && !evo.isDead && (<span className="absolute -top-1 -right-1 text-base animate-pulse">🤒</span>)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-bold truncate">{pet.pet_name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {evo.badge} {evo.label}
+                      {evo.isDead ? <span className="text-destructive font-semibold ml-1">{t("profile.pet.dead")}</span>
+                        : sick ? <span className="text-destructive font-semibold ml-1">{t("profile.pet.sick")}</span>
+                        : <span className="text-green-500 font-semibold ml-1">{t("profile.pet.healthy")}</span>}
+                    </p>
+                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-1.5">
+                      <div className={`h-1.5 rounded-full transition-all duration-500 ${sick ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min((xp / max) * 100, 100)}%` }} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {level >= MAX_LEVEL ? t("profile.pet.maxLevel") : `${remaining} ${t("profile.pet.xpToNext")}${level + 1}`}
+                    </p>
+                  </div>
+                  {petAccessories.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      {petAccessories.map((a: any) => (<span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {petEvents.length > 0 && (<PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />)}
+
+          <PetActivityFeed visits={recentVisits} ownUserId={user?.id ?? null} isOwn={true} />
+
+          {topRival && (
+            <Card className="glass border-secondary/30">
+              <CardContent className="py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚔️</span>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("profile.topRival.label")}</p>
+                    <button onClick={() => navigate(`/player/${topRival.userId}`)} className="font-bold text-sm text-primary hover:underline">{topRival.name}</button>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-lg leading-tight">{topRival.count}</div>
+                  <div className="text-[9px] text-muted-foreground">{t("profile.topRival.games")}</div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="glass">
+            <CardContent className="py-3">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("profile.eloCard.label")}</span>
+                <span className="font-bold text-sm text-gradient">{profile.elo}</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div className="gradient-primary h-2 rounded-full transition-all duration-500" style={{ width: `${eloProgress}%` }} />
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <p className="text-[10px] text-muted-foreground">
+                  {league.eloNeeded - profile.elo > 0 ? `${league.eloNeeded - profile.elo} ${t("profile.eloCard.toNext")} ${league.next}` : t("profile.eloCard.maxRank")}
+                </p>
+                {bonusTokens > 0 && (<p className="text-[10px] font-semibold text-accent">🪙 +{bonusTokens} {t("profile.eloCard.bonus")}</p>)}
+              </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+        </TabsContent>
 
-      {/* Pet companion with evolution (same style as other players' profile) */}
-      {pet && (() => {
-        const xp = pet.xp ?? 0;
-        const max = pet.max_xp ?? MAX_PET_XP;
-        const evo = getPetEvolution(xp, max);
-        const level = levelFromXp(xp);
-        const { remaining } = xpToNextLevel(xp);
-        const sick = petEvents.length > 0;
-        return (
-          <div className={`glass rounded-2xl p-4 border mb-4 ${sick ? "border-destructive/40" : "border-border/30"}`}>
-            <div className="flex items-center gap-3">
-              <div className={`relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${sick ? "ring-destructive/50" : evo.ring}`}>
-                <span className="text-5xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
-                <span className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold">
-                  Lv{level}
-                </span>
-                {sick && !evo.isDead && (
-                  <span className="absolute -top-1 -right-1 text-base animate-pulse">🤒</span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold truncate">{pet.pet_name}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {evo.badge} {evo.label}
-                  {evo.isDead
-                    ? <span className="text-destructive font-semibold ml-1">· Mort 🪦</span>
-                    : sick
-                      ? <span className="text-destructive font-semibold ml-1">· Malalt 🤒</span>
-                      : <span className="text-green-500 font-semibold ml-1">· Saludable ✅</span>}
-                </p>
-                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-1.5">
-                  <div className={`h-1.5 rounded-full transition-all duration-500 ${sick ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min((xp / max) * 100, 100)}%` }} />
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {level >= MAX_LEVEL ? "Nivell màxim!" : `${remaining} XP per pujar a Lv${level + 1}`}
-                </p>
-              </div>
-              {petAccessories.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  {petAccessories.map((a: any) => (
-                    <span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Pet health events */}
-      {petEvents.length > 0 && (
-        <div className="mb-4">
-          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
-        </div>
-      )}
-
-      {/* Recent pet activity (under the pet card) */}
-      <PetActivityFeed visits={recentVisits} ownUserId={user?.id ?? null} isOwn={true} />
-
-
-      {/* Top rival */}
-      {topRival && (
-        <Card className="mb-4 glass border-secondary/30">
-          <CardContent className="py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">⚔️</span>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Rival favorit</p>
-                <button
-                  onClick={() => navigate(`/player/${topRival.userId}`)}
-                  className="font-bold text-sm text-primary hover:underline"
-                >
-                  {topRival.name}
-                </button>
+        {/* ───── GAMES ───── */}
+        <TabsContent value="games" className="space-y-6 mt-0">
+          {activeGames.length > 0 ? (
+            <div>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                {t("profile.activeGames.title")} ({activeGames.length})
+              </h2>
+              <div className="space-y-2">
+                {activeGames.map((g: any) => (
+                  <Card key={g.id} className="glass cursor-pointer hover:border-primary/40 transition-all" onClick={() => navigate(`/game/${g.id}`)}>
+                    <CardContent className="py-3 px-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold tracking-wider">{g.code}</span>
+                          {g.rivalName && <span className="text-[10px] text-primary font-medium">{t("profile.activeGames.vs")} {g.rivalName}</span>}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{statusLabel(g.status)}</span>
+                      </div>
+                      {g.hasHidden && g.hiddenObj ? (
+                        <div className="text-[11px] text-muted-foreground">
+                          <span className="text-foreground font-medium">{g.hiddenObj.icon} {g.hiddenObj.name}</span>
+                          {" → "}
+                          {g.hiddenScenario && <span>{g.hiddenScenario.icon} {g.hiddenScenario.name} · </span>}
+                          {g.hiddenItem && <span>{g.hiddenItem.icon} {g.hiddenItem.name} · </span>}
+                          {g.hiddenPosition && <span>{posKey(g.hiddenPosition)}</span>}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground italic">{t("profile.activeGames.notHidden")}</p>
+                      )}
+                      {g.status === "playing" && g.tokens != null && (
+                        <p className="text-[10px] text-accent mt-0.5 font-medium">🪙 {g.tokens} {t("profile.activeGames.tokens")}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
-            <div className="text-right">
-              <div className="font-bold text-lg leading-tight">{topRival.count}</div>
-              <div className="text-[9px] text-muted-foreground">partides</div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : null}
 
-      {/* Elo bar */}
-      <Card className="mb-5 glass">
-        <CardContent className="py-3">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Elo Rating</span>
-            <span className="font-bold text-sm text-gradient">{profile.elo}</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-            <div className="gradient-primary h-2 rounded-full transition-all duration-500" style={{ width: `${eloProgress}%` }} />
-          </div>
-          <div className="flex justify-between mt-1.5">
-            <p className="text-[10px] text-muted-foreground">
-              {league.eloNeeded - profile.elo > 0
-                ? `${league.eloNeeded - profile.elo} per ${league.next}`
-                : "Rang màxim!"}
-            </p>
-            {bonusTokens > 0 && (
-              <p className="text-[10px] font-semibold text-accent">🪙 +{bonusTokens} bonus</p>
+          {trophies.length > 0 && (
+            <div>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                {t("profile.trophies.title")} ({trophies.length})
+              </h2>
+              <div className="space-y-2">
+                {trophies.map((tr: any) => {
+                  const sd = tr.special_data as any;
+                  return (
+                    <Card key={tr.id} className="glass border-accent/30">
+                      <CardContent className="py-2.5 flex items-center gap-3">
+                        <span className="text-2xl">{getTrophyDisplayIcon(sd)}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{getTrophyDisplayName(sd)}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {sd?.object_name} · {new Date(tr.collected_at).toLocaleDateString(lang === "en" ? "en" : "ca")}
+                          </div>
+                          {sd?.custom_message && (<div className="text-[11px] italic text-primary/80 mt-0.5">💌 "{sd.custom_message}"</div>)}
+                        </div>
+                        <button onClick={async () => {
+                          if (!confirm(t("profile.trophies.confirmDelete"))) return;
+                          await supabase.from("player_inventory").delete().eq("id", tr.id);
+                          toast.success(t("profile.trophies.deletedToast"));
+                          loadData();
+                        }} className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10"
+                          title={t("profile.trophies.deleteTitle")}>🗑️</button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {activeGames.length === 0 && trophies.length === 0 && (
+            <Card className="glass"><CardContent className="py-8 text-center">
+              <div className="text-4xl mb-2 opacity-50">🎮</div>
+              <p className="text-sm text-muted-foreground">—</p>
+            </CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* ───── COLLECTION ───── */}
+        <TabsContent value="collection" className="space-y-6 mt-0">
+          <WonObjectsSection userId={user!.id} />
+
+          <div>
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+              {t("profile.inventory.title")} ({rewards.length})
+            </h2>
+            <Tip>{t("profile.inventory.tip")}</Tip>
+            <div className="h-2" />
+            {rewards.length === 0 ? (
+              <Card className="glass">
+                <CardContent className="py-8 text-center">
+                  <div className="text-4xl mb-2 opacity-50">📦</div>
+                  <p className="text-sm text-muted-foreground">{t("profile.inventory.empty")}</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">{t("profile.inventory.emptyHint")}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {rewards.map((r: any) => {
+                  const item = r.reward_items;
+                  const rarity = RARITY_CONFIG[item.rarity] ?? RARITY_CONFIG.common;
+                  const borderClass = RARITY_BORDER[item.rarity] ?? RARITY_BORDER.common;
+                  return (
+                    <Card key={r.id} className={`glass border ${borderClass}`}>
+                      <CardContent className="py-2.5 flex items-center gap-3">
+                        <span className="text-2xl">{item.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{item.name}</div>
+                          <div className="text-[11px] text-muted-foreground">{rarity.emoji} {rarity.label} · {item.sell_value}🪙</div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="text-xs h-7 px-2 rounded-lg" onClick={() => setPlacingReward(r)}>📍</Button>
+                          <Button size="sm" variant="ghost" className="text-xs h-7 px-2 rounded-lg" onClick={() => setSellingReward(r)}>🪙</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Active Games */}
-      {activeGames.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            🎮 Partides actives ({activeGames.length})
-          </h2>
-          <div className="space-y-2">
-            {activeGames.map((g: any) => {
-              const statusLabels: Record<string, string> = { waiting: "⏳ Esperant", hiding: "🫣 Amagant", playing: "🔍 Jugant" };
-              const posLabels: Record<string, string> = { sobre: "⬆️ Sobre", sota: "⬇️ Sota", dins: "📦 Dins" };
-              return (
-                <Card key={g.id} className="glass cursor-pointer hover:border-primary/40 transition-all" onClick={() => navigate(`/game/${g.id}`)}>
-                  <CardContent className="py-3 px-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold tracking-wider">{g.code}</span>
-                        {g.rivalName && <span className="text-[10px] text-primary font-medium">vs {g.rivalName}</span>}
-                      </div>
-                      <span className="text-[10px] text-muted-foreground">{statusLabels[g.status] ?? g.status}</span>
-                    </div>
-                    {g.hasHidden && g.hiddenObj ? (
-                      <div className="text-[11px] text-muted-foreground">
-                        <span className="text-foreground font-medium">{g.hiddenObj.icon} {g.hiddenObj.name}</span>
-                        {" → "}
-                        {g.hiddenScenario && <span>{g.hiddenScenario.icon} {g.hiddenScenario.name} · </span>}
-                        {g.hiddenItem && <span>{g.hiddenItem.icon} {g.hiddenItem.name} · </span>}
-                        {g.hiddenPosition && <span>{posLabels[g.hiddenPosition]}</span>}
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground italic">Encara no has amagat cap objecte</p>
-                    )}
-                    {g.status === "playing" && g.tokens != null && (
-                      <p className="text-[10px] text-accent mt-0.5 font-medium">🪙 {g.tokens} tokens</p>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+        {/* ───── SOCIAL ───── */}
+        <TabsContent value="social" className="space-y-6 mt-0">
+          <div>
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              {t("profile.wall.title")} · <span className="normal-case">{t("profile.wall.subtitle")}</span>
+            </h2>
+            {wallMessages.length === 0 ? (
+              <Card className="glass"><CardContent className="py-6 text-center">
+                <div className="text-3xl mb-2 opacity-50">🤫</div>
+                <p className="text-xs text-muted-foreground">{t("profile.wall.empty")}</p>
+              </CardContent></Card>
+            ) : (
+              <div className="space-y-1.5">
+                {wallMessages.map((m: any) => {
+                  const mins = Math.floor((Date.now() - new Date(m.created_at).getTime()) / 60000);
+                  const timeStr = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h`;
+                  return (
+                    <Card key={m.id} className="glass">
+                      <CardContent className="py-2 px-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <button onClick={() => navigate(`/player/${m.author_user_id}`)} className="text-xs font-semibold text-primary hover:underline">{m._author_name}</button>
+                            <p className="text-sm break-words">{m.message}</p>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeStr}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      )}
 
-      {/* Trophies */}
-      {trophies.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            🏆 Trofeus ({trophies.length})
-          </h2>
-          <div className="space-y-2">
-            {trophies.map((t: any) => {
-              const sd = t.special_data as any;
-              return (
-                <Card key={t.id} className="glass border-accent/30">
-                  <CardContent className="py-2.5 flex items-center gap-3">
-                    <span className="text-2xl">{getTrophyDisplayIcon(sd)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm">{getTrophyDisplayName(sd)}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
-                      </div>
-                      {sd?.custom_message && (
-                        <div className="text-[11px] italic text-primary/80 mt-0.5">💌 "{sd.custom_message}"</div>
-                      )}
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (!confirm("Segur que vols eliminar aquest trofeu?")) return;
-                        await supabase.from("player_inventory").delete().eq("id", t.id);
-                        toast.success("Trofeu eliminat");
-                        loadData();
-                      }}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10"
-                      title="Eliminar trofeu"
-                    >
-                      🗑️
-                    </button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          <ReferralsSection userId={user!.id} />
+        </TabsContent>
 
-      {/* Won objects (reward collection progress) */}
-      <WonObjectsSection userId={user!.id} />
-
-      {/* Inventory */}
-      <div className="mb-6">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-          🎒 Inventari ({rewards.length})
-        </h2>
-        <Tip>📍 Col·loca mobles en escenaris per ampliar el joc · 🪙 Ven-los per tokens bonus</Tip>
-        <div className="h-2" />
-        {rewards.length === 0 ? (
-          <Card className="glass">
-            <CardContent className="py-8 text-center">
-              <div className="text-4xl mb-2 opacity-50">📦</div>
-              <p className="text-sm text-muted-foreground">Cap objecte.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Guanya partides per obtenir mobles!</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {rewards.map((r: any) => {
-              const item = r.reward_items;
-              const rarity = RARITY_CONFIG[item.rarity] ?? RARITY_CONFIG.common;
-              const borderClass = RARITY_BORDER[item.rarity] ?? RARITY_BORDER.common;
-              return (
-                <Card key={r.id} className={`glass border ${borderClass}`}>
-                  <CardContent className="py-2.5 flex items-center gap-3">
-                    <span className="text-2xl">{item.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm">{item.name}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {rarity.emoji} {rarity.label} · {item.sell_value}🪙
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="outline" className="text-xs h-7 px-2 rounded-lg"
-                        onClick={() => setPlacingReward(r)}>📍</Button>
-                      <Button size="sm" variant="ghost" className="text-xs h-7 px-2 rounded-lg"
-                        onClick={() => setSellingReward(r)}>🪙</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* (Pet activity moved up under pet card) */}
-
-      {/* Wall messages */}
-      <div className="mb-6">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          💬 El teu mur · <span className="normal-case">missatges de {WALL_TTL_HOURS}h</span>
-        </h2>
-        {wallMessages.length === 0 ? (
-          <Card className="glass">
-            <CardContent className="py-6 text-center">
-              <div className="text-3xl mb-2 opacity-50">🤫</div>
-              <p className="text-xs text-muted-foreground">Cap missatge recent</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-1.5">
-            {wallMessages.map((m: any) => {
-              const mins = Math.floor((Date.now() - new Date(m.created_at).getTime()) / 60000);
-              const timeStr = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h`;
-              return (
-                <Card key={m.id} className="glass">
-                  <CardContent className="py-2 px-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <button
-                          onClick={() => navigate(`/player/${m.author_user_id}`)}
-                          className="text-xs font-semibold text-primary hover:underline">
-                          {m._author_name}
-                        </button>
-                        <p className="text-sm break-words">{m.message}</p>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeStr}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Referrals — convida amics */}
-      <ReferralsSection userId={user!.id} />
-
-      {/* Idioma de joc */}
-      <LanguageSection />
-
-      <Button variant="outline" className="w-full" onClick={signOut}>
-        🚪 Tancar sessió
-      </Button>
-
-
-      {/* Zona perillosa — eliminar compte */}
-      <DangerZone displayName={profile?.display_name ?? ""} onDeleted={() => {
-        signOut().finally(() => navigate("/auth"));
-      }} />
+        {/* ───── SETTINGS ───── */}
+        <TabsContent value="settings" className="space-y-4 mt-0">
+          <LanguageSection />
+          <Button variant="outline" className="w-full" onClick={signOut}>{t("profile.signOut")}</Button>
+          <DangerZone displayName={profile?.display_name ?? ""} onDeleted={() => { signOut().finally(() => navigate("/auth")); }} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-/** Secció per convidar amics i veure recompenses progressives */
+/** Referrals — invite friends */
 function ReferralsSection({ userId }: { userId: string }) {
+  const t = useT();
   const [link, setLink] = useState<{ code: string; url: string } | null>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [l, r] = await Promise.all([
-        getMyReferralLink(userId),
-        getMyReferrals(userId).catch(() => []),
-      ]);
-      setLink(l);
-      setReferrals(r);
-      setLoading(false);
+      const [l, r] = await Promise.all([getMyReferralLink(userId), getMyReferrals(userId).catch(() => [])]);
+      setLink(l); setReferrals(r); setLoading(false);
     })();
   }, [userId]);
 
-  const copyToClipboard = async (text: string, label: string) => {
+  const copyToClipboard = async (text: string, kind: "code" | "link") => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${label} copiat!`);
-    } catch {
-      toast.error("No s'ha pogut copiar");
-    }
+      toast.success(kind === "code" ? t("profile.referrals.copiedCode") : t("profile.referrals.copiedLink"));
+    } catch { toast.error(t("profile.referrals.copyError")); }
   };
 
   const shareViaWhatsApp = () => {
     if (!link) return;
-    const text = `🕵️ Vine a jugar a Deduction Duel amb mi! Registra't amb el meu codi i guanya 5 tokens de benvinguda: ${link.url}`;
+    const text = `${t("profile.referrals.shareMsg")} ${link.url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -743,80 +639,44 @@ function ReferralsSection({ userId }: { userId: string }) {
   if (loading || !link) return null;
 
   return (
-    <div className="mb-6">
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-        🎁 Convida amics
-      </h2>
-      <Tip>Comparteix el teu codi. Tots dos guanyeu tokens i ítems especials!</Tip>
+    <div>
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t("profile.referrals.title")}</h2>
+      <Tip>{t("profile.referrals.tip")}</Tip>
       <div className="h-2" />
-
       <Card className="glass border-primary/30">
         <CardContent className="py-3 space-y-3">
-          {/* Codi propi */}
           <div className="text-center">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">El teu codi</div>
-            <button
-              onClick={() => copyToClipboard(link.code, "Codi")}
-              className="text-lg font-bold text-primary tracking-wider hover:underline"
-            >
-              {link.code}
-            </button>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("profile.referrals.yourCode")}</div>
+            <button onClick={() => copyToClipboard(link.code, "code")} className="text-lg font-bold text-primary tracking-wider hover:underline">{link.code}</button>
           </div>
-
-          {/* Botons compartir */}
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => copyToClipboard(link.url, "Enllaç")}>
-              🔗 Copiar enllaç
-            </Button>
-            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={shareViaWhatsApp}>
-              💬 WhatsApp
-            </Button>
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => copyToClipboard(link.url, "link")}>{t("profile.referrals.copyLink")}</Button>
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={shareViaWhatsApp}>{t("profile.referrals.whatsapp")}</Button>
           </div>
-
-          {/* Recompenses esglaonades */}
           <div className="space-y-1 text-[11px] border-t border-border/30 pt-2">
-            <div className="flex justify-between text-muted-foreground">
-              <span>Per cada amic registrat</span>
-              <span className="text-primary font-medium">+3🪙</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Si juga 1a partida</span>
-              <span className="text-primary font-medium">+10🪙</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Si juga 5+ partides</span>
-              <span className="text-primary font-medium">+1 ítem rar 🔵</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>3 amics actius</span>
-              <span className="text-primary font-medium">+1 ítem èpic 🟣</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>5 amics actius</span>
-              <span className="text-primary font-medium">+1 llegendari 🟡</span>
-            </div>
+            <div className="flex justify-between text-muted-foreground"><span>{t("profile.referrals.perFriend")}</span><span className="text-primary font-medium">+3🪙</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>{t("profile.referrals.firstGame")}</span><span className="text-primary font-medium">+10🪙</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>{t("profile.referrals.fivePlus")}</span><span className="text-primary font-medium">{t("profile.referrals.rewardRare")}</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>{t("profile.referrals.threeActive")}</span><span className="text-primary font-medium">{t("profile.referrals.rewardEpic")}</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>{t("profile.referrals.fiveActive")}</span><span className="text-primary font-medium">{t("profile.referrals.rewardLegendary")}</span></div>
           </div>
-
-          {/* Progress */}
           {referrals.length > 0 && (
             <div className="border-t border-border/30 pt-2 space-y-1.5">
               <div className="text-[10px] text-muted-foreground">
-                Amics actius: <span className="text-foreground font-bold">{activeCount}</span>
-                {nextEpic > 0 && ` · ${nextEpic} per èpic`}
-                {nextEpic === 0 && nextLegendary > 0 && ` · ${nextLegendary} per llegendari`}
+                {t("profile.referrals.activeFriends")} <span className="text-foreground font-bold">{activeCount}</span>
+                {nextEpic > 0 && ` · ${nextEpic} ${t("profile.referrals.forEpic")}`}
+                {nextEpic === 0 && nextLegendary > 0 && ` · ${nextLegendary} ${t("profile.referrals.forLegendary")}`}
               </div>
               <div className="space-y-1">
                 {referrals.slice(0, 5).map((r) => (
                   <div key={r.id} className="flex items-center justify-between text-[11px] bg-muted/30 rounded px-2 py-1">
                     <span className="truncate">{r.display_name}</span>
                     <span className="text-muted-foreground shrink-0">
-                      {r.active_reward_given ? "🔵 actiu" : r.first_game_reward_given ? "🎮 1a partida" : "✋ registrat"}
+                      {r.active_reward_given ? t("profile.referrals.statusActive") : r.first_game_reward_given ? t("profile.referrals.statusFirstGame") : t("profile.referrals.statusRegistered")}
                     </span>
                   </div>
                 ))}
-                {referrals.length > 5 && (
-                  <div className="text-[10px] text-muted-foreground text-center">+{referrals.length - 5} més</div>
-                )}
+                {referrals.length > 5 && (<div className="text-[10px] text-muted-foreground text-center">+{referrals.length - 5} {t("profile.referrals.more")}</div>)}
               </div>
             </div>
           )}
@@ -826,8 +686,10 @@ function ReferralsSection({ userId }: { userId: string }) {
   );
 }
 
-/** Section showing which reward items the player has collected */
+/** Display case — won reward items */
 function WonObjectsSection({ userId }: { userId: string }) {
+  const t = useT();
+  const { lang } = useLanguage();
   const [catalog, setCatalog] = useState<any[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -836,35 +698,26 @@ function WonObjectsSection({ userId }: { userId: string }) {
     (async () => {
       const [items, { data: owned }] = await Promise.all([
         getRewardCatalog(),
-        supabase.from("player_rewards")
-          .select("reward_item_id")
-          .eq("user_id", userId)
-          .eq("status", "owned"),
+        supabase.from("player_rewards").select("reward_item_id").eq("user_id", userId).eq("status", "owned"),
       ]);
       setCatalog(items);
       setOwnedIds(new Set((owned ?? []).map((r: any) => r.reward_item_id)));
       setLoading(false);
     })();
-  }, [userId]);
+  }, [userId, lang]);
 
   if (loading || catalog.length === 0) return null;
 
   const ownedCount = catalog.filter(i => ownedIds.has(i.id)).length;
-
   const RARITY_BORDER_MAP: Record<string, string> = {
-    common: "border-muted-foreground/20",
-    uncommon: "border-green-500/30",
-    rare: "border-blue-500/30",
-    epic: "border-purple-500/40",
-    legendary: "border-amber-400/50",
+    common: "border-muted-foreground/20", uncommon: "border-green-500/30",
+    rare: "border-blue-500/30", epic: "border-purple-500/40", legendary: "border-amber-400/50",
   };
 
   return (
-    <div className="mb-6">
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-        🏆 Vitrina ({ownedCount}/{catalog.length})
-      </h2>
-      <Tip>Mobles guanyats en partides. Els grisos encara no els tens!</Tip>
+    <div>
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t("profile.vitrina.title")} ({ownedCount}/{catalog.length})</h2>
+      <Tip>{t("profile.vitrina.tip")}</Tip>
       <div className="h-2" />
       <div className="flex flex-wrap gap-2">
         {catalog.map((item: any) => {
@@ -873,9 +726,7 @@ function WonObjectsSection({ userId }: { userId: string }) {
           const border = RARITY_BORDER_MAP[item.rarity] ?? "";
           return (
             <div key={item.id}
-              className={`flex flex-col items-center gap-0.5 rounded-xl border p-2 min-w-[60px] transition-all ${
-                has ? `${border} bg-muted/30` : "border-border/20 opacity-30 grayscale"
-              }`}
+              className={`flex flex-col items-center gap-0.5 rounded-xl border p-2 min-w-[60px] transition-all ${has ? `${border} bg-muted/30` : "border-border/20 opacity-30 grayscale"}`}
               title={`${item.name} — ${rarity?.emoji} ${rarity?.label}`}>
               <span className="text-2xl">{item.icon}</span>
               <span className="text-[9px] font-medium leading-tight text-center">{item.name}</span>
@@ -888,8 +739,9 @@ function WonObjectsSection({ userId }: { userId: string }) {
   );
 }
 
-/** Zona perillosa — Eliminar compte permanentment */
+/** Danger zone — Account deletion */
 function DangerZone({ displayName, onDeleted }: { displayName: string; onDeleted: () => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -903,77 +755,53 @@ function DangerZone({ displayName, onDeleted }: { displayName: string; onDeleted
     try {
       const { data, error } = await supabase.functions.invoke("delete-account");
       if (error || (data && (data as any).error)) {
-        throw new Error((data as any)?.error || error?.message || "Error desconegut");
+        throw new Error((data as any)?.error || error?.message || "Error");
       }
-      toast.success("Compte eliminat. Adéu! 👋");
+      toast.success(t("profile.danger.deletedToast"));
       setOpen(false);
       onDeleted();
     } catch (e: any) {
-      toast.error(`No s'ha pogut eliminar: ${e.message ?? e}`);
+      toast.error(`${t("profile.danger.deleteError")} ${e.message ?? e}`);
       setDeleting(false);
     }
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-destructive/20">
-      <h2 className="text-xs font-semibold text-destructive uppercase tracking-wider mb-2">
-        ⚠️ Zona perillosa
-      </h2>
-      <Tip>Acció irreversible. Totes les teves dades s'esborraran permanentment.</Tip>
+    <div className="mt-4 pt-6 border-t border-destructive/20">
+      <h2 className="text-xs font-semibold text-destructive uppercase tracking-wider mb-2">{t("profile.danger.title")}</h2>
+      <Tip>{t("profile.danger.tip")}</Tip>
       <div className="h-2" />
       {!open ? (
-        <Button
-          variant="outline"
-          className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => setOpen(true)}
-        >
-          🗑️ Eliminar el meu compte
+        <Button variant="outline" className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setOpen(true)}>
+          {t("profile.danger.deleteBtn")}
         </Button>
       ) : (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-3">
           <div className="text-xs space-y-1">
-            <p className="font-semibold text-destructive">S'esborrarà definitivament:</p>
+            <p className="font-semibold text-destructive">{t("profile.danger.willDelete")}</p>
             <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
-              <li>Perfil, lliga, Elo i estadístiques</li>
-              <li>Mascota, accessoris i inventari</li>
-              <li>Recompenses i mobles col·locats</li>
-              <li>Progrés del mode història</li>
-              <li>Referrals i partides en curs</li>
+              <li>{t("profile.danger.item1")}</li>
+              <li>{t("profile.danger.item2")}</li>
+              <li>{t("profile.danger.item3")}</li>
+              <li>{t("profile.danger.item4")}</li>
+              <li>{t("profile.danger.item5")}</li>
             </ul>
             <p className="text-muted-foreground pt-1">
-              Les partides finalitzades es mantindran <strong>anonimitzades</strong> per preservar l'històric dels rivals.
+              {t("profile.danger.anonNote")} <strong>{t("profile.danger.anonNoteBold")}</strong> {t("profile.danger.anonNoteEnd")}
             </p>
           </div>
           <div>
             <label className="text-[11px] font-medium text-foreground block mb-1">
-              Escriu <span className="font-mono text-destructive">{expected || "(sense nom)"}</span> per confirmar:
+              {t("profile.danger.confirmLabel")} <span className="font-mono text-destructive">{expected || t("profile.danger.noName")}</span> {t("profile.danger.confirmEnd")}
             </label>
-            <input
-              type="text"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              disabled={deleting}
+            <input type="text" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} disabled={deleting}
               className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-destructive/40"
-              placeholder={expected}
-              autoComplete="off"
-            />
+              placeholder={expected} autoComplete="off" />
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => { setOpen(false); setConfirmText(""); }}
-              disabled={deleting}
-            >
-              Cancel·lar
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1"
-              onClick={handleDelete}
-              disabled={!canDelete || deleting}
-            >
-              {deleting ? "Eliminant..." : "Eliminar definitivament"}
+            <Button variant="outline" className="flex-1" onClick={() => { setOpen(false); setConfirmText(""); }} disabled={deleting}>{t("profile.danger.cancel")}</Button>
+            <Button variant="destructive" className="flex-1" onClick={handleDelete} disabled={!canDelete || deleting}>
+              {deleting ? t("profile.danger.deleting") : t("profile.danger.confirmDelete")}
             </Button>
           </div>
         </div>
@@ -982,7 +810,7 @@ function DangerZone({ displayName, onDeleted }: { displayName: string; onDeleted
   );
 }
 
-/** Selector d'idioma de joc (UI + contingut narratiu) */
+/** Language selector */
 function LanguageSection() {
   const { lang, setLang } = useLanguage();
   const t = useT();
@@ -995,13 +823,7 @@ function LanguageSection() {
         </div>
         <div className="flex gap-2">
           {(["ca", "en"] as Lang[]).map((l) => (
-            <Button
-              key={l}
-              size="sm"
-              variant={lang === l ? "default" : "outline"}
-              onClick={() => setLang(l)}
-              className="flex-1"
-            >
+            <Button key={l} size="sm" variant={lang === l ? "default" : "outline"} onClick={() => setLang(l)} className="flex-1">
               {t(`lang.${l}`)}
             </Button>
           ))}
@@ -1010,4 +832,3 @@ function LanguageSection() {
     </Card>
   );
 }
-
