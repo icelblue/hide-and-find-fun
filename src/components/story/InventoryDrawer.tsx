@@ -36,6 +36,8 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const itemNameT = (id: string, fallback: string) => translateContent(tx, "story_item_name", id, fallback);
   const recipeNameT = (id: string, fallback: string) => translateContent(tx, "story_recipe_name", id, fallback);
   const recipeDescT = (id: string, fallback: string) => translateContent(tx, "story_recipe_description", id, fallback);
+  const endingTitleT = (id: string, fallback: string) => translateContent(tx, "story_node_title", id, fallback);
+  const accessoryNameT = (name: string) => t(`inventory.accessoryName.${name}`, name);
 
   // Group inventory by item_id with counts (so duplicates show as ×N)
   const grouped = Object.values(
@@ -67,6 +69,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
       if (r.result_item_id && !seenItems.has(r.result_item_id)) { seenItems.add(r.result_item_id); entries.push({ entity_type: "story_item_name", entity_id: r.result_item_id }); }
       for (const reqId of r.requires_items) if (!seenItems.has(reqId)) { seenItems.add(reqId); entries.push({ entity_type: "story_item_name", entity_id: reqId }); }
     }
+    for (const e of jour?.endingsSeen ?? []) entries.push({ entity_type: "story_node_title", entity_id: e.id });
     const map = await fetchTranslations(lang, entries);
     setTx(map);
   };
@@ -267,7 +270,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                     <div key={a.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
                       <span className="text-2xl">{a.accessory_icon}</span>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold truncate">{a.accessory_name}</p>
+                        <p className="text-xs font-bold truncate">{accessoryNameT(a.accessory_name)}</p>
                         <p className="text-[9px] text-muted-foreground">{t("inventory.alwaysEquipped")}</p>
                       </div>
                     </div>
@@ -296,7 +299,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                   {journal.endingsSeen.map((e) => (
                     <div key={e.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
                       <span className="text-2xl">🏁</span>
-                      <p className="text-sm font-medium">{e.title}</p>
+                      <p className="text-sm font-medium">{endingTitleT(e.id, e.title)}</p>
                     </div>
                   ))}
                 </>

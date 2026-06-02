@@ -309,6 +309,17 @@
     "accessoriesHint": "Unlocked by completing chapters and special challenges.",
     "alwaysEquipped": "Always equipped",
     "accessoriesFooter": "Accessories are permanent and visible on {name}'s public profile.",
+    "accessoryName": {
+      "Collar": "Collar",
+      "Llaç": "Bow",
+      "Pilota": "Ball",
+      "Os": "Bone",
+      "Manta": "Blanket",
+      "Joguina": "Plush toy",
+      "Corona de petxines": "Shell crown",
+      "Ala blava": "Blue wing",
+      "Bandana valenta": "Brave bandana"
+    },
     "noEndings": "You haven't reached any ending yet.",
     "noEndingsHint": "Keep playing to discover them! ({n} total)",
     "endingsProgress": "You discovered {seen} of {total} possible endings.",
