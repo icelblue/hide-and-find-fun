@@ -924,7 +924,7 @@ export async function sendSocialItem(
       const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
     } else if (itemType === "barricada") {
-      if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error("Has de seleccionar un camí!");
+      if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error(tt("game.errors.mustSelectPath"));
       const { data: barResult, error: barErr } = await supabase.rpc("execute_barricada" as any, {
         _game_id: gameId, _scenario_from: extraData.scenarioFrom, _scenario_to: extraData.scenarioTo,
       });
