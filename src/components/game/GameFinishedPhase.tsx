@@ -69,7 +69,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const scenarioIds = [...new Set(allMoves.filter(m => m.target_scenario_id).map(m => m.target_scenario_id!))];
       const itemIds = [...new Set(allMoves.filter(m => m.target_item_id).map(m => m.target_item_id!))];
 
-      const [{ data: scenarioData }, { data: itemData }] = await Promise.all([
+      const [{ data: scenarioDataRaw }, { data: itemDataRaw }] = await Promise.all([
         scenarioIds.length > 0
           ? supabase.from("scenarios").select("id, name, icon").in("id", scenarioIds)
           : { data: [] as any[] },
@@ -77,9 +77,11 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
           ? supabase.from("items").select("id, name, icon").in("id", itemIds)
           : { data: [] as any[] },
       ]);
+      const scenarioData = await translateRows(scenarioDataRaw ?? [], "pvp_scenario_name", "id", "name");
+      const itemData = await translateRows(itemDataRaw ?? [], "pvp_item_name", "id", "name");
 
-      const scenarioMap = new Map((scenarioData ?? []).map(s => [s.id, s]));
-      const itemMap = new Map((itemData ?? []).map(i => [i.id, i]));
+      const scenarioMap = new Map(scenarioData.map(s => [s.id, s]));
+      const itemMap = new Map(itemData.map(i => [i.id, i]));
       const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? t("game.results.playerDefault")]));
 
       const log: ActionLogEntry[] = allMoves.map(m => {
