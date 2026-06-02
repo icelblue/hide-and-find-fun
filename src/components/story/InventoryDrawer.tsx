@@ -305,42 +305,21 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
 
             {/* AJUDA */}
             <TabsContent value="help" className="mt-0 space-y-3 text-xs">
-              <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">🎒 Què és la motxilla?</p>
-                <p className="text-muted-foreground">
-                  Aquí guardes els objectes que trobes durant la història. Pots <b>donar-los</b> a {petName}
-                  per cuidar les seves necessitats, o <b>combinar-los</b> seguint receptes per crear-ne de més potents.
-                </p>
-              </div>
-              <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">📊 Barres = més plenes, millor</p>
-                <p className="text-muted-foreground">
-                  <b>Sacietat</b>, <b>Descans</b>, <b>Calma</b> i <b>Vincle</b>: com més plenes, més feliç està {petName}.
-                  Els objectes amb números en verd milloren l'estat; els grocs el desgasten.
-                </p>
-              </div>
-              <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">🧪 Combinar</p>
-                <p className="text-muted-foreground">
-                  A la pestanya <b>Receptes</b>, si tens els ingredients d'una recepta es marca verda i pots
-                  prémer "Combinar". Les receptes es <b>descobreixen automàticament</b> quan acumules els
-                  ingredients a la motxilla.
-                </p>
-              </div>
-              <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">⏰ Necessitats canvien soles</p>
-                <p className="text-muted-foreground">
-                  Cada 12h sense jugar, la <b>Sacietat</b>, el <b>Descans</b> i el <b>Vincle</b> baixen una mica.
-                  Torna i dona-li el que necessita per mantenir-la feliç!
-                </p>
-              </div>
-              <div className="glass rounded-lg p-3 border border-border/30">
-                <p className="font-bold mb-1">🐾 Visites i regals</p>
-                <p className="text-muted-foreground">
-                  Des del perfil d'un altre jugador pots <b>enviar la teva mascota a jugar</b> amb la seva
-                  (cooldown 4h) o <b>regalar-li un objecte</b> de la teva motxilla.
-                </p>
-              </div>
+              {[
+                { t: "whatTitle", b: "whatBody" },
+                { t: "barsTitle", b: "barsBody" },
+                { t: "combineTitle", b: "combineBody" },
+                { t: "needsTitle", b: "needsBody" },
+                { t: "visitsTitle", b: "visitsBody" },
+              ].map((s) => (
+                <div key={s.t} className="glass rounded-lg p-3 border border-border/30">
+                  <p className="font-bold mb-1">{t(`inventory.help.${s.t}`)}</p>
+                  <p
+                    className="text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: t(`inventory.help.${s.b}`, { name: petName }) }}
+                  />
+                </div>
+              ))}
             </TabsContent>
           </Tabs>
         </div>
