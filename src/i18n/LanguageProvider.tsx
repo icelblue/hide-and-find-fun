@@ -123,7 +123,14 @@ export type ContentEntityType =
   | "story_world_description"
   | "story_recipe_name"
   | "story_recipe_description"
-  | "reward_item_name";
+  | "reward_item_name"
+  // PvP content (v1.23.0)
+  | "pvp_scenario_name"
+  | "pvp_item_name"
+  | "pvp_object_name"
+  | "pvp_object_trait"
+  | "pvp_object_special_prompt"
+  | "pvp_item_interaction_label";
 
 /**
  * Bulk fetch traduccions per a una llista d'entitats.
