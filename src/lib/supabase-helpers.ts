@@ -29,6 +29,7 @@
 // ============================================================
 import { supabase } from "@/integrations/supabase/client";
 import { parseTools, type PlayerTools, type ToolType, type Position } from "@/lib/game-types";
+import { translateRows } from "@/i18n/translate-data";
 
 // Re-export for backwards compatibility
 export { parseTools, type ToolType } from "@/lib/game-types";
@@ -140,13 +141,13 @@ export function generateGameCode(): string {
 export async function getScenarios() {
   const { data, error } = await supabase.from("scenarios").select("*").order("display_order");
   if (error) throw error;
-  return data;
+  return translateRows(data ?? [], "pvp_scenario_name", "id", "name");
 }
 
 export async function getItemsByScenario(scenarioId: string) {
   const { data, error } = await supabase.from("items").select("*").eq("scenario_id", scenarioId).order("display_order");
   if (error) throw error;
-  return data;
+  return translateRows(data ?? [], "pvp_item_name", "id", "name");
 }
 
 export async function getItemInteractions(itemIds: string[]) {
@@ -157,7 +158,7 @@ export async function getItemInteractions(itemIds: string[]) {
     .in("item_id", itemIds)
     .order("display_order");
   if (error) throw error;
-  return data ?? [];
+  return translateRows(data ?? [], "pvp_item_interaction_label", "id", "action_label");
 }
 
 // ============================================
@@ -170,8 +171,16 @@ export const TAG_ACTIONS = {
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
 } as const;
 
-// Outdoor scenarios: start dark (need illumination)
-export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó"];
+// Outdoor scenarios: start dark (need illumination).
+// 🔒 Backwards-compatible CA name list (now deprecated — prefer scenarios.is_outdoor flag from BD).
+export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó", "Garden", "Balcony"];
+
+/** Returns true if a scenario object is outdoor (dark by default). Uses BD flag with name fallback. */
+export function isScenarioOutdoor(scenario: { name?: string; is_outdoor?: boolean | null } | null | undefined): boolean {
+  if (!scenario) return false;
+  if (scenario.is_outdoor === true) return true;
+  return scenario.name ? OUTDOOR_SCENARIOS.includes(scenario.name) : false;
+}
 
 /**
  * Deterministic hash from gameId to decide which items are dirty per game.

@@ -7,9 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MATERIAL_LABELS } from "@/lib/supabase-helpers";
 import { getHideMessage } from "@/lib/object-specials";
 import { RARITY_CONFIG } from "@/lib/reward-helpers";
-import { POS_LABELS } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n/LanguageProvider";
+import { translateRows } from "@/i18n/translate-data";
+
 
 
 interface FinishedPhaseProps {
@@ -68,7 +69,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const scenarioIds = [...new Set(allMoves.filter(m => m.target_scenario_id).map(m => m.target_scenario_id!))];
       const itemIds = [...new Set(allMoves.filter(m => m.target_item_id).map(m => m.target_item_id!))];
 
-      const [{ data: scenarioData }, { data: itemData }] = await Promise.all([
+      const [{ data: scenarioDataRaw }, { data: itemDataRaw }] = await Promise.all([
         scenarioIds.length > 0
           ? supabase.from("scenarios").select("id, name, icon").in("id", scenarioIds)
           : { data: [] as any[] },
@@ -76,9 +77,11 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
           ? supabase.from("items").select("id, name, icon").in("id", itemIds)
           : { data: [] as any[] },
       ]);
+      const scenarioData = await translateRows(scenarioDataRaw ?? [], "pvp_scenario_name", "id", "name");
+      const itemData = await translateRows(itemDataRaw ?? [], "pvp_item_name", "id", "name");
 
-      const scenarioMap = new Map((scenarioData ?? []).map(s => [s.id, s]));
-      const itemMap = new Map((itemData ?? []).map(i => [i.id, i]));
+      const scenarioMap = new Map(scenarioData.map(s => [s.id, s]));
+      const itemMap = new Map(itemData.map(i => [i.id, i]));
       const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? t("game.results.playerDefault")]));
 
       const log: ActionLogEntry[] = allMoves.map(m => {
@@ -111,7 +114,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
           description = t("game.results.logMoveTo", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
         } else if (m.action === "look" && m.target_item_id) {
           const itm = itemMap.get(m.target_item_id);
-          const posLabel = m.target_position ? POS_LABELS[m.target_position] ?? m.target_position : "";
+          const posLabel = m.target_position ? t(`game.pos.${m.target_position}`) : "";
           const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
           const hint = m.hint_level != null ? ` ${hintIcons[m.hint_level] ?? ""}` : "";
           const itmLabel = `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim();
@@ -148,15 +151,21 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const rivalSD: any = rival.special_data;
       const isCustom = rivalSD?.is_custom === true;
 
-      const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
+      const [{ data: objRaw }, { data: itmRaw }, { data: rivalProf }] = await Promise.all([
         rival.hidden_object_id && !isCustom
-          ? supabase.from("objects").select("name, icon, material, size").eq("id", rival.hidden_object_id).single()
+          ? supabase.from("objects").select("id, name, icon, material, size").eq("id", rival.hidden_object_id).single()
           : { data: null },
         rival.hidden_item_id
-          ? supabase.from("items").select("name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
+          ? supabase.from("items").select("id, name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
           : { data: null },
         supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
       ]);
+      const [objArr, itmArr] = await Promise.all([
+        objRaw ? translateRows([objRaw as any], "pvp_object_name", "id", "name") : Promise.resolve([null]),
+        itmRaw ? translateRows([itmRaw as any], "pvp_item_name", "id", "name") : Promise.resolve([null]),
+      ]);
+      const obj = objArr[0] as any;
+      const itm = itmArr[0] as any;
       let scn = null;
       if (itm?.scenario_id) {
         scn = scenarios.find((s: any) => s.id === itm.scenario_id) ?? null;
@@ -177,10 +186,11 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         if (rivalSD.custom_trait2) traits.push(rivalSD.custom_trait2);
       } else if (rival.hidden_object_id) {
         const [{ data: traitData }, { data: specialData }] = await Promise.all([
-          supabase.from("object_traits").select("trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
+          supabase.from("object_traits").select("id, trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
           supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
         ]);
-        traits = (traitData ?? []).map((t: any) => t.trait_text);
+        const translatedTraits = await translateRows((traitData ?? []) as any[], "pvp_object_trait", "id", "trait_text");
+        traits = translatedTraits.map((t: any) => t.trait_text);
         specialType = specialData?.special_type ?? null;
       }
 
@@ -262,7 +272,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                     <p>{rivalInfo.scenario.icon} <strong>{rivalInfo.scenario.name}</strong></p>
                   )}
                   {rivalInfo.item && (
-                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {POS_LABELS[rivalInfo.position] ?? rivalInfo.position}</p>
+                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {t(`game.pos.${rivalInfo.position}`, rivalInfo.position)}</p>
                   )}
                 </div>
                 {rivalInfo.traits.length > 0 && (

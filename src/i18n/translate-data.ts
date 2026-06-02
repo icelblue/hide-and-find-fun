@@ -15,6 +15,30 @@ export function getCurrentLang(): Lang {
   return v === "en" ? "en" : "ca";
 }
 
+/**
+ * Generic translator for an array of rows. Mutates each row's `valueKey` to
+ * the EN translation when lang='en' and a translation exists. CA is no-op.
+ * Use for arbitrary BD-fetched lists (scenarios, items, objects…).
+ */
+export async function translateRows<T extends Record<string, any>>(
+  rows: T[],
+  entity_type: ContentEntityType,
+  idKey: keyof T,
+  valueKey: keyof T,
+  lang: Lang = getCurrentLang(),
+): Promise<T[]> {
+  if (lang === "ca" || rows.length === 0) return rows;
+  const entries = rows
+    .filter((r) => r[idKey] != null)
+    .map((r) => ({ entity_type, entity_id: String(r[idKey]) }));
+  const map = await fetchTranslations(lang, entries);
+  return rows.map((r) => {
+    const v = map.get(`${entity_type}:${String(r[idKey])}`);
+    return v ? { ...r, [valueKey]: v } : r;
+  });
+}
+
+
 async function translateBatch(
   lang: Lang,
   entries: Array<{ entity_type: ContentEntityType; entity_id: string }>
