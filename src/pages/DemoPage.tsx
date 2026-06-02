@@ -24,7 +24,7 @@ type Scenario = {
   positions: { id: string; icon: string; labelKey: string }[];
 };
 
-// Amagatall predefinit per tots els escenaris: CALAIX
+// Amagatall del RIVAL (el que has de buscar): sempre CALAIX en aquesta demo
 const HIDDEN_AT = "calaix";
 
 const SCENARIOS: Record<ScenarioId, Scenario> = {
@@ -33,7 +33,8 @@ const SCENARIOS: Record<ScenarioId, Scenario> = {
     icon: "🍳",
     nameKey: "demo.scenario.kitchen",
     object: { icon: "🔑", nameKey: "demo.obj.key" },
-    furniture: { icon: "🗄️", nameKey: "demo.pos.drawer" },
+    // El TEU objecte l'amagues a l'armari (diferent del calaix on busques el del rival)
+    furniture: { icon: "🚪", nameKey: "demo.pos.cupboard" },
     positions: [
       { id: "nevera", icon: "🧊", labelKey: "demo.pos.fridge" },
       { id: "calaix", icon: "🗄️", labelKey: "demo.pos.drawer" },
@@ -46,7 +47,8 @@ const SCENARIOS: Record<ScenarioId, Scenario> = {
     icon: "📚",
     nameKey: "demo.scenario.library",
     object: { icon: "📜", nameKey: "demo.obj.scroll" },
-    furniture: { icon: "🗄️", nameKey: "demo.pos.drawer" },
+    // El TEU objecte l'amagues al bagul
+    furniture: { icon: "🧰", nameKey: "demo.pos.chest" },
     positions: [
       { id: "prestatge", icon: "📚", labelKey: "demo.pos.shelf" },
       { id: "calaix",    icon: "🗄️", labelKey: "demo.pos.drawer" },
@@ -59,7 +61,8 @@ const SCENARIOS: Record<ScenarioId, Scenario> = {
     icon: "🚗",
     nameKey: "demo.scenario.garage",
     object: { icon: "🔧", nameKey: "demo.obj.wrench" },
-    furniture: { icon: "🗄️", nameKey: "demo.pos.drawer" },
+    // El TEU objecte l'amagues a la caixa d'eines
+    furniture: { icon: "🧰", nameKey: "demo.pos.toolbox" },
     positions: [
       { id: "caixaeines", icon: "🧰", labelKey: "demo.pos.toolbox" },
       { id: "calaix",     icon: "🗄️", labelKey: "demo.pos.drawer" },
