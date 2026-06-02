@@ -108,12 +108,12 @@ describe("MATERIAL_LABELS", () => {
     }
   });
 
-  it("fabric is Roba", () => {
-    expect(MATERIAL_LABELS.fabric).toBe("Roba");
+  it("fabric maps to i18n key", () => {
+    expect(MATERIAL_LABELS.fabric).toBe("game.materials.fabric");
   });
 
-  it("food is Menjar", () => {
-    expect(MATERIAL_LABELS.food).toBe("Menjar");
+  it("food maps to i18n key", () => {
+    expect(MATERIAL_LABELS.food).toBe("game.materials.food");
   });
 });
 
