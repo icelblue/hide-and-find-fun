@@ -311,7 +311,34 @@
     "accessoriesFooter": "Accessories are permanent and visible on {name}'s public profile.",
     "noEndings": "You haven't reached any ending yet.",
     "noEndingsHint": "Keep playing to discover them! ({n} total)",
-    "endingsProgress": "You discovered {seen} of {total} possible endings."
+    "endingsProgress": "You discovered {seen} of {total} possible endings.",
+    "toastNotUsable": "This item can't be used directly. Try combining it!",
+    "toastUsed": "{icon} {pet} {verb} {item}!",
+    "toastNoIngredients": "You don't have all the ingredients!",
+    "toastCombined": "✨ You crafted {icon} {name}!",
+    "help": {
+      "whatTitle": "🎒 What is the backpack?",
+      "whatBody": "Here you keep the items you find during the story. You can <b>give them</b> to {name} to take care of their needs, or <b>combine them</b> following recipes to craft stronger ones.",
+      "barsTitle": "📊 Bars = fuller is better",
+      "barsBody": "<b>Fullness</b>, <b>Rest</b>, <b>Calm</b> and <b>Bond</b>: the fuller they are, the happier {name} is. Items with green numbers improve the state; yellow ones drain it.",
+      "combineTitle": "🧪 Combining",
+      "combineBody": "In the <b>Recipes</b> tab, if you have all the ingredients of a recipe it turns green and you can press \"Combine\". Recipes are <b>discovered automatically</b> when you stash the ingredients in your backpack.",
+      "needsTitle": "⏰ Needs drift over time",
+      "needsBody": "Every 12h without playing, <b>Fullness</b>, <b>Rest</b> and <b>Bond</b> drop a little. Come back and give them what they need to stay happy!",
+      "visitsTitle": "🐾 Visits and gifts",
+      "visitsBody": "From another player's profile you can <b>send your pet to play</b> with theirs (4h cooldown) or <b>gift them an item</b> from your backpack."
+    }
+  },
+  "storyEffect": {
+    "eat": { "label": "{icon} Feed", "verb": "is eating" },
+    "devour": { "label": "{icon} Give", "verb": "devours" },
+    "taste": { "label": "{icon} Give", "verb": "tastes" },
+    "drink": { "label": "{icon} Give a drink", "verb": "drinks" },
+    "rest": { "label": "{icon} Tuck in", "verb": "rests with" },
+    "play": { "label": "{icon} Play", "verb": "plays with" },
+    "calm": { "label": "{icon} Soothe", "verb": "takes" },
+    "gift": { "label": "{icon} Gift", "verb": "receives" },
+    "music": { "label": "{icon} Calm with music", "verb": "listens to" }
   },
   "stats": {
     "bond": "Bond",
