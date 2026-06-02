@@ -703,12 +703,12 @@ export async function hideObject(
     const objSize = (obj as any)?.size ?? 2;
     const capacity = (itm as any)?.inner_capacity ?? 2;
     if (objSize > capacity) {
-      throw new Error("L'objecte és massa gran per amagar-lo dins d'aquest moble! Tria una altra posició.");
+      throw new Error(tt("game.errors.objectTooBigInside"));
     }
   }
 
   if (position === "darrere" && (itm as any)?.can_behind === false) {
-    throw new Error("No es pot amagar darrere d'aquest moble! Tria una altra posició.");
+    throw new Error(tt("game.errors.cannotHideBehindThis"));
   }
 
   const material = (obj as any)?.material ?? "generic";
