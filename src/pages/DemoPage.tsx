@@ -291,7 +291,7 @@ function StepWin({
           {t("demo.win.bodyDynamic", {
             n: attempts.length,
             obj: t(scenario.object.nameKey),
-            place: t(scenario.furniture.nameKey),
+            place: t("demo.pos.drawer"),
           })}
         </p>
       </div>
