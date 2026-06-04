@@ -118,6 +118,8 @@
     "loading": "Carregant perfil...",
     "leagueSuffix": "Lliga",
     "editNameAria": "Editar nom",
+    "collectionMasterTitle": "Mestre Col·leccionista",
+    "collectionMasterTooltip": "Has completat els 50 objectes! ×2 tokens bonus + més probabilitat de trobar eines",
     "editName": {
       "title": "✏️ Canvia el teu nom",
       "hint": "Així et veuran els altres jugadors. Entre 2 i 20 caràcters.",
