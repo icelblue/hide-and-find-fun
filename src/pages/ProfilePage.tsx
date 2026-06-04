@@ -321,6 +321,15 @@ export default function ProfilePage() {
             aria-label={t("profile.editNameAria")} title={t("profile.editNameAria")}>✏️</button>
         </div>
         <p className="text-sm font-semibold text-primary capitalize mt-0.5">{profile.league} {t("profile.leagueSuffix")}</p>
+        {profile.collection_master_at && (
+          <div
+            className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold shadow-sm"
+            title={t("profile.collectionMasterTooltip")}
+          >
+            <span>👑</span>
+            <span>{t("profile.collectionMasterTitle")}</span>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="overview" className="relative z-10">

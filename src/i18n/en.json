@@ -118,6 +118,8 @@
     "loading": "Loading profile...",
     "leagueSuffix": "League",
     "editNameAria": "Edit name",
+    "collectionMasterTitle": "Collection Master",
+    "collectionMasterTooltip": "You collected all 50 items! ×2 bonus tokens + higher chance to find tools",
     "editName": {
       "title": "✏️ Change your name",
       "hint": "This is how other players will see you. Between 2 and 20 characters.",

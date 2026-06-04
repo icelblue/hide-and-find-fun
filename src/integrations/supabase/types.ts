@@ -969,6 +969,7 @@ export type Database = {
           avatar_url: string | null
           best_streak: number
           bonus_tokens: number
+          collection_master_at: string | null
           created_at: string
           current_streak: number
           display_name: string | null
@@ -988,6 +989,7 @@ export type Database = {
           avatar_url?: string | null
           best_streak?: number
           bonus_tokens?: number
+          collection_master_at?: string | null
           created_at?: string
           current_streak?: number
           display_name?: string | null
@@ -1007,6 +1009,7 @@ export type Database = {
           avatar_url?: string | null
           best_streak?: number
           bonus_tokens?: number
+          collection_master_at?: string | null
           created_at?: string
           current_streak?: number
           display_name?: string | null
@@ -1614,6 +1617,7 @@ export type Database = {
     }
     Functions: {
       check_both_hidden: { Args: { _game_id: string }; Returns: boolean }
+      check_collection_master: { Args: { _user_id: string }; Returns: boolean }
       check_referral_milestones: {
         Args: { _user_id: string }
         Returns: undefined
