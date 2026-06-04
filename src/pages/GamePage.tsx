@@ -824,6 +824,8 @@ export default function GamePage() {
           const hideMsg = getHideMessage(resolvedRival?.special_data);
           if (hideMsg) toast.info(t("game.toasts.rivalHideMsg", { msg: hideMsg }), { duration: 8000 });
         }
+      } else if (result.cursed) {
+        toast.error(`${t("game.items.cursed")} ${result.bonusTokens}🪙`, { duration: 5000 });
       } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
         const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
         toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });

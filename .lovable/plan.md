@@ -1,113 +1,83 @@
-# Pla de millores (auditat, peça a peça)
+# Pla: Pressió i Bluff — CORE v1
 
-## Estat de les tasques
+Objectiu: més decisió psicològica, menys marge d'error, eines amb pes real. Tot reversible i sense entitats noves.
 
-| # | Tasca | Estat | Notes |
-|---|-------|-------|-------|
-| 1 | Fix pestanyes "How to play" al Lobby | ✅ Fet | `onMouseDown stopPropagation` a l'overlay de HelpButton |
-| 2 | Story mode: motxilla tradueix objectes a EN | ✅ Fet | `story_item_name` + `fetchTranslations` a `InventoryDrawer.tsx`, 25 traduccions EN inserides |
-| 3 | Receptes i ítems Story: més freqüents i variats | ❌ Cancel·lat | Usuari no vol canvis de moment |
-| 4 | PvP: botó compartir + enllaç segur a partida | ✅ Fet | RPC `join_game_by_link` (revoked anon), ruta `/join/:gameId`, botó 🔗 a `GamePage` (Web Share + clipboard + WhatsApp fallback), redirect post-login a `AuthRoute` |
-| 5 | Mode Demo / Guest sense registre | ✅ Fet | Opció A (tutorial guiat 5 pantalles) a `/demo`, sandbox client-side, sense Supabase. Botó "Prova sense registre" a `AuthPage` |
-| 6 | Bug pistes EN (sobre/sota/dins/darrere) | ✅ Fet | `posLabel()` a `GamePage.tsx` + `t("game.pos.*")` a `ItemActions.tsx` |
-| 7 | PetEvolutionCard "Lv Lv" duplicat | ✅ Fet | Eliminat duplicat de label a `PetEvolutionCard.tsx` |
-| 8 | Traducció completa tabs HelpButton (Bàsic/Regles/Premis) | 🔲 Pendent | ~50 strings nous a `ca.json`/`en.json` |
-| 9 | Constants hardcoded: MATERIAL_LABELS, ENVIRONMENT_LABELS, SOCIAL_ITEMS, errors | ✅ Fet | Constants ja eren i18n keys; 9 errors `throw new Error(...)` ara via `tt()` (nou `lib/i18n-helpers.ts`) |
-| 10 | Posicions dins mobles no traduïdes | ✅ Fet | Corregit a `ItemActions.tsx` (línies 128, 136) |
-| 11 | `getObjects()` no tradueix | 🔲 Pendent | Només l'usen alguns punts; traduir a fase següent |
+## Decisions tancades
+| # | Decisió | Valor |
+|---|---------|-------|
+| 1 | Tokens diaris | **5 → 4🪙/dia** |
+| 2 | Cost socials ofensius | SÍ (defensius gratis) |
+| 3 | Caselles maleïdes | **-0.3 base**, **-0.5 si Elo alt** (llindar ≥1400) |
+| 4 | Ordre | CORE sol, validar abans d'opcionals |
+| 5 | Eines | **Consumibles single-use** (drap, martell, llanterna). Tornavís UNLIMITED (no bloquejar joc) |
+| 6 | Pool drap | Pujar RPC 2→**5** (alinear amb client) |
 
----
+## Checklist persistent
+Es guarda a `mem://features/pressure-bluff-checklist.md` i s'actualitza marcant `[x]` cada pas. Així si perdo memòria, només cal llegir-la.
 
-## 3. Receptes i ítems Story: més freqüents i variats [PENDENT]
+```
+[ ] 1. Migració: token_reset 5→4
+[ ] 2. Migració: costs socials (RPCs execute_*)
+[ ] 3. Migració: scenario_bonuses negatius (-0.3) inserts
+[ ] 4. Migració: aplicar -0.5 quan rival.elo>=1400 a execute_look
+[ ] 5. Migració: execute_tag_action revela escenari trencat
+[ ] 6. Migració: TOOLS pool drap 2→5 + consumir eina post-ús
+[ ] 7. Frontend: actualitzar TOKEN_COSTS i UI socials (mostrar cost)
+[ ] 8. Frontend: marcar drap/martell/llanterna com consumibles a UI
+[ ] 9. i18n: textos nous (cost socials, casella maleïda, consum eina)
+[ ] 10. Memory: actualitzar game-mechanics-v2 + social-items + tools-system
+[ ] 11. Validació: jugar 1 partida CPU end-to-end
+```
 
-**Estat actual**: probabilitat baixa de drop, poca varietat percebuda.
+## Detall tècnic
 
-**Pla de balanç (sense trencar saves)**:
-- Auditar `story_nodes` choices que donen items: pujar pes de drop d'ítems comuns 1.5–2x.
-- Receptes: reduir cost (ingredients) en 1 per receptes bàsiques; afegir 3-5 receptes noves de combinació senzilla.
-- Afegir un node "Taller / Mercat" recurrent que aparegui cada X passos amb pool d'ítems aleatori.
-- Tot via migració de dades (UPDATE story_choices SET item_drop_weight, INSERT story_recipes). Sense canvis d'esquema.
-- Traduir els ítems/receptes nous a EN dins la mateixa migració.
+### Bloc 1 — Tokens 5→4
+- `daily_token_reset` cron + funció de reset: canviar literal `5` → `4`
+- `profiles.tokens` default → 4
+- Frontend: cap canvi (llegeix de BD)
 
-**Decisions pendents de l'usuari**:
-- Quants ítems comuns nous? (suggereixo 8-10)
-- % d'augment de drop rate? (suggereixo +50% per comuns, +20% per rars)
-- Quantes receptes noves? (suggereixo 3-5 senzilles de 2 ingredients)
-- Tema preferent? (cuina, alquímia, natura, màgia…)
+### Bloc 2 — Cost socials
+RPCs a tocar amb deducció abans del check de slot:
+| Ítem | Cost |
+|------|------|
+| Plàtan | 0.5🪙 |
+| Barricada | 0.5🪙 |
+| Trampa | 0.5🪙 |
+| Espia | 0.5🪙 |
+| Robar tornavís | 0.5🪙 |
+| Swap | 1.0🪙 |
+| Escut, Missatge, Bomba fum | gratis |
 
----
+Frontend: mostrar `🪙` al SocialItemsPanel.
 
-## 4. PvP: botó compartir + enllaç segur a partida [PENDENT]
+### Bloc 3+4 — Caselles maleïdes
+1. INSERT a `scenario_bonuses`: 2 files per escenari amb `bonus_value='-0.3'` a posicions concretes.
+2. A `execute_look`: si `_bonus_value < 0` i `rival.elo >= 1400` → multiplicar per `5/3` (≈-0.5).
+3. Feedback toast: "💀 Casella maleïda! -0.3🪙"
 
-**Requisits del usuari**:
-- Botó "Compartir" a partida PvP → genera enllaç (WhatsApp, copia, etc.).
-- Si la partida té rival assignat: només aquest rival pot entrar (validació per `auth.uid()`).
-- Si la partida està oberta (sense rival): qui obri l'enllaç i estigui logat pot acceptar com a rival.
+### Bloc 5 — Trencar revela escenari
+`execute_tag_action` (cas `break`): incloure `scenario_id` al payload del missatge cap al rival → notificació "💥 Han trencat un moble al Lavabo".
 
-**Implementació**:
-- Ruta nova: `/join/:gameId` → component `JoinGamePage`.
-  - Si no logat → redirigir a `/auth?redirect=/join/:gameId`.
-  - Si logat: cridar RPC `join_game_by_link(game_id)` que:
-    - Si `rival_user_id` és NULL → assigna `auth.uid()` com a rival, retorna OK.
-    - Si `rival_user_id = auth.uid()` → OK, navega a partida.
-    - Si `rival_user_id != auth.uid()` → error "Aquesta partida ja té rival".
-    - Si `creator_user_id = auth.uid()` → navega a la pròpia partida.
-- Botó "Compartir" a `GamePage` (fase waiting + qualsevol fase): obre Web Share API si suportat, fallback a copy + WhatsApp link (`https://wa.me/?text=...`).
-- Seguretat: la RPC és `security definer` amb `set search_path = public`, valida amb `auth.uid()` (no client-side). RLS de `games` ja restringeix lectura; afegim política de UPDATE per `rival_user_id` només quan és NULL.
-- Edge cases: partida finished/expired → bloquejar join amb missatge clar.
+### Bloc 6 — Eines consumibles
+Canvi gros però net:
+- **Drap**: es consumeix en netejar. Bonus garantit en netejar: +0.3🪙 (palpable).
+- **Martell**: es consumeix en trencar.
+- **Llanterna**: es consumeix per look en fosc (Jardí/Balcó). Si no en tens, look bloquejat en fosc.
+- **Tornavís**: **UNLIMITED** (com ara). Justificació: arreglar és la única manera de desbloquejar "sobre/dins" d'un moble que tu mateix pots haver trencat → no podem bloquejar joc.
+- Pool partida: drap 5, martell 5, llanterna 1, tornavís 5 (sense canvi).
+- `playerTools` decrement al RPC post-acció.
+- UI: badge "1 ús" als consumibles.
 
----
+## Out of scope (validem CORE primer)
+- Reduir loot 15%→8%
+- Espia mostra trail
+- Barricada 2 peatges
+- Mode Història
 
-## 5. Mode Demo / Guest sense registre [PENDENT]
-
-**Objectiu**: provar el joc abans de registrar-se.
-
-**Opció escollida (segura i mínima)**: tutorial interactiu en frontend, no requereix backend ni anonymous auth (prohibida per política):
-- Pàgina `/demo` accessible des d'Auth/Landing.
-- Mode "sandbox" 100% client-side: estat en memòria/localStorage que simula una partida PvP curta contra una IA scriptada (bot que fa moviments predefinits).
-- Reutilitza components `ScenarioPicker`, `ItemActions`, etc. amb un adapter que llegeix d'un store local en lloc de Supabase.
-- Mostra CTA "Registra't per jugar real" al final.
-
-**Per què no anonymous auth**: la política del projecte ho prohibeix explícitament i obriria forat de seguretat (creació massiva de comptes). El mode demo client-side és més segur, no consumeix recursos i és immediat.
-
----
-
-## 8. Traducció completa tabs HelpButton [PENDENT]
-
-**Àmbit**: Pests "Bàsic / Regles / Premis" dins del modal HelpButton (variant PvP).
-
-**Tasca**: ~50 strings nous a `ca.json`/`en.json`. No fet per pressupost de temps a torn anterior.
-
----
-
-## 9. Constants hardcoded a supabase-helpers.ts [PENDENT]
-
-**Llista de constants**:
-- `MATERIAL_LABELS` — traduir a i18n keys
-- `ENVIRONMENT_LABELS` — traduir a i18n keys
-- `SOCIAL_ITEMS` — traduir a i18n keys
-- Errors hardcoded — traduir a i18n keys
-
----
-
-## 11. getObjects() traducció [PENDENT]
-
-**Nota**: Només l'usen alguns punts aïllats del joc. Traducció planificada per a fase posterior.
-
----
-
-## Ordre d'execució proposat (commits separats per seguretat)
-
-1. **Traducció tabs HelpButton** (frontend, JSONs) — risc nul.
-2. **Constants hardcoded supabase-helpers** (frontend, refactor) — risc nul.
-3. **Share-link PvP** (migració RPC + ruta nova + botó) — risc mitjà, requereix tests.
-4. **Mode demo** (ruta nova, sandbox aïllat) — risc nul (no toca BD).
-5. **Balanç receptes/ítems** (migració dades) — risc mitjà, reversible. Necessita confirmació prèvia.
-6. **getObjects() traducció** (frontend) — risc nul.
-7. **Docs + memory updates**.
-
-## Validacions abans de tancar
-
-- Tests existents passen (`regressions.test.ts` ja cobreix REG-015 tabs HelpButton).
-- Linter Supabase net.
-- Manual QA: alternar CA/EN a Lobby, Story, PvP; provar enllaç PvP amb 2 usuaris i amb un no-rival; provar /demo sense login.
+## Tests manuals post-deploy
+1. Reset diari → 4🪙
+2. Plàtan costa 0.5🪙, escut gratis
+3. Trobar casella -0.3 a Elo baix, -0.5 a Elo alt
+4. Trencar moble → rival rep toast amb escenari
+5. Netejar consumeix drap + dona +0.3🪙
+6. Sense llanterna → no pots mirar a Jardí

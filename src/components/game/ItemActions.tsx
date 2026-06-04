@@ -70,7 +70,11 @@ export default function ItemActions({
                         ({t("game.items.needs")} {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : "🔧"})
                       </span>
                     )}
-
+                    {ta.requiresTool && ta.hasTool && (ta.requiresTool === "drap" || ta.requiresTool === "martell") && (
+                      <span className="ml-1 text-[9px] px-1 py-0.5 rounded bg-destructive/20 text-destructive font-semibold">
+                        {t("game.items.consumable")}
+                      </span>
+                    )}
                   </span>
                   <span className="text-[10px] text-muted-foreground">{ta.cost}🪙</span>
                 </button>

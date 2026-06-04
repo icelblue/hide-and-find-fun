@@ -655,7 +655,10 @@
       "done": "✓ done",
       "needs": "needs",
       "openActions": "open actions",
-      "closeActions": "close actions"
+      "closeActions": "close actions",
+      "consumable": "1 use",
+      "cursed": "💀 Cursed spot!",
+      "toolConsumed": "Tool consumed"
     },
     "social": {
       "useItemBtn": "⚡ Use social item",

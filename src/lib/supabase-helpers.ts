@@ -776,13 +776,13 @@ export async function ensureTokensReset(player: any) {
   await supabase
     .from("game_players")
     .update({
-      tokens_remaining: 5.0,
+      tokens_remaining: 4.0,
       tokens_last_reset: today,
       social_item_used_today: false,
     })
     .eq("id", player.id);
 
-  return 5.0;
+  return 4.0;
 }
 
 export async function redeemBonusTokens(gameId: string, userId: string, amount: number) {
@@ -819,6 +819,8 @@ export async function performMove(
     foundObject: result.found_object ?? false,
     foundBonus: result.found_bonus ?? null,
     bonusValue: result.bonus_value ?? null,
+    bonusTokens: result.bonus_tokens ?? 0,
+    cursed: result.cursed ?? false,
     tokensRemaining: result.tokens_remaining ?? 0,
     hintLevel: result.hint_level ?? null,
     toolFound: result.tool_found ?? null,
