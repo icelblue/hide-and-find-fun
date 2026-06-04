@@ -167,6 +167,9 @@ export async function getItemInteractions(itemIds: string[]) {
 // TAG-BASED INTERACTIONS (Netejar, Trencar, Arreglar)
 // ============================================
 
+// 🔒 CRITICAL: REG-016 — costs SINCRONITZATS amb RPC execute_tag_action.
+// Si canvies un cost aquí, actualitza també la migració SQL.
+// Test de sincronia: src/test/tag-costs-sync.test.ts
 export const TAG_ACTIONS = {
   dirty: { icon: "🧹", label: "Netejar", cost: 0.2, requiresTool: "drap" as const },
   breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: "martell" as const },
