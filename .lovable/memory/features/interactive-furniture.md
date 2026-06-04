@@ -1,45 +1,45 @@
 ---
-name: Interactive Furniture System v1.8
-description: Tag-based actions, SHARED COMPETITIVE tool pool (first to find keeps it), breakable state shared, dirty random per game, robar_tornavis social item
+name: Interactive Furniture System v1.9
+description: Tag-based actions (breakable 63 mobles, dirty 7, hidden 0). Tool pool COMPETITIU (veure tools-system.md). Estat trencat COMPARTIT entre jugadors.
 type: feature
 ---
 
 ## Tag-Based Actions
-| Tag | Action | Tool | Cost | Effect |
-|-----|--------|------|------|--------|
-| `dirty` | 🧹 Netejar | 🧹 Drap ✓ | 0.2🪙 | 50% mini bonus |
-| `breakable` | 💥 Trencar | 🔨 Martell ✓ | 0.3🪙 | Notifies rival, moble trencat per TOTS DOS |
-| `broken` | 🔧 Arreglar | 🔧 Tornavís ✓ | 0.2🪙 | Fixes item, 40% mini bonus |
+Veure `tools-system.md` per costos i pool. Resum:
+| Tag | Acció | Eina | Cost |
+|-----|-------|------|------|
+| `dirty` | 🧹 Netejar | 🧹 Drap | 0.2🪙 |
+| `breakable` | 💥 Trencar | 🔨 Martell | 0.3🪙 |
+| `broken` | 🔧 Arreglar | 🔧 Tornavís | 0.2🪙 |
 
-## Tools — SHARED COMPETITIVE POOL
-- **Pool per partida** (compartit entre els 2 jugadors):
-  - 🔨 Martell: **5** total
-  - 🧹 Drap: **2** total
-  - 🔦 Llanterna: **1** total
-  - 🔧 Tornavís: **5** extra (tothom ja comença amb 1)
-- **Qui la troba se la queda!** El rival es queda sense.
-- **UNLIMITED USE**: Un cop trobada, no es gasta
-- **Found**: 20% chance on look/light/clean/fix (5% each type)
-- **Drap**: Auto-donat (1) quan entres a escenari amb mobles bruts
-- **Pool check**: Abans d'atorgar, consulta `game_players.tools` de TOTS dos jugadors
+## Inventari actual de mobles interactius (verificat a BD)
+
+### Breakable: **63 mobles** (gairebé tots)
+L'únic NO breakable a la BD és **Caixa de cartró**. Tota la resta (Aparador, Armari, Arxivador, Banyera, Barbacoa, Baúl, Cadires, Caixa, Calaix, Calaixera, Còmoda, Despensa, Escriptori, Llum, Quadre, Televisió, Vitrina, etc.) tenen `breakable` al tag.
+
+### Dirty: **7 mobles** (verificat a BD)
+- Armari mirall
+- Catifa ×3 (instàncies diferents)
+- Cistella
+- Paperera
+- Rentadora
+
+`getDirtyItemsForGame()` agafa ~60% d'aquests per partida via hash determinístic.
+
+### Hidden: **0 mobles**
+El tag `hidden` no s'usa actualment a cap moble (esborrats d'iteracions anteriors).
+
+## Breakable State — COMPARTIT entre jugadors
+- Stored as `game_moves` amb `bonus_value: "tag:break:{itemId}"`
+- Tots dos jugadors veuen l'estat trencat
+- Arreglar elimina el break (consultat per `EXISTS` en moves posteriors)
+
+## Bloqueig de posicions per estat
+- **Brut** → bloqueja "dins" fins netejar
+- **Trencat** → bloqueja "sobre" + "dins" fins arreglar
 
 ## Social Item: Robar Tornavís
-- Type: `robar_tornavis` (enum social_item_type)
-- Icon: 🔧 | Name: "Robar tornavís"
-- Effect: Roba 1 tornavís del rival i l'afegeix al teu inventari
-- Blocked by shield: YES
-- Error if rival has 0 tornavís
-
-## Breakable State — SHARED between players
-- Stored as `game_moves` with `bonus_value: "tag:break:{itemId}"`
-- Both players see broken state
-- Arreglar removes the break
-
-## Dirty Furniture — Random Per Game
-- `getDirtyItemsForGame(items, gameId)` selects ~60% via deterministic hash
-- Same game = same dirty items
-
-## Current Interactive Items (DB)
-- **Breakable (5)**: Vitrina, Llum×2, Quadre, Televisió, Armari mirall
-- **Dirty (7)**: Catifa×3, Paperera, Armari mirall, Cistella, Rentadora
-- **Hidden (2)**: Gerro (Balcó), Baúl (Jardí)
+Veure `social-items.md` (és un dels 9 ítems actius).
+- Type: `robar_tornavis` (enum `social_item_type`)
+- Roba 1 tornavís del rival. Bloquejat per escut.
+- Error si rival no en té.
