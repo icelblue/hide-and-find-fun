@@ -30,15 +30,18 @@ Cadira, Llum, Catifa, Quadre, Taula, Tovalloler, Barana, Hamaca, Pedra, Banc, Or
 - **Looked spots**: Disable the look button (already checked)
 - Critical: only one action per position needed
 
-## Social Items (1/day)
-- 🍌 **Plàtan**: Blocks 1 random position button. Unblocks on any other action.
-- 💣 **Bomba de fum**: Moves YOUR hidden object to a DIFFERENT scenario (random item + position). 1x/game. Sends self-notification with new location. NOT blocked by shield.
-- 🛡️ **Escut**: Protects from next banana, swap, OR robar_tornavis. Deactivates after blocking. Does NOT block smoke bomb or espia.
-- 🕵️ **Espia**: Reveals which scenario the rival is currently in. Self-targeted (no notification to rival).
-- 🔄 **Intercanvi**: Swaps your current scenario with the rival's. Blocked by shield. Side effects applied BEFORE realtime notification.
-- 💡 **Pista personalitzada**: Send a message/bluff to the rival.
-- 🔧 **Robar tornavís**: Steals 1 screwdriver from rival. Blocked by shield.
-- ~~🔮 Pista falsa~~: REMOVED from game.
+## Social Items (veure `social-items.md` per detalls complets)
+**9 ítems actius** (enum `social_item_type` també conté `false_clue` però NO s'usa al joc):
+- 🍌 **Plàtan** (1/dia) — bloqueja 1 posició del rival
+- 💣 **Bomba de fum** (1/dia, 1x/partida) — mou el teu objecte a DIFERENT escenari + moble
+- 🛡️ **Escut** (1/dia) — bloqueja pròxim plàtan/swap/robar/barricada
+- 🔄 **Intercanvi** (1/dia) — intercanvia escenari actual entre jugadors
+- 🕵️ **Espia** (1/dia) — revela escenari del rival
+- 🚧 **Barricada** (**2/dia**) — bloqueja camí entre 2 escenaris (peatge +1🪙 per forçar)
+- 🪤 **Trampa** (**2/dia**) — col·loca trampa en moble (-1🪙 si rival mira)
+- 💡 **Missatge** (1/dia) — pista o farol al rival (max 80 chars)
+- 🔧 **Robar tornavís** (1/dia) — roba 1 tornavís del rival
+- ~~🔮 Pista falsa~~ — encara a l'enum però **eliminada del joc**
 
 ## Hide Message
 - ONLY available for **special objects** (objects with object_specials entry, e.g. Foto, Joguina)

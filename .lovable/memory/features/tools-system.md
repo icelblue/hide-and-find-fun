@@ -1,27 +1,36 @@
 ---
 name: Tools & Tag Actions
-description: Dirty items block 'dins', broken items block 'sobre'+'dins'. Tools are strategic. Pool: martell 5, drap 5, llanterna 1, tornavis 5. Start with 1 llanterna + 1 tornavis.
+description: SOURCE OF TRUTH per eines. Pool per partida martell 5, drap 5, llanterna 1, tornavis 5. Inici 1 tornavís + 1 llanterna automàtica si escenari fosc.
 type: feature
 ---
 
 ## Eines i Accions de Mobles
 
-### Eines inicials
-- 🔦 Llanterna ×1 (per escenaris foscos: Jardí, Balcó)
+### Eines inicials (cada jugador)
 - 🔧 Tornavís ×1 (per arreglar mobles trencats)
+- 🔦 Llanterna: auto-donada quan entres a escenari fosc (Jardí, Balcó)
+- 🧹 Drap: auto-donat (1) quan entres a escenari amb mobles bruts
 
-### Pool per partida (compartit entre jugadors)
-| Eina | Pool | Prob. roll |
-|------|------|-----------|
-| 🔨 Martell | 5 | 10% |
-| 🧹 Drap | 5 | 8% |
-| 🔧 Tornavís | 5 | 4% |
-| 🔦 Llanterna | 1 | 3% |
+### Pool COMPETITIU per partida (compartit entre els 2 jugadors)
+Verificat a `src/lib/supabase-helpers.ts:271-274`:
+| Eina | Pool | Prob. roll on look |
+|------|------|--------------------|
+| 🔨 Martell | 5 | 5% |
+| 🔧 Tornavís | 5 (extra) | 5% |
+| 🧹 Drap | 5 | 5% |
+| 🔦 Llanterna | 1 | 5% |
 
-### Bloqueig de posicions (ESTRATÈGIC)
-- **Moble brut** 🧹 → bloqueja "dins" fins netejar (cal drap, 0.3🪙)
-- **Moble trencat** 💥 → bloqueja "sobre" + "dins" fins arreglar (cal tornavís, 0.3🪙)
-- **Trencar** moble (cal martell, 0.4🪙) → ofensiu, notifica rival en PvP
+- **Qui la troba se la queda** — el rival es queda sense.
+- **UNLIMITED USE** un cop trobada (no es gasta).
+- **Pool check** a `getRemainingToolPool()` consulta `game_players.tools` de tots dos.
 
-### Determinisme
-- ~60% dels mobles amb tag "dirty" es marquen bruts per partida (hash del gameId)
+### Costs i bloquejos (verificat a supabase-helpers.ts:170-173)
+| Tag | Acció | Eina | Cost | Efecte |
+|-----|-------|------|------|--------|
+| `dirty` | 🧹 Netejar | Drap | 0.2🪙 | Desbloqueja "dins". 50% mini bonus |
+| `breakable` | 💥 Trencar | Martell | 0.3🪙 | Trenca per AMB DOS jugadors. Notifica rival |
+| `broken` | 🔧 Arreglar | Tornavís | 0.2🪙 | Desbloqueja sobre+dins. 40% mini bonus |
+
+### Determinisme dirty
+- `getDirtyItemsForGame(items, gameId)` selecciona ~60% dels mobles `dirty` via hash determinístic del gameId
+- Mateixa partida → mateixos mobles bruts

@@ -1,23 +1,23 @@
 # Memory: index.md
-Updated: now
+Updated: today (verificat contra BD + codi)
 
 # Project Memory
 
 ## Core
 Deduction Duel — joc PvP puzzle de deducció. Català/Castellà UI. Mobile-first (390px).
-Escenari→Zona→Spot→Amagatall (arbre decisió). 5 tokens/dia, 7 dies límit.
-Simultani: amagar + buscar alhora. Elo + Lligues visuals. Pistes: icona + tooltip.
-Accions amb cost variable: 0.3 (observar) / 0.5 (explorar) / 1.0 (investigar) / 1.5 (confirmar).
-Camins 100% predefinits per escenari. 3 escenaris inicials: Cuina, Biblioteca, Garatge.
-🛡️ SEMPRE pre-flight abans de tocar codi (fitxers, risc, tests). Veure safety-protocol.
-🔒 Respectar comentaris `// 🔒 CRITICAL` — tests REG abans i després.
+Escenari → Moble → Posició (sobre/sota/dins/darrere). 5 tokens/dia, 7 dies límit.
+Simultani: amagar + buscar alhora. Elo + Lligues visuals.
+**2 accions actives**: Observar 0.3🪙 (5 nivells de pista 0-4 + 20% soroll) i Moure 0.5🪙. Confirmar/Investigar eliminats v1.5.0.
+**7 escenaris**: Balcó, Cuina, Despatx, Habitació, Jardí, Lavabo, Menjador. Connexions en anell amb 2 veïns cadascun.
+**Mode Història** (separat de PvP): pet personality, story_nodes, RewardReveal després de triar.
 
 ## Memories
-- [Safety protocol](mem://features/safety-protocol) — Pre-flight obligatori, zones 🔒 CRITICAL, smoke E2E
-- [Game architecture](mem://features/game-architecture) — Regles completes, flux, tokens, condicions
-- [Scenarios & Actions](mem://features/scenarios) — 3 escenaris complets amb arbres, accions i costos
-- [Social items](mem://features/social-items) — Plàtan, bomba fum, pista falsa, escut, missatge
-- [Ranking system](mem://features/ranking) — Elo intern + Lligues Bronze→Diamant
-- [Object validation](mem://features/objects) — Regex, diccionari, propietats booleanes
-- [Regressions](mem://features/regressions) — REG-001..REG-015 amb tests
-- [i18n system](mem://features/i18n) — CA/EN híbrid: UI JSON + contingut BD `translations`, fallback CA
+- [Game mechanics v2](mem://features/game-mechanics-v2) — Accions, posicions, pistes, materials, bonus, traits, recompenses
+- [Tools system](mem://features/tools-system) — SOURCE OF TRUTH: pool 5/5/1/5, costs, eines inicials
+- [Interactive furniture](mem://features/interactive-furniture) — Tags (breakable 63 mobles, dirty 7, hidden 0), estat compartit
+- [Social items v3.1](mem://features/social-items) — 9 ítems actius (false_clue eliminat), barricada/trampa 2/dia
+- [Story mode](mem://features/story-mode) — Mode història PvE
+- [i18n](mem://features/i18n) — Català/Castellà/English
+- [PWA notifications](mem://features/pwa-notifications) — Push, manifest
+- [Regressions](mem://features/regressions) — REG-001 a REG-015, protocol de tests
+- [Safety protocol](mem://features/safety-protocol) — Pre-flight obligatori, zones 🔒 CRITICAL
