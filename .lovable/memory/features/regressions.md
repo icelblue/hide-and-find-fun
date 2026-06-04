@@ -34,6 +34,7 @@ Cada regressió documentada amb:
 | REG-013 | Display objecte custom | getTrophyDisplay* prioritza is_custom |
 | REG-014 | Validació icona custom | validateCustomObject + isSingleEmoji |
 | REG-015 | Pestanyes HelpButton tanquen modal | stopPropagation al onClick de tabs |
+| REG-016 | Costos tag (clean/break/fix) client↔RPC desincronitzats | Test extreu cost SQL i compara amb TAG_ACTIONS (`tag-costs-sync.test.ts`) |
 
 ### Protocol per noves regressions
 
