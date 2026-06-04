@@ -20,7 +20,16 @@ Decisions aprovades per l'usuari (veure `.lovable/plan.md` per detall complet).
 - [ ] 8. Frontend: marcar Help amb regles noves
 - [x] 9. i18n: textos nous (casella maleïda, consum eina)
 - [x] 10. Memory: actualitzar game-mechanics-v2 + social-items + tools-system
-- [ ] 11. Validació final: jugar 1 partida CPU end-to-end
+- [x] 11. Validació final CORE: REG-016 test sincronia costos client↔RPC
+- [x] 12. **HOTFIX 2026-06-04**: Restaurat costos RPC originals (clean 0.2 / break 0.3 / fix 0.2). Llanterna pool 1→3.
+
+## Wave C (proposta dissenyada, pendent decisió final)
+**Galleda + Drap mullat + Abrillantar** (idea usuari validada):
+- Eina `galleda` (1 ús, pool partida 2). Drop ~5% al fer clean/fix.
+- Tag `fillable` a: Pica cuina, Pica lavabo, Banyera, Dutxa, Rentadora, Aixetes.
+- Acció `fill_water` (cost 0.3🪙, consumeix galleda) → estat `wet` compartit al moble.
+- **Combo:** Drap normal + moble wet → "Drap mullat" (no es troba enlloc, només via combo).
+- Acció `polish` (drap mullat, consumeix) sobre moble normal → **+2🪙 GARANTIT o pista extra** (decidir).
 
 ## Notes de disseny
 - **Tornavís UNLIMITED** justificació: és l'única manera de desbloquejar "sobre/dins" d'un moble trencat. Si bloquegéssim el joc.
