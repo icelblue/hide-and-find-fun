@@ -655,7 +655,10 @@
       "done": "✓ fet",
       "needs": "cal",
       "openActions": "obrir accions",
-      "closeActions": "tancar accions"
+      "closeActions": "tancar accions",
+      "consumable": "1 ús",
+      "cursed": "💀 Casella maleïda!",
+      "toolConsumed": "Eina gastada"
     },
     "social": {
       "useItemBtn": "⚡ Usar ítem social",
