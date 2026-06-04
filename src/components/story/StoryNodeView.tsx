@@ -77,12 +77,9 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
             const usesItems = c.requires_items && c.requires_items.length > 0;
             const usesBond = typeof c.requires_bond === "number";
             const usesTraits = c.requires_traits && Object.keys(c.requires_traits).length > 0;
-            // Detect if this choice has a trait-based bonus that the pet WILL trigger
-            const traitBonus = personality && c.trait_reward_multiplier
-              ? getRewardTraitBonus(personality, c.trait_reward_multiplier)
-              : null;
-            const hasActiveBonus = !!(traitBonus && traitBonus.trait && traitBonus.multiplier > 1);
-            const isPersonalityChoice = usesTraits || hasActiveBonus;
+            // Bug A fix: NO reveal trait reward bonuses before the choice is made
+            // (the RewardReveal animation handles that after the choice).
+            const isPersonalityChoice = usesTraits;
             return (
               <Button
                 key={c.id}
@@ -116,11 +113,6 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
                           );
                         })}
                       </div>
-                    )}
-                    {hasActiveBonus && traitBonus?.trait && (
-                      <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-semibold`}>
-                        ✨ {t("story.bonus")} {t(`petTrait.${traitBonus.trait}`, TRAIT_META[traitBonus.trait as Trait]?.label ?? "")} ×{traitBonus.multiplier}
-                      </span>
                     )}
                   </div>
                 </div>
