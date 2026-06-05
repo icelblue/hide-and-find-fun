@@ -1589,7 +1589,7 @@ export default function GamePage() {
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
                   onInteraction={handleInteraction} moveHistory={moveHistory}
                   playerTools={playerTools} gameBreaks={gameBreaks}
-                  onTagAction={handleTagAction} dirtyItems={dirtyItems} />
+                  onTagAction={handleTagAction} dirtyItems={dirtyItems} breakableItems={breakableItems} />
               ))}
             </div>
           </div>
