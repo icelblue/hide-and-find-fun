@@ -338,6 +338,7 @@ export type Database = {
           created_by: string
           id: string
           invited_user_id: string | null
+          is_story: boolean
           scenario_id: string | null
           status: Database["public"]["Enums"]["game_status"]
           updated_at: string
@@ -349,6 +350,7 @@ export type Database = {
           created_by: string
           id?: string
           invited_user_id?: string | null
+          is_story?: boolean
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
           updated_at?: string
@@ -360,6 +362,7 @@ export type Database = {
           created_by?: string
           id?: string
           invited_user_id?: string | null
+          is_story?: boolean
           scenario_id?: string | null
           status?: Database["public"]["Enums"]["game_status"]
           updated_at?: string

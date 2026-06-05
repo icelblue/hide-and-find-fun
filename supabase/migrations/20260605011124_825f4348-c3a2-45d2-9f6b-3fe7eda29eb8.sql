@@ -1,0 +1,1 @@
+ALTER TABLE public.games ADD COLUMN IF NOT EXISTS is_story boolean NOT NULL DEFAULT false;
