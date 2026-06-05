@@ -1623,12 +1623,15 @@ export default function GamePage() {
                       <span className="truncate mr-1">
                         <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
                         {m.action === "move" && `🚶→ ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
-                        {m.action === "look" && (
-                          <>
-                            👀 {(m.items as any)?.icon} {m.target_position ? posLabel(m.target_position) : ""}
-                            {hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}
-                          </>
-                        )}
+                        {m.action === "look" && (() => {
+                          const bv = (m as any).bonus_value as string | null;
+                          if (bv && bv.startsWith("tag:")) {
+                            const t = bv.split(":")[1];
+                            const icon = t === "clean" ? "🧹" : t === "break" ? "💥" : t === "fix" ? "🔧" : "⚡";
+                            return <>{icon} {(m.items as any)?.icon} {(m.items as any)?.name}</>;
+                          }
+                          return <>👀 {(m.items as any)?.icon} {m.target_position ? posLabel(m.target_position) : ""}{hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}</>;
+                        })()}
                         {m.found_object && " 🏆"}
                         {m.found_bonus === "extra_token" && " 🎁"}
                       </span>
