@@ -217,12 +217,31 @@ export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<strin
   return dirtySet;
 }
 
+/**
+ * Same idea per als trencables: ~60% subset determinístic per gameId.
+ * Així cada partida varia quins mobles són realment trencables.
+ */
+export function getBreakableItemsForGame(allItems: any[], gameId: string): Set<string> {
+  const eligible = allItems.filter((i: any) => (i.tags ?? []).includes("breakable"));
+  const breakSet = new Set<string>();
+  const seed = hashString(gameId + ":break");
+  for (let i = 0; i < eligible.length; i++) {
+    const itemSeed = hashString(eligible[i].id + gameId + ":break");
+    if (itemSeed % 100 < 60) breakSet.add(eligible[i].id);
+  }
+  if (breakSet.size === 0 && eligible.length > 0) {
+    breakSet.add(eligible[seed % eligible.length].id);
+  }
+  return breakSet;
+}
+
 /** Get tag-based actions available for an item given player's tools and game state */
 export function getTagActions(
   item: any,
   playerTools: Record<string, number>,
   gameBreaks: Set<string>,
   dirtyItems?: Set<string>,
+  breakableItems?: Set<string>,
 ) {
   const tags: string[] = item.tags ?? [];
   const actions: Array<{
@@ -256,7 +275,8 @@ export function getTagActions(
     });
   }
 
-  if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
+  const isBreakableThisGame = breakableItems ? breakableItems.has(item.id) : tags.includes("breakable");
+  if (isBreakableThisGame && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
       tag: "breakable",
@@ -273,7 +293,7 @@ export function getTagActions(
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
   martell: 5,
   drap: 5,
-  llanterna: 3,
+  llanterna: 5,
   tornavis: 5,
 };
 
