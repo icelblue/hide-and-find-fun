@@ -67,9 +67,9 @@ describe("REG-017: CORE PvP no torna a valors/columnes antigues", () => {
     }
   });
 
-  it("pool llanterna client ↔ RPCs està sincronitzat a 3", () => {
-    expect(TOOLS_PER_GAME.llanterna).toBe(3);
-    expect(extractLlanternaPool(latestFunctionSql("execute_tag_action"))).toBe(3);
-    expect(extractLlanternaPool(latestFunctionSql("execute_toggle_light"))).toBe(3);
+  it("pool llanterna client ↔ RPCs està sincronitzat a 5", () => {
+    expect(TOOLS_PER_GAME.llanterna).toBe(5);
+    expect(extractLlanternaPool(latestFunctionSql("execute_tag_action"))).toBe(5);
+    expect(extractLlanternaPool(latestFunctionSql("execute_toggle_light"))).toBe(5);
   });
 });
