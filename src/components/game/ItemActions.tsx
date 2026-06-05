@@ -22,16 +22,17 @@ interface ItemActionsProps {
   gameBreaks?: Set<string>;
   onTagAction?: (itemId: string, actionKey: string) => void;
   dirtyItems?: Set<string>;
+  breakableItems?: Set<string>;
 }
 
 export default function ItemActions({
   item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot,
-  interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems,
+  interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems, breakableItems,
 }: ItemActionsProps) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   const hasInteractions = interactions && interactions.length > 0;
-  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems);
+  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems, breakableItems);
   const hasAnySpecial = hasInteractions || tagActions.length > 0;
   const isBroken = gameBreaks?.has(item.id);
   const isDirty = dirtyItems?.has(item.id) && !gameBreaks?.has(`clean:${item.id}`);
