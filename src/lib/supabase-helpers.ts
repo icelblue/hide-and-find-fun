@@ -858,7 +858,7 @@ export async function performMove(
 // SOCIAL ITEMS
 // ============================================
 
-export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap" | "robar_tornavis" | "barricada" | "trampa";
+export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap" | "robar_tornavis" | "robar_llanterna" | "barricada" | "trampa";
 
 /**
  * Social item catalog. `nameKey`/`descKey` are i18n keys — translate at render with t().
@@ -874,6 +874,7 @@ export const SOCIAL_ITEMS = [
   { type: "trampa" as const, icon: "🪤", nameKey: "game.socialItems.trampa.name", descKey: "game.socialItems.trampa.desc", name: "Trampa", desc: "Col·loca trampa en un moble (-1🪙 al rival si mira) — 2/dia", multiUse: true },
   { type: "message" as const, icon: "💡", nameKey: "game.socialItems.message.name", descKey: "game.socialItems.message.desc", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
   { type: "robar_tornavis" as const, icon: "🔧", nameKey: "game.socialItems.robar_tornavis.name", descKey: "game.socialItems.robar_tornavis.desc", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
+  { type: "robar_llanterna" as const, icon: "🔦", nameKey: "game.socialItems.robar_llanterna.name", descKey: "game.socialItems.robar_llanterna.desc", name: "Robar llanterna", desc: "Roba 1 llanterna al rival" },
 ] as const;
 
 export async function sendSocialItem(
