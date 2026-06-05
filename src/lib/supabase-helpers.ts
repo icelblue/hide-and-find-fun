@@ -178,7 +178,7 @@ export const TAG_ACTIONS = {
 
 // Outdoor scenarios: start dark (need illumination).
 // 🔒 Backwards-compatible CA name list (now deprecated — prefer scenarios.is_outdoor flag from BD).
-export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó", "Garden", "Balcony"];
+export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó", "Garden", "Balcony", "Terrassa", "Pati"];
 
 /** Returns true if a scenario object is outdoor (dark by default). Uses BD flag with name fallback. */
 export function isScenarioOutdoor(scenario: { name?: string; is_outdoor?: boolean | null } | null | undefined): boolean {
