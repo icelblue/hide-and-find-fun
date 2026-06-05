@@ -23,7 +23,7 @@ import {
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason, MATERIAL_LABELS,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
-  OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame,
+  OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame, getBreakableItemsForGame,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
