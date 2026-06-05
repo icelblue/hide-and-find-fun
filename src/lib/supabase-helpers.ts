@@ -273,7 +273,7 @@ export function getTagActions(
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
   martell: 5,
   drap: 5,
-  llanterna: 1,
+  llanterna: 3,
   tornavis: 5,
 };
 
