@@ -280,17 +280,22 @@ export default function GamePage() {
         }
         const gameDirty = getDirtyItemsForGame(loadedItems, gameId);
         setDirtyItems(gameDirty);
+        const gameBreakable = getBreakableItemsForGame(loadedItems, gameId);
+        setBreakableItems(gameBreakable);
 
-        // Auto-give drap if dirty items here (fire-and-forget, don't block)
+        // Auto-give drap via RPC (server-side pool check, no infinite draps)
         const hasDirtyHere = loadedItems.some((i: any) => gameDirty.has(i.id));
         if (hasDirtyHere && playerData) {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
-            tools.drap = 1;
-            supabase.from("game_players").update({ tools }).eq("id", playerData.id).then(() => {});
-            playerData.tools = tools;
-            setPlayerTools({ ...tools });
-            toast.info(t("game.toasts.foundDrap"), { duration: 4000 });
+            supabase.rpc("execute_grant_drap_if_available" as any, { _game_id: gameId }).then(({ data }) => {
+              if ((data as any)?.granted) {
+                tools.drap = 1;
+                playerData.tools = tools;
+                setPlayerTools({ ...tools });
+                toast.info(t("game.toasts.foundDrap"), { duration: 4000 });
+              }
+            });
           }
         }
         // Load interactions now that we have item IDs (single extra query)
