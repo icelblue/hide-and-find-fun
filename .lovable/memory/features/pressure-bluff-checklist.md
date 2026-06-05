@@ -22,7 +22,8 @@ Decisions aprovades per l'usuari (veure `.lovable/plan.md` per detall complet).
 - [x] 10. Memory: actualitzar game-mechanics-v2 + social-items + tools-system
 - [x] 11. Validació final CORE: REG-016 test sincronia costos client↔RPC
 - [x] 12. **HOTFIX 2026-06-04**: Restaurat costos RPC originals (clean 0.2 / break 0.3 / fix 0.2). Llanterna pool 1→3.
-- [x] 13. **REG-017 2026-06-05**: Auditoria automàtica CORE — tokens 4, `elo`, no `i_story`, llanterna pool 3 client↔RPC.
+- [x] 13. **REG-017 2026-06-05**: Auditoria automàtica CORE — tokens 4, `elo`, no `i_story`, llanterna pool sincronitzat.
+- [x] 14. **WAVE 1 2026-06-05**: Llanterna pool 3→5 + fallback gratuït. Tornavís roll prioritari. `execute_robar_llanterna` social gratis. Auto-drap server-side via RPC. Tool roll 15% a `execute_game_move.look`. Barricada restaurada. Server-side tag validation. Outdoor scenarios afegit Terrassa/Pati. `getBreakableItemsForGame` ~60% subset determinístic.
 
 ## Wave C (proposta dissenyada, pendent decisió final)
 **Galleda + Drap mullat + Abrillantar** (idea usuari validada):
