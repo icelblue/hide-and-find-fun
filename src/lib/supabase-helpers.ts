@@ -999,7 +999,7 @@ export async function sendSocialItem(
     game_id: gameId,
     from_player_id: fromPlayerId,
     to_player_id: actualToPlayer,
-    item_type: itemType,
+    item_type: itemType as any,
     message_text: messageText,
     blocked_by_shield: blocked,
   });
