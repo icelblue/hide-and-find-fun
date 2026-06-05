@@ -48,7 +48,7 @@ describe("REG-017: CORE PvP no torna a valors/columnes antigues", () => {
   });
 
   it("RPCs que resetejen tokens usen 4.0", () => {
-    for (const fn of ["execute_tag_action", "execute_toggle_light"]) {
+    for (const fn of ["execute_game_move", "execute_tag_action", "execute_toggle_light"]) {
       const sql = latestFunctionSql(fn);
       expect(sql).toMatch(/tokens_remaining\s*=\s*4\.0/i);
       expect(sql).not.toMatch(/tokens_remaining\s*=\s*5\.0/i);
