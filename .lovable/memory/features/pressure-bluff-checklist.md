@@ -17,11 +17,12 @@ Decisions aprovades per l'usuari (veure `.lovable/plan.md` per detall complet).
 - [x] 5. Migració: execute_tag_action revela nom escenari al trencar
 - [x] 6. Migració: TOOLS consumibles — drap/martell/llanterna decrement on use. Tornavís UNLIMITED. Drap dona +0.3🪙 GARANTIT.
 - [x] 7. Frontend: badge "1 ús" als consumibles
-- [ ] 8. Frontend: marcar Help amb regles noves
+- [x] 8. Frontend: marcar Help amb regles noves (4 tokens, eines ×5/×3)
 - [x] 9. i18n: textos nous (casella maleïda, consum eina)
 - [x] 10. Memory: actualitzar game-mechanics-v2 + social-items + tools-system
 - [x] 11. Validació final CORE: REG-016 test sincronia costos client↔RPC
 - [x] 12. **HOTFIX 2026-06-04**: Restaurat costos RPC originals (clean 0.2 / break 0.3 / fix 0.2). Llanterna pool 1→3.
+- [x] 13. **REG-017 2026-06-05**: Auditoria automàtica CORE — tokens 4, `elo`, no `i_story`, llanterna pool 3 client↔RPC.
 
 ## Wave C (proposta dissenyada, pendent decisió final)
 **Galleda + Drap mullat + Abrillantar** (idea usuari validada):

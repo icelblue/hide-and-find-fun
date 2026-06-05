@@ -908,7 +908,7 @@
       },
       "s6": {
         "title": "🪙 Tokens",
-        "text": "Tens 5 tokens al dia (es reinicien sols). Cada acció gasta una mica. Si t'acabes els tokens, has d'esperar a demà o convidar amics per guanyar bonus tokens."
+        "text": "Tens 4 tokens al dia (es reinicien sols). Cada acció gasta una mica. Si t'acabes els tokens, has d'esperar a demà o convidar amics per guanyar bonus tokens."
       },
       "s7": {
         "title": "⚡ Trucs i ítems socials",
@@ -926,7 +926,7 @@
       },
       "r3": {
         "title": "🪙 Tokens",
-        "text": "Tens 5 tokens al dia, es reinicien automàticament. Pots gastar bonus tokens guanyats de recompenses. Administra'ls bé!"
+        "text": "Tens 4 tokens al dia, es reinicien automàticament. Pots gastar bonus tokens guanyats de recompenses. Administra'ls bé!"
       },
       "r4": {
         "title": "🚶 Moure's · {cost}🪙",
@@ -946,7 +946,7 @@
       },
       "r8": {
         "title": "🎁 Bonus i eines",
-        "text": "Quan observes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap (×2) — netejar mobles bruts.\n🔨 Martell (×5) — trencar mobles fràgils.\n🔧 Tornavís (×5 extra, tothom comença amb 1).\n🔦 Llanterna (×1) — zones fosques.\n⚠️ POOL COMPARTIT: Qui la troba se la queda! El rival es queda sense!"
+        "text": "Quan observes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap (×5) — netejar mobles bruts.\n🔨 Martell (×5) — trencar mobles fràgils.\n🔧 Tornavís (×5 extra, tothom comença amb 1).\n🔦 Llanterna (×3) — zones fosques.\n⚠️ POOL COMPARTIT: Qui la troba se la queda! El rival es queda sense!"
       },
       "r9": {
         "title": "💡 Llum i llanterna",

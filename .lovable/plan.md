@@ -9,24 +9,24 @@ Objectiu: més decisió psicològica, menys marge d'error, eines amb pes real. T
 | 2 | Cost socials ofensius | SÍ (defensius gratis) |
 | 3 | Caselles maleïdes | **-0.3 base**, **-0.5 si Elo alt** (llindar ≥1400) |
 | 4 | Ordre | CORE sol, validar abans d'opcionals |
-| 5 | Eines | **Consumibles single-use** (drap, martell, llanterna). Tornavís UNLIMITED (no bloquejar joc) |
+| 5 | Eines | **Consumibles single-use** (drap, martell, llanterna). Llanterna pool **3**. Tornavís UNLIMITED (no bloquejar joc) |
 | 6 | Pool drap | Pujar RPC 2→**5** (alinear amb client) |
 
 ## Checklist persistent
 Es guarda a `mem://features/pressure-bluff-checklist.md` i s'actualitza marcant `[x]` cada pas. Així si perdo memòria, només cal llegir-la.
 
 ```
-[ ] 1. Migració: token_reset 5→4
+[x] 1. Migració: token_reset 5→4
 [ ] 2. Migració: costs socials (RPCs execute_*)
-[ ] 3. Migració: scenario_bonuses negatius (-0.3) inserts
-[ ] 4. Migració: aplicar -0.5 quan rival.elo>=1400 a execute_look
-[ ] 5. Migració: execute_tag_action revela escenari trencat
-[ ] 6. Migració: TOOLS pool drap 2→5 + consumir eina post-ús
-[ ] 7. Frontend: actualitzar TOKEN_COSTS i UI socials (mostrar cost)
-[ ] 8. Frontend: marcar drap/martell/llanterna com consumibles a UI
-[ ] 9. i18n: textos nous (cost socials, casella maleïda, consum eina)
-[ ] 10. Memory: actualitzar game-mechanics-v2 + social-items + tools-system
-[ ] 11. Validació: jugar 1 partida CPU end-to-end
+[x] 3. Migració: scenario_bonuses negatius (-0.3) inserts
+[x] 4. Migració: aplicar -0.5 quan rival.elo>=1400 a execute_game_move
+[x] 5. Migració: execute_tag_action revela escenari trencat
+[x] 6. Migració: TOOLS pool drap 2→5 + llanterna 3 + consumir eina post-ús
+[ ] 7. Frontend: actualitzar TOKEN_COSTS i UI socials (mostrar cost) — **Wave B pendent**
+[x] 8. Frontend: marcar drap/martell/llanterna com consumibles a UI
+[x] 9. i18n: textos nous (casella maleïda, consum eina, 4 tokens, llanterna ×3)
+[x] 10. Memory: actualitzar game-mechanics-v2 + social-items + tools-system
+[x] 11. Validació: tests REG-016 + REG-017 client↔RPC
 ```
 
 ## Detall tècnic
@@ -64,7 +64,7 @@ Canvi gros però net:
 - **Martell**: es consumeix en trencar.
 - **Llanterna**: es consumeix per look en fosc (Jardí/Balcó). Si no en tens, look bloquejat en fosc.
 - **Tornavís**: **UNLIMITED** (com ara). Justificació: arreglar és la única manera de desbloquejar "sobre/dins" d'un moble que tu mateix pots haver trencat → no podem bloquejar joc.
-- Pool partida: drap 5, martell 5, llanterna 1, tornavís 5 (sense canvi).
+- Pool partida: drap 5, martell 5, llanterna 3, tornavís 5 extra.
 - `playerTools` decrement al RPC post-acció.
 - UI: badge "1 ús" als consumibles.
 
