@@ -908,7 +908,7 @@
       },
       "s6": {
         "title": "🪙 Tokens",
-        "text": "You have 5 tokens per day (they reset on their own). Each action costs a bit. If you run out, wait until tomorrow or invite friends for bonus tokens."
+        "text": "You have 4 tokens per day (they reset on their own). Each action costs a bit. If you run out, wait until tomorrow or invite friends for bonus tokens."
       },
       "s7": {
         "title": "⚡ Tricks and social items",
@@ -926,7 +926,7 @@
       },
       "r3": {
         "title": "🪙 Tokens",
-        "text": "You have 5 tokens per day, they reset automatically. You can spend bonus tokens earned from rewards. Manage them well!"
+        "text": "You have 4 tokens per day, they reset automatically. You can spend bonus tokens earned from rewards. Manage them well!"
       },
       "r4": {
         "title": "🚶 Move · {cost}🪙",
@@ -946,7 +946,7 @@
       },
       "r8": {
         "title": "🎁 Bonus and tools",
-        "text": "When you look, there's a 20% chance to find extra tokens or tools:\n🧹 Rag (×2) — clean dirty furniture.\n🔨 Hammer (×5) — break fragile furniture.\n🔧 Screwdriver (×5 extra, everyone starts with 1).\n🔦 Flashlight (×1) — dark zones.\n⚠️ SHARED POOL: Whoever finds it keeps it! The rival gets none!"
+        "text": "When you look, there's a 20% chance to find extra tokens or tools:\n🧹 Rag (×5) — clean dirty furniture.\n🔨 Hammer (×5) — break fragile furniture.\n🔧 Screwdriver (×5 extra, everyone starts with 1).\n🔦 Flashlight (×3) — dark zones.\n⚠️ SHARED POOL: Whoever finds it keeps it! The rival gets none!"
       },
       "r9": {
         "title": "💡 Light and flashlight",
