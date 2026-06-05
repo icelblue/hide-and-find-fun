@@ -949,6 +949,11 @@ export async function sendSocialItem(
     } else if (itemType === "robar_tornavis") {
       const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
+    } else if (itemType === "robar_llanterna") {
+      const { error: robarErr } = await supabase.rpc("execute_robar_llanterna" as any, { _game_id: gameId });
+      if (robarErr) throw new Error(robarErr.message);
+      // RPC ja insereix a game_social_items, no marquem social_item_used_today (és gratis)
+      return { blocked: false, espiaResult: null };
     } else if (itemType === "barricada") {
       if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error(tt("game.errors.mustSelectPath"));
       const { data: barResult, error: barErr } = await supabase.rpc("execute_barricada" as any, {
