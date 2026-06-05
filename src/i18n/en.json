@@ -868,6 +868,10 @@
       "robar_tornavis": {
         "name": "Steal screwdriver",
         "desc": "Steals 1 screwdriver from the rival"
+      },
+      "robar_llanterna": {
+        "name": "Steal flashlight",
+        "desc": "Steals 1 flashlight from the rival (free)"
       }
     }
   },

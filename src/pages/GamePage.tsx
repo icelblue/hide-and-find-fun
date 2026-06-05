@@ -23,7 +23,7 @@ import {
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason, MATERIAL_LABELS,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
-  OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame,
+  OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame, getBreakableItemsForGame,
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
@@ -116,6 +116,7 @@ export default function GamePage() {
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [playerTools, setPlayerTools] = useState<PlayerTools>(parseTools(null));
   const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
+  const [breakableItems, setBreakableItems] = useState<Set<string>>(new Set());
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
   const [illuminatedScenarios, setIlluminatedScenarios] = useState<Set<string>>(new Set());
   const [scenarioIsDarkState, setScenarioIsDarkState] = useState(false);
@@ -279,17 +280,22 @@ export default function GamePage() {
         }
         const gameDirty = getDirtyItemsForGame(loadedItems, gameId);
         setDirtyItems(gameDirty);
+        const gameBreakable = getBreakableItemsForGame(loadedItems, gameId);
+        setBreakableItems(gameBreakable);
 
-        // Auto-give drap if dirty items here (fire-and-forget, don't block)
+        // Auto-give drap via RPC (server-side pool check, no infinite draps)
         const hasDirtyHere = loadedItems.some((i: any) => gameDirty.has(i.id));
         if (hasDirtyHere && playerData) {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
-            tools.drap = 1;
-            supabase.from("game_players").update({ tools }).eq("id", playerData.id).then(() => {});
-            playerData.tools = tools;
-            setPlayerTools({ ...tools });
-            toast.info(t("game.toasts.foundDrap"), { duration: 4000 });
+            supabase.rpc("execute_grant_drap_if_available" as any, { _game_id: gameId }).then(({ data }) => {
+              if ((data as any)?.granted) {
+                tools.drap = 1;
+                playerData.tools = tools;
+                setPlayerTools({ ...tools });
+                toast.info(t("game.toasts.foundDrap"), { duration: 4000 });
+              }
+            });
           }
         }
         // Load interactions now that we have item IDs (single extra query)
@@ -1583,7 +1589,7 @@ export default function GamePage() {
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
                   onInteraction={handleInteraction} moveHistory={moveHistory}
                   playerTools={playerTools} gameBreaks={gameBreaks}
-                  onTagAction={handleTagAction} dirtyItems={dirtyItems} />
+                  onTagAction={handleTagAction} dirtyItems={dirtyItems} breakableItems={breakableItems} />
               ))}
             </div>
           </div>

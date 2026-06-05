@@ -1643,6 +1643,11 @@ export type Database = {
         }
         Returns: Json
       }
+      execute_grant_drap_if_available: {
+        Args: { _game_id: string }
+        Returns: Json
+      }
+      execute_robar_llanterna: { Args: { _game_id: string }; Returns: Json }
       execute_robar_tornavis: { Args: { _game_id: string }; Returns: Json }
       execute_smoke_bomb: { Args: { _game_id: string }; Returns: Json }
       execute_swap: { Args: { _game_id: string }; Returns: Json }

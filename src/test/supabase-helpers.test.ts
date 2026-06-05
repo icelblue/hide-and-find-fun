@@ -134,8 +134,8 @@ describe("TOKEN_COSTS", () => {
 // SOCIAL ITEMS
 // ============================================
 describe("SOCIAL_ITEMS", () => {
-  it("has all 9 social items", () => {
-    expect(SOCIAL_ITEMS.length).toBe(9);
+  it("has all 10 social items", () => {
+    expect(SOCIAL_ITEMS.length).toBe(10);
   });
 
   it("includes robar_tornavis", () => {
@@ -169,7 +169,7 @@ describe("TOOLS_PER_GAME", () => {
   it("has correct pool sizes", () => {
     expect(TOOLS_PER_GAME.martell).toBe(5);
     expect(TOOLS_PER_GAME.drap).toBe(5);
-    expect(TOOLS_PER_GAME.llanterna).toBe(3);
+    expect(TOOLS_PER_GAME.llanterna).toBe(5);
     expect(TOOLS_PER_GAME.tornavis).toBe(5);
   });
 });

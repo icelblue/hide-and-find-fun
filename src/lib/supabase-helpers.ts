@@ -178,7 +178,7 @@ export const TAG_ACTIONS = {
 
 // Outdoor scenarios: start dark (need illumination).
 // 🔒 Backwards-compatible CA name list (now deprecated — prefer scenarios.is_outdoor flag from BD).
-export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó", "Garden", "Balcony"];
+export const OUTDOOR_SCENARIOS = ["Jardí", "Balcó", "Garden", "Balcony", "Terrassa", "Pati"];
 
 /** Returns true if a scenario object is outdoor (dark by default). Uses BD flag with name fallback. */
 export function isScenarioOutdoor(scenario: { name?: string; is_outdoor?: boolean | null } | null | undefined): boolean {
@@ -217,12 +217,31 @@ export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<strin
   return dirtySet;
 }
 
+/**
+ * Same idea per als trencables: ~60% subset determinístic per gameId.
+ * Així cada partida varia quins mobles són realment trencables.
+ */
+export function getBreakableItemsForGame(allItems: any[], gameId: string): Set<string> {
+  const eligible = allItems.filter((i: any) => (i.tags ?? []).includes("breakable"));
+  const breakSet = new Set<string>();
+  const seed = hashString(gameId + ":break");
+  for (let i = 0; i < eligible.length; i++) {
+    const itemSeed = hashString(eligible[i].id + gameId + ":break");
+    if (itemSeed % 100 < 60) breakSet.add(eligible[i].id);
+  }
+  if (breakSet.size === 0 && eligible.length > 0) {
+    breakSet.add(eligible[seed % eligible.length].id);
+  }
+  return breakSet;
+}
+
 /** Get tag-based actions available for an item given player's tools and game state */
 export function getTagActions(
   item: any,
   playerTools: Record<string, number>,
   gameBreaks: Set<string>,
   dirtyItems?: Set<string>,
+  breakableItems?: Set<string>,
 ) {
   const tags: string[] = item.tags ?? [];
   const actions: Array<{
@@ -256,7 +275,8 @@ export function getTagActions(
     });
   }
 
-  if (tags.includes("breakable") && !gameBreaks.has(item.id)) {
+  const isBreakableThisGame = breakableItems ? breakableItems.has(item.id) : tags.includes("breakable");
+  if (isBreakableThisGame && !gameBreaks.has(item.id)) {
     const cfg = TAG_ACTIONS.breakable;
     actions.push({
       tag: "breakable",
@@ -273,7 +293,7 @@ export function getTagActions(
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
   martell: 5,
   drap: 5,
-  llanterna: 3,
+  llanterna: 5,
   tornavis: 5,
 };
 
@@ -838,7 +858,7 @@ export async function performMove(
 // SOCIAL ITEMS
 // ============================================
 
-export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap" | "robar_tornavis" | "barricada" | "trampa";
+export type SocialItemType = "banana" | "smoke_bomb" | "shield" | "message" | "espia" | "swap" | "robar_tornavis" | "robar_llanterna" | "barricada" | "trampa";
 
 /**
  * Social item catalog. `nameKey`/`descKey` are i18n keys — translate at render with t().
@@ -854,6 +874,7 @@ export const SOCIAL_ITEMS = [
   { type: "trampa" as const, icon: "🪤", nameKey: "game.socialItems.trampa.name", descKey: "game.socialItems.trampa.desc", name: "Trampa", desc: "Col·loca trampa en un moble (-1🪙 al rival si mira) — 2/dia", multiUse: true },
   { type: "message" as const, icon: "💡", nameKey: "game.socialItems.message.name", descKey: "game.socialItems.message.desc", name: "Pista personalitzada", desc: "Envia una pista o farol al rival" },
   { type: "robar_tornavis" as const, icon: "🔧", nameKey: "game.socialItems.robar_tornavis.name", descKey: "game.socialItems.robar_tornavis.desc", name: "Robar tornavís", desc: "Roba 1 tornavís al rival" },
+  { type: "robar_llanterna" as const, icon: "🔦", nameKey: "game.socialItems.robar_llanterna.name", descKey: "game.socialItems.robar_llanterna.desc", name: "Robar llanterna", desc: "Roba 1 llanterna al rival" },
 ] as const;
 
 export async function sendSocialItem(
@@ -928,6 +949,11 @@ export async function sendSocialItem(
     } else if (itemType === "robar_tornavis") {
       const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
+    } else if (itemType === "robar_llanterna") {
+      const { error: robarErr } = await supabase.rpc("execute_robar_llanterna" as any, { _game_id: gameId });
+      if (robarErr) throw new Error(robarErr.message);
+      // RPC ja insereix a game_social_items, no marquem social_item_used_today (és gratis)
+      return { blocked: false, espiaResult: null };
     } else if (itemType === "barricada") {
       if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error(tt("game.errors.mustSelectPath"));
       const { data: barResult, error: barErr } = await supabase.rpc("execute_barricada" as any, {
@@ -973,7 +999,7 @@ export async function sendSocialItem(
     game_id: gameId,
     from_player_id: fromPlayerId,
     to_player_id: actualToPlayer,
-    item_type: itemType,
+    item_type: itemType as any,
     message_text: messageText,
     blocked_by_shield: blocked,
   });
