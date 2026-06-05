@@ -868,6 +868,10 @@
       "robar_tornavis": {
         "name": "Robar tornavís",
         "desc": "Roba 1 tornavís al rival"
+      },
+      "robar_llanterna": {
+        "name": "Robar llanterna",
+        "desc": "Roba 1 llanterna al rival (gratis)"
       }
     }
   },
