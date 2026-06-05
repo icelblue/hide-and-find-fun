@@ -945,6 +945,10 @@ export default function GamePage() {
     if (m.target_item_id && m.target_position && m.action === "look") {
       // Skip looks that happened before the rival's smoke bomb (object moved, hints invalid)
       if (rivalSmokeBombAt && m.created_at < rivalSmokeBombAt) continue;
+      // Skip tag actions (clean/break/fix) — they log as 'look' for audit but are NOT peeks.
+      // Cleaning a furniture must only UNLOCK 'dins', never auto-reveal it.
+      const bv = (m as any).bonus_value as string | null;
+      if (bv && bv.startsWith("tag:")) continue;
       lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
     }
   }
