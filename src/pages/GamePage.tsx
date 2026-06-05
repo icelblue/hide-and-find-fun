@@ -116,6 +116,7 @@ export default function GamePage() {
   const [itemInteractions, setItemInteractions] = useState<any[]>([]);
   const [playerTools, setPlayerTools] = useState<PlayerTools>(parseTools(null));
   const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
+  const [breakableItems, setBreakableItems] = useState<Set<string>>(new Set());
   const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
   const [illuminatedScenarios, setIlluminatedScenarios] = useState<Set<string>>(new Set());
   const [scenarioIsDarkState, setScenarioIsDarkState] = useState(false);
