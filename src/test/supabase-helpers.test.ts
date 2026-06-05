@@ -134,8 +134,8 @@ describe("TOKEN_COSTS", () => {
 // SOCIAL ITEMS
 // ============================================
 describe("SOCIAL_ITEMS", () => {
-  it("has all 9 social items", () => {
-    expect(SOCIAL_ITEMS.length).toBe(9);
+  it("has all 10 social items", () => {
+    expect(SOCIAL_ITEMS.length).toBe(10);
   });
 
   it("includes robar_tornavis", () => {
