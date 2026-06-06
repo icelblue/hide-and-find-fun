@@ -756,6 +756,7 @@
       "bonusTokens": "🎁 +{n}🪙 bonus!",
       "bonusTokensAdded": "+{n}🪙 bonus tokens added to this match!",
       "toolFound": "🔍 You found a {tool}!",
+      "tornavisSpawned": "🔧 A screwdriver appeared on the map!",
       "flashlightOn": "🔦 The flashlight lights up the area! New furniture revealed!",
       "flashlightOff": "🌑 You turned off the area's lighting.",
       "lightsOff": "🌑 You turned off the lights! Nobody sees the furniture.",

@@ -684,6 +684,7 @@ export default function GamePage() {
 
       if (result.bonusResult) toast.success(t("game.toasts.bonusTokens", { n: result.bonusResult.amount }), { duration: 3000 });
       if (result.toolFound) toast.info(t("game.toasts.toolFound", { tool: getToolName(result.toolFound) }), { duration: 4000 });
+      if (result.tornavisSpawned) toast.info(t("game.toasts.tornavisSpawned"), { duration: 4000 });
 
       clearBanana();
       await loadGame();

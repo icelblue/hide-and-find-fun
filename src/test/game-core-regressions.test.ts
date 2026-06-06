@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { TOOLS_PER_GAME } from "@/lib/supabase-helpers";
+import { TOOLS_PER_GAME, OUTDOOR_SCENARIOS } from "@/lib/supabase-helpers";
 
 const MIGRATIONS_DIR = "supabase/migrations";
 
@@ -71,5 +71,15 @@ describe("REG-017: CORE PvP no torna a valors/columnes antigues", () => {
     expect(TOOLS_PER_GAME.llanterna).toBe(5);
     expect(extractLlanternaPool(latestFunctionSql("execute_tag_action"))).toBe(5);
     expect(extractLlanternaPool(latestFunctionSql("execute_toggle_light"))).toBe(5);
+  });
+
+  // REG-018: escenaris outdoor BD ⊆ client OUTDOOR_SCENARIOS (sense drift)
+  it("REG-018: noms outdoor coneguts (Jardí, Balcó) inclosos a OUTDOOR_SCENARIOS client", () => {
+    // Els escenaris reals de BD amb is_outdoor=true són Jardí i Balcó.
+    // Si afegim un escenari nou outdoor a BD, cal afegir-lo aquí o el dark-state es trencarà.
+    const knownOutdoor = ["Jardí", "Balcó"];
+    for (const name of knownOutdoor) {
+      expect(OUTDOOR_SCENARIOS).toContain(name);
+    }
   });
 });
