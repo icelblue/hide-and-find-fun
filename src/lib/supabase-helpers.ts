@@ -342,18 +342,19 @@ export async function rollForTool(gameId: string): Promise<ToolType | null> {
  * Check if a scenario is illuminated.
  * - Indoor scenarios: start ON, can be toggled off/on
  * - Outdoor scenarios: start OFF, can be toggled on with llanterna
- * 
- * We look at tag:light_off / tag:light_on moves.
- * Outdoor scenarios without any light_on move are considered dark.
+ *
+ * Pass `isOutdoor` from BD (`scenarios.is_outdoor`) to avoid hardcoded name matching.
+ * Falls back to OUTDOOR_SCENARIOS list if `isOutdoor` is undefined (legacy callers).
  */
 export function isIlluminated(
   scenarioId: string,
   scenarioName: string,
   allTagMoves: Array<{ bonus_value: string | null }>,
+  isOutdoor?: boolean,
 ): boolean {
-  const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
+  const outdoor = isOutdoor ?? OUTDOOR_SCENARIOS.includes(scenarioName);
   // Default: indoor=ON, outdoor=OFF
-  let lit = !isOutdoor;
+  let lit = !outdoor;
   for (const m of allTagMoves) {
     const val = (m.bonus_value as string) ?? "";
     if (val === `tag:light_off:${scenarioId}`) lit = false;
