@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { TOOLS_PER_GAME } from "@/lib/supabase-helpers";
+import { TOOLS_PER_GAME, OUTDOOR_SCENARIOS } from "@/lib/supabase-helpers";
 
 const MIGRATIONS_DIR = "supabase/migrations";
 
