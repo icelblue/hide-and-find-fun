@@ -756,6 +756,7 @@
       "bonusTokens": "🎁 +{n}🪙 bonus!",
       "bonusTokensAdded": "+{n}🪙 bonus tokens afegits a aquesta partida!",
       "toolFound": "🔍 Has trobat un {tool}!",
+      "tornavisSpawned": "🔧 Ha aparegut un tornavís al mapa!",
       "flashlightOn": "🔦 La llanterna il·lumina la zona! Nous mobles revelats!",
       "flashlightOff": "🌑 Has apagat la il·luminació de la zona.",
       "lightsOff": "🌑 Has apagat el llum! Ningú veu els mobles.",
