@@ -1,5 +1,5 @@
 # Memory: index.md
-Updated: today (CORE v1 Pressió i Bluff)
+Updated: 2026-06-07 (Wave 1 + Wave 2 aplicades)
 
 # Project Memory
 
