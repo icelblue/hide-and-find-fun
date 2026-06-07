@@ -8,10 +8,13 @@ Deduction Duel — joc PvP puzzle de deducció. Català/Castellà UI. Mobile-fir
 7 escenaris reals: Balcó, Cuina, Despatx, Habitació, Jardí, Lavabo, Menjador.
 2 accions actives: Observar 0.3🪙, Moure 0.5🪙. **4 tokens/dia**, 7 dies límit.
 Simultani: amagar + buscar alhora. Elo + Lligues visuals. Pistes: 5 nivells icona+tooltip.
-Eines pool partida: martell 5, drap 5, llanterna 3, tornavís 5 extra. Drop 25% (30% si Mestre Col·leccionista).
-**Eines consumibles**: drap (clean), martell (break), llanterna (encendre exterior). Tornavís UNLIMITED.
+Eines pool partida: martell 5, drap 5, llanterna **5**, tornavís 5. Drop 25% (30% si Mestre Col·leccionista).
+**Eines consumibles**: drap (clean), martell (break), llanterna (encendre exterior). Tornavís UNLIMITED en ús (pot quedar a 0 però roll prioritari + `execute_robar_tornavis` social).
+**Anti-bloqueig llanterna**: `execute_toggle_light` regala llanterna gratis del pool si vols encendre exterior i no en té ningú. Social `execute_robar_llanterna` gratis.
 **Caselles maleïdes**: -0.3🪙 (-0.5 si rival Elo≥1400). 14 caselles (2/escenari).
-Netejar = **+0.3🪙 GARANTIT**. Trencar revela escenari al rival.
+Netejar = **+0.3🪙 GARANTIT** (drap auto-donat via RPC `execute_grant_drap_if_available`). Trencar revela escenari al rival.
+**Outdoor scenarios** (necessiten llanterna de nit): Jardí, Balcó, Terrassa, Pati — derivat de BD `scenarios.is_outdoor`.
+**Breakable/Dirty**: ~60% subset determinístic per partida via hash (`getBreakableItemsForGame` / `getDirtyItemsForGame`).
 Mestre Col·leccionista (50/50 reward_items): ×2 bonus tokens + +5% prob eines + badge 👑.
 
 ## Memories
