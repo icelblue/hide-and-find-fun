@@ -929,11 +929,21 @@ export async function sendSocialItem(
 
   let espiaResult: string | null = null;
 
+  // Wave B: deduct social cost BEFORE any action (RPC handles validation + reset)
+  const cost = SOCIAL_COSTS[itemType] ?? 0;
+  if (cost > 0 && !blocked) {
+    const { error: costErr } = await supabase.rpc("consume_social_cost" as any, {
+      _game_id: gameId, _cost: cost,
+    });
+    if (costErr) throw new Error(costErr.message);
+  }
+
   // Execute the action FIRST, before marking as used (so if it fails, the user can retry)
   if (blocked) {
     await supabase.from("game_players").update({ shield_active: false }).eq("id", toPlayer!.id);
   } else {
     if (itemType === "shield") {
+      await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
       await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
       const { data: bombResult, error: bombErr } = await supabase.rpc("execute_smoke_bomb" as any, { _game_id: gameId });
