@@ -1,5 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/i18n/LanguageProvider", () => ({
+  useT: () => (key: string, fallback?: string) => fallback ?? key,
+  useLanguage: () => ({ lang: "ca", setLang: vi.fn(), t: (k: string) => k }),
+  useContentT: () => (_t: unknown, fallback: string) => fallback,
+  LanguageProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 import { SpecialFoundPopup } from "@/components/game/GamePopups";
 import { buildTrophySpecialData, getHideMessage, getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 
