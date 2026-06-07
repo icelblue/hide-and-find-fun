@@ -878,6 +878,23 @@ export const SOCIAL_ITEMS = [
   { type: "robar_llanterna" as const, icon: "🔦", nameKey: "game.socialItems.robar_llanterna.name", descKey: "game.socialItems.robar_llanterna.desc", name: "Robar llanterna", desc: "Roba 1 llanterna al rival" },
 ] as const;
 
+/**
+ * Costos socials ofensius (Wave B). Ítems defensius (shield, message, smoke_bomb,
+ * robar_llanterna) = gratis. Sincronitzat amb RPC `consume_social_cost`.
+ */
+export const SOCIAL_COSTS: Record<SocialItemType, number> = {
+  banana: 0.5,
+  barricada: 0.5,
+  trampa: 0.5,
+  espia: 0.5,
+  robar_tornavis: 0.5,
+  swap: 1.0,
+  shield: 0,
+  message: 0,
+  smoke_bomb: 0,
+  robar_llanterna: 0,
+};
+
 export async function sendSocialItem(
   gameId: string,
   fromPlayerId: string,
