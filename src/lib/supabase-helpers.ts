@@ -944,7 +944,6 @@ export async function sendSocialItem(
   } else {
     if (itemType === "shield") {
       await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
-      await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
       const { data: bombResult, error: bombErr } = await supabase.rpc("execute_smoke_bomb" as any, { _game_id: gameId });
       if (bombErr) throw new Error(bombErr.message);
