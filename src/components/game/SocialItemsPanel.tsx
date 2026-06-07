@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SOCIAL_ITEMS, type SocialItemType } from "@/lib/supabase-helpers";
+import { SOCIAL_ITEMS, SOCIAL_COSTS, type SocialItemType } from "@/lib/supabase-helpers";
 import { useT } from "@/i18n/LanguageProvider";
 
 
