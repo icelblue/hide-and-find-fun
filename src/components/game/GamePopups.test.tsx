@@ -1,5 +1,24 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import caStrings from "@/i18n/ca.json";
+
+function lookup(key: string): string {
+  return key.split(".").reduce<any>((acc, k) => (acc && typeof acc === "object" ? acc[k] : undefined), caStrings) ?? key;
+}
+
+vi.mock("@/i18n/LanguageProvider", () => ({
+  useT: () => (key: string, varsOrFallback?: any, maybeFallback?: string) => {
+    const val = lookup(key);
+    if (typeof val === "string") return val;
+    if (typeof varsOrFallback === "string") return varsOrFallback;
+    if (typeof maybeFallback === "string") return maybeFallback;
+    return key;
+  },
+  useLanguage: () => ({ lang: "ca", setLang: vi.fn(), t: (k: string) => lookup(k) }),
+  useContentT: () => (_t: unknown, fallback: string) => fallback,
+  LanguageProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 import { SpecialFoundPopup } from "@/components/game/GamePopups";
 import { buildTrophySpecialData, getHideMessage, getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 
