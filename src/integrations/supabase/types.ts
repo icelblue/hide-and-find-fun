@@ -1626,6 +1626,10 @@ export type Database = {
         Returns: undefined
       }
       claim_reminder_bonus: { Args: { _claim_token: string }; Returns: Json }
+      consume_social_cost: {
+        Args: { _cost: number; _game_id: string }
+        Returns: Json
+      }
       count_game_players: { Args: { _game_id: string }; Returns: number }
       delete_user_account: { Args: never; Returns: Json }
       execute_barricada: {

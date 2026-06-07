@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SOCIAL_ITEMS, type SocialItemType } from "@/lib/supabase-helpers";
+import { SOCIAL_ITEMS, SOCIAL_COSTS, type SocialItemType } from "@/lib/supabase-helpers";
 import { useT } from "@/i18n/LanguageProvider";
 
 
@@ -75,7 +75,9 @@ export default function SocialItemsPanel({
             const isMultiUse = MULTI_USE_ITEMS.has(item.type);
             const isBombUsed = item.type === "smoke_bomb" && player.smoke_bomb_used;
             const multiRemaining = isMultiUse ? (item.type === "barricada" ? barricadaRemaining : trampaRemaining) : 0;
-            const isDisabled = isBombUsed || actionLoading ||
+            const cost = SOCIAL_COSTS[item.type as SocialItemType] ?? 0;
+            const notEnoughTokens = cost > 0 && (player.tokens_remaining ?? 0) < cost;
+            const isDisabled = isBombUsed || actionLoading || notEnoughTokens ||
               (isMultiUse ? multiRemaining <= 0 : singleUseDisabled);
 
             return (
@@ -85,6 +87,9 @@ export default function SocialItemsPanel({
                 className={`glass rounded-xl p-3 text-center transition-all active:scale-[0.95] hover:border-accent/40 group relative ${isDisabled ? "opacity-30" : ""}`}>
                 <span className="text-3xl block mb-1.5">{item.icon}</span>
                 <span className="text-[11px] font-semibold block leading-tight">{t(item.nameKey)}</span>
+                {cost > 0 && (
+                  <span className="text-[10px] text-accent font-bold block mt-0.5">{cost}🪙</span>
+                )}
                 {isMultiUse && (
                   <span className="text-[9px] text-muted-foreground block mt-0.5">
                     {multiRemaining}/2

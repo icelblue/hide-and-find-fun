@@ -11,7 +11,7 @@ Decisions aprovades per l'usuari (veure `.lovable/plan.md` per detall complet).
 ## Checklist (marcar `[x]` quan fet)
 
 - [x] 1. Migració: token_reset 5→4 (execute_tag_action + execute_toggle_light + default)
-- [ ] 2. Migració: costs socials (RPCs execute_*) — **WAVE B**
+- [x] 2. Migració: costs socials via `consume_social_cost` RPC (Plàtan/Barricada/Trampa/Espia/Robar tornavís 0.5🪙, Swap 1.0🪙). Defensius gratis. Client `sendSocialItem` dedueix abans d'executar. UI mostra cost al `SocialItemsPanel`. **WAVE B 2026-06-07**.
 - [x] 3. Migració: scenario_bonuses negatius (-0.3) inserts (2 per escenari × 7 = 14 caselles)
 - [x] 4. Migració: aplicar -0.5 quan rival.elo>=1400 a execute_game_move
 - [x] 5. Migració: execute_tag_action revela nom escenari al trencar
