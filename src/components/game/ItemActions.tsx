@@ -68,10 +68,10 @@ export default function ItemActions({
                     {ta.label}
                     {ta.requiresTool && !ta.hasTool && (
                       <span className="text-[9px] text-muted-foreground ml-1">
-                        ({t("game.items.needs")} {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : "🔧"})
+                        ({t("game.items.needs")} {ta.requiresTool === "drap" ? "🧹" : ta.requiresTool === "martell" ? "🔨" : ta.requiresTool === "galleda" ? "🪣+🧹" : ta.requiresTool === "drap_mullat" ? "✨" : "🔧"})
                       </span>
                     )}
-                    {ta.requiresTool && ta.hasTool && (ta.requiresTool === "drap" || ta.requiresTool === "martell") && (
+                    {ta.requiresTool && ta.hasTool && (ta.requiresTool === "drap" || ta.requiresTool === "martell" || ta.requiresTool === "galleda" || ta.requiresTool === "drap_mullat") && (
                       <span className="ml-1 text-[9px] px-1 py-0.5 rounded bg-destructive/20 text-destructive font-semibold">
                         {t("game.items.consumable")}
                       </span>
