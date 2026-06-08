@@ -1445,9 +1445,9 @@ export default function GamePage() {
             {noTokens && (
               <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">{t("game.search.noTokens")}</span>
             )}
-            {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0 || playerTools.llanterna > 0) && (
+            {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0 || playerTools.llanterna > 0 || playerTools.galleda > 0 || playerTools.drap_mullat > 0) && (
               <span className="bg-secondary/10 text-secondary text-[11px] font-semibold px-3 py-1 rounded-full border border-secondary/20">
-                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.tornavis > 0 ? ` 🔧${playerTools.tornavis}` : ""}{playerTools.martell > 0 ? ` 🔨${playerTools.martell}` : ""}{playerTools.llanterna > 0 ? ` 🔦${playerTools.llanterna}` : ""}
+                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.tornavis > 0 ? ` 🔧${playerTools.tornavis}` : ""}{playerTools.martell > 0 ? ` 🔨${playerTools.martell}` : ""}{playerTools.llanterna > 0 ? ` 🔦${playerTools.llanterna}` : ""}{playerTools.galleda > 0 ? ` 🪣${playerTools.galleda}` : ""}{playerTools.drap_mullat > 0 ? ` ✨${playerTools.drap_mullat}` : ""}
               </span>
             )}
           </div>
