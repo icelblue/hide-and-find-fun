@@ -174,6 +174,8 @@ export const TAG_ACTIONS = {
   dirty: { icon: "🧹", label: "Netejar", cost: 0.2, requiresTool: "drap" as const },
   breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: "martell" as const },
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
+  fillable: { icon: "🪣", label: "Mullar drap", cost: 0.3, requiresTool: "galleda" as const },
+  polish: { icon: "✨", label: "Abrillantar (+2🪙)", cost: 0, requiresTool: "drap_mullat" as const },
 } as const;
 
 // Outdoor scenarios: start dark (need illumination).
