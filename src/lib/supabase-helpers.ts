@@ -295,19 +295,23 @@ export const TOOLS_PER_GAME: Record<ToolType, number> = {
   drap: 5,
   llanterna: 5,
   tornavis: 5,
+  galleda: 2,        // Wave C: pool partida 2 (drop 5%)
+  drap_mullat: 99,   // sense límit pool (només via combo galleda+drap)
 };
 
 /** Get how many of each tool have been found in this game (both players combined) */
 async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, number>> {
   const { data: players } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
 
-  const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0 };
+  const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0, galleda: 0, drap_mullat: 0 };
   for (const p of (players as any[]) ?? []) {
     const t = parseTools(p.tools);
     totals.martell += t.martell;
     totals.drap += t.drap;
     totals.llanterna += t.llanterna;
     totals.tornavis += Math.max(0, t.tornavis - 1); // -1 for the starting one
+    totals.galleda += t.galleda;
+    totals.drap_mullat += t.drap_mullat;
   }
   return totals;
 }
