@@ -15,6 +15,8 @@ Eines pool partida: martell 5, drap 5, llanterna **5**, tornavís 5. Drop 25% (3
 Netejar = **+0.3🪙 GARANTIT** (drap auto-donat via RPC `execute_grant_drap_if_available`). Trencar revela escenari al rival.
 **Outdoor scenarios** (necessiten llanterna de nit): Jardí, Balcó, Terrassa, Pati — derivat de BD `scenarios.is_outdoor`.
 **Breakable/Dirty**: ~60% subset determinístic per partida via hash (`getBreakableItemsForGame` / `getDirtyItemsForGame`).
+**Costos socials** (Wave B): Plàtan/Barricada/Trampa/Espia/Robar tornavís 0.5🪙, Swap 1.0🪙. Defensius (Escut, Missatge, Bomba fum, Robar llanterna) gratis. RPC `consume_social_cost`.
+**Wave C — Polish**: galleda (pool 2, drop 5% en clean/fix) + drap → drap_mullat (RPC `execute_fill_water`, 0.3🪙). Drap_mullat sobre moble normal → **+2🪙 garantit** (RPC `execute_polish`). Mobles fillable: Banyera, Pica×2, Rentadora.
 Mestre Col·leccionista (50/50 reward_items): ×2 bonus tokens + +5% prob eines + badge 👑.
 
 ## Memories
