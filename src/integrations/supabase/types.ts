@@ -1636,6 +1636,10 @@ export type Database = {
         Args: { _game_id: string; _scenario_from: string; _scenario_to: string }
         Returns: Json
       }
+      execute_fill_water: {
+        Args: { _game_id: string; _item_id: string }
+        Returns: Json
+      }
       execute_game_move: {
         Args: {
           _action: Database["public"]["Enums"]["action_type"]
@@ -1649,6 +1653,10 @@ export type Database = {
       }
       execute_grant_drap_if_available: {
         Args: { _game_id: string }
+        Returns: Json
+      }
+      execute_polish: {
+        Args: { _game_id: string; _item_id: string }
         Returns: Json
       }
       execute_robar_llanterna: { Args: { _game_id: string }; Returns: Json }
@@ -1768,6 +1776,7 @@ export type Database = {
       }
       register_referral: { Args: { _referral_code: string }; Returns: Json }
       resolve_my_pet_visits: { Args: never; Returns: Json }
+      roll_galleda_drop: { Args: { _game_id: string }; Returns: Json }
       sell_reward_item: { Args: { _player_reward_id: string }; Returns: number }
       send_pet_visit: { Args: { _host_user_id: string }; Returns: Json }
       start_game_setup: { Args: { _game_id: string }; Returns: undefined }

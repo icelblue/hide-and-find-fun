@@ -174,6 +174,8 @@ export const TAG_ACTIONS = {
   dirty: { icon: "🧹", label: "Netejar", cost: 0.2, requiresTool: "drap" as const },
   breakable: { icon: "💥", label: "Trencar", cost: 0.3, requiresTool: "martell" as const },
   broken: { icon: "🔧", label: "Arreglar", cost: 0.2, requiresTool: "tornavis" as const },
+  fillable: { icon: "🪣", label: "Mullar drap", cost: 0.3, requiresTool: "galleda" as const },
+  polish: { icon: "✨", label: "Abrillantar (+2🪙)", cost: 0, requiresTool: "drap_mullat" as const },
 } as const;
 
 // Outdoor scenarios: start dark (need illumination).
@@ -286,28 +288,77 @@ export function getTagActions(
     });
   }
 
+  const tagsArr: string[] = tags;
+  const isFillable = tagsArr.includes("fillable");
+  const isBrokenNow = gameBreaks.has(item.id);
+  const isDirtyNow = isDirtyThisGame && !gameBreaks.has(`clean:${item.id}`);
+
+  // Wave C: fill_water — requires galleda + drap
+  if (isFillable && !isBrokenNow) {
+    const cfg = TAG_ACTIONS.fillable;
+    const hasGalleda = (playerTools.galleda ?? 0) > 0;
+    const hasDrap = (playerTools.drap ?? 0) > 0;
+    actions.push({
+      tag: "fillable",
+      ...cfg,
+      hasTool: hasGalleda && hasDrap,
+      actionKey: `fill_water:${item.id}`,
+    });
+  }
+
+  // Wave C: polish — requires drap_mullat, item must be "normal" (not dirty/broken)
+  if (!isBrokenNow && !isDirtyNow && (playerTools.drap_mullat ?? 0) > 0) {
+    const cfg = TAG_ACTIONS.polish;
+    actions.push({
+      tag: "polish",
+      ...cfg,
+      hasTool: true,
+      actionKey: `polish:${item.id}`,
+    });
+  }
+
   return actions;
 }
 
-// Shared tool pool per game
+export async function executeFillWater(gameId: string, itemId: string) {
+  const { data, error } = await supabase.rpc("execute_fill_water" as any, { _game_id: gameId, _item_id: itemId });
+  if (error) throw new Error(error.message);
+  return data as any;
+}
+
+export async function executePolish(gameId: string, itemId: string) {
+  const { data, error } = await supabase.rpc("execute_polish" as any, { _game_id: gameId, _item_id: itemId });
+  if (error) throw new Error(error.message);
+  return data as any;
+}
+
+export async function rollGalledaDrop(gameId: string) {
+  const { data, error } = await supabase.rpc("roll_galleda_drop" as any, { _game_id: gameId });
+  if (error) return { dropped: false };
+  return data as any;
+}
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
   martell: 5,
   drap: 5,
   llanterna: 5,
   tornavis: 5,
+  galleda: 2,        // Wave C: pool partida 2 (drop 5%)
+  drap_mullat: 99,   // sense límit pool (només via combo galleda+drap)
 };
 
 /** Get how many of each tool have been found in this game (both players combined) */
 async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, number>> {
   const { data: players } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
 
-  const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0 };
+  const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0, galleda: 0, drap_mullat: 0 };
   for (const p of (players as any[]) ?? []) {
     const t = parseTools(p.tools);
     totals.martell += t.martell;
     totals.drap += t.drap;
     totals.llanterna += t.llanterna;
     totals.tornavis += Math.max(0, t.tornavis - 1); // -1 for the starting one
+    totals.galleda += t.galleda;
+    totals.drap_mullat += t.drap_mullat;
   }
   return totals;
 }

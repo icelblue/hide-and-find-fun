@@ -6,13 +6,15 @@
 // TOOL SYSTEM
 // ============================================
 
-export type ToolType = "drap" | "tornavis" | "martell" | "llanterna";
+export type ToolType = "drap" | "tornavis" | "martell" | "llanterna" | "galleda" | "drap_mullat";
 
 export type PlayerTools = {
   drap: number;
   tornavis: number;
   martell: number;
   llanterna: number;
+  galleda: number;
+  drap_mullat: number;
 };
 
 /** Default tools every player starts with */
@@ -21,6 +23,8 @@ export const DEFAULT_TOOLS: PlayerTools = {
   tornavis: 1,
   martell: 0,
   llanterna: 1,
+  galleda: 0,
+  drap_mullat: 0,
 } as const;
 
 /** Safely parse tools from the jsonb column */
@@ -32,6 +36,8 @@ export function parseTools(raw: unknown): PlayerTools {
       tornavis: t.tornavis ?? DEFAULT_TOOLS.tornavis,
       martell: t.martell ?? DEFAULT_TOOLS.martell,
       llanterna: t.llanterna ?? DEFAULT_TOOLS.llanterna,
+      galleda: t.galleda ?? DEFAULT_TOOLS.galleda,
+      drap_mullat: t.drap_mullat ?? DEFAULT_TOOLS.drap_mullat,
     };
   }
   return { ...DEFAULT_TOOLS };
@@ -44,6 +50,8 @@ export function getToolName(tool: ToolType): string {
     tornavis: "🔧 Tornavís",
     martell: "🔨 Martell",
     llanterna: "🔦 Llanterna",
+    galleda: "🪣 Galleda",
+    drap_mullat: "✨ Drap mullat",
   };
   return names[tool];
 }
