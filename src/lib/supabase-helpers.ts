@@ -288,10 +288,55 @@ export function getTagActions(
     });
   }
 
+  const tagsArr: string[] = tags;
+  const isFillable = tagsArr.includes("fillable");
+  const isBrokenNow = gameBreaks.has(item.id);
+  const isDirtyNow = isDirtyThisGame && !gameBreaks.has(`clean:${item.id}`);
+
+  // Wave C: fill_water — requires galleda + drap
+  if (isFillable && !isBrokenNow) {
+    const cfg = TAG_ACTIONS.fillable;
+    const hasGalleda = (playerTools.galleda ?? 0) > 0;
+    const hasDrap = (playerTools.drap ?? 0) > 0;
+    actions.push({
+      tag: "fillable",
+      ...cfg,
+      hasTool: hasGalleda && hasDrap,
+      actionKey: `fill_water:${item.id}`,
+    });
+  }
+
+  // Wave C: polish — requires drap_mullat, item must be "normal" (not dirty/broken)
+  if (!isBrokenNow && !isDirtyNow && (playerTools.drap_mullat ?? 0) > 0) {
+    const cfg = TAG_ACTIONS.polish;
+    actions.push({
+      tag: "polish",
+      ...cfg,
+      hasTool: true,
+      actionKey: `polish:${item.id}`,
+    });
+  }
+
   return actions;
 }
 
-// Shared tool pool per game
+export async function executeFillWater(gameId: string, itemId: string) {
+  const { data, error } = await supabase.rpc("execute_fill_water" as any, { _game_id: gameId, _item_id: itemId });
+  if (error) throw new Error(error.message);
+  return data as any;
+}
+
+export async function executePolish(gameId: string, itemId: string) {
+  const { data, error } = await supabase.rpc("execute_polish" as any, { _game_id: gameId, _item_id: itemId });
+  if (error) throw new Error(error.message);
+  return data as any;
+}
+
+export async function rollGalledaDrop(gameId: string) {
+  const { data, error } = await supabase.rpc("roll_galleda_drop" as any, { _game_id: gameId });
+  if (error) return { dropped: false };
+  return data as any;
+}
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
   martell: 5,
   drap: 5,
