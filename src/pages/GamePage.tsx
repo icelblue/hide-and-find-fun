@@ -673,10 +673,29 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
-      const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
       const [actionType] = actionKey.split(":");
       const item = currentScenarioItems.find(i => i.id === itemId);
-      const getToolName = (t: string) => t === "drap" ? "🧹 Drap" : t === "martell" ? "🔨 Martell" : t === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
+      const getToolName = (t: string) => t === "drap" ? "🧹 Drap" : t === "martell" ? "🔨 Martell" : t === "llanterna" ? "🔦 Llanterna" : t === "galleda" ? "🪣 Galleda" : "🔧 Tornavís";
+
+      // Wave C: new RPC paths
+      if (actionType === "fill_water") {
+        const { executeFillWater } = await import("@/lib/supabase-helpers");
+        await executeFillWater(gameId, itemId);
+        toast.success(t("game.toasts.dampClothCreated", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
+        clearBanana();
+        await loadGame();
+        return;
+      }
+      if (actionType === "polish") {
+        const { executePolish } = await import("@/lib/supabase-helpers");
+        const res = await executePolish(gameId, itemId);
+        toast.success(t("game.toasts.polishBonus", { n: res?.bonus ?? 2 }), { duration: 5000 });
+        clearBanana();
+        await loadGame();
+        return;
+      }
+
+      const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
 
       if (actionType === "clean") toast.success(t("game.toasts.itemCleaned", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
       else if (actionType === "break") toast.success(t("game.toasts.itemBroken", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 5000 });
@@ -685,6 +704,15 @@ export default function GamePage() {
       if (result.bonusResult) toast.success(t("game.toasts.bonusTokens", { n: result.bonusResult.amount }), { duration: 3000 });
       if (result.toolFound) toast.info(t("game.toasts.toolFound", { tool: getToolName(result.toolFound) }), { duration: 4000 });
       if (result.tornavisSpawned) toast.info(t("game.toasts.tornavisSpawned"), { duration: 4000 });
+
+      // Wave C: galleda drop after clean/fix (5%)
+      if (actionType === "clean" || actionType === "fix") {
+        try {
+          const { rollGalledaDrop } = await import("@/lib/supabase-helpers");
+          const drop = await rollGalledaDrop(gameId);
+          if (drop?.dropped) toast.info(t("game.toasts.galledaFound"), { duration: 4000 });
+        } catch { /* silent */ }
+      }
 
       clearBanana();
       await loadGame();
