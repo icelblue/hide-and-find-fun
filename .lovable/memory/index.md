@@ -1,5 +1,5 @@
 # Memory: index.md
-Updated: 2026-06-07 (Wave 1 + Wave 2 aplicades)
+Updated: 2026-06-08 (Wave B + Wave C aplicades)
 
 # Project Memory
 
