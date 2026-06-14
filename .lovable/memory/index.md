@@ -1,5 +1,5 @@
 # Memory: index.md
-Updated: 2026-06-08 (Wave B + Wave C aplicades)
+Updated: 2026-06-14 (Loot 8% + Espia trail + Barricada 2 peatges verificat)
 
 # Project Memory
 
