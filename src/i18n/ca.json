@@ -779,7 +779,7 @@
       "trophyError": "No s'ha pogut desar el trofeu: {msg}",
       "errorUnknown": "error desconegut",
       "blockedShield": "🛡️ Bloquejat per l'escort del rival!",
-      "espiaResult": "🕵️ El rival és a: {name}",
+      "espiaResult": "🕵️ Trail del rival: {name}",
       "smokeBombResult": "💣 Bomba de fum! Objecte mogut a {scen} → {item} ({pos})",
       "barricadaResult": "🚧 Barricada col·locada: {from} ↔ {to} (3 torns)",
       "trampaResult": "🪤 Trampa col·locada a {item}!",
