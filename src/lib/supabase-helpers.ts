@@ -1012,17 +1012,40 @@ export async function sendSocialItem(
       const { error: swapErr } = await supabase.rpc("execute_swap" as any, { _game_id: gameId });
       if (swapErr) throw new Error(swapErr.message);
     } else if (itemType === "espia") {
-      const rivalScenarioId = toPlayer?.current_scenario_id;
-      if (rivalScenarioId) {
-        const { data: scenario } = await supabase
-          .from("scenarios")
-          .select("name, icon")
-          .eq("id", rivalScenarioId)
-          .single();
-        if (scenario) espiaResult = `${scenario.icon} ${scenario.name}`;
-        else espiaResult = "📍 Ubicació desconeguda";
-      } else {
+      // Trail: últims escenaris on s'ha mogut el rival (incloent l'actual)
+      const { data: rivalMoves } = await supabase
+        .from("game_moves")
+        .select("target_scenario_id, created_at")
+        .eq("game_id", gameId)
+        .eq("player_id", toPlayerId)
+        .eq("action", "move")
+        .not("target_scenario_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      const seen = new Set<string>();
+      const trailIds: string[] = [];
+      const currentId = toPlayer?.current_scenario_id;
+      if (currentId) { trailIds.push(currentId); seen.add(currentId); }
+      for (const m of rivalMoves ?? []) {
+        const sid = (m as any).target_scenario_id as string | null;
+        if (!sid || seen.has(sid)) continue;
+        seen.add(sid);
+        trailIds.push(sid);
+        if (trailIds.length >= 3) break;
+      }
+
+      if (trailIds.length === 0) {
         espiaResult = "🤷 El rival encara no s'ha mogut!";
+      } else {
+        const { data: scenarios } = await supabase
+          .from("scenarios")
+          .select("id, name, icon")
+          .in("id", trailIds);
+        const byId = new Map((scenarios ?? []).map((s: any) => [s.id, `${s.icon} ${s.name}`]));
+        const labels = trailIds.map(id => byId.get(id) ?? "📍").filter(Boolean);
+        // [actual, anterior, anterior-1] separats per fletxa cap enrere
+        espiaResult = labels.join(" ← ");
       }
     } else if (itemType === "robar_tornavis") {
       const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
