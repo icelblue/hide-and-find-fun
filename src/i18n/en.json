@@ -779,7 +779,7 @@
       "trophyError": "Couldn't save the trophy: {msg}",
       "errorUnknown": "unknown error",
       "blockedShield": "🛡️ Blocked by the rival's escort!",
-      "espiaResult": "🕵️ The rival is at: {name}",
+      "espiaResult": "🕵️ Rival's trail: {name}",
       "smokeBombResult": "💣 Smoke bomb! Object moved to {scen} → {item} ({pos})",
       "barricadaResult": "🚧 Barricade placed: {from} ↔ {to} (3 turns)",
       "trampaResult": "🪤 Trap placed at {item}!",
