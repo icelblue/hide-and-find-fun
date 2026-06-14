@@ -8,7 +8,7 @@ Deduction Duel — joc PvP puzzle de deducció. Català/Castellà UI. Mobile-fir
 7 escenaris reals: Balcó, Cuina, Despatx, Habitació, Jardí, Lavabo, Menjador.
 2 accions actives: Observar 0.3🪙, Moure 0.5🪙. **4 tokens/dia**, 7 dies límit.
 Simultani: amagar + buscar alhora. Elo + Lligues visuals. Pistes: 5 nivells icona+tooltip.
-Eines pool partida: martell 5, drap 5, llanterna **5**, tornavís 5. Drop 25% (30% si Mestre Col·leccionista).
+Eines pool partida: martell 5, drap 5, llanterna **5**, tornavís 5. **Drop 8%** (13% si Mestre Col·leccionista).
 **Eines consumibles**: drap (clean), martell (break), llanterna (encendre exterior). Tornavís UNLIMITED en ús (pot quedar a 0 però roll prioritari + `execute_robar_tornavis` social).
 **Anti-bloqueig llanterna**: `execute_toggle_light` regala llanterna gratis del pool si vols encendre exterior i no en té ningú. Social `execute_robar_llanterna` gratis.
 **Caselles maleïdes**: -0.3🪙 (-0.5 si rival Elo≥1400). 14 caselles (2/escenari).
