@@ -10,7 +10,7 @@ import { useT } from "@/i18n/LanguageProvider";
 
 const RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"] as const;
 const BASIC_STEPS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"] as const;
-const RULE_KEYS = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"] as const;
+const RULE_KEYS = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r16", "r17", "r18", "r11", "r12", "r13", "r14", "r15"] as const;
 
 export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const t = useT();
