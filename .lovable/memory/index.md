@@ -11,7 +11,7 @@ Simultani: amagar + buscar alhora. Elo + Lligues visuals. Pistes: 5 nivells icon
 Eines pool partida: martell 5, drap 5, llanterna **5**, tornavís 5. **Drop 8%** (13% si Mestre Col·leccionista).
 **Eines consumibles**: drap (clean), martell (break), llanterna (encendre exterior). Tornavís UNLIMITED en ús (pot quedar a 0 però roll prioritari + `execute_robar_tornavis` social).
 **Anti-bloqueig llanterna**: `execute_toggle_light` regala llanterna gratis del pool si vols encendre exterior i no en té ningú. Social `execute_robar_llanterna` gratis.
-**Caselles maleïdes**: -0.3🪙 (-0.5 si rival Elo≥1400). 14 caselles (2/escenari).
+**Caselles maleïdes (Wave A)**: per partida es generen 3 cursed (-0.3/-0.5🪙, x5/3 si rival Elo≥1400) + 3 bonus (+1🪙, x2 si Mestre) sobre (item,position) aleatoris de l'escenari amagat. Es guarden a `game_players.special_data.scenario_specials`. Generació a `start_game_setup`. Lectura a `execute_game_move` (ja no usa la taula global `scenario_bonuses`). RPC `get_revealed_specials` retorna les revelades. UI: ring + 💀/🎁 sobre la posició ja trepitjada (derivat de moveHistory.bonus_value).
 Netejar = **+0.3🪙 GARANTIT** (drap auto-donat via RPC `execute_grant_drap_if_available`). Trencar revela escenari al rival.
 **Outdoor scenarios** (necessiten llanterna de nit): Jardí, Balcó, Terrassa, Pati — derivat de BD `scenarios.is_outdoor`.
 **Breakable/Dirty**: ~60% subset determinístic per partida via hash (`getBreakableItemsForGame` / `getDirtyItemsForGame`).

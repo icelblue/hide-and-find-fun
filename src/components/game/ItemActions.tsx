@@ -15,6 +15,7 @@ interface ItemActionsProps {
   tokensRemaining: number;
   lookedSpots: Set<string>;
   bananaBlockedSpot: string | null;
+  revealedSpecials?: Map<string, { type: "curse" | "bonus"; value: number }>;
   interactions?: any[];
   onInteraction?: (interaction: any) => void;
   moveHistory?: any[];
@@ -27,6 +28,7 @@ interface ItemActionsProps {
 
 export default function ItemActions({
   item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot,
+  revealedSpecials,
   interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems, breakableItems,
 }: ItemActionsProps) {
   const t = useT();
@@ -128,16 +130,28 @@ export default function ItemActions({
                 : blockedByBehind ? t("game.items.cannot")
                 : blockedByCapacity ? t("game.items.noFit")
                 : "";
+              const reveal = revealedSpecials?.get(spotKey);
+              const revealRing = reveal?.type === "curse"
+                ? "ring-1 ring-destructive/50"
+                : reveal?.type === "bonus" ? "ring-1 ring-amber-400/60" : "";
               return (
                 <button key={pos.value}
                   onClick={() => onLook(item.id, pos.value)} aria-label={`${t(`game.pos.${pos.value}`, pos.label)} ${item.name}`}
                   disabled={disabled || tokensRemaining < TOKEN_COSTS.look || alreadyLooked || isBananaBlocked || isBlocked}
-                  className={`w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${
+                  title={reveal ? (reveal.type === "curse"
+                    ? `💀 ${reveal.value}🪙`
+                    : `🎁 +${reveal.value}🪙`) : undefined}
+                  className={`relative w-full rounded-lg p-3 text-xs transition-colors active:scale-[0.97] font-medium ${revealRing} ${
                     isBlocked ? "bg-muted/20 opacity-50 border border-accent/30" :
                     isBananaBlocked ? "bg-destructive/20 opacity-60 border border-destructive/30" :
                     alreadyLooked ? "bg-muted/20 opacity-40 line-through" :
                     "bg-muted/40 hover:bg-primary/10 disabled:opacity-30"
                   }`}>
+                  {reveal && (
+                    <span className="absolute top-0.5 right-1 text-[10px] leading-none">
+                      {reveal.type === "curse" ? "💀" : "🎁"}
+                    </span>
+                  )}
                   {isBlocked ? blockLabel : isBananaBlocked ? "🍌" : `${pos.icon} ${t(`game.pos.${pos.value}`, pos.label)}`}
                   <span className="block text-[9px] text-muted-foreground mt-0.5">
                     {isBlocked ? t("game.items.blocked") : isBananaBlocked ? t("game.items.blocked") : alreadyLooked ? t("game.items.seen") : `${TOKEN_COSTS.look}🪙`}

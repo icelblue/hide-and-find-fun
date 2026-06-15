@@ -976,6 +976,7 @@ export default function GamePage() {
   const scenarioIsDark = scenarioIsDarkState;
 
   const lookedSpots = new Set<string>();
+  const revealedSpecials = new Map<string, { type: "curse" | "bonus"; value: number }>();
   for (const m of moveHistory) {
     if (m.target_item_id && m.target_position && m.action === "look") {
       // Skip looks that happened before the rival's smoke bomb (object moved, hints invalid)
@@ -984,7 +985,16 @@ export default function GamePage() {
       // Cleaning a furniture must only UNLOCK 'dins', never auto-reveal it.
       const bv = (m as any).bonus_value as string | null;
       if (bv && bv.startsWith("tag:")) continue;
-      lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
+      const spotKey = `${m.target_item_id}:${m.target_position}`;
+      lookedSpots.add(spotKey);
+      // Wave A: derive cursed/bonus reveals from numeric bonus_value
+      const numericBv = bv != null ? Number(bv) : NaN;
+      if (Number.isFinite(numericBv) && numericBv !== 0) {
+        revealedSpecials.set(spotKey, {
+          type: numericBv < 0 ? "curse" : "bonus",
+          value: numericBv,
+        });
+      }
     }
   }
 
@@ -1615,6 +1625,7 @@ export default function GamePage() {
                 <ItemActions key={item.id} item={item} positions={POSITIONS}
                   onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
                   lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
+                  revealedSpecials={revealedSpecials}
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
                   onInteraction={handleInteraction} moveHistory={moveHistory}
                   playerTools={playerTools} gameBreaks={gameBreaks}
