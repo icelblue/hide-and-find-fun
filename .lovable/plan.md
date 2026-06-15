@@ -1,83 +1,59 @@
-# Pla: Pressió i Bluff — CORE v1
+# Wave A — Visibilitat de caselles maleïdes i bonus d'escenari
 
-Objectiu: més decisió psicològica, menys marge d'error, eines amb pes real. Tot reversible i sense entitats noves.
+Objectiu: tancar el bucle de feedback de les mecàniques de **bonus/caselles maleïdes** que ja existeixen al backend però són invisibles per al jugador fora del toast puntual.
 
-## Decisions tancades
-| # | Decisió | Valor |
-|---|---------|-------|
-| 1 | Tokens diaris | **5 → 4🪙/dia** |
-| 2 | Cost socials ofensius | SÍ (defensius gratis) |
-| 3 | Caselles maleïdes | **-0.3 base**, **-0.5 si Elo alt** (llindar ≥1400) |
-| 4 | Ordre | CORE sol, validar abans d'opcionals |
-| 5 | Eines | **Consumibles single-use** (drap, martell, llanterna). Llanterna pool **3**. Tornavís UNLIMITED (no bloquejar joc) |
-| 6 | Pool drap | Pujar RPC 2→**5** (alinear amb client) |
+## Estat actual (auditoria)
 
-## Checklist persistent
-Es guarda a `mem://features/pressure-bluff-checklist.md` i s'actualitza marcant `[x]` cada pas. Així si perdo memòria, només cal llegir-la.
+- ✅ Backend: `execute_game_move` ja calcula `cursed` i `bonus_tokens` consultant `scenario_bonuses`.
+- ✅ Toast: `GamePage.tsx:862` mostra "💀 Casella maleïda −X🪙" en observar-hi.
+- ⚠️ Taula `scenario_bonuses`: només té 21 files, **totes `extra_token` amb valor `+1`** → no hi ha cap casella maleïda real a la BD.
+- ❌ UI: cap indicador visual ni a `ScenarioPicker` ni al header de partida.
+- ❌ Memòria persistent: si trepitges una casella maleïda, no queda marca a la sessió.
 
-```
-[x] 1. Migració: token_reset 5→4
-[ ] 2. Migració: costs socials (RPCs execute_*)
-[x] 3. Migració: scenario_bonuses negatius (-0.3) inserts
-[x] 4. Migració: aplicar -0.5 quan rival.elo>=1400 a execute_game_move
-[x] 5. Migració: execute_tag_action revela escenari trencat
-[x] 6. Migració: TOOLS pool drap 2→5 + llanterna 3 + consumir eina post-ús
-[ ] 7. Frontend: actualitzar TOKEN_COSTS i UI socials (mostrar cost) — **Wave B pendent**
-[x] 8. Frontend: marcar drap/martell/llanterna com consumibles a UI
-[x] 9. i18n: textos nous (casella maleïda, consum eina, 4 tokens, llanterna ×3)
-[x] 10. Memory: actualitzar game-mechanics-v2 + social-items + tools-system
-[x] 11. Validació: tests REG-016 + REG-017 client↔RPC
-```
+## Peces del puzle (per ordre d'execució)
 
-## Detall tècnic
+### Peça 1 · Dades (migració)
+Sembrar caselles especials per partida. Dues opcions:
 
-### Bloc 1 — Tokens 5→4
-- `daily_token_reset` cron + funció de reset: canviar literal `5` → `4`
-- `profiles.tokens` default → 4
-- Frontend: cap canvi (llegeix de BD)
+- **A — Estàtiques per moble**: afegir ~10 files negatives a `scenario_bonuses` (value `-0.3` o `-0.5`) i ~5 positives addicionals. Senzill, però són sempre les mateixes per a tothom.
+- **B — Per partida (recomanat)**: nova columna `games.scenario_bonuses jsonb` generada a `create_game`, amb 3 cursed + 3 bonus aleatoris entre els mobles de l'escenari del rival. Així cada partida és diferent i no cal modificar `scenario_bonuses` global.
 
-### Bloc 2 — Cost socials
-RPCs a tocar amb deducció abans del check de slot:
-| Ítem | Cost |
-|------|------|
-| Plàtan | 0.5🪙 |
-| Barricada | 0.5🪙 |
-| Trampa | 0.5🪙 |
-| Espia | 0.5🪙 |
-| Robar tornavís | 0.5🪙 |
-| Swap | 1.0🪙 |
-| Escut, Missatge, Bomba fum | gratis |
+Decisió per defecte: **opció B**.
 
-Frontend: mostrar `🪙` al SocialItemsPanel.
+### Peça 2 · Endpoint de revelació
+RPC `get_revealed_specials(game_id)` que retorna les caselles ja descobertes (per mi o pel rival quan trenco un moble) amb `{item_id, position, type: 'curse'|'bonus', value}`. Es crida al carregar partida i després de cada moviment.
 
-### Bloc 3+4 — Caselles maleïdes
-1. INSERT a `scenario_bonuses`: 2 files per escenari amb `bonus_value='-0.3'` a posicions concretes.
-2. A `execute_look`: si `_bonus_value < 0` i `rival.elo >= 1400` → multiplicar per `5/3` (≈-0.5).
-3. Feedback toast: "💀 Casella maleïda! -0.3🪙"
+### Peça 3 · UI `ScenarioPicker` (mapa de mobles)
+- Afegir overlay petit a cada `PositionButton` ja revelada:
+  - 💀 cantonada inferior-dreta + ring vermell tènue per cursed
+  - 🎁 cantonada + ring daurat per bonus
+- Tooltip: "Casella maleïda revelada −0.5🪙" / "Bonus +1🪙"
+- Storage local només per persistir entre re-renders dins la sessió (font de veritat = backend).
 
-### Bloc 5 — Trencar revela escenari
-`execute_tag_action` (cas `break`): incloure `scenario_id` al payload del missatge cap al rival → notificació "💥 Han trencat un moble al Lavabo".
+### Peça 4 · Badge al header de partida
+A `GamePage` afegir badge compacte sota el comptador de tokens:
+- `💀 2 · 🎁 1` (caselles especials restants no revelades de l'escenari del rival)
+- Tooltip explica el sistema.
+- Es recalcula a partir del retorn del nou RPC.
 
-### Bloc 6 — Eines consumibles
-Canvi gros però net:
-- **Drap**: es consumeix en netejar. Bonus garantit en netejar: +0.3🪙 (palpable).
-- **Martell**: es consumeix en trencar.
-- **Llanterna**: es consumeix per look en fosc (Jardí/Balcó). Si no en tens, look bloquejat en fosc.
-- **Tornavís**: **UNLIMITED** (com ara). Justificació: arreglar és la única manera de desbloquejar "sobre/dins" d'un moble que tu mateix pots haver trencat → no podem bloquejar joc.
-- Pool partida: drap 5, martell 5, llanterna 3, tornavís 5 extra.
-- `playerTools` decrement al RPC post-acció.
-- UI: badge "1 ús" als consumibles.
+### Peça 5 · i18n + tests
+- Claus noves a `ca.json` / `en.json`: `game.specials.curseRevealed`, `game.specials.bonusRevealed`, `game.specials.headerBadge`.
+- Test `REG-019`: després de trepitjar casella maleïda → revelació visible per a tots dos jugadors.
 
-## Out of scope (validem CORE primer)
-- Reduir loot 15%→8%
-- Espia mostra trail
-- Barricada 2 peatges
-- Mode Història
+## Fora d'abast
 
-## Tests manuals post-deploy
-1. Reset diari → 4🪙
-2. Plàtan costa 0.5🪙, escut gratis
-3. Trobar casella -0.3 a Elo baix, -0.5 a Elo alt
-4. Trencar moble → rival rep toast amb escenari
-5. Netejar consumeix drap + dona +0.3🪙
-6. Sense llanterna → no pots mirar a Jardí
+- Re-balanç de probabilitats/valors (es manté `-0.3/-0.5` i `+1`).
+- Animacions complexes (només ring + emoji estàtic).
+- Notificació push.
+
+## Detalls tècnics
+
+- Migració crea `games.scenario_bonuses jsonb DEFAULT '[]'` + tria 3 mobles aleatoris per escenari del rival amb `ORDER BY random() LIMIT 3`.
+- `execute_game_move` passa a llegir de `games.scenario_bonuses` en comptes de la taula global.
+- `get_revealed_specials` filtra per `game_moves` on `result_data->>'cursed' = 'true'` o `bonus_tokens > 0`.
+- Components nous: cap. Edicions: `ScenarioPicker.tsx`, `GamePage.tsx`, `supabase-helpers.ts`.
+
+## Cost estimat
+~3 edicions de codi + 1 migració + 2 RPCs nous. Mitjà.
+
+Vols que ho executi tal qual o prefereixes l'**opció A** (caselles estàtiques) per estalviar la migració de `games`?
