@@ -15,6 +15,7 @@ interface ItemActionsProps {
   tokensRemaining: number;
   lookedSpots: Set<string>;
   bananaBlockedSpot: string | null;
+  revealedSpecials?: Map<string, { type: "curse" | "bonus"; value: number }>;
   interactions?: any[];
   onInteraction?: (interaction: any) => void;
   moveHistory?: any[];
@@ -27,6 +28,7 @@ interface ItemActionsProps {
 
 export default function ItemActions({
   item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot,
+  revealedSpecials,
   interactions, onInteraction, moveHistory, playerTools, gameBreaks, onTagAction, dirtyItems, breakableItems,
 }: ItemActionsProps) {
   const t = useT();
