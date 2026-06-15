@@ -983,6 +983,18 @@
       "r15": {
         "title": "🏆 Public showcase",
         "text": "On each player's profile you can see their collection of won furniture (showcase). Items not yet won appear in grey."
+      },
+      "r16": {
+        "title": "💀 Cursed cells",
+        "text": "Some positions hide a curse. If you observe there, you pay an extra fee (−0.3 or −0.5🪙). The curse stays hidden until someone steps on it. Breaking furniture reveals the rival's scenario category as compensation."
+      },
+      "r17": {
+        "title": "🪣 Bucket & ✨ Polish",
+        "text": "🪣 Bucket — Match pool of 2 units. 5% drop on clean/repair.\n💧 Combo: Use bucket on a fillable item (Kitchen sink, Bathroom sink, Bathtub, Shower, Washer) spending 0.3🪙 + 1 normal cloth → get a ✨ wet cloth.\n✨ Polish — Free. Use the wet cloth on any clean piece of furniture for a guaranteed +2🪙."
+      },
+      "r18": {
+        "title": "💰 Social item costs",
+        "text": "Offensive social items now cost tokens:\n🍌 Banana · 🚧 Barricade · 🪤 Trap · 🕵️ Spy · 🔧 Steal screwdriver — 0.5🪙\n🔄 Swap — 1.0🪙\n🛡️ Shield · 💣 Smoke bomb · 💡 Hint — free.\n🕵️ Spy now reveals the rival's last 3 visited scenarios."
       }
     },
     "mapTitle": "🗺️ Room map",
