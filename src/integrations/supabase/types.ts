@@ -1707,6 +1707,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_revealed_specials: {
+        Args: { _game_id: string }
+        Returns: {
+          item_id: string
+          pos: Database["public"]["Enums"]["position_type"]
+          type: string
+          value: number
+        }[]
+      }
       get_rival_traits: { Args: { _game_id: string }; Returns: Json }
       get_safe_game_players: {
         Args: { _game_id: string }
