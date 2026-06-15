@@ -983,6 +983,18 @@
       "r15": {
         "title": "🏆 Vitrina pública",
         "text": "Al perfil de cada jugador pots veure la seva col·lecció de mobles guanyats (vitrina). Els mobles no obtinguts apareixen en gris."
+      },
+      "r16": {
+        "title": "💀 Caselles maleïdes",
+        "text": "Algunes posicions tenen una maledicció oculta. Si hi observes, pagues un extra (−0.3 o −0.5🪙). La maledicció no es revela fins que algú la trepitja. Trencar un moble revela la categoria de l'escenari del rival com a compensació."
+      },
+      "r17": {
+        "title": "🪣 Galleda i ✨ Abrillantar",
+        "text": "🪣 Galleda — Pool partida 2 unitats. Drop 5% al netejar/arreglar.\n💧 Combo: Usa galleda en un moble fillable (Pica cuina, Pica lavabo, Banyera, Dutxa, Rentadora) gastant 0.3🪙 + 1 drap normal → obtens un ✨ drap mullat.\n✨ Abrillantar — Gratis. Usa el drap mullat sobre qualsevol moble net per guanyar +2🪙 garantits."
+      },
+      "r18": {
+        "title": "💰 Costos d'ítems socials",
+        "text": "Usar un ítem social ofensiu té cost en tokens:\n🍌 Plàtan · 🚧 Barricada · 🪤 Trampa · 🕵️ Espia · 🔧 Robar tornavís — 0.5🪙\n🔄 Intercanvi — 1.0🪙\n🛡️ Escut · 💣 Bomba de fum · 💡 Pista — gratis.\n🕵️ L'espia ara mostra els últims 3 escenaris visitats pel rival."
       }
     },
     "mapTitle": "🗺️ Mapa d'habitacions",
