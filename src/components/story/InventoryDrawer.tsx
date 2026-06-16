@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getInventory, getAllRecipes, getDiscoveredRecipeIds, hasItems, combineRecipe,
-  getItemEffect, useItemOnPet,
+  getItemEffect, getItemEffectAsync, useItemOnPet,
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
 import { getMyAccessories } from "@/lib/story-helpers";
