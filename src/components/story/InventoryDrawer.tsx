@@ -50,9 +50,12 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   );
 
   const load = async () => {
+    // Pre-warm DB effects cache so sync `getItemEffect` veu items definits a story_item_effects.
+    await getItemEffectAsync({ item_id: "__warm__", item_name: "", item_icon: "" }).catch(() => null);
     const [inv, recs, known, accs, jour] = await Promise.all([
       getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId), getJournal(userId),
     ]);
+
     setInventory(inv);
     setRecipes(recs);
     setKnownIds(known);
