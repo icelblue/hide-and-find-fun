@@ -114,7 +114,7 @@ export interface ItemEffect {
   verb: string;       // fallback CA verb (toast)
 }
 
-/** Mapping per item_id base. Si no hi és, fallback genèric per paraules clau al nom. */
+/** Static fallback used while the DB cache is still loading (or for offline tests). */
 const ITEM_EFFECTS_BY_ID: Record<string, ItemEffect> = {
   apple:    { delta: { hunger: -40, bond: 5 },   kind: "eat",    label: "🍎 Donar menjar", verb: "menja" },
   bread:    { delta: { hunger: -50, bond: 5 },   kind: "eat",    label: "🍞 Donar pa",     verb: "menja" },
@@ -130,10 +130,53 @@ const ITEM_EFFECTS_BY_ID: Record<string, ItemEffect> = {
   music:    { delta: { fear: -30, sleep: -10 },  kind: "music",  label: "🎵 Calmar amb música", verb: "escolta" },
 };
 
-/** Inferred fallback by name keyword (català/castellà). */
+/** Verb fallback per kind quan ve de BD i no tenim text personalitzat. */
+const KIND_VERB: Record<EffectKind, string> = {
+  eat: "menja", devour: "devora", taste: "tasta", drink: "beu",
+  rest: "descansa amb", play: "juga amb", calm: "pren",
+  gift: "rep", music: "escolta",
+};
+
+/** DB-loaded overlay: item_id → ItemEffect (loaded once per session). */
+let _effectsCache: Record<string, ItemEffect> | null = null;
+let _effectsLoading: Promise<void> | null = null;
+
+async function loadEffectsCache(): Promise<void> {
+  if (_effectsCache) return;
+  if (_effectsLoading) return _effectsLoading;
+  _effectsLoading = (async () => {
+    const { data } = await supabase
+      .from("story_item_effects")
+      .select("item_id,kind,d_hunger,d_sleep,d_fear,d_bond");
+    const map: Record<string, ItemEffect> = {};
+    for (const row of (data ?? []) as any[]) {
+      const delta: Partial<PetState> = {};
+      if (row.d_hunger) delta.hunger = row.d_hunger;
+      if (row.d_sleep)  delta.sleep  = row.d_sleep;
+      if (row.d_fear)   delta.fear   = row.d_fear;
+      if (row.d_bond)   delta.bond   = row.d_bond;
+      const kind = row.kind as EffectKind;
+      map[row.item_id] = { delta, kind, label: "", verb: KIND_VERB[kind] ?? "rep" };
+    }
+    _effectsCache = map;
+  })();
+  return _effectsLoading;
+}
+
+/** Force-refresh BD cache (tests, after seeds). */
+export function _resetItemEffectsCache() { _effectsCache = null; _effectsLoading = null; }
+
+/** Inferred fallback by name keyword (català/castellà) — last resort. */
 function inferEffect(item: InventoryItem): ItemEffect | null {
   const direct = ITEM_EFFECTS_BY_ID[item.item_id];
   if (direct) return direct;
+  const fromDb = _effectsCache?.[item.item_id];
+  if (fromDb) {
+    return {
+      ...fromDb,
+      label: `${item.item_icon ?? ""} ${item.item_name}`.trim(),
+    };
+  }
   const n = item.item_name.toLowerCase();
   if (/poma|fruita|menj|comid|pa\b|pan\b|carn|peix|pesc|baia|baya|llaminadu|caram|honey|mel|miel/.test(n))
     return { delta: { hunger: -40, bond: 5 }, kind: "eat", label: `${item.item_icon} Donar a menjar`, verb: "menja" };
@@ -154,12 +197,20 @@ export function getItemEffect(item: InventoryItem): ItemEffect | null {
   return inferEffect(item);
 }
 
+/** Async variant: ensures DB cache is loaded before resolving. Preferred from UI. */
+export async function getItemEffectAsync(item: InventoryItem): Promise<ItemEffect | null> {
+  await loadEffectsCache();
+  return inferEffect(item);
+}
+
+
 /** Use one item: consume + apply delta. Returns new state and effect used (null if not usable). */
 export async function useItemOnPet(userId: string, item: InventoryItem):
   Promise<{ state: PetState; effect: ItemEffect } | null>
 {
-  const effect = getItemEffect(item);
+  const effect = await getItemEffectAsync(item);
   if (!effect) return null;
+
   // Remove ONE instance (delete by id from row table — match item_id, limit 1 via eq+row)
   const { data: row } = await supabase
     .from("story_inventory")

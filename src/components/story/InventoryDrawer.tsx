@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getInventory, getAllRecipes, getDiscoveredRecipeIds, hasItems, combineRecipe,
-  getItemEffect, useItemOnPet,
+  getItemEffect, getItemEffectAsync, useItemOnPet,
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
 import { getMyAccessories } from "@/lib/story-helpers";
@@ -50,9 +50,12 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   );
 
   const load = async () => {
+    // Pre-warm DB effects cache so sync `getItemEffect` veu items definits a story_item_effects.
+    await getItemEffectAsync({ item_id: "__warm__", item_name: "", item_icon: "" }).catch(() => null);
     const [inv, recs, known, accs, jour] = await Promise.all([
       getInventory(userId), getAllRecipes(), getDiscoveredRecipeIds(userId), getMyAccessories(userId), getJournal(userId),
     ]);
+
     setInventory(inv);
     setRecipes(recs);
     setKnownIds(known);

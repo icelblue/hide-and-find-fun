@@ -1,59 +1,52 @@
-# Wave A — Visibilitat de caselles maleïdes i bonus d'escenari
+# Punt 7 — Tancar Mode Història v5.2
 
-Objectiu: tancar el bucle de feedback de les mecàniques de **bonus/caselles maleïdes** que ja existeixen al backend però són invisibles per al jugador fora del toast puntual.
+Punt 8 (Wave A — caselles maleïdes/bonus UI) ja es va completar al missatge anterior. Aquest pla ataca només els pendents de `mem://features/story-mode`.
 
-## Estat actual (auditoria)
+## Pendents detectats
 
-- ✅ Backend: `execute_game_move` ja calcula `cursed` i `bonus_tokens` consultant `scenario_bonuses`.
-- ✅ Toast: `GamePage.tsx:862` mostra "💀 Casella maleïda −X🪙" en observar-hi.
-- ⚠️ Taula `scenario_bonuses`: només té 21 files, **totes `extra_token` amb valor `+1`** → no hi ha cap casella maleïda real a la BD.
-- ❌ UI: cap indicador visual ni a `ScenarioPicker` ni al header de partida.
-- ❌ Memòria persistent: si trepitges una casella maleïda, no queda marca a la sessió.
+| # | Pendent | Tipus | Cost |
+|---|---------|-------|------|
+| A | `item_id` explícit a `story_recipes` (eliminar inferència per keyword) | BD + lib | Baix |
+| B | Més seeds `requires_skill` capítols 5-8 (Bosc/Castell) | BD only | Baix |
+| C | Mini-puzzles dins nodes (ex: posa ingredients en ordre) | Nou component + schema | **Alt** |
+| D | Espai propi amb mobles desbloquejables (recompensa Story) | Nova taula + UI | **Alt** |
+| E | Selector d'espai personalitzat al crear partida PvP | UI + JOIN PvP | **Alt** |
 
-## Peces del puzle (per ordre d'execució)
+## Decisió d'aquesta tongada
 
-### Peça 1 · Dades (migració)
-Sembrar caselles especials per partida. Dues opcions:
+Faig **A + B** (peces tancades, baix risc, sense disseny obert). C/D/E són blocs grans i toquen PvP — els deixo per una sessió dedicada amb decisions teves.
 
-- **A — Estàtiques per moble**: afegir ~10 files negatives a `scenario_bonuses` (value `-0.3` o `-0.5`) i ~5 positives addicionals. Senzill, però són sempre les mateixes per a tothom.
-- **B — Per partida (recomanat)**: nova columna `games.scenario_bonuses jsonb` generada a `create_game`, amb 3 cursed + 3 bonus aleatoris entre els mobles de l'escenari del rival. Així cada partida és diferent i no cal modificar `scenario_bonuses` global.
+## Peça A — `item_id` explícit a receptes
 
-Decisió per defecte: **opció B**.
+### Diagnòstic
+`autoDiscoverRecipes` infereix l'item resultat de la recepta per keyword del nom (poma/aigua/manta…). Fràgil: receptes futures amb noms creatius fallen.
 
-### Peça 2 · Endpoint de revelació
-RPC `get_revealed_specials(game_id)` que retorna les caselles ja descobertes (per mi o pel rival quan trenco un moble) amb `{item_id, position, type: 'curse'|'bonus', value}`. Es crida al carregar partida i després de cada moviment.
+### Canvis
+1. **Migració**: afegir `story_recipes.result_item_id text` (nullable per compatibilitat). Backfill per matching actual de keywords sobre receptes existents.
+2. **`src/lib/story-state.ts`**: `getItemEffect(item_id)` → si la recepta té `result_item_id`, retorna directament; si no, fallback al keyword actual.
+3. **Test**: cobrir que una recepta amb `result_item_id` no depèn del nom.
 
-### Peça 3 · UI `ScenarioPicker` (mapa de mobles)
-- Afegir overlay petit a cada `PositionButton` ja revelada:
-  - 💀 cantonada inferior-dreta + ring vermell tènue per cursed
-  - 🎁 cantonada + ring daurat per bonus
-- Tooltip: "Casella maleïda revelada −0.5🪙" / "Bonus +1🪙"
-- Storage local només per persistir entre re-renders dins la sessió (font de veritat = backend).
+## Peça B — Seeds `requires_skill` 5-8
 
-### Peça 4 · Badge al header de partida
-A `GamePage` afegir badge compacte sota el comptador de tokens:
-- `💀 2 · 🎁 1` (caselles especials restants no revelades de l'escenari del rival)
-- Tooltip explica el sistema.
-- Es recalcula a partir del retorn del nou RPC.
+### Diagnòstic
+`story_choices.requires_skill` només té entrades a capítols 1-4. Capítols 5-8 (Bosc + Castell) no premien progressió d'skills.
 
-### Peça 5 · i18n + tests
-- Claus noves a `ca.json` / `en.json`: `game.specials.curseRevealed`, `game.specials.bonusRevealed`, `game.specials.headerBadge`.
-- Test `REG-019`: després de trepitjar casella maleïda → revelació visible per a tots dos jugadors.
+### Canvis
+1. **Migració**: INSERT a `story_choices` 4-6 noves opcions amb:
+   - 2 al Bosc (Lv4 💪 Força, Lv6 ✨ Empatia)
+   - 2 al Castell (Lv8 🔥 Coratge, Lv10 👑 Llegenda)
+   - 1-2 amb `min_visits` per branques re-visita
+2. Mantenir balanç: cada node afectat conserva almenys una opció sense `requires_skill` perquè no quedi bloquejat.
+3. **Test**: REG nou que verifica que cada node 5-8 té ≥1 opció accessible sense skill.
 
-## Fora d'abast
+## Fora d'abast (deixats per sessió dedicada)
 
-- Re-balanç de probabilitats/valors (es manté `-0.3/-0.5` i `+1`).
-- Animacions complexes (només ring + emoji estàtic).
-- Notificació push.
-
-## Detalls tècnics
-
-- Migració crea `games.scenario_bonuses jsonb DEFAULT '[]'` + tria 3 mobles aleatoris per escenari del rival amb `ORDER BY random() LIMIT 3`.
-- `execute_game_move` passa a llegir de `games.scenario_bonuses` en comptes de la taula global.
-- `get_revealed_specials` filtra per `game_moves` on `result_data->>'cursed' = 'true'` o `bonus_tokens > 0`.
-- Components nous: cap. Edicions: `ScenarioPicker.tsx`, `GamePage.tsx`, `supabase-helpers.ts`.
+- **C — Mini-puzzles**: requereix decidir tipus (ordre d'ingredients, encaix, memòria), schema (`story_nodes.puzzle_data jsonb`?), recompensa.
+- **D — Espai propi**: nova taula `player_spaces` + UI selector mobles + integració amb evolució mascota.
+- **E — Selector espai PvP**: depèn de D. Modifica `create_game` per acceptar `space_id` del creador.
 
 ## Cost estimat
-~3 edicions de codi + 1 migració + 2 RPCs nous. Mitjà.
+2 migracions + 1 edició de `story-state.ts` + 2 tests nous. Mitjà-baix.
 
-Vols que ho executi tal qual o prefereixes l'**opció A** (caselles estàtiques) per estalviar la migració de `games`?
+## Següent pas
+Si aproves, executo A i B en paral·lel (migració A, migració B, edicions de codi).

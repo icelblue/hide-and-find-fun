@@ -1331,6 +1331,36 @@ export type Database = {
         }
         Relationships: []
       }
+      story_item_effects: {
+        Row: {
+          created_at: string
+          d_bond: number
+          d_fear: number
+          d_hunger: number
+          d_sleep: number
+          item_id: string
+          kind: string
+        }
+        Insert: {
+          created_at?: string
+          d_bond?: number
+          d_fear?: number
+          d_hunger?: number
+          d_sleep?: number
+          item_id: string
+          kind: string
+        }
+        Update: {
+          created_at?: string
+          d_bond?: number
+          d_fear?: number
+          d_hunger?: number
+          d_sleep?: number
+          item_id?: string
+          kind?: string
+        }
+        Relationships: []
+      }
       story_node_visits: {
         Row: {
           count: number
