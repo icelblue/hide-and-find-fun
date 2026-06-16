@@ -208,8 +208,9 @@ export async function getItemEffectAsync(item: InventoryItem): Promise<ItemEffec
 export async function useItemOnPet(userId: string, item: InventoryItem):
   Promise<{ state: PetState; effect: ItemEffect } | null>
 {
-  const effect = getItemEffect(item);
+  const effect = await getItemEffectAsync(item);
   if (!effect) return null;
+
   // Remove ONE instance (delete by id from row table — match item_id, limit 1 via eq+row)
   const { data: row } = await supabase
     .from("story_inventory")
