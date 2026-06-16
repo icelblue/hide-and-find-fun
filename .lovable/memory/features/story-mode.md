@@ -51,9 +51,12 @@ type: feature
 ### Independent del PvP 🔒
 Cap RPC PvP, cap taula PvP modificada.
 
-### Pendent
-- Mini-puzzles
-- Espai propi amb mobles desbloquejables
-- Selector d'espai personalitzat al crear partida PvP
-- Més seeds amb requires_skill a capítols 5-8
-- Definir explícitament item_id a noves receptes seedades (ara ITEM_EFFECTS infereix per keyword)
+### v5.2 (2026-06-16)
+- **Peça A · Effects explícits**: nova taula `story_item_effects (item_id, kind, d_hunger, d_sleep, d_fear, d_bond)` + cache a `story-state.ts`. `getItemEffect` consulta cache BD abans del fallback per keyword. Seeds: 12 base + 4 outputs de receptes (amulet_seafire, clau_obrible, pocio_calma, ruta_secreta) + 3 d'inventari existent (clau_vella, sea_pearl, shell). `getItemEffectAsync` per UIs que vulguin esperar cache.
+- **Peça B · Skill choices Bosc/Castell**: 5 noves opcions `requires_skill` als capítols 5 i 7 (👃 c5_forest, 💪 c5_forest_wolf, ✨ c5_forest_storm, 🔥 c7_dragon, 👑 c7_silence). Cada node manté ≥3 opcions sense skill.
+
+### Pendent (blocs grans amb disseny obert)
+- Mini-puzzles (schema `story_nodes.puzzle_data`?)
+- Espai propi amb mobles desbloquejables (nova taula `player_spaces`)
+- Selector d'espai personalitzat al crear partida PvP (depèn d'espai propi)
+
