@@ -1421,6 +1421,8 @@ export default function GamePage() {
                   <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial1") }} />
                   <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial2") }} />
                   <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial3") }} />
+                  {!isStory && <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial4") }} />}
+                  {!isStory && <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial5") }} />}
                 </div>
               </CardContent>
             </Card>

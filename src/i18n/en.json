@@ -612,6 +612,8 @@
       "tutorial1": "🚶 <strong>Move</strong> between rooms to explore",
       "tutorial2": "👀 <strong>Observe</strong> (0.3🪙) positions to get hints: ❄️ cold → 🌡️ warm → 🔥 hot!",
       "tutorial3": "🎯 If you guess furniture + position, <strong>you find the object and win!</strong>",
+      "tutorial4": "💰 Offensive social items (🍌🚧🪤🕵️) cost <strong>0.5🪙</strong>; 🔄 Swap <strong>1.0🪙</strong>. Defensive (🛡️💣) are free.",
+      "tutorial5": "🪣 If you find a <strong>bucket</strong>, use it on a water furniture + 1 cloth → <strong>damp cloth</strong>. Apply it on a clean furniture for <strong>+2🪙 guaranteed</strong>.",
       "locationLabel": "Location",
       "tokensLabel": "Tokens",
       "rivalNearby": "⚠️ Rival is near your object!",

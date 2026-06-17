@@ -612,6 +612,8 @@
       "tutorial1": "🚶 <strong>Mou-te</strong> entre habitacions per explorar",
       "tutorial2": "👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!",
       "tutorial3": "🎯 Si encertes moble + posició, <strong>trobes l'objecte i guanyes!</strong>",
+      "tutorial4": "💰 Ítems socials ofensius (🍌🚧🪤🕵️) costen <strong>0.5🪙</strong>; 🔄 Intercanvi <strong>1.0🪙</strong>. Defensius (🛡️💣) gratis.",
+      "tutorial5": "🪣 Si trobes <strong>galleda</strong>, usa-la en un moble amb aigua + 1 drap → <strong>drap mullat</strong>. Aplica'l sobre un moble net per <strong>+2🪙 garantits</strong>.",
       "locationLabel": "Ubicació",
       "tokensLabel": "Tokens",
       "rivalNearby": "⚠️ Rival a prop del teu objecte!",
