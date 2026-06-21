@@ -1099,5 +1099,41 @@
       "feat3": "Elo system and competitive leagues",
       "feat4": "Story mode with pet and evolution"
     }
-  }
+  },
+  "space": {
+    "title": "My Space",
+    "happiness": "Happiness",
+    "slotsUsed": "slots",
+    "hint": "Pick a piece of furniture and tap a slot",
+    "tapToPlace": "Tap a slot to place",
+    "inventory": "Inventory",
+    "shop": "Shop",
+    "owned": "Owned",
+    "bought": "Bought!",
+    "emptyInventory": "No furniture yet. Visit the shop!",
+    "notEnough": "Not enough coins",
+    "buyError": "Purchase failed",
+    "saveError": "Could not save",
+    "cat": {
+      "bed": "Beds",
+      "rug": "Rugs",
+      "plant": "Plants",
+      "decor": "Decor"
+    }
+  },
+  "furniture": {
+    "bed_basic": "Basic bed",
+    "bed_cozy": "Cozy bed",
+    "bed_royal": "Royal bed",
+    "rug_simple": "Simple rug",
+    "rug_persian": "Persian rug",
+    "rug_magic": "Magic rug",
+    "plant_small": "Small plant",
+    "plant_tree": "Tree",
+    "plant_bonsai": "Bonsai",
+    "decor_lamp": "Lamp",
+    "decor_painting": "Painting",
+    "decor_crystal": "Crystal"
+  },
+  "lobby_extra": { "spaceMenu": "My space" }
 }
