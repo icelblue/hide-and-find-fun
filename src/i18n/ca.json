@@ -1099,5 +1099,41 @@
       "feat3": "Sistema Elo i lligues competitives",
       "feat4": "Mode Història amb mascota i evolució"
     }
-  }
+  },
+  "space": {
+    "title": "El meu espai",
+    "happiness": "Felicitat",
+    "slotsUsed": "caselles",
+    "hint": "Selecciona un moble i toca una casella",
+    "tapToPlace": "Toca una casella per col·locar",
+    "inventory": "Inventari",
+    "shop": "Botiga",
+    "owned": "Tens",
+    "bought": "Comprat!",
+    "emptyInventory": "Encara no tens mobles. Visita la botiga!",
+    "notEnough": "No tens prou monedes",
+    "buyError": "No s'ha pogut comprar",
+    "saveError": "No s'ha pogut desar",
+    "cat": {
+      "bed": "Llits",
+      "rug": "Catifes",
+      "plant": "Plantes",
+      "decor": "Decoració"
+    }
+  },
+  "furniture": {
+    "bed_basic": "Llit bàsic",
+    "bed_cozy": "Llit acollidor",
+    "bed_royal": "Llit reial",
+    "rug_simple": "Catifa simple",
+    "rug_persian": "Catifa persa",
+    "rug_magic": "Catifa màgica",
+    "plant_small": "Planta petita",
+    "plant_tree": "Arbre",
+    "plant_bonsai": "Bonsai",
+    "decor_lamp": "Làmpada",
+    "decor_painting": "Quadre",
+    "decor_crystal": "Cristall"
+  },
+  "lobby_extra": { "spaceMenu": "El meu espai" }
 }
