@@ -122,6 +122,39 @@ export type Database = {
         }
         Relationships: []
       }
+      furniture_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          happiness_bonus: number
+          icon: string
+          id: string
+          name_key: string
+          price_coins: number
+          unlock_level: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          happiness_bonus?: number
+          icon: string
+          id: string
+          name_key: string
+          price_coins?: number
+          unlock_level?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          happiness_bonus?: number
+          icon?: string
+          id?: string
+          name_key?: string
+          price_coins?: number
+          unlock_level?: number
+        }
+        Relationships: []
+      }
       game_moves: {
         Row: {
           action: Database["public"]["Enums"]["action_type"]
@@ -845,6 +878,35 @@ export type Database = {
         }
         Relationships: []
       }
+      player_furniture: {
+        Row: {
+          acquired_at: string
+          furniture_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          furniture_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          furniture_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_furniture_furniture_id_fkey"
+            columns: ["furniture_id"]
+            isOneToOne: false
+            referencedRelation: "furniture_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_inventory: {
         Row: {
           collected_at: string
@@ -966,6 +1028,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_spaces: {
+        Row: {
+          created_at: string
+          layout: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          layout?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          layout?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

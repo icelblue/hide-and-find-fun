@@ -1,52 +1,102 @@
-# Punt 7 — Tancar Mode Història v5.2
 
-Punt 8 (Wave A — caselles maleïdes/bonus UI) ja es va completar al missatge anterior. Aquest pla ataca només els pendents de `mem://features/story-mode`.
+# Pla: Blocs C + D + E
 
-## Pendents detectats
+Tres peces independents però connectades pel mateix eix: la mascota i el seu espai.
 
-| # | Pendent | Tipus | Cost |
-|---|---------|-------|------|
-| A | `item_id` explícit a `story_recipes` (eliminar inferència per keyword) | BD + lib | Baix |
-| B | Més seeds `requires_skill` capítols 5-8 (Bosc/Castell) | BD only | Baix |
-| C | Mini-puzzles dins nodes (ex: posa ingredients en ordre) | Nou component + schema | **Alt** |
-| D | Espai propi amb mobles desbloquejables (recompensa Story) | Nova taula + UI | **Alt** |
-| E | Selector d'espai personalitzat al crear partida PvP | UI + JOIN PvP | **Alt** |
+```text
+  ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+  │  C: Puzzles     │      │  D: Espai propi │  →   │  E: PvP Personal│
+  │  Mode Història  │      │  1 habitació    │      │  Mode separat   │
+  └─────────────────┘      └─────────────────┘      └─────────────────┘
+       (independent)         (desbloqueja a E)         (depèn de D)
+```
 
-## Decisió d'aquesta tongada
+---
 
-Faig **A + B** (peces tancades, baix risc, sense disseny obert). C/D/E són blocs grans i toquen PvP — els deixo per una sessió dedicada amb decisions teves.
+## C — Mini-puzzles d'ordre d'ingredients
 
-## Peça A — `item_id` explícit a receptes
+**Decisió tancada:** seqüència correcta d'ítems de l'inventari. Recompensa: ítem únic + 50 XP.
 
-### Diagnòstic
-`autoDiscoverRecipes` infereix l'item resultat de la recepta per keyword del nom (poma/aigua/manta…). Fràgil: receptes futures amb noms creatius fallen.
+### Esquema DB
+- Nova columna `story_nodes.puzzle_data jsonb` (nullable). Estructura:
+  ```json
+  {
+    "type": "ingredient_order",
+    "slots": 3,
+    "valid_items": ["herba_lluna","aigua_pura","cristall"],
+    "correct_order": ["aigua_pura","herba_lluna","cristall"],
+    "reward_item": "elixir_sagrat",
+    "reward_xp": 50,
+    "fail_message_key": "story.puzzle.fail.generic"
+  }
+  ```
+- Nova taula `story_puzzle_attempts` (run_id, node_id, attempts, solved_at). Límit 3 intents → opció saltar amb penalització -1 vida.
 
-### Canvis
-1. **Migració**: afegir `story_recipes.result_item_id text` (nullable per compatibilitat). Backfill per matching actual de keywords sobre receptes existents.
-2. **`src/lib/story-state.ts`**: `getItemEffect(item_id)` → si la recepta té `result_item_id`, retorna directament; si no, fallback al keyword actual.
-3. **Test**: cobrir que una recepta amb `result_item_id` no depèn del nom.
+### Frontend
+- Nou component `PuzzleNodeView.tsx` (s'invoca des de `StoryNodeView` quan `puzzle_data != null`).
+- UI: 3 slots buits → tap a ítem inventari → s'insereix al primer slot lliure. Botó "Comprovar".
+- Animacions: glow verd si correcte, shake vermell si no. Toast amb pista després del 2n intent.
 
-## Peça B — Seeds `requires_skill` 5-8
+### Cobertura
+- 3 puzzles inicials: Capítol 3 (poció calma), Capítol 6 (amulet seafire), Capítol 9 (clau final).
+- Tests: validació d'ordre, gestió d'intents, atorgament de recompensa.
 
-### Diagnòstic
-`story_choices.requires_skill` només té entrades a capítols 1-4. Capítols 5-8 (Bosc + Castell) no premien progressió d'skills.
+---
 
-### Canvis
-1. **Migració**: INSERT a `story_choices` 4-6 noves opcions amb:
-   - 2 al Bosc (Lv4 💪 Força, Lv6 ✨ Empatia)
-   - 2 al Castell (Lv8 🔥 Coratge, Lv10 👑 Llegenda)
-   - 1-2 amb `min_visits` per branques re-visita
-2. Mantenir balanç: cada node afectat conserva almenys una opció sense `requires_skill` perquè no quedi bloquejat.
-3. **Test**: REG nou que verifica que cada node 5-8 té ≥1 opció accessible sense skill.
+## D — Espai propi (1 habitació, mobles desbloquejables)
 
-## Fora d'abast (deixats per sessió dedicada)
+**Decisió tancada:** una sola habitació amb grid fix 4×4, mobles comprats amb monedes.
 
-- **C — Mini-puzzles**: requereix decidir tipus (ordre d'ingredients, encaix, memòria), schema (`story_nodes.puzzle_data jsonb`?), recompensa.
-- **D — Espai propi**: nova taula `player_spaces` + UI selector mobles + integració amb evolució mascota.
-- **E — Selector espai PvP**: depèn de D. Modifica `create_game` per acceptar `space_id` del creador.
+### Esquema DB
+- `player_spaces` (user_id PK, layout jsonb, updated_at). `layout` = `[{slot:0, furniture_id:"bed_basic"}, ...]`.
+- `furniture_catalog` (id, name_key, price_coins, icon, category, unlock_level). Seed 12 mobles inicials (3 llits, 3 catifes, 3 plantes, 3 decoracions).
+- `player_furniture` (user_id, furniture_id, acquired_at). Inventari de mobles posseïts.
+- RLS: només propietari pot llegir/escriure el seu espai i inventari de mobles. `furniture_catalog` lectura pública.
 
-## Cost estimat
-2 migracions + 1 edició de `story-state.ts` + 2 tests nous. Mitjà-baix.
+### Frontend
+- Nova ruta `/space` accessible des de `Index` (card "El meu espai").
+- Component `SpaceEditor.tsx`: grid 4×4, drag&drop de mobles d'inventari a slots. Botó "Botiga" obre `FurnitureShop.tsx`.
+- Mascota es renderitza al centre, reacciona als mobles (bonus felicitat segons categoria).
 
-## Següent pas
-Si aproves, executo A i B en paral·lel (migració A, migració B, edicions de codi).
+### Cobertura
+- Tests: validació de slot únic per moble, càlcul de preu, persistència del layout.
+- i18n CA/EN per noms de mobles i UI botiga.
+
+---
+
+## E — Mode PvP Personal (cua separada)
+
+**Decisió tancada:** cua independent. Només jugadors amb espai configurat poden entrar.
+
+### Esquema DB
+- `games.game_mode text` (default `"standard"`, nou valor `"personal_pvp"`).
+- `games.host_space_snapshot jsonb` — congela el layout del host al moment de crear la partida (evita que canviï mentre juguen).
+- RPC `create_personal_game(opponent_id)`: valida que ambdós jugadors tinguin ≥4 mobles col·locats, crea partida amb mode personal, snapshotegen els 2 espais.
+- `execute_game_move` adaptat: si `game_mode = personal_pvp`, busca a `host_space_snapshot` enlloc d'escenari oficial.
+
+### Frontend
+- Botó "PvP Personal" al `LobbyPage` (disabled amb tooltip si l'espai no compleix mínim).
+- `GamePage` detecta `game_mode` i renderitza el grid del snapshot enlloc d'escenari fix.
+- Sense canvis a la lògica de Observar/Moure/items — només canvia la font del layout.
+
+### Cobertura
+- Validació mínim mobles abans de crear partida.
+- Test: partida personal no es trenca si el host modifica el seu espai post-creació.
+
+---
+
+## Ordre d'execució proposat
+
+1. **D primer** (espai propi) — base per E, peça autònoma, valor immediat.
+2. **C en paral·lel** (puzzles) — independent, no bloqueja res.
+3. **E al final** — depèn de D consolidat.
+
+Cada bloc s'envia amb migració pròpia + UI + tests. Total estimat: 3 sessions denses (una per bloc).
+
+---
+
+## Què NO inclou aquest pla
+
+- Múltiples habitacions, expansió de mascotes, comerç entre jugadors, mobles animats, decoració estacional. Tot això són ampliacions posteriors un cop la base estigui sòlida.
+
+Aprova i començo per **D**. Si vols invertir l'ordre (C abans), digues-ho.
