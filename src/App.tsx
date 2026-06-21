@@ -18,6 +18,7 @@ const GamePage = lazy(() => import("./pages/GamePage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const PlayerProfilePage = lazy(() => import("./pages/PlayerProfilePage"));
 const StoryModePage = lazy(() => import("./pages/StoryModePage"));
+const SpacePage = lazy(() => import("./pages/SpacePage"));
 const ClaimReminderPage = lazy(() => import("./pages/ClaimReminderPage"));
 const DemoPage = lazy(() => import("./pages/DemoPage"));
 const JoinGamePage = lazy(() => import("./pages/JoinGamePage"));
