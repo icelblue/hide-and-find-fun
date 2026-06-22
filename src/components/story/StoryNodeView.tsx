@@ -27,7 +27,7 @@ function fillPet(text: string, petName: string) {
   return text.split("{pet}").join(petName);
 }
 
-export function StoryNodeView({ node, choices, petName, inventory, state, unlockedSkills, nodeVisitCount, worldLabel, personality, onChoose, busy }: Props) {
+export function StoryNodeView({ node, choices, petName, inventory, state, unlockedSkills, nodeVisitCount, worldLabel, personality, onChoose, busy, hideChoices }: Props) {
   const t = useT();
   const [revealChoices, setRevealChoices] = useState(false);
   const filled = useMemo(() => fillPet(node.narrative, petName), [node, petName]);
