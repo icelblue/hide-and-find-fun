@@ -32,6 +32,8 @@ import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
 import { PetStatsBar } from "@/components/story/PetStatsBar";
 import { InventoryDrawer } from "@/components/story/InventoryDrawer";
 import { WorldMap } from "@/components/story/WorldMap";
+import { PuzzleNodeView } from "@/components/story/PuzzleNodeView";
+import { parsePuzzle, getAttempt } from "@/lib/story-puzzle";
 
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
@@ -78,6 +80,7 @@ export default function StoryModePage() {
   const [visitMap, setVisitMap] = useState<Map<string, number>>(new Map());
   const [recipeCount, setRecipeCount] = useState(0);
   const [personality, setPersonality] = useState<Personality | null>(null);
+  const [puzzleSolvedNodes, setPuzzleSolvedNodes] = useState<Set<string>>(new Set());
 
   // Last ending info
   const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
@@ -192,6 +195,12 @@ export default function StoryModePage() {
         setRun(runData);
         setNode(n);
         setChoices(c);
+        if (parsePuzzle(n.puzzle_data)) {
+          const att = await getAttempt(runData.id, n.id);
+          if (att?.solved_at || att?.skipped_at) {
+            setPuzzleSolvedNodes((s) => new Set(s).add(n.id));
+          }
+        }
         setPhase("playing");
       } else {
         setPhase("ready");
@@ -343,7 +352,32 @@ export default function StoryModePage() {
     const newChoices = await getChoices(pendingNext.id);
     setNode(pendingNext);
     setChoices(newChoices);
+    if (run && parsePuzzle(pendingNext.puzzle_data)) {
+      const att = await getAttempt(run.id, pendingNext.id);
+      if (att?.solved_at || att?.skipped_at) {
+        setPuzzleSolvedNodes((s) => new Set(s).add(pendingNext.id));
+      }
+    }
     setPendingNext(null);
+  };
+
+  const handlePuzzleSolved = async (reward: { item: { id: string; name: string; icon: string }; xp: number }) => {
+    if (!node || !user) return;
+    setPuzzleSolvedNodes((s) => new Set(s).add(node.id));
+    // Refresh inventory + pet + state
+    const [inv, freshPet] = await Promise.all([getInventory(user.id), getMyPet(user.id)]);
+    setInventory(inv);
+    setInventoryRefresh((n) => n + 1);
+    setPet(freshPet);
+    toast.success(t("puzzle.solved", { name: reward.item.name, xp: String(reward.xp) }, `🧩 ${reward.item.icon} ${reward.item.name} +${reward.xp} XP`));
+  };
+
+  const handlePuzzleSkipped = async () => {
+    if (!node || !user) return;
+    setPuzzleSolvedNodes((s) => new Set(s).add(node.id));
+    const st = await getPetState(user.id);
+    setPrevPetState(petState);
+    setPetState(st);
   };
 
   const handleContinueChapter = async () => {
@@ -659,23 +693,41 @@ export default function StoryModePage() {
           </div>
         )}
 
-        <div className="relative z-10">
-          <StoryNodeView
-            node={node}
-            choices={choices}
-            petName={pet.pet_name}
-            inventory={inventory}
-            state={petState}
-            unlockedSkills={skills}
-            nodeVisitCount={visitMap.get(node.id) ?? 1}
-            worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
-              ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
-              : undefined}
-            personality={personality ?? undefined}
-            onChoose={handleChoose}
-            busy={busy || !!reveal}
-          />
-        </div>
+        {(() => {
+          const puzzle = parsePuzzle(node.puzzle_data);
+          const puzzleActive = puzzle && run && !puzzleSolvedNodes.has(node.id);
+          return (
+            <div className="relative z-10 space-y-3">
+              <StoryNodeView
+                node={node}
+                choices={choices}
+                petName={pet.pet_name}
+                inventory={inventory}
+                state={petState}
+                unlockedSkills={skills}
+                nodeVisitCount={visitMap.get(node.id) ?? 1}
+                worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
+                  ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
+                  : undefined}
+                personality={personality ?? undefined}
+                onChoose={handleChoose}
+                busy={busy || !!reveal}
+                hideChoices={!!puzzleActive}
+              />
+              {puzzleActive && user && (
+                <PuzzleNodeView
+                  userId={user.id}
+                  runId={run!.id}
+                  nodeId={node.id}
+                  puzzle={puzzle!}
+                  inventory={inventory}
+                  onSolved={handlePuzzleSolved}
+                  onSkipped={handlePuzzleSkipped}
+                />
+              )}
+            </div>
+          );
+        })()}
 
         {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
       </div>

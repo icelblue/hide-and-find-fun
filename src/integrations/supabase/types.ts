@@ -1507,6 +1507,50 @@ export type Database = {
         }
         Relationships: []
       }
+      story_puzzle_attempts: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          node_id: string
+          run_id: string
+          skipped_at: string | null
+          solved_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          node_id: string
+          run_id: string
+          skipped_at?: string | null
+          solved_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          node_id?: string
+          run_id?: string
+          skipped_at?: string | null
+          solved_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_puzzle_attempts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "story_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       story_recipe_book: {
         Row: {
           discovered_at: string

@@ -164,6 +164,13 @@
 .animate-troll-flash { animation: troll-flash 0.8s ease-out; }
 .animate-troll-bounce { animation: troll-bounce 0.8s ease-in-out infinite; }
 
+@keyframes shake-x {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.animate-shake { animation: shake-x 0.4s ease-in-out 2; }
+
 /* Prevent Safari auto-zoom on input focus (requires font-size >= 16px) */
 @supports (-webkit-touch-callout: none) {
   input, select, textarea {
