@@ -32,6 +32,8 @@ import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
 import { PetStatsBar } from "@/components/story/PetStatsBar";
 import { InventoryDrawer } from "@/components/story/InventoryDrawer";
 import { WorldMap } from "@/components/story/WorldMap";
+import { PuzzleNodeView } from "@/components/story/PuzzleNodeView";
+import { parsePuzzle, getAttempt } from "@/lib/story-puzzle";
 
 import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
 import { HelpDialog } from "@/components/story/HelpDialog";
