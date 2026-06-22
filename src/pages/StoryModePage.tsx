@@ -195,6 +195,12 @@ export default function StoryModePage() {
         setRun(runData);
         setNode(n);
         setChoices(c);
+        if (parsePuzzle(n.puzzle_data)) {
+          const att = await getAttempt(runData.id, n.id);
+          if (att?.solved_at || att?.skipped_at) {
+            setPuzzleSolvedNodes((s) => new Set(s).add(n.id));
+          }
+        }
         setPhase("playing");
       } else {
         setPhase("ready");
