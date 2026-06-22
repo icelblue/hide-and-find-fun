@@ -20,6 +20,7 @@ interface Props {
   personality?: Personality;
   onChoose: (choice: StoryChoice) => Promise<ChoiceResult | void>;
   busy: boolean;
+  hideChoices?: boolean;
 }
 
 function fillPet(text: string, petName: string) {
