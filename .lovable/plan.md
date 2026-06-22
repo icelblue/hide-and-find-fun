@@ -13,33 +13,15 @@ Tres peces independents però connectades pel mateix eix: la mascota i el seu es
 
 ---
 
-## C — Mini-puzzles d'ordre d'ingredients
+## C — Mini-puzzles d'ordre d'ingredients ✅ IMPLEMENTAT
 
-**Decisió tancada:** seqüència correcta d'ítems de l'inventari. Recompensa: ítem únic + 50 XP.
-
-### Esquema DB
-- Nova columna `story_nodes.puzzle_data jsonb` (nullable). Estructura:
-  ```json
-  {
-    "type": "ingredient_order",
-    "slots": 3,
-    "valid_items": ["herba_lluna","aigua_pura","cristall"],
-    "correct_order": ["aigua_pura","herba_lluna","cristall"],
-    "reward_item": "elixir_sagrat",
-    "reward_xp": 50,
-    "fail_message_key": "story.puzzle.fail.generic"
-  }
-  ```
-- Nova taula `story_puzzle_attempts` (run_id, node_id, attempts, solved_at). Límit 3 intents → opció saltar amb penalització -1 vida.
-
-### Frontend
-- Nou component `PuzzleNodeView.tsx` (s'invoca des de `StoryNodeView` quan `puzzle_data != null`).
-- UI: 3 slots buits → tap a ítem inventari → s'insereix al primer slot lliure. Botó "Comprovar".
-- Animacions: glow verd si correcte, shake vermell si no. Toast amb pista després del 2n intent.
-
-### Cobertura
-- 3 puzzles inicials: Capítol 3 (poció calma), Capítol 6 (amulet seafire), Capítol 9 (clau final).
-- Tests: validació d'ordre, gestió d'intents, atorgament de recompensa.
+- DB: `story_nodes.puzzle_data jsonb` + taula `story_puzzle_attempts` (run_id, node_id, attempts, solved_at, skipped_at) amb RLS per propietari.
+- Lògica pura: `src/lib/story-puzzle.ts` (parsePuzzle, checkOrder, submitPuzzleOrder, skipPuzzle, MAX=3).
+- UI: `src/components/story/PuzzleNodeView.tsx` — slots seqüencials, palette d'ítems, comprovació, shake/glow, skip amb penalització (fear +20 / bond -10).
+- Integració: `StoryModePage` detecta `puzzle_data` al node actiu, oculta choices fins resoldre/saltar, atorga ítem + XP en cas d'èxit.
+- i18n CA/EN al namespace `puzzle.*`.
+- Tests: 11 nous (parse, check order, defaults). Total: 197/197 ✅.
+- Pendent dades: seed de 3 puzzles (Capítol 3 / 6 / 9) — la infraestructura ja accepta `puzzle_data` a qualsevol node existent.
 
 ---
 
