@@ -72,7 +72,7 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
         </CardContent>
       </Card>
 
-      {revealChoices && (
+      {revealChoices && !hideChoices && (
         <div className="space-y-2 animate-fade-in">
           {visibleChoices.map((c, i) => {
             const usesItems = c.requires_items && c.requires_items.length > 0;
