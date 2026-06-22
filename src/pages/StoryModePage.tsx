@@ -693,23 +693,41 @@ export default function StoryModePage() {
           </div>
         )}
 
-        <div className="relative z-10">
-          <StoryNodeView
-            node={node}
-            choices={choices}
-            petName={pet.pet_name}
-            inventory={inventory}
-            state={petState}
-            unlockedSkills={skills}
-            nodeVisitCount={visitMap.get(node.id) ?? 1}
-            worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
-              ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
-              : undefined}
-            personality={personality ?? undefined}
-            onChoose={handleChoose}
-            busy={busy || !!reveal}
-          />
-        </div>
+        {(() => {
+          const puzzle = parsePuzzle(node.puzzle_data);
+          const puzzleActive = puzzle && run && !puzzleSolvedNodes.has(node.id);
+          return (
+            <div className="relative z-10 space-y-3">
+              <StoryNodeView
+                node={node}
+                choices={choices}
+                petName={pet.pet_name}
+                inventory={inventory}
+                state={petState}
+                unlockedSkills={skills}
+                nodeVisitCount={visitMap.get(node.id) ?? 1}
+                worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
+                  ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
+                  : undefined}
+                personality={personality ?? undefined}
+                onChoose={handleChoose}
+                busy={busy || !!reveal}
+                hideChoices={!!puzzleActive}
+              />
+              {puzzleActive && user && (
+                <PuzzleNodeView
+                  userId={user.id}
+                  runId={run!.id}
+                  nodeId={node.id}
+                  puzzle={puzzle!}
+                  inventory={inventory}
+                  onSolved={handlePuzzleSolved}
+                  onSkipped={handlePuzzleSkipped}
+                />
+              )}
+            </div>
+          );
+        })()}
 
         {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
       </div>
