@@ -1135,5 +1135,20 @@
     "decor_painting": "Quadre",
     "decor_crystal": "Cristall"
   },
-  "lobby_extra": { "spaceMenu": "El meu espai" }
+  "lobby_extra": { "spaceMenu": "El meu espai" },
+  "puzzle": {
+    "title": "Puzzle d'ingredients",
+    "instruction": "Col·loca {n} ingredients en l'ordre correcte",
+    "check": "Comprovar",
+    "reset": "Buidar",
+    "skip": "Saltar (-salut)",
+    "skipConfirm": "Saltar el puzzle? Perdràs vincle i guanyaràs por.",
+    "skipped": "Has saltat el puzzle.",
+    "solved": "🧩 {name} +{xp} XP",
+    "wrong": "Ordre incorrecte ({left} intents restants)",
+    "exhausted": "Has esgotat els intents. Pots saltar amb penalització.",
+    "missing": "No tens aquest ingredient",
+    "attemptsLeft": "Intents: {n}/3",
+    "hintGeneric": "Pista: revisa l'ordre."
+  }
 }
