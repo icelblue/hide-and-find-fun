@@ -352,7 +352,32 @@ export default function StoryModePage() {
     const newChoices = await getChoices(pendingNext.id);
     setNode(pendingNext);
     setChoices(newChoices);
+    if (run && parsePuzzle(pendingNext.puzzle_data)) {
+      const att = await getAttempt(run.id, pendingNext.id);
+      if (att?.solved_at || att?.skipped_at) {
+        setPuzzleSolvedNodes((s) => new Set(s).add(pendingNext.id));
+      }
+    }
     setPendingNext(null);
+  };
+
+  const handlePuzzleSolved = async (reward: { item: { id: string; name: string; icon: string }; xp: number }) => {
+    if (!node || !user) return;
+    setPuzzleSolvedNodes((s) => new Set(s).add(node.id));
+    // Refresh inventory + pet + state
+    const [inv, freshPet] = await Promise.all([getInventory(user.id), getMyPet(user.id)]);
+    setInventory(inv);
+    setInventoryRefresh((n) => n + 1);
+    setPet(freshPet);
+    toast.success(t("puzzle.solved", { name: reward.item.name, xp: String(reward.xp) }, `🧩 ${reward.item.icon} ${reward.item.name} +${reward.xp} XP`));
+  };
+
+  const handlePuzzleSkipped = async () => {
+    if (!node || !user) return;
+    setPuzzleSolvedNodes((s) => new Set(s).add(node.id));
+    const st = await getPetState(user.id);
+    setPrevPetState(petState);
+    setPetState(st);
   };
 
   const handleContinueChapter = async () => {
