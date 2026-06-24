@@ -327,6 +327,29 @@ export default function LobbyPage() {
     finally { setLoading(false); }
   };
 
+  const handlePersonalChallenge = async (rivalUserId: string, rivalName: string) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("create_personal_game" as any, { _opponent_id: rivalUserId });
+      if (error) {
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("host_no_space")) throw new Error(t("lobby_extra.errHostNoSpace"));
+        if (msg.includes("opponent_no_space")) throw new Error(t("lobby_extra.errOpponentNoSpace"));
+        if (msg.includes("host_min_furniture")) throw new Error(t("lobby_extra.errHostMinFurniture"));
+        if (msg.includes("opponent_min_furniture")) throw new Error(t("lobby_extra.errOpponentMinFurniture"));
+        if (msg.includes("cannot_challenge_self")) throw new Error(t("lobby_extra.errCannotChallengeSelf"));
+        throw error;
+      }
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row?.game_id) throw new Error("no_game_id");
+      toast.success(t("lobby_extra.personalSent").replace("{name}", rivalName));
+      navigate(`/game/${row.game_id}`);
+    } catch (err: any) { toast.error(err.message); }
+    finally { setLoading(false); }
+  };
+
+
   const handleBugReport = async () => {
     if (!user || !bugMessage.trim()) return;
     try {
