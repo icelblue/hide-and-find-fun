@@ -482,9 +482,13 @@ export default function LobbyPage() {
                       {t("lobby_extra.personalChallengeShort")}
                     </Button>
                   </div>
-
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
 
       {/* Join by code */}
       <Card className="mb-5 glass">
