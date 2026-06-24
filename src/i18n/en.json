@@ -1135,7 +1135,17 @@
     "decor_painting": "Painting",
     "decor_crystal": "Crystal"
   },
-  "lobby_extra": { "spaceMenu": "My space" },
+  "lobby_extra": {
+    "spaceMenu": "My space",
+    "personalChallenge": "Personal challenge",
+    "personalChallengeShort": "🏠 PvP",
+    "personalSent": "Personal challenge sent to {name}",
+    "errHostNoSpace": "You need to set up your space first (/space).",
+    "errOpponentNoSpace": "Opponent has no space yet.",
+    "errHostMinFurniture": "You need at least 4 furniture items in your space.",
+    "errOpponentMinFurniture": "Opponent doesn't have enough furniture (min. 4).",
+    "errCannotChallengeSelf": "You can't challenge yourself."
+  },
   "puzzle": {
     "title": "Ingredient puzzle",
     "instruction": "Place {n} ingredients in the correct order",
@@ -1149,6 +1159,11 @@
     "exhausted": "No more tries. You may skip with penalty.",
     "missing": "You don't have this ingredient",
     "attemptsLeft": "Tries: {n}/3",
-    "hintGeneric": "Hint: review the order."
+    "hintGeneric": "Hint: review the order.",
+    "hint": {
+      "kitchen": "Dry ingredients first, then liquids.",
+      "ritual": "Salt protects before flame illuminates.",
+      "dreams": "Moonwater opens the path; silver closes it."
+    }
   }
 }

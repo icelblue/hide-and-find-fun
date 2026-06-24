@@ -46,39 +46,31 @@ Tres peces independents però connectades pel mateix eix: la mascota i el seu es
 
 ---
 
-## E — Mode PvP Personal (cua separada)
+## E — Mode PvP Personal ⚠️ PARCIALMENT IMPLEMENTAT
 
-**Decisió tancada:** cua independent. Només jugadors amb espai configurat poden entrar.
+### Fet en aquesta sessió
+- Migració: `games.game_mode` (default `standard`, check `standard|personal_pvp`), `games.host_space_snapshot jsonb`, `games.guest_space_snapshot jsonb`.
+- RPC `create_personal_game(_opponent_id uuid)` (SECURITY DEFINER, només `authenticated`): valida que ambdós jugadors tinguin `player_spaces` amb ≥4 mobles, congela els 2 layouts al moment de crear i emet codi de 6 caràcters.
+- Frontend: `LobbyPage` mostra un segon botó `🏠 PvP` sota cada resultat de cerca de jugadors, gestiona els 5 errors (`host_no_space`, `opponent_no_space`, `host_min_furniture`, `opponent_min_furniture`, `cannot_challenge_self`) amb missatges traduïts CA/EN.
+- Tests: 197/197 ✅ (sense regressions).
 
-### Esquema DB
-- `games.game_mode text` (default `"standard"`, nou valor `"personal_pvp"`).
-- `games.host_space_snapshot jsonb` — congela el layout del host al moment de crear la partida (evita que canviï mentre juguen).
-- RPC `create_personal_game(opponent_id)`: valida que ambdós jugadors tinguin ≥4 mobles col·locats, crea partida amb mode personal, snapshotegen els 2 espais.
-- `execute_game_move` adaptat: si `game_mode = personal_pvp`, busca a `host_space_snapshot` enlloc d'escenari oficial.
-
-### Frontend
-- Botó "PvP Personal" al `LobbyPage` (disabled amb tooltip si l'espai no compleix mínim).
-- `GamePage` detecta `game_mode` i renderitza el grid del snapshot enlloc d'escenari fix.
-- Sense canvis a la lògica de Observar/Moure/items — només canvia la font del layout.
-
-### Cobertura
-- Validació mínim mobles abans de crear partida.
-- Test: partida personal no es trenca si el host modifica el seu espai post-creació.
+### Seed puzzles (Wave C — completat)
+- `c3_kitchen_feed` → flour/egg/milk (reward `🍞 Pa dolç`, +50 XP).
+- `haunted_courtyard` → salt/candle/feather (reward `👻 Amulet fantasma`, +75 XP).
+- `dreams_choice` → moonwater/dreamleaf/stardust/silver (reward `🌙 Elixir dels somnis`, +100 XP).
+- Pistes i18n a `puzzle.hint.{kitchen,ritual,dreams}` (CA/EN).
 
 ---
 
-## Ordre d'execució proposat
+## Pendent per a la propera sessió
 
-1. **D primer** (espai propi) — base per E, peça autònoma, valor immediat.
-2. **C en paral·lel** (puzzles) — independent, no bloqueja res.
-3. **E al final** — depèn de D consolidat.
-
-Cada bloc s'envia amb migració pròpia + UI + tests. Total estimat: 3 sessions denses (una per bloc).
+1. **Adaptador GamePage per `personal_pvp`**: quan `game.game_mode === 'personal_pvp'`, carregar `host_space_snapshot` / `guest_space_snapshot` enlloc de `scenario_id` i renderitzar els slots del grid 4×4 com a "objectes" amagables. Ara una partida personal es crea correctament però l'UI de joc encara entra al flux estàndard.
+2. **Verificació visual end-to-end** (Playwright): crear espai → comprar 4 mobles → enviar repte PvP Personal → confirmar codi/redirecció.
+3. **Test unitari `create_personal_game`**: validar errors (no_space, min_furniture, self).
 
 ---
 
 ## Què NO inclou aquest pla
 
-- Múltiples habitacions, expansió de mascotes, comerç entre jugadors, mobles animats, decoració estacional. Tot això són ampliacions posteriors un cop la base estigui sòlida.
+- Múltiples habitacions, expansió de mascotes, comerç entre jugadors, mobles animats, decoració estacional.
 
-Aprova i començo per **D**. Si vols invertir l'ordre (C abans), digues-ho.
