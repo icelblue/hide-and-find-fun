@@ -469,16 +469,20 @@ export default function LobbyPage() {
                       <span className="text-[10px] text-muted-foreground">Elo {p.elo}</span>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" className="text-xs shrink-0"
-                    onClick={() => handleChallenge(p.user_id, p.display_name)}
-                    disabled={loading}>
-                    {t("lobby.challengeBtn")}
-                  </Button>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button size="sm" variant="outline" className="text-xs"
+                      onClick={() => handleChallenge(p.user_id, p.display_name)}
+                      disabled={loading}>
+                      {t("lobby.challengeBtn")}
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-[10px] h-6 px-2"
+                      onClick={() => handlePersonalChallenge(p.user_id, p.display_name)}
+                      disabled={loading}
+                      title={t("lobby_extra.personalChallenge")}>
+                      {t("lobby_extra.personalChallengeShort")}
+                    </Button>
+                  </div>
 
-                </div>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
 
