@@ -369,6 +369,9 @@ export type Database = {
           code: string
           created_at: string
           created_by: string
+          game_mode: string
+          guest_space_snapshot: Json | null
+          host_space_snapshot: Json | null
           id: string
           invited_user_id: string | null
           is_story: boolean
@@ -381,6 +384,9 @@ export type Database = {
           code: string
           created_at?: string
           created_by: string
+          game_mode?: string
+          guest_space_snapshot?: Json | null
+          host_space_snapshot?: Json | null
           id?: string
           invited_user_id?: string | null
           is_story?: boolean
@@ -393,6 +399,9 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string
+          game_mode?: string
+          guest_space_snapshot?: Json | null
+          host_space_snapshot?: Json | null
           id?: string
           invited_user_id?: string | null
           is_story?: boolean
@@ -1788,6 +1797,13 @@ export type Database = {
         Returns: Json
       }
       count_game_players: { Args: { _game_id: string }; Returns: number }
+      create_personal_game: {
+        Args: { _opponent_id: string }
+        Returns: {
+          code: string
+          game_id: string
+        }[]
+      }
       delete_user_account: { Args: never; Returns: Json }
       execute_barricada: {
         Args: { _game_id: string; _scenario_from: string; _scenario_to: string }
