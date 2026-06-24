@@ -1135,7 +1135,17 @@
     "decor_painting": "Quadre",
     "decor_crystal": "Cristall"
   },
-  "lobby_extra": { "spaceMenu": "El meu espai" },
+  "lobby_extra": {
+    "spaceMenu": "El meu espai",
+    "personalChallenge": "Repte personal",
+    "personalChallengeShort": "🏠 PvP",
+    "personalSent": "Repte personal enviat a {name}",
+    "errHostNoSpace": "Primer has de crear el teu espai (/space).",
+    "errOpponentNoSpace": "L'oponent encara no té espai.",
+    "errHostMinFurniture": "Necessites almenys 4 mobles al teu espai.",
+    "errOpponentMinFurniture": "L'oponent no té prou mobles (mín. 4).",
+    "errCannotChallengeSelf": "No pots reptar-te a tu mateix."
+  },
   "puzzle": {
     "title": "Puzzle d'ingredients",
     "instruction": "Col·loca {n} ingredients en l'ordre correcte",
@@ -1149,6 +1159,11 @@
     "exhausted": "Has esgotat els intents. Pots saltar amb penalització.",
     "missing": "No tens aquest ingredient",
     "attemptsLeft": "Intents: {n}/3",
-    "hintGeneric": "Pista: revisa l'ordre."
+    "hintGeneric": "Pista: revisa l'ordre.",
+    "hint": {
+      "kitchen": "Primer els secs, després els líquids.",
+      "ritual": "La sal protegeix abans que la flama il·lumini.",
+      "dreams": "L'aigua de lluna obre el camí; la plata el tanca."
+    }
   }
 }
