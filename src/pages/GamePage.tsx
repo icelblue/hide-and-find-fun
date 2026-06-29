@@ -284,7 +284,22 @@ export default function GamePage() {
       // Items, connections, interactions (items result is raw array from helper)
       let loadedItems: any[] = [];
       let loadedInteractions: any[] = [];
-      if (isPlaying && currentScenId && R.items) {
+
+      if (isPlaying && isPersonalGame) {
+        // ── Personal PvP: deriva items del snapshot, sense connexions ni dirty/breakable ──
+        try {
+          const personal = await loadPersonalCombatData(
+            (gameData as any)?.host_space_snapshot,
+            (gameData as any)?.guest_space_snapshot
+          );
+          loadedItems = personal.items;
+          setConnectedScenarios([]);
+          setDirtyItems(new Set());
+          setBreakableItems(new Set());
+        } catch (err: any) {
+          logError(err.message, err.stack, "GamePage:loadPersonalCombatData");
+        }
+      } else if (isPlaying && currentScenId && R.items) {
         loadedItems = Array.isArray(R.items) ? R.items : (R.items?.data ?? R.items ?? []);
         if (R.connected) {
           const conn = Array.isArray(R.connected) ? R.connected : (R.connected?.data ?? []);
