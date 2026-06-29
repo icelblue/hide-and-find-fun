@@ -25,6 +25,17 @@ import {
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
   OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame, getBreakableItemsForGame,
 } from "@/lib/supabase-helpers";
+import {
+  loadPersonalCombatData,
+  parseSnapshot,
+  synthScenario,
+  synthObjects,
+  synthItems,
+  mergeSnapshots,
+  loadFurnitureCatalog,
+  PERSONAL_SCENARIO_ID,
+  type FurnitureCatalogItem,
+} from "@/lib/personal-pvp-adapter";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
   getMyAccessories, awardAccessory, hasAllAccessories,
