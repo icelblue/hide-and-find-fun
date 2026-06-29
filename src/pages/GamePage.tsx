@@ -222,7 +222,8 @@ export default function GamePage() {
       if (!isStoryGame && isPlaying) {
         batch.traits = supabase.rpc("get_rival_traits" as any, { _game_id: gameId });
       }
-      if (isPlaying && currentScenId) {
+      const isPersonalGame = (gameData as any)?.game_mode === "personal_pvp";
+      if (isPlaying && currentScenId && !isPersonalGame) {
         batch.items = getItemsByScenario(currentScenId);
         batch.connected = getConnectedScenarios(currentScenId);
         batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
