@@ -525,12 +525,42 @@ export default function GamePage() {
     };
   }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem, scheduleLoadGame]);
 
+  // ── Personal PvP: override scenaris/objectes amb el snapshot ──
+  const isPersonalGame = (game as any)?.game_mode === "personal_pvp";
+  useEffect(() => {
+    if (!isPersonalGame || !game) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const personal = await loadPersonalCombatData(
+          (game as any).host_space_snapshot,
+          (game as any).guest_space_snapshot
+        );
+        if (cancelled) return;
+        setScenarios(personal.scenarios);
+        setObjects(personal.objects);
+      } catch (err: any) {
+        logError(err.message, err.stack, "GamePage:personal effect");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isPersonalGame, game]);
+
   // ============================================
   // HIDING HANDLERS
   // ============================================
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
-    setItems(await getItemsByScenario(id));
+    if (isPersonalGame && game) {
+      const catalog = await loadFurnitureCatalog();
+      const merged = mergeSnapshots(
+        parseSnapshot((game as any).host_space_snapshot),
+        parseSnapshot((game as any).guest_space_snapshot)
+      );
+      setItems(synthItems(merged, catalog));
+    } else {
+      setItems(await getItemsByScenario(id));
+    }
     setHideStep(2);
   };
 
