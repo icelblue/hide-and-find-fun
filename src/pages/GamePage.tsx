@@ -364,18 +364,20 @@ export default function GamePage() {
 
       // Scenario illumination
       let isOutdoor = false;
-      if (R.curScen) {
+      if (R.curScen && !isPersonalGame) {
         isOutdoor = OUTDOOR_SCENARIOS.includes(R.curScen.data?.name ?? "");
       }
       let indoorLightOff = false;
-      if (!isOutdoor && currentScenId) {
+      if (!isOutdoor && currentScenId && !isPersonalGame) {
         for (const m of allGameMoves) {
           const val = (m.bonus_value as string) ?? "";
           if (val === `tag:light_off:${currentScenId}`) indoorLightOff = true;
           if (val === `tag:light_on:${currentScenId}`) indoorLightOff = false;
         }
       }
-      const scenarioIsDark = isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff;
+      const scenarioIsDark = isPersonalGame
+        ? false
+        : (isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff);
       setScenarioIsDarkState(scenarioIsDark);
 
       const visibleItems = loadedItems.filter((i: any) => {
