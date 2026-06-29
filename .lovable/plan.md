@@ -1,76 +1,52 @@
+## Adaptador `personal_pvp` per a `GamePage` + verificació visual
 
-# Pla: Blocs C + D + E
+### Objectiu
+Quan `game.game_mode === 'personal_pvp'`, el motor de combat ha d'utilitzar el **snapshot del grid 4×4** del jugador rival com a "escenari" enlloc de la taula `scenarios`. Mínim canvi al motor, màxim aïllament.
 
-Tres peces independents però connectades pel mateix eix: la mascota i el seu espai.
+### Peça nova: `src/lib/personal-pvp-adapter.ts`
+Helper pur que tradueix un `space_snapshot` (`{slot, furniture_id}[]`) + catàleg de mobles a les formes que `GamePage` ja consumeix:
 
 ```text
-  ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
-  │  C: Puzzles     │      │  D: Espai propi │  →   │  E: PvP Personal│
-  │  Mode Història  │      │  1 habitació    │      │  Mode separat   │
-  └─────────────────┘      └─────────────────┘      └─────────────────┘
-       (independent)         (desbloqueja a E)         (depèn de D)
+snapshot ──► synthScenario(roomId, ownerName)  → 1 escenari "🏠 Habitació de X"
+         ├─► synthObjects(snapshot, catalog)   → 1 objecte per moble (icon, name, is_special=false)
+         ├─► synthItems(snapshot, catalog)     → 1 item per moble (hidden=false)
+         └─► synthConnections()                → [] (sense connexions, 1 sola sala)
 ```
 
----
+Sense `object_specials`, sense `item_interactions`, sense fosca. Mode "net": amagar i buscar nu.
 
-## C — Mini-puzzles d'ordre d'ingredients ✅ IMPLEMENTAT
+### Patch a `GamePage.tsx` (4 punts d'enganxall, tots condicionats per `isPersonal`)
 
-- DB: `story_nodes.puzzle_data jsonb` + taula `story_puzzle_attempts` (run_id, node_id, attempts, solved_at, skipped_at) amb RLS per propietari.
-- Lògica pura: `src/lib/story-puzzle.ts` (parsePuzzle, checkOrder, submitPuzzleOrder, skipPuzzle, MAX=3).
-- UI: `src/components/story/PuzzleNodeView.tsx` — slots seqüencials, palette d'ítems, comprovació, shake/glow, skip amb penalització (fear +20 / bond -10).
-- Integració: `StoryModePage` detecta `puzzle_data` al node actiu, oculta choices fins resoldre/saltar, atorga ítem + XP en cas d'èxit.
-- i18n CA/EN al namespace `puzzle.*`.
-- Tests: 11 nous (parse, check order, defaults). Total: 197/197 ✅.
-- Pendent dades: seed de 3 puzzles (Capítol 3 / 6 / 9) — la infraestructura ja accepta `puzzle_data` a qualsevol node existent.
+1. `useEffect` inicial (`getScenarios`, `getObjects`):
+   - Si `game.game_mode === 'personal_pvp'` → cridar adaptador amb el snapshot **del rival** (l'amfitrió busca al guest_snapshot i viceversa).
+2. `loadGame` BATCH 2 → `batch.items = getItemsByScenario(currentScenId)` i `batch.connected` → substituir per `synthItems`/`synthConnections` (no toquen Supabase).
+3. Mecàniques bloquejades en mode personal:
+   - Custom object: amagat (només mobles del rival com a object).
+   - `item_interactions` buides → la UI ja gestiona array buit.
+   - `dirtyItems` / `breakableItems` / `OUTDOOR_SCENARIOS` → tot off (cap moble és tag-target).
+4. Hide flow: l'usuari tria 1 dels seus mobles (snapshot propi) com a object; el rival busca al snapshot del cercador.
 
----
+### Sense canvis a la DB
+La migració del torn anterior ja deixa `host_space_snapshot` i `guest_space_snapshot` a `games`. L'adaptador només els llegeix.
 
-## D — Espai propi (1 habitació, mobles desbloquejables)
+### Verificació visual (Playwright)
+`LOVABLE_BROWSER_AUTH_STATUS` injectat → script que:
+1. Restaura sessió, va a `/space`, comprova que hi ha ≥4 mobles col·locats (si no, els compra i col·loca).
+2. Va a `/` (Lobby), busca un jugador, clica `🏠 PvP`, confirma codi generat.
+3. Captura: `space.png`, `lobby_pvp.png`, `game_personal.png` mostrant la sala sintètica.
 
-**Decisió tancada:** una sola habitació amb grid fix 4×4, mobles comprats amb monedes.
+Si l'sessió no està injectada o no hi ha rival amb espai, el pas 2-3 queda registrat com a "no reproduïble end-to-end" i deixem només la validació de l'editor d'espai + càrrega de codi via `create_personal_game` RPC (smoke).
 
-### Esquema DB
-- `player_spaces` (user_id PK, layout jsonb, updated_at). `layout` = `[{slot:0, furniture_id:"bed_basic"}, ...]`.
-- `furniture_catalog` (id, name_key, price_coins, icon, category, unlock_level). Seed 12 mobles inicials (3 llits, 3 catifes, 3 plantes, 3 decoracions).
-- `player_furniture` (user_id, furniture_id, acquired_at). Inventari de mobles posseïts.
-- RLS: només propietari pot llegir/escriure el seu espai i inventari de mobles. `furniture_catalog` lectura pública.
+### Tests unitaris
+`src/test/personal-pvp-adapter.test.ts`:
+- snapshot buit → 0 objectes, 1 escenari.
+- snapshot 4 mobles → 4 objectes amb icons del catàleg, items hidden=false.
+- furniture_id desconegut → es filtra (no peta).
 
-### Frontend
-- Nova ruta `/space` accessible des de `Index` (card "El meu espai").
-- Component `SpaceEditor.tsx`: grid 4×4, drag&drop de mobles d'inventari a slots. Botó "Botiga" obre `FurnitureShop.tsx`.
-- Mascota es renderitza al centre, reacciona als mobles (bonus felicitat segons categoria).
+### Què NO toca
+- Recompenses, social items, eines, traits del rival: idèntics al flux estàndard.
+- `StoryModePage`, `SpacePage`: cap canvi.
+- Migracions noves: cap.
 
-### Cobertura
-- Tests: validació de slot únic per moble, càlcul de preu, persistència del layout.
-- i18n CA/EN per noms de mobles i UI botiga.
-
----
-
-## E — Mode PvP Personal ⚠️ PARCIALMENT IMPLEMENTAT
-
-### Fet en aquesta sessió
-- Migració: `games.game_mode` (default `standard`, check `standard|personal_pvp`), `games.host_space_snapshot jsonb`, `games.guest_space_snapshot jsonb`.
-- RPC `create_personal_game(_opponent_id uuid)` (SECURITY DEFINER, només `authenticated`): valida que ambdós jugadors tinguin `player_spaces` amb ≥4 mobles, congela els 2 layouts al moment de crear i emet codi de 6 caràcters.
-- Frontend: `LobbyPage` mostra un segon botó `🏠 PvP` sota cada resultat de cerca de jugadors, gestiona els 5 errors (`host_no_space`, `opponent_no_space`, `host_min_furniture`, `opponent_min_furniture`, `cannot_challenge_self`) amb missatges traduïts CA/EN.
-- Tests: 197/197 ✅ (sense regressions).
-
-### Seed puzzles (Wave C — completat)
-- `c3_kitchen_feed` → flour/egg/milk (reward `🍞 Pa dolç`, +50 XP).
-- `haunted_courtyard` → salt/candle/feather (reward `👻 Amulet fantasma`, +75 XP).
-- `dreams_choice` → moonwater/dreamleaf/stardust/silver (reward `🌙 Elixir dels somnis`, +100 XP).
-- Pistes i18n a `puzzle.hint.{kitchen,ritual,dreams}` (CA/EN).
-
----
-
-## Pendent per a la propera sessió
-
-1. **Adaptador GamePage per `personal_pvp`**: quan `game.game_mode === 'personal_pvp'`, carregar `host_space_snapshot` / `guest_space_snapshot` enlloc de `scenario_id` i renderitzar els slots del grid 4×4 com a "objectes" amagables. Ara una partida personal es crea correctament però l'UI de joc encara entra al flux estàndard.
-2. **Verificació visual end-to-end** (Playwright): crear espai → comprar 4 mobles → enviar repte PvP Personal → confirmar codi/redirecció.
-3. **Test unitari `create_personal_game`**: validar errors (no_space, min_furniture, self).
-
----
-
-## Què NO inclou aquest pla
-
-- Múltiples habitacions, expansió de mascotes, comerç entre jugadors, mobles animats, decoració estacional.
-
+### Risc conegut
+`GamePage` és gros (1735 línies). L'adaptador encapsula la divergència en una única funció `loadCombatData(game, user)` per evitar `if` repartits — si emergeix més divergència en el futur, refactor cap a un hook `useCombatSource`.
