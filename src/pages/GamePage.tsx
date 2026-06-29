@@ -25,6 +25,17 @@ import {
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
   OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame, getBreakableItemsForGame,
 } from "@/lib/supabase-helpers";
+import {
+  loadPersonalCombatData,
+  parseSnapshot,
+  synthScenario,
+  synthObjects,
+  synthItems,
+  mergeSnapshots,
+  loadFurnitureCatalog,
+  PERSONAL_SCENARIO_ID,
+  type FurnitureCatalogItem,
+} from "@/lib/personal-pvp-adapter";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
   getMyAccessories, awardAccessory, hasAllAccessories,
@@ -211,7 +222,8 @@ export default function GamePage() {
       if (!isStoryGame && isPlaying) {
         batch.traits = supabase.rpc("get_rival_traits" as any, { _game_id: gameId });
       }
-      if (isPlaying && currentScenId) {
+      const isPersonalGame = (gameData as any)?.game_mode === "personal_pvp";
+      if (isPlaying && currentScenId && !isPersonalGame) {
         batch.items = getItemsByScenario(currentScenId);
         batch.connected = getConnectedScenarios(currentScenId);
         batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
@@ -272,7 +284,22 @@ export default function GamePage() {
       // Items, connections, interactions (items result is raw array from helper)
       let loadedItems: any[] = [];
       let loadedInteractions: any[] = [];
-      if (isPlaying && currentScenId && R.items) {
+
+      if (isPlaying && isPersonalGame) {
+        // ── Personal PvP: deriva items del snapshot, sense connexions ni dirty/breakable ──
+        try {
+          const personal = await loadPersonalCombatData(
+            (gameData as any)?.host_space_snapshot,
+            (gameData as any)?.guest_space_snapshot
+          );
+          loadedItems = personal.items;
+          setConnectedScenarios([]);
+          setDirtyItems(new Set());
+          setBreakableItems(new Set());
+        } catch (err: any) {
+          logError(err.message, err.stack, "GamePage:loadPersonalCombatData");
+        }
+      } else if (isPlaying && currentScenId && R.items) {
         loadedItems = Array.isArray(R.items) ? R.items : (R.items?.data ?? R.items ?? []);
         if (R.connected) {
           const conn = Array.isArray(R.connected) ? R.connected : (R.connected?.data ?? []);
@@ -337,18 +364,20 @@ export default function GamePage() {
 
       // Scenario illumination
       let isOutdoor = false;
-      if (R.curScen) {
+      if (R.curScen && !isPersonalGame) {
         isOutdoor = OUTDOOR_SCENARIOS.includes(R.curScen.data?.name ?? "");
       }
       let indoorLightOff = false;
-      if (!isOutdoor && currentScenId) {
+      if (!isOutdoor && currentScenId && !isPersonalGame) {
         for (const m of allGameMoves) {
           const val = (m.bonus_value as string) ?? "";
           if (val === `tag:light_off:${currentScenId}`) indoorLightOff = true;
           if (val === `tag:light_on:${currentScenId}`) indoorLightOff = false;
         }
       }
-      const scenarioIsDark = isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff;
+      const scenarioIsDark = isPersonalGame
+        ? false
+        : (isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff);
       setScenarioIsDarkState(scenarioIsDark);
 
       const visibleItems = loadedItems.filter((i: any) => {
@@ -496,12 +525,42 @@ export default function GamePage() {
     };
   }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem, scheduleLoadGame]);
 
+  // ── Personal PvP: override scenaris/objectes amb el snapshot ──
+  const isPersonalGame = (game as any)?.game_mode === "personal_pvp";
+  useEffect(() => {
+    if (!isPersonalGame || !game) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const personal = await loadPersonalCombatData(
+          (game as any).host_space_snapshot,
+          (game as any).guest_space_snapshot
+        );
+        if (cancelled) return;
+        setScenarios(personal.scenarios);
+        setObjects(personal.objects);
+      } catch (err: any) {
+        logError(err.message, err.stack, "GamePage:personal effect");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isPersonalGame, game]);
+
   // ============================================
   // HIDING HANDLERS
   // ============================================
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
-    setItems(await getItemsByScenario(id));
+    if (isPersonalGame && game) {
+      const catalog = await loadFurnitureCatalog();
+      const merged = mergeSnapshots(
+        parseSnapshot((game as any).host_space_snapshot),
+        parseSnapshot((game as any).guest_space_snapshot)
+      );
+      setItems(synthItems(merged, catalog));
+    } else {
+      setItems(await getItemsByScenario(id));
+    }
     setHideStep(2);
   };
 
