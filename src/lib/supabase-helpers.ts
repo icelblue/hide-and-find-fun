@@ -671,12 +671,12 @@ export async function getMyInvites(userId: string) {
 export async function getMyGames(userId: string) {
   const { data: joined } = await supabase
     .from("game_players")
-    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id)")
+    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id, game_mode)")
     .eq("user_id", userId);
 
   const { data: pendingInvites } = await supabase
     .from("games")
-    .select("id, code, status, created_by, created_at, invited_user_id")
+    .select("id, code, status, created_by, created_at, invited_user_id, game_mode")
     .eq("status", "waiting")
     .eq("invited_user_id", userId);
 
