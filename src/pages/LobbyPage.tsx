@@ -149,6 +149,9 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
             <div>
               {isPending && <p className="text-sm font-bold text-accent">{t("lobby.challengesYou").replace("{name}", creatorName)}</p>}
               <span className="font-mono text-sm font-semibold tracking-wider">{game.code}</span>
+              {game.game_mode === "personal_pvp" && (
+                <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-accent/15 text-accent border border-accent/30">🏠 Personal</span>
+              )}
               {!isPending && gp._rival_name && (
                 <span className="ml-2 text-[11px] text-muted-foreground">vs <span className="text-foreground/70 font-medium">{gp._rival_name}</span></span>
               )}
