@@ -135,6 +135,9 @@ export default function GamePage() {
   const isLoadingGameRef = useRef(false);
   const pendingReloadRef = useRef(false);
   const realtimeReloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Wave A UI polish: track newly-revealed specials to animate them once
+  const [pendingReveal, setPendingReveal] = useState<SpecialRevealData | null>(null);
+  const seenRevealMoveIdsRef = useRef<Set<string>>(new Set());
 
   // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
