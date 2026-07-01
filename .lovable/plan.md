@@ -1,52 +1,56 @@
-## Adaptador `personal_pvp` per a `GamePage` + verificació visual
+# Pla pendent — Deduction Duel
 
-### Objectiu
-Quan `game.game_mode === 'personal_pvp'`, el motor de combat ha d'utilitzar el **snapshot del grid 4×4** del jugador rival com a "escenari" enlloc de la taula `scenarios`. Mínim canvi al motor, màxim aïllament.
+Última actualització: recuperar aquesta llista al començar la propera sessió.
 
-### Peça nova: `src/lib/personal-pvp-adapter.ts`
-Helper pur que tradueix un `space_snapshot` (`{slot, furniture_id}[]`) + catàleg de mobles a les formes que `GamePage` ja consumeix:
+## Prioritat 🔴 Alta (bugs/UX crítics) — ~2 crèdits
 
-```text
-snapshot ──► synthScenario(roomId, ownerName)  → 1 escenari "🏠 Habitació de X"
-         ├─► synthObjects(snapshot, catalog)   → 1 objecte per moble (icon, name, is_special=false)
-         ├─► synthItems(snapshot, catalog)     → 1 item per moble (hidden=false)
-         └─► synthConnections()                → [] (sense connexions, 1 sola sala)
-```
+1. **E2E real Personal PvP**
+   - Smoke Playwright amb 2 sessions reals (host + guest) jugant una partida personal completa.
+   - Captura `game_personal.png`.
+   - Verificar que el guest carrega correctament el `host_space_snapshot` (ara només s'ha validat des de la perspectiva de l'host).
 
-Sense `object_specials`, sense `item_interactions`, sense fosca. Mode "net": amagar i buscar nu.
+2. **Tutorial onboarding Personal Space + Puzzles**
+   - Primer cop que l'usuari entra a `/space`: dialog explicatiu (grid 4×4, botiga amb bonus_tokens, mínim 4 mobles per jugar PvP personal).
+   - Primer cop que troba un puzle d'ingredients al Mode Història: dialog explicatiu (ordre correcte, límit d'intents, penalització skip).
+   - Flag a `profiles` (`tutorial_space_seen`, `tutorial_puzzle_seen`) o localStorage.
 
-### Patch a `GamePage.tsx` (4 punts d'enganxall, tots condicionats per `isPersonal`)
+## Prioritat 🟡 Mitjana — ~2 crèdits
 
-1. `useEffect` inicial (`getScenarios`, `getObjects`):
-   - Si `game.game_mode === 'personal_pvp'` → cridar adaptador amb el snapshot **del rival** (l'amfitrió busca al guest_snapshot i viceversa).
-2. `loadGame` BATCH 2 → `batch.items = getItemsByScenario(currentScenId)` i `batch.connected` → substituir per `synthItems`/`synthConnections` (no toquen Supabase).
-3. Mecàniques bloquejades en mode personal:
-   - Custom object: amagat (només mobles del rival com a object).
-   - `item_interactions` buides → la UI ja gestiona array buit.
-   - `dirtyItems` / `breakableItems` / `OUTDOOR_SCENARIOS` → tot off (cap moble és tag-target).
-4. Hide flow: l'usuari tria 1 dels seus mobles (snapshot propi) com a object; el rival busca al snapshot del cercador.
+3. **Wave A UI polish** — animacions de revelació de maledicció/bonus (ara només ring + emoji estàtic). Reutilitzar `RewardReveal` del Mode Història com a base.
 
-### Sense canvis a la DB
-La migració del torn anterior ja deixa `host_space_snapshot` i `guest_space_snapshot` a `games`. L'adaptador només els llegeix.
+4. **Story Mode capítols 9-10** + 2-3 puzles d'ingredients addicionals per allargar el contingut final.
 
-### Verificació visual (Playwright)
-`LOVABLE_BROWSER_AUTH_STATUS` injectat → script que:
-1. Restaura sessió, va a `/space`, comprova que hi ha ≥4 mobles col·locats (si no, els compra i col·loca).
-2. Va a `/` (Lobby), busca un jugador, clica `🏠 PvP`, confirma codi generat.
-3. Captura: `space.png`, `lobby_pvp.png`, `game_personal.png` mostrant la sala sintètica.
+5. **Costs socials — tooltip + reset diari visible**
+   - Tooltip explicatiu al botó (per què costa X, quan es reseteja).
+   - Comptador visual del reset diari al `SocialItemsPanel`.
 
-Si l'sessió no està injectada o no hi ha rival amb espai, el pas 2-3 queda registrat com a "no reproduïble end-to-end" i deixem només la validació de l'editor d'espai + càrrega de codi via `create_personal_game` RPC (smoke).
+## Prioritat 🟢 Baixa (contingut/polish) — ~1 crèdit
 
-### Tests unitaris
-`src/test/personal-pvp-adapter.test.ts`:
-- snapshot buit → 0 objectes, 1 escenari.
-- snapshot 4 mobles → 4 objectes amb icons del catàleg, items hidden=false.
-- furniture_id desconegut → es filtra (no peta).
+6. **Catàleg de mobles ampliat** (Personal Space) — més varietat visual + alguns "rare" més cars amb bonus_tokens.
 
-### Què NO toca
-- Recompenses, social items, eines, traits del rival: idèntics al flux estàndard.
-- `StoryModePage`, `SpacePage`: cap canvi.
-- Migracions noves: cap.
+## ⚪ Opcional (si sobren crèdits) — ~0.5 crèdits
 
-### Risc conegut
-`GamePage` és gros (1735 línies). L'adaptador encapsula la divergència en una única funció `loadCombatData(game, user)` per evitar `if` repartits — si emergeix més divergència en el futur, refactor cap a un hook `useCombatSource`.
+7. Badge "🏠 Personal" al header de `GamePage` per recordar el mode.
+8. Ordenar lobby: invites personals primer.
+
+---
+
+## Recomanació d'execució segons crèdits disponibles
+
+- **5 crèdits** → 1 + 2 + 3 (bug bloquejant + onboarding + polish visual notable).
+- **8+ crèdits** → afegir 4 + 5.
+- **10+ crèdits** → tot fins 6, deixar 7-8 com a buffer.
+
+## Estat consolidat (fet en sessions anteriors)
+
+- ✅ Wave B (costs socials backend + UI bàsic)
+- ✅ Wave C (galleda, drap mullat, polish +2🪙)
+- ✅ Wave A backend (curses/bonuses dinàmics per partida)
+- ✅ Story Mode v5.2 (`story_item_effects` + skill-gated Ch5/7)
+- ✅ Bloc C (Mini-puzzles ingredients)
+- ✅ Bloc D (Personal Space 4×4 + botiga)
+- ✅ Bloc E (Personal PvP: create RPC + adapter + lobby badge + tests)
+- ✅ Spy trail (últimes 3 escenes rival)
+- ✅ Drop rate 15%→8% (Master 20%→13%)
+- ✅ Barricada 2 usos/dia
+- ✅ Auditoria RPCs (B1-B8 tancats)
