@@ -2,17 +2,16 @@
 
 Última actualització: recuperar aquesta llista al començar la propera sessió.
 
-## Prioritat 🔴 Alta (bugs/UX crítics) — ~2 crèdits
+# Pla pendent — Deduction Duel
 
-1. **E2E real Personal PvP**
-   - Smoke Playwright amb 2 sessions reals (host + guest) jugant una partida personal completa.
-   - Captura `game_personal.png`.
-   - Verificar que el guest carrega correctament el `host_space_snapshot` (ara només s'ha validat des de la perspectiva de l'host).
+Última actualització: recuperar aquesta llista al començar la propera sessió.
 
-2. **Tutorial onboarding Personal Space + Puzzles**
-   - Primer cop que l'usuari entra a `/space`: dialog explicatiu (grid 4×4, botiga amb bonus_tokens, mínim 4 mobles per jugar PvP personal).
-   - Primer cop que troba un puzle d'ingredients al Mode Història: dialog explicatiu (ordre correcte, límit d'intents, penalització skip).
-   - Flag a `profiles` (`tutorial_space_seen`, `tutorial_puzzle_seen`) o localStorage.
+## Prioritat 🔴 Alta — pendent
+
+1. **E2E real Personal PvP** (BLOCAT en sandbox: `LOVABLE_BROWSER_AUTH_STATUS=signed_out`).
+   - Requereix 2 sessions autenticades simultànies — cal executar-ho quan el sandbox tingui sessió injectada, o manualment amb 2 comptes reals a producció.
+   - Script Playwright a redactar: login host → `/space` (garantir ≥4 mobles) → lobby → 🏠 PvP a rival → login guest en context separat → acceptar invite → captura `game_personal.png` amb sala sintètica.
+
 
 ## Prioritat 🟡 Mitjana — ~2 crèdits
 
