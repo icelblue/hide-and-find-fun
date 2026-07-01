@@ -1165,5 +1165,25 @@
       "ritual": "Salt protects before flame illuminates.",
       "dreams": "Moonwater opens the path; silver closes it."
     }
+  },
+  "onboarding": {
+    "space": {
+      "title": "Your space",
+      "b1": "4×4 grid: tap a furniture from inventory, then tap a cell to place it.",
+      "b2": "Tap an occupied cell to return the furniture to inventory.",
+      "b3": "Buy furniture in the 🛒 Shop with coins 🪙 (bonus tokens from PvP).",
+      "b4": "You need at least 4 placed furniture to challenge rivals in Personal PvP (🏠)."
+    },
+    "puzzle": {
+      "title": "Ingredient puzzle",
+      "b1": "Place ingredients in the correct order to solve it.",
+      "b2": "You have 3 tries. From the 2nd, you'll see a hint 💡.",
+      "b3": "If you run out or skip, you'll lose bond and gain fear."
+    },
+    "cta": "Got it!"
+  },
+  "reveal": {
+    "curse": "Cursed cell!",
+    "bonus": "Bonus cell!"
   }
 }
