@@ -13,6 +13,7 @@ import { useT } from "@/i18n/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { toast } from "sonner";
 
 const GRID_SIZE = 16; // 4×4
@@ -170,6 +171,18 @@ export default function SpacePage() {
 
   return (
     <div className="min-h-screen bg-background pb-8">
+      <OnboardingDialog
+        storageKey="onboarding:space:v1"
+        icon="🏠"
+        title={t("onboarding.space.title", "El teu espai")}
+        bullets={[
+          t("onboarding.space.b1"),
+          t("onboarding.space.b2"),
+          t("onboarding.space.b3"),
+          t("onboarding.space.b4"),
+        ]}
+        ctaLabel={t("onboarding.cta", "Entesos!")}
+      />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-3 py-2.5 flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="text-sm">

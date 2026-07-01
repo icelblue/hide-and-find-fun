@@ -1165,5 +1165,25 @@
       "ritual": "La sal protegeix abans que la flama il·lumini.",
       "dreams": "L'aigua de lluna obre el camí; la plata el tanca."
     }
+  },
+  "onboarding": {
+    "space": {
+      "title": "El teu espai",
+      "b1": "Grid 4×4: toca un moble de l'inventari i després una casella per col·locar-lo.",
+      "b2": "Toca una casella ocupada per retornar el moble a l'inventari.",
+      "b3": "Compra mobles a la 🛒 Botiga amb monedes 🪙 (bonus tokens de PvP).",
+      "b4": "Necessites almenys 4 mobles col·locats per reptar rivals en PvP Personal (🏠)."
+    },
+    "puzzle": {
+      "title": "Puzzle d'ingredients",
+      "b1": "Col·loca els ingredients en l'ordre correcte per resoldre'l.",
+      "b2": "Tens 3 intents. A partir del 2n, veuràs una pista 💡.",
+      "b3": "Si t'esgotes o vols saltar, perdràs vincle i guanyaràs por."
+    },
+    "cta": "Entesos!"
+  },
+  "reveal": {
+    "curse": "Casella maleïda!",
+    "bonus": "Casella premi!"
   }
 }

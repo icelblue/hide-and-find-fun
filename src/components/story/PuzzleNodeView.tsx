@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { OnboardingDialog } from "@/components/OnboardingDialog";
 import type { InventoryItem } from "@/lib/story-state";
 import {
   type IngredientOrderPuzzle, MAX_PUZZLE_ATTEMPTS,
@@ -117,6 +118,13 @@ export function PuzzleNodeView({ userId, runId, nodeId, puzzle, inventory, onSol
 
   return (
     <Card className={`glass border-accent/30 ${shake ? "animate-shake" : ""} ${glow ? "ring-2 ring-emerald-400/70" : ""}`}>
+      <OnboardingDialog
+        storageKey="onboarding:puzzle:v1"
+        icon="🧩"
+        title={t("onboarding.puzzle.title", "Puzzle d'ingredients")}
+        bullets={[t("onboarding.puzzle.b1"), t("onboarding.puzzle.b2"), t("onboarding.puzzle.b3")]}
+        ctaLabel={t("onboarding.cta", "Entesos!")}
+      />
       <CardContent className="py-5 space-y-4">
         <div className="text-center">
           <p className="text-[10px] uppercase tracking-wider text-accent/80 mb-1">

@@ -63,6 +63,7 @@ import { useT } from "@/i18n/LanguageProvider";
 
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
+import { SpecialReveal, type SpecialRevealData } from "@/components/game/SpecialReveal";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
 import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup, WinFoundPopup } from "@/components/game/GamePopups";
@@ -134,6 +135,9 @@ export default function GamePage() {
   const isLoadingGameRef = useRef(false);
   const pendingReloadRef = useRef(false);
   const realtimeReloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Wave A UI polish: track newly-revealed specials to animate them once
+  const [pendingReveal, setPendingReveal] = useState<SpecialRevealData | null>(null);
+  const seenRevealMoveIdsRef = useRef<Set<string>>(new Set());
 
   // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
@@ -1057,9 +1061,31 @@ export default function GamePage() {
     }
   }
 
+  // Wave A polish: detect NEW own-look moves that hit specials → trigger reveal overlay
+  useEffect(() => {
+    if (!user || !moveHistory?.length) return;
+    // Seed on first render so pre-existing reveals don't replay
+    if (seenRevealMoveIdsRef.current.size === 0) {
+      moveHistory.forEach((m: any) => m?.id && seenRevealMoveIdsRef.current.add(m.id));
+      return;
+    }
+    for (const m of moveHistory as any[]) {
+      if (!m?.id || seenRevealMoveIdsRef.current.has(m.id)) continue;
+      seenRevealMoveIdsRef.current.add(m.id);
+      if (m.action !== "look" || m.user_id !== user.id) continue;
+      const bv = m.bonus_value;
+      if (!bv || typeof bv !== "string" || bv.startsWith("tag:")) continue;
+      const n = Number(bv);
+      if (!Number.isFinite(n) || n === 0) continue;
+      setPendingReveal({ type: n < 0 ? "curse" : "bonus", value: n });
+      break; // one at a time; next reveal (if any) fires after dismiss
+    }
+  }, [moveHistory, user]);
+
   // ============================================
   // LOADING
   // ============================================
+
   if (!game || !player) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
@@ -1077,6 +1103,12 @@ export default function GamePage() {
   return (
     <main className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative" role="main">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" aria-hidden="true" />
+
+      <SpecialReveal
+        reveal={pendingReveal}
+        onDone={() => setPendingReveal(null)}
+        labels={{ curse: t("reveal.curse", "Casella maleïda!"), bonus: t("reveal.bonus", "Casella premi!") }}
+      />
 
       {/* Popups */}
       <SpecialFoundPopup show={showSpecialFoundPopup} rival={rival} objects={objects}
