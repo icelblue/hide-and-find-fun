@@ -63,6 +63,7 @@ import { useT } from "@/i18n/LanguageProvider";
 
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
+import { SpecialReveal, type SpecialRevealData } from "@/components/game/SpecialReveal";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
 import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup, WinFoundPopup } from "@/components/game/GamePopups";
