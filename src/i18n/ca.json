@@ -1133,7 +1133,15 @@
     "plant_bonsai": "Bonsai",
     "decor_lamp": "Làmpada",
     "decor_painting": "Quadre",
-    "decor_crystal": "Cristall"
+    "decor_crystal": "Cristall",
+    "chair_stool": "Tamboret",
+    "chair_gaming": "Cadira gaming",
+    "desk_writing": "Escriptori",
+    "desk_gaming": "Setup gaming",
+    "tech_tv": "Televisió",
+    "tech_console": "Consola retro",
+    "music_guitar": "Guitarra",
+    "art_sculpture": "Escultura"
   },
   "lobby_extra": {
     "spaceMenu": "El meu espai",

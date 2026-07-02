@@ -1133,7 +1133,15 @@
     "plant_bonsai": "Bonsai",
     "decor_lamp": "Lamp",
     "decor_painting": "Painting",
-    "decor_crystal": "Crystal"
+    "decor_crystal": "Crystal",
+    "chair_stool": "Stool",
+    "chair_gaming": "Gaming chair",
+    "desk_writing": "Writing desk",
+    "desk_gaming": "Gaming setup",
+    "tech_tv": "TV",
+    "tech_console": "Retro console",
+    "music_guitar": "Guitar",
+    "art_sculpture": "Sculpture"
   },
   "lobby_extra": {
     "spaceMenu": "My space",
