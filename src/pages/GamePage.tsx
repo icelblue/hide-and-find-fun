@@ -1141,6 +1141,14 @@ export default function GamePage() {
           ) : (
             <>
               <span className="font-mono text-[11px] bg-muted/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/30 tracking-wider font-semibold">{game.code}</span>
+              {isPersonalGame && (
+                <span
+                  className="text-[11px] bg-accent/15 text-accent px-2.5 py-1.5 rounded-full border border-accent/30 font-semibold"
+                  title={t("game.header.personalBadgeTip", "Mode Personal PvP")}
+                >
+                  🏠
+                </span>
+              )}
               {rival && (
                 <button onClick={() => navigate(`/player/${rival.user_id}`)}
                   className="text-[11px] bg-secondary/10 text-secondary px-2.5 py-1.5 rounded-full border border-secondary/20 hover:bg-secondary/20 transition-colors font-medium">
