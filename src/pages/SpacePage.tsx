@@ -193,6 +193,65 @@ export default function SpacePage() {
     refresh();
   };
 
+  // ---------- Drag & drop de sales ----------
+  const cellFromPointer = useCallback((clientX: number, clientY: number): { x: number; y: number } | null => {
+    const el = gridRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const cellW = rect.width / MAP_SIZE;
+    const cellH = rect.height / MAP_SIZE;
+    const cx = Math.floor((clientX - rect.left) / cellW);
+    const cy = Math.floor((clientY - rect.top) / cellH);
+    if (cx < 0 || cx >= MAP_SIZE || cy < 0 || cy >= MAP_SIZE) return null;
+    return { x: cx, y: cy };
+  }, []);
+
+  const onCellPointerDown = (e: React.PointerEvent, room: PlayerRoom) => {
+    // No arrossegar si estem col·locant una nova sala
+    if (placingTemplate) return;
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    setDragRoomId(room.id);
+    setDragPos({ x: e.clientX, y: e.clientY });
+    setDragHoverCell({ x: room.position_x, y: room.position_y });
+    setDragMoved(false);
+  };
+
+  const onCellPointerMove = (e: React.PointerEvent) => {
+    if (!dragRoomId) return;
+    setDragPos({ x: e.clientX, y: e.clientY });
+    const cell = cellFromPointer(e.clientX, e.clientY);
+    if (cell) {
+      setDragHoverCell(cell);
+      setDragMoved(true);
+    }
+  };
+
+  const onCellPointerUp = async (e: React.PointerEvent, room: PlayerRoom) => {
+    if (!dragRoomId) return;
+    const cell = cellFromPointer(e.clientX, e.clientY);
+    const rid = dragRoomId;
+    setDragRoomId(null);
+    setDragPos(null);
+    setDragHoverCell(null);
+    if (!cell || !dragMoved) {
+      // Click net (sense moviment) → navega a la sala
+      setDragMoved(false);
+      if (!dragMoved && rid === room.id) navigate(`/space/room/${room.id}`);
+      return;
+    }
+    setDragMoved(false);
+    if (cell.x === room.position_x && cell.y === room.position_y) return;
+    const occupied = rooms.find((r) => r.id !== rid && r.position_x === cell.x && r.position_y === cell.y);
+    if (occupied) { toast.error(t("apartment.cellTaken", "Casella ocupada")); return; }
+    // Optimista
+    setRooms((prev) => prev.map((r) => r.id === rid ? { ...r, position_x: cell.x, position_y: cell.y } : r));
+    const { error } = await supabase.rpc("move_player_room", { _room_id: rid, _new_x: cell.x, _new_y: cell.y });
+    if (error) { toast.error(error.message); refresh(); return; }
+    toast.success(t("apartment.moved", "Sala moguda"));
+  };
+
+
+
   // ---------- Render ----------
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><p className="text-muted-foreground animate-pulse">{t("common.loading")}</p></div>;
