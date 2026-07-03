@@ -5,17 +5,17 @@
 // fallback cells). Helpers `cell(col,row)` per evitar índexs màgics.
 // ============================================================
 import { ROOM_THEMES, type RoomTheme } from "@/lib/room-themes";
-import bgCounter from "@/assets/room/bg-counter.png";
-import bgDeskSurface from "@/assets/room/bg-desk-surface.png";
-import bgTiledWall from "@/assets/room/bg-tiled-wall.png";
-import bgFence from "@/assets/room/bg-fence.png";
-import bgCurtain from "@/assets/room/bg-curtain.png";
-import bgRailing from "@/assets/room/bg-railing.png";
-import bgWallWood from "@/assets/room/bg-wall-wood.png";
-import bgRugLarge from "@/assets/room/bg-rug-large.png";
-import bgBacksplash from "@/assets/room/bg-backsplash.png";
-import bgSkyline from "@/assets/room/bg-skyline.png";
-import bgBalconyFloor from "@/assets/room/bg-balcony-floor.png";
+import { url as bgCounter } from "@/assets/room/bg-counter.png.asset.json";
+import { url as bgDeskSurface } from "@/assets/room/bg-desk-surface.png.asset.json";
+import { url as bgTiledWall } from "@/assets/room/bg-tiled-wall.png.asset.json";
+import { url as bgFence } from "@/assets/room/bg-fence.png.asset.json";
+import { url as bgCurtain } from "@/assets/room/bg-curtain.png.asset.json";
+import { url as bgRailing } from "@/assets/room/bg-railing.png.asset.json";
+import { url as bgWallWood } from "@/assets/room/bg-wall-wood.png.asset.json";
+import { url as bgRugLarge } from "@/assets/room/bg-rug-large.png.asset.json";
+import { url as bgBacksplash } from "@/assets/room/bg-backsplash.png.asset.json";
+import { url as bgSkyline } from "@/assets/room/bg-skyline.png.asset.json";
+import { url as bgBalconyFloor } from "@/assets/room/bg-balcony-floor.png.asset.json";
 
 // ---------- Grid ----------
 export const PVP_GRID_W = 6;
