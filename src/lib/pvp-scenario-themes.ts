@@ -9,6 +9,9 @@ import bgFence from "@/assets/room/bg-fence.png";
 import bgWindow from "@/assets/room/bg-window.png";
 import bgCurtain from "@/assets/room/bg-curtain.png";
 import bgRailing from "@/assets/room/bg-railing.png";
+import bgWallWood from "@/assets/room/bg-wall-wood.png";
+import bgRugLarge from "@/assets/room/bg-rug-large.png";
+import bgBacksplash from "@/assets/room/bg-backsplash.png";
 
 /** Retorna el tema visual d'un escenari PvP a partir del seu nom. */
 export function themeForScenarioName(name: string | null | undefined): RoomTheme {
@@ -93,17 +96,17 @@ const SCENARIO_LAYOUTS: Record<string, CellRule[]> = {
     { pattern: /cadira|chair/i, cell: 14 },        // davant escriptori
     { pattern: /paperera|bin|trash/i, cell: 18 },
   ],
-  // MENJADOR: taula centre, sofà baix, tele a paret
+  // MENJADOR: TV a paret superior, sofà DAVANT la TV (mateixa columna), taula/cadires a un costat
   menjador: [
     { pattern: /vitrina/i, cell: 0 },
     { pattern: /quadre|painting/i, cell: 2 },
     { pattern: /televisi|\btv\b/i, cell: 3 },
     { pattern: /llum|lamp/i, cell: 4 },
     { pattern: /aparador/i, cell: 5 },
-    { pattern: /taula|table/i, cell: 14 },
-    { pattern: /cadira|chair/i, cell: 15 },
-    { pattern: /sof[àa]|couch/i, cell: 19 },
-    { pattern: /catifa|rug/i, cell: 21 },
+    { pattern: /sof[àa]|couch/i, cell: 15 },   // davant la TV
+    { pattern: /taula|table/i, cell: 20 },
+    { pattern: /cadira|chair/i, cell: 22 },
+    { pattern: /catifa|rug/i, cell: 26 },
   ],
   // JARDÍ: arbre a un costat, caseta a l'altre, elements dispersos
   jardi: [
@@ -210,30 +213,36 @@ export interface ScenarioBackdrop {
 
 const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
   cuina: [
-    // Encimera contínua tota la fila 0 (sota nevera/forn/microones/pica/calaix/despensa)
+    // Encimera contínua fila 0
     { sprite: bgCounter, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true },
+    // Rajola "backsplash" a la fila 1 (paret sobre l'encimera) — dóna profunditat
+    { sprite: bgBacksplash, col: 0, row: 1, spanCols: 6, spanRows: 1, cover: true, opacity: 0.55 },
   ],
   lavabo: [
-    // Paret enrajolada fila 0 (darrere mirall/prestatgeria/pica)
     { sprite: bgTiledWall, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true, opacity: 0.55 },
-    // Encimera sota la pica (cel·la 7)
     { sprite: bgCounter, col: 0, row: 1, spanCols: 3, spanRows: 1, cover: true, opacity: 0.9 },
   ],
   despatx: [
-    // Superfície d'escriptori sota laptop/ordinador (cel·les 8-11 row 1)
     { sprite: bgDeskSurface, col: 1, row: 1, spanCols: 4, spanRows: 2 },
-    // Finestra a la paret superior dreta
     { sprite: bgWindow, col: 4, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
   ],
-  habitacio: [],
-  menjador: [],
+  habitacio: [
+    // Paret de fusta darrere la zona del llit (fila 0-1) — capçalera visual
+    { sprite: bgWallWood, col: 1, row: 0, spanCols: 4, spanRows: 2, cover: true, opacity: 0.55 },
+    // Catifa gran centrada sota el llit i la tauleta
+    { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 2, opacity: 0.8 },
+  ],
+  menjador: [
+    // Paret de fusta amb TV al centre (fila 0)
+    { sprite: bgWallWood, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.7 },
+    // Catifa gran davall de sofà + taula (files 2-4)
+    { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 3, opacity: 0.75 },
+  ],
   jardi: [
-    // Tanca perimetral fila 0 i fila 4
     { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
     { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
   ],
   balco: [
-    // Barana inferior contínua
     { sprite: bgRailing, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.95 },
   ],
 };
