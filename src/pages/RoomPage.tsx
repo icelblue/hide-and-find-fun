@@ -20,7 +20,7 @@ import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
-const MAP_SIZE = 5;
+// (MAP_SIZE viu ara a SpacePage; el moviment de sales es fa allà via drag&drop)
 
 type CatalogItem = {
   id: string;
