@@ -61,7 +61,7 @@ export default function StoryModePage() {
   const [playerName, setPlayerName] = useState("");
 
   // Adoption flow
-  const [randomPet, setRandomPet] = useState(PET_OPTIONS[0]);
+  const [randomPet, setRandomPet] = useState<(typeof PET_OPTIONS)[number]>(PET_OPTIONS[0]);
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
   const [petNameInput, setPetNameInput] = useState("");
@@ -158,7 +158,7 @@ export default function StoryModePage() {
       } catch { /* silent */ }
 
       if (!petData) {
-        const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
+        const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
         setRandomPet(rp);
         setIntroStep(0);
         setGiftOpened(false);
@@ -205,9 +205,10 @@ export default function StoryModePage() {
       } else {
         setPhase("ready");
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       console.error("[StoryMode] loadAll error", e);
-      toast.error(t("storyPage.loadError", { msg: String(e?.message ?? e) }));
+      toast.error(t("storyPage.loadError", { msg }));
       setPhase("ready");
     }
   }, [user, t]);
@@ -235,7 +236,7 @@ export default function StoryModePage() {
       toast.success(t("storyPage.adoptedToast", { icon: randomPet.icon, name: trimmed }));
 
       toast.success(`${randomPet.icon} ${trimmed} és el teu company!`);
-    } catch (e: any) { toast.error(e?.message ?? "Error creant la mascota"); }
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Error creant la mascota"); }
     finally { setNamingPet(false); }
   };
 
@@ -258,9 +259,10 @@ export default function StoryModePage() {
       setChapterRewards([]);
       setPrevPetState(null);
       setPhase("playing");
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t("storyPage.unknownError");
       console.error("[StoryMode] startRun error", e);
-      toast.error(t("storyPage.startError", { msg: String(e?.message ?? t("storyPage.unknownError")) }));
+      toast.error(t("storyPage.startError", { msg }));
     }
     finally { setBusy(false); }
 
@@ -336,10 +338,10 @@ export default function StoryModePage() {
         const freshRun = await getActiveRun(user.id);
         if (freshRun) setRun(freshRun);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t("storyPage.choiceFailed");
       console.error("[StoryMode] choice error", e);
-      toast.error(t("storyPage.choiceError", { msg: String(e?.message ?? t("storyPage.choiceFailed")) }));
-
+      toast.error(t("storyPage.choiceError", { msg }));
     }
     finally { setBusy(false); }
   };
@@ -413,11 +415,11 @@ export default function StoryModePage() {
       setEndedNode(null); setEndedStatus(null); setEndedPet(null);
       setRun(null); setNode(null); setChoices([]); setPet(null);
       setPetState(DEFAULT_STATE); setInventory([]);
-      const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)] as any;
+      const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
       setRandomPet(rp);
       setIntroStep(0); setGiftOpened(false); setPetNameInput("");
       setPhase("intro");
-    } catch (e: any) { toast.error(e?.message ?? "Error reiniciant"); }
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Error reiniciant"); }
     finally { setBusy(false); }
   };
 
