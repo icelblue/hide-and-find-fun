@@ -593,23 +593,8 @@ export default function GamePage() {
     setHideStep(2);
   };
 
-  // ============================================
-  // HIDING HANDLERS
-  // ============================================
-  const handleSelectScenario = async (id: string) => {
-    setSelectedScenario(id);
-    if (isPersonalGame && game) {
-      const catalog = await loadFurnitureCatalog();
-      const merged = mergeSnapshots(
-        parseSnapshot((game as any).host_space_snapshot),
-        parseSnapshot((game as any).guest_space_snapshot)
-      );
-      setItems(synthItems(merged, catalog));
-    } else {
-      setItems(await getItemsByScenario(id));
-    }
-    setHideStep(2);
-  };
+  // (handleSelectScenario definit més amunt amb suport multi-sala)
+
 
   const handleSelectObject = async (objId: string) => {
     setSelectedObject(objId);
