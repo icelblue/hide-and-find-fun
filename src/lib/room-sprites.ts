@@ -151,66 +151,81 @@ const NAME_SPRITE: Record<string, string> = {
 };
 
 // -------- Keyword matcher per items PvP amb nom lliure --------
-// Ordre important: paraules específiques primer.
-const KEYWORD_SPRITE: Array<[RegExp, string]> = [
+// L'ordre importa: patrons més específics ABANS que els genèrics
+// (ex. "tauleta" abans que "taula", "microones" abans que "forn").
+// Cada regla té un `id` estable per a tests de regressió.
+export interface SpriteRule {
+  id: string;
+  pattern: RegExp;
+  sprite: string;
+}
+
+export const SPRITE_RULES: SpriteRule[] = [
   // dormitori
-  [/\b(llit|cama|bed|hamaca)\b/i, sprBed],
-  [/(sof[àa]|couch|sofa)/i, sprSofa],
-  [/(cadira|silla|chair|butaca|tamboret|banc|bench)/i, sprChair],
-  [/(escriptori|desk)/i, sprDesk],
-  // ⚠️ Tauleta ABANS que taula (no conté "taula" com a substring, però sí "taul")
-  [/(tauleta|nightstand|mesita)/i, sprNightstand],
-  [/(taula|mesa|table)/i, sprTable],
+  { id: "bed", pattern: /\b(llit|cama|bed|hamaca)\b/i, sprite: sprBed },
+  { id: "sofa", pattern: /(sof[àa]|couch|sofa)/i, sprite: sprSofa },
+  { id: "chair", pattern: /(cadira|silla|chair|butaca|tamboret|banc|bench)/i, sprite: sprChair },
+  { id: "desk", pattern: /(escriptori|desk)/i, sprite: sprDesk },
+  // ⚠️ Tauleta ABANS que taula
+  { id: "nightstand", pattern: /(tauleta|nightstand|mesita)/i, sprite: sprNightstand },
+  { id: "table", pattern: /(taula|mesa|table)/i, sprite: sprTable },
   // tech
-  [/(televisi[óo]|television|\btv\b|pantalla|monitor)/i, sprTv],
-  [/\b(ordinador|ordenador|laptop|port[aà]til|computer|pc)\b/i, sprLaptop],
-  [/\b(consola|console|videojoc)\b/i, sprConsole],
-  [/\b(auriculars|cascos|headphones)\b/i, sprHeadphones],
-  // natura
-  [/\b(arbre|árbol|arbol|tree|bosc)\b/i, sprTree],
-  [/\b(cactus|c[aà]ctus)\b/i, sprCactus],
-  [/\b(flor|flores|flowers|bouquet|ram)\b/i, sprFlowers],
-  [/\b(bolet|seta|mushroom|fong)\b/i, sprMushroom],
-  [/\b(bonsai|bons[aá]i)\b/i, sprBonsai],
-  [/\b(jardinera|test|maceta|planta|plant|regadora|testos|arbust|bush)\b/i, sprPlant],
-  // cuina i electrodom
-  [/\b(nevera|frigor[ií]fic|refrigerador|fridge)\b/i, sprFridge],
-  [/\b(microones|microondas|microwave)\b/i, sprMicrowave],
-  [/\b(fogons?|forn|estufa|barbacoa|stove|oven|hornalla)\b/i, sprStove],
-  [/\b(pica|aig[üu]era|sink|fregadero)\b/i, sprSink],
-  [/\b(despensa|pantry|aparador|vitrina)\b/i, sprShelf],
-  [/\b(rentadora|lavadora|secadora|washer|dryer)\b/i, sprWasher],
+  { id: "tv", pattern: /(televisi[óo]|television|\btv\b|pantalla|monitor)/i, sprite: sprTv },
+  { id: "laptop", pattern: /\b(ordinador|ordenador|laptop|port[aà]til|computer|pc)\b/i, sprite: sprLaptop },
+  { id: "console", pattern: /\b(consola|console|videojoc)\b/i, sprite: sprConsole },
+  { id: "headphones", pattern: /\b(auriculars|cascos|headphones)\b/i, sprite: sprHeadphones },
+  // natura (arbre ABANS que altres plantes)
+  { id: "tree", pattern: /\b(arbre|árbol|arbol|tree|bosc)\b/i, sprite: sprTree },
+  { id: "cactus", pattern: /\b(cactus|c[aà]ctus)\b/i, sprite: sprCactus },
+  { id: "flowers", pattern: /\b(flor|flores|flowers|bouquet|ram)\b/i, sprite: sprFlowers },
+  { id: "mushroom", pattern: /\b(bolet|seta|mushroom|fong)\b/i, sprite: sprMushroom },
+  { id: "bonsai", pattern: /\b(bonsai|bons[aá]i)\b/i, sprite: sprBonsai },
+  { id: "plant", pattern: /\b(jardinera|test|maceta|planta|plant|regadora|testos|arbust|bush)\b/i, sprite: sprPlant },
+  // cuina i electrodom (microones ABANS que forn per evitar "microforn")
+  { id: "fridge", pattern: /\b(nevera|frigor[ií]fic|refrigerador|fridge)\b/i, sprite: sprFridge },
+  { id: "microwave", pattern: /\b(microones|microondas|microwave)\b/i, sprite: sprMicrowave },
+  { id: "stove", pattern: /\b(fogons?|forn|estufa|barbacoa|stove|oven|hornalla)\b/i, sprite: sprStove },
+  { id: "sink", pattern: /\b(pica|aig[üu]era|sink|fregadero)\b/i, sprite: sprSink },
+  { id: "pantry", pattern: /\b(despensa|pantry|aparador|vitrina)\b/i, sprite: sprShelf },
+  { id: "washer", pattern: /\b(rentadora|lavadora|secadora|washer|dryer)\b/i, sprite: sprWasher },
   // bany
-  [/\b(v[aà]ter|wc|water|inodor|toilet)\b/i, sprToilet],
-  [/\b(banyera|ba[nñ]era|dutxa|shower|bath|bathtub|tovalloler)\b/i, sprBath],
+  { id: "toilet", pattern: /\b(v[aà]ter|wc|water|inodor|toilet)\b/i, sprite: sprToilet },
+  { id: "bath", pattern: /\b(banyera|ba[nñ]era|dutxa|shower|bath|bathtub|tovalloler)\b/i, sprite: sprBath },
   // decor
-  [/\b(catifa|alfombra|rug|carpet|estora)\b/i, sprRug],
-  [/\b(l[aà]mpada|l[aà]mpara|lamp|llum|light|fanal|farola)\b/i, sprLamp],
-  [/\b(candela|candles?|espelma|vela)\b/i, sprCandle],
-  [/\b(cristall|crystal|gema|gem)\b/i, sprCrystal],
-  [/\b(mirall|espejo|mirror)\b/i, sprMirror],
-  [/\b(quadre|cuadro|painting|pintura|poster|pòster)\b/i, sprPainting],
-  [/\b(gerro|jarr[óo]n|vase|amfora|[aà]mfora)\b/i, sprVase],
-  [/\b(escultura|sculpture|estatua|est[aà]tua|bust|bust)\b/i, sprSculpture],
+  { id: "rug", pattern: /\b(catifa|alfombra|rug|carpet|estora)\b/i, sprite: sprRug },
+  { id: "lamp", pattern: /\b(l[aà]mpada|l[aà]mpara|lamp|llum|light|fanal|farola)\b/i, sprite: sprLamp },
+  { id: "candle", pattern: /\b(candela|candles?|espelma|vela)\b/i, sprite: sprCandle },
+  { id: "crystal", pattern: /\b(cristall|crystal|gema|gem)\b/i, sprite: sprCrystal },
+  { id: "mirror", pattern: /\b(mirall|espejo|mirror)\b/i, sprite: sprMirror },
+  { id: "painting", pattern: /\b(quadre|cuadro|painting|pintura|poster|pòster)\b/i, sprite: sprPainting },
+  { id: "vase", pattern: /\b(gerro|jarr[óo]n|vase|amfora|[aà]mfora)\b/i, sprite: sprVase },
+  { id: "sculpture", pattern: /\b(escultura|sculpture|estatua|est[aà]tua|bust)\b/i, sprite: sprSculpture },
   // música
-  [/\b(guitarra|guitar)\b/i, sprGuitar],
-  [/\b(piano|teclat|keyboard)\b/i, sprPiano],
-  [/\b(bateria|drums|tambor)\b/i, sprDrums],
+  { id: "guitar", pattern: /\b(guitarra|guitar)\b/i, sprite: sprGuitar },
+  { id: "piano", pattern: /\b(piano|teclat|keyboard)\b/i, sprite: sprPiano },
+  { id: "drums", pattern: /\b(bateria|drums|tambor)\b/i, sprite: sprDrums },
   // pet
-  [/\b(peixera|acuario|aquarium|fishtank|peix)\b/i, sprFishtank],
-  [/\b(pilota|ball|os|hueso|bone|joguina|toy)\b/i, sprPettoy],
+  { id: "fishtank", pattern: /\b(peixera|acuario|aquarium|fishtank|peix)\b/i, sprite: sprFishtank },
+  { id: "pettoy", pattern: /\b(pilota|ball|os|hueso|bone|joguina|toy)\b/i, sprite: sprPettoy },
   // emmagatzematge
-  [/\b(armari|ropero|closet|wardrobe|c[oò]moda|comoda|calaix|calaixera|arxivador)\b/i, sprWardrobe],
-  [/\b(prestatg[a-z]*|estanter[ií]a|shelf|bookshelf|biblioteca|llibres?|books?)\b/i, sprShelf],
-  [/\b(bagul|ba[uú]l|cofre|chest|caixa|caja|maleta|cistella|paperera|estenedor)\b/i, sprChest],
-  // exterior
+  { id: "wardrobe", pattern: /\b(armari|ropero|closet|wardrobe|c[oò]moda|comoda|calaix|calaixera|arxivador)\b/i, sprite: sprWardrobe },
+  { id: "shelf", pattern: /\b(prestatg[a-z]*|estanter[ií]a|shelf|bookshelf|biblioteca|llibres?|books?)\b/i, sprite: sprShelf },
+  { id: "chest", pattern: /\b(bagul|ba[uú]l|cofre|chest|caixa|caja|maleta|cistella|paperera|estenedor)\b/i, sprite: sprChest },
   // exterior / reward items lúdics
-  [/(roca|pedra|piedra|rock|stone|barana|caseta)/i, sprRock],
-  [/(gronxador|swing|columpio|gronx)/i, sprSwing],
-  [/(font.?d.?aigua|font d'aigua|fountain|fuente)/i, sprFountain],
-  [/(piscina|pool|jacuzzi|spa)/i, sprPool],
-  [/(castell|castillo|castle|inflable)/i, sprCastle],
+  { id: "rock", pattern: /(roca|pedra|piedra|rock|stone|barana|caseta)/i, sprite: sprRock },
+  { id: "swing", pattern: /(gronxador|swing|columpio|gronx)/i, sprite: sprSwing },
+  { id: "fountain", pattern: /(font.?d.?aigua|fountain|fuente)/i, sprite: sprFountain },
+  { id: "pool", pattern: /(piscina|pool|jacuzzi|spa)/i, sprite: sprPool },
+  { id: "castle", pattern: /(castell|castillo|castle|inflable)/i, sprite: sprCastle },
 ];
+
+/** Match d'un nom lliure a una regla de sprite. Exposat per a tests. */
+export function matchSpriteRule(name: string): SpriteRule | null {
+  for (const rule of SPRITE_RULES) {
+    if (rule.pattern.test(name)) return rule;
+  }
+  return null;
+}
 
 /**
  * Resol el sprite d'un moble. Prioritat:
@@ -227,13 +242,13 @@ export function spriteForFurniture(
   if (nameKey && NAME_SPRITE[nameKey]) return NAME_SPRITE[nameKey];
   const haystack = `${displayName ?? ""} ${nameKey ?? ""}`.trim();
   if (haystack) {
-    for (const [re, url] of KEYWORD_SPRITE) {
-      if (re.test(haystack)) return url;
-    }
+    const rule = matchSpriteRule(haystack);
+    if (rule) return rule.sprite;
   }
   if (category && CATEGORY_SPRITE[category]) return CATEGORY_SPRITE[category];
   return null;
 }
+
 
 /**
  * Textura de fons per un tema donat. null → utilitzar patró CSS
