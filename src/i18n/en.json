@@ -1148,8 +1148,16 @@
     "moveRoom": "Move room on map",
     "moved": "Room moved",
     "moveOutOfBounds": "Off the map",
-    "dragHint": "Drag a room to move it · tap to enter"
-
+    "dragHint": "Drag a room to move it · tap to enter",
+    "terrainBonusTip": "Room on its preferred terrain: +10% happiness",
+    "petHere": "Your pet is here"
+  },
+  "terrain": {
+    "grass": "Grass",
+    "dirt": "Dirt",
+    "water": "Water",
+    "rock": "Rock",
+    "sand": "Sand"
   },
   "room": {
     "bedroom": "Bedroom",

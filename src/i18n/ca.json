@@ -1148,10 +1148,16 @@
     "moveRoom": "Moure sala al mapa",
     "moved": "Sala moguda",
     "moveOutOfBounds": "Fora del mapa",
-    "dragHint": "Arrossega una sala per moure-la · toca per entrar"
-
-
-
+    "dragHint": "Arrossega una sala per moure-la · toca per entrar",
+    "terrainBonusTip": "Sala en el seu terreny preferit: +10% felicitat",
+    "petHere": "La teva mascota és aquí"
+  },
+  "terrain": {
+    "grass": "Gespa",
+    "dirt": "Terra",
+    "water": "Aigua",
+    "rock": "Roca",
+    "sand": "Sorra"
   },
   "room": {
     "bedroom": "Habitació",

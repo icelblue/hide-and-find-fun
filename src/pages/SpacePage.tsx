@@ -15,8 +15,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { toast } from "sonner";
+import { TerrainTile } from "@/components/space/TerrainTile";
+import { generateTerrain, preferredTerrainForCategory, MAP_SIZE, TERRAIN_BONUS } from "@/lib/terrain";
 
-const MAP_SIZE = 5;
+type Pet = { pet_icon: string; pet_name: string };
 
 type RoomTemplate = {
   id: string;
@@ -53,6 +55,7 @@ export default function SpacePage() {
   const [rooms, setRooms] = useState<PlayerRoom[]>([]);
   const [conns, setConns] = useState<Connection[]>([]);
   const [coins, setCoins] = useState(0);
+  const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [addOpen, setAddOpen] = useState(false);
@@ -71,11 +74,12 @@ export default function SpacePage() {
 
   const refresh = useCallback(async () => {
     if (!user) return;
-    const [tpls, rms, cns, prof] = await Promise.all([
+    const [tpls, rms, cns, prof, pt] = await Promise.all([
       supabase.from("room_catalog").select("*").order("unlock_level"),
       supabase.from("player_rooms").select("id, room_template_id, custom_name, layout, position_x, position_y").eq("user_id", user.id),
       supabase.from("room_connections").select("id, room_a_id, room_b_id").eq("user_id", user.id),
       supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).maybeSingle(),
+      supabase.from("player_pets").select("pet_icon, pet_name").eq("user_id", user.id).maybeSingle(),
     ]);
     setTemplates((tpls.data as RoomTemplate[]) ?? []);
     setRooms(((rms.data as unknown as PlayerRoom[]) ?? []).map((r) => ({
@@ -84,6 +88,7 @@ export default function SpacePage() {
     })));
     setConns((cns.data as Connection[]) ?? []);
     setCoins((prof.data as { bonus_tokens?: number } | null)?.bonus_tokens ?? 0);
+    setPet((pt.data as Pet | null) ?? null);
     setLoading(false);
   }, [user]);
 
@@ -105,6 +110,18 @@ export default function SpacePage() {
     rooms.forEach((r) => s.add(`${r.position_x}:${r.position_y}`));
     return s;
   }, [rooms]);
+
+  // Terreny 2D determinista per usuari (grid[y][x])
+  const terrain = useMemo(() => generateTerrain(user?.id ?? "guest"), [user?.id]);
+
+  // Sala on viu la mascota: preferència dormitori → primera per posició (y·5+x)
+  const petRoomId = useMemo(() => {
+    if (!pet || rooms.length === 0) return null;
+    const bedroom = rooms.find((r) => templateById.get(r.room_template_id)?.category === "bedroom");
+    if (bedroom) return bedroom.id;
+    const sorted = [...rooms].sort((a, b) => (a.position_y * MAP_SIZE + a.position_x) - (b.position_y * MAP_SIZE + b.position_x));
+    return sorted[0]?.id ?? null;
+  }, [pet, rooms, templateById]);
 
   const totalFurniture = useMemo(
     () => rooms.reduce((n, r) => n + r.layout.length, 0),
@@ -327,12 +344,15 @@ export default function SpacePage() {
               const isPlacingHere = !!placingTemplate;
               const isHoverDrop = dragRoomId && dragHoverCell?.x === x && dragHoverCell?.y === y;
               const isDragging = room && dragRoomId === room.id;
+              const cellTerrain = terrain[y]?.[x] ?? "grass";
+              const prefTerrain = tpl ? preferredTerrainForCategory(tpl.category) : null;
+              const hasTerrainBonus = !!(tpl && prefTerrain && prefTerrain === cellTerrain);
+              const hasPet = !!(pet && room && room.id === petRoomId);
               return (
                 <div
                   key={idx}
                   onClick={() => {
                     if (isPlacingHere) placeRoomAt(x, y);
-                    // Navegació passa per pointerup; no fem res aquí per sales (evita doble)
                   }}
                   onPointerDown={room ? (e) => onCellPointerDown(e, room) : undefined}
                   onPointerMove={room ? onCellPointerMove : undefined}
@@ -344,26 +364,54 @@ export default function SpacePage() {
                     isDragging
                       ? "opacity-30 border-accent"
                       : room
-                      ? "bg-card border-accent/40 shadow-sm hover:border-accent"
+                      ? "border-accent/40 shadow-sm hover:border-accent"
                       : isHoverDrop
-                      ? "bg-accent/20 border-accent border-dashed"
+                      ? "border-accent border-dashed"
                       : isPlacingHere
-                      ? "bg-accent/10 border-accent/60 border-dashed animate-pulse"
-                      : "bg-background/40 border-border/30"
+                      ? "border-accent/60 border-dashed animate-pulse"
+                      : "border-border/40"
                   }`}
                   aria-label={room ? room.custom_name : `cell-${x}-${y}`}
                 >
+                  {/* Terreny sempre de fons */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <TerrainTile type={cellTerrain} />
+                  </div>
+                  {/* Overlay quan la cel·la està buida perquè el terreny quedi visible però suau */}
+                  {!room && !isHoverDrop && !isPlacingHere && (
+                    <div className="absolute inset-0 bg-background/10 pointer-events-none" />
+                  )}
+                  {isHoverDrop && !room && <div className="absolute inset-0 bg-accent/30 pointer-events-none" />}
+                  {isPlacingHere && !room && <div className="absolute inset-0 bg-accent/20 pointer-events-none" />}
                   {room && tpl && (
-                    <>
+                    <div className="relative z-10 flex flex-col items-center justify-center w-full h-full bg-card/85 backdrop-blur-[1px]">
                       <span className="text-xl leading-none">{tpl.icon}</span>
                       <span className="text-[8px] font-medium truncate w-full px-0.5 text-foreground/80">{room.custom_name}</span>
                       <span className="text-[7px] text-muted-foreground">{room.layout.length}📦</span>
-                    </>
+                      {hasTerrainBonus && (
+                        <span
+                          className="absolute top-0.5 left-0.5 text-[8px] leading-none px-1 py-[1px] rounded bg-emerald-500/90 text-white font-bold"
+                          title={t("apartment.terrainBonusTip", "Sala en el seu terreny preferit: +10% felicitat")}
+                        >
+                          +{Math.round(TERRAIN_BONUS * 100)}%
+                        </span>
+                      )}
+                      {hasPet && (
+                        <span
+                          className="absolute bottom-0 right-0.5 text-sm leading-none animate-bounce"
+                          title={pet ? `${pet.pet_icon} ${pet.pet_name}` : ""}
+                          aria-label={t("apartment.petHere", "La teva mascota és aquí")}
+                        >
+                          {pet?.pet_icon}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               );
             })}
           </div>
+
 
           {/* Ghost element seguint el punter mentre s'arrossega */}
           {dragRoomId && dragPos && (() => {

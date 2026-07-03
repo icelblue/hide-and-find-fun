@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
+import { generateTerrain, preferredTerrainForCategory, TERRAIN_BONUS } from "@/lib/terrain";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
@@ -45,6 +46,7 @@ type RoomTemplate = {
   id: string;
   icon: string;
   name_key: string;
+  category: string;
   grid_w: number;
   grid_h: number;
   allowed_categories: string[];
@@ -107,7 +109,7 @@ export default function RoomPage() {
 
       const { data: tpl } = await supabase
         .from("room_catalog")
-        .select("id, icon, name_key, grid_w, grid_h, allowed_categories, happiness_multiplier")
+        .select("id, icon, name_key, category, grid_w, grid_h, allowed_categories, happiness_multiplier")
         .eq("id", rm.data.room_template_id)
         .maybeSingle();
       if (tpl) setTemplate(tpl as unknown as RoomTemplate);
@@ -171,6 +173,16 @@ export default function RoomPage() {
   const allowedCats = template?.allowed_categories ?? [];
   const multiplier = Number(template?.happiness_multiplier ?? 1);
 
+  // Bonus terreny: si la sala està sobre el seu terreny preferit al mapa 5×5, +10%
+  const terrainBonus = useMemo(() => {
+    if (!template || !room || !user) return 0;
+    const pref = preferredTerrainForCategory(template.category);
+    if (!pref) return 0;
+    const grid = generateTerrain(user.id);
+    const cell = grid[room.position_y]?.[room.position_x];
+    return cell === pref ? TERRAIN_BONUS : 0;
+  }, [template, room, user]);
+
   // Inventari filtrat per categories permeses (buit = tot permès)
   const catAllowed = useCallback((cat: string) => allowedCats.length === 0 || allowedCats.includes(cat), [allowedCats]);
 
@@ -194,19 +206,19 @@ export default function RoomPage() {
 
   const happiness = useMemo(() => {
     let s = 0;
+    const terrainMult = 1 + terrainBonus;
     for (const x of layout) {
       if (isReward(x.furniture_id)) {
-        s += REWARD_HAPPINESS * multiplier;
+        s += REWARD_HAPPINESS * multiplier * terrainMult;
       } else {
         const c = catalogById.get(x.furniture_id);
         const base = c?.happiness_bonus ?? 0;
-        // Multiplicador s'aplica només si la categoria coincideix amb allowed
         const bonusMult = c && catAllowed(c.category) && allowedCats.length > 0 ? multiplier : 1;
-        s += base * bonusMult;
+        s += base * bonusMult * terrainMult;
       }
     }
     return Math.round(s);
-  }, [layout, catalogById, multiplier, catAllowed, allowedCats.length]);
+  }, [layout, catalogById, multiplier, catAllowed, allowedCats.length, terrainBonus]);
 
   const resolveEntry = useCallback((fid: string) => {
     if (isReward(fid)) {
@@ -317,6 +329,14 @@ export default function RoomPage() {
               <span className="text-muted-foreground">{gridW}×{gridH}</span>
               {multiplier > 1 && (
                 <span className="text-accent font-semibold">×{multiplier.toFixed(2)} 😊</span>
+              )}
+              {terrainBonus > 0 && (
+                <span
+                  className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold"
+                  title={t("apartment.terrainBonusTip", "Sala en el seu terreny preferit: +10% felicitat")}
+                >
+                  🌱 +{Math.round(terrainBonus * 100)}%
+                </span>
               )}
             </CardContent>
           </Card>
