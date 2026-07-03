@@ -394,25 +394,8 @@ export default function RoomPage() {
           })}
         </div>
 
-        {/* Fletxes per moure la sala pel mapa */}
-        <Card className="glass">
-          <CardContent className="py-2 px-3">
-            <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider mb-1.5">
-              {t("apartment.moveRoom", "Moure sala al mapa")} ({room.position_x + 1},{room.position_y + 1})
-            </p>
-            <div className="grid grid-cols-3 gap-1 max-w-[140px] mx-auto">
-              <span />
-              <Button size="sm" variant="outline" disabled={!canMove(0, -1)} onClick={() => handleMove(0, -1)} className="h-8">↑</Button>
-              <span />
-              <Button size="sm" variant="outline" disabled={!canMove(-1, 0)} onClick={() => handleMove(-1, 0)} className="h-8">←</Button>
-              <span className="text-center text-[10px] self-center text-muted-foreground">{template?.icon}</span>
-              <Button size="sm" variant="outline" disabled={!canMove(1, 0)} onClick={() => handleMove(1, 0)} className="h-8">→</Button>
-              <span />
-              <Button size="sm" variant="outline" disabled={!canMove(0, 1)} onClick={() => handleMove(0, 1)} className="h-8">↓</Button>
-              <span />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Moviment de sales: arrossega des del mini-mapa de l'apartament */}
+
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
