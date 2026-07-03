@@ -1694,7 +1694,9 @@ export default function GamePage() {
             {(() => {
               const isCurrentlyDark = scenarioIsDark;
               const hasLlanterna = playerTools.llanterna > 0;
-              const canToggle = isOutdoor ? (isCurrentlyDark ? hasLlanterna : true) : true;
+              // Sempre permetem clicar: si és exterior fosc sense llanterna, el servidor
+              // fa fallback del pool compartit (max 5) i, si s'esgota, retorna error clar.
+              const canToggle = true;
 
               return (
                 <>

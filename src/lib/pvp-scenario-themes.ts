@@ -12,6 +12,8 @@ import bgRailing from "@/assets/room/bg-railing.png";
 import bgWallWood from "@/assets/room/bg-wall-wood.png";
 import bgRugLarge from "@/assets/room/bg-rug-large.png";
 import bgBacksplash from "@/assets/room/bg-backsplash.png";
+import bgSkyline from "@/assets/room/bg-skyline.png";
+import bgBalconyFloor from "@/assets/room/bg-balcony-floor.png";
 
 /** Retorna el tema visual d'un escenari PvP a partir del seu nom. */
 export function themeForScenarioName(name: string | null | undefined): RoomTheme {
@@ -120,17 +122,18 @@ const SCENARIO_LAYOUTS: Record<string, CellRule[]> = {
     { pattern: /regadora|watering/i, cell: 21 },
     { pattern: /ba[uú]l|chest/i, cell: 23 },
   ],
-  // BALCÓ (grid més estret, però mantenim 6x5): barana baixa, taula centre
+  // BALCÓ: cel + skyline fila 0-1, barana fila 2 (línia horitzó), terra fila 3-4
   balco: [
+    // Fila 0-1: coses "penjades" o altes davant del cel
     { pattern: /jardinera|planter/i, cell: 0 },
-    { pattern: /estenedor|clothesline/i, cell: 1 },
-    { pattern: /gerro|vase/i, cell: 4 },
+    { pattern: /estenedor|clothesline/i, cell: 2 },
     { pattern: /testos|plant|maceta/i, cell: 5 },
-    { pattern: /fanal|lantern|lamp/i, cell: 11 },
-    { pattern: /cadira|chair/i, cell: 14 },
-    { pattern: /taula|table/i, cell: 15 },
-    { pattern: /barana|railing/i, cell: 17 },
-    { pattern: /catifa|rug/i, cell: 21 },
+    { pattern: /fanal|lantern|lamp/i, cell: 6 },
+    { pattern: /gerro|vase/i, cell: 11 },
+    // Fila 3-4: mobiliari de terra
+    { pattern: /cadira|chair/i, cell: 20 },
+    { pattern: /taula|table/i, cell: 21 },
+    { pattern: /catifa|rug/i, cell: 26 },
     { pattern: /caixa|box/i, cell: 23 },
   ],
 };
@@ -243,7 +246,12 @@ const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
     { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
   ],
   balco: [
-    { sprite: bgRailing, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.95 },
+    // Cel amb skyline al fons (files 0-1)
+    { sprite: bgSkyline, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true },
+    // Terra de terracota (files 3-4)
+    { sprite: bgBalconyFloor, col: 0, row: 3, spanCols: 6, spanRows: 2, cover: true, opacity: 0.85 },
+    // Barana de forja a la fila 2 (línia horitzó separa cel de terra)
+    { sprite: bgRailing, col: 0, row: 2, spanCols: 6, spanRows: 1, cover: true },
   ],
 };
 
