@@ -1782,9 +1782,11 @@ export default function GamePage() {
                   if (!s) return { slot: idx };
                   const item = currentScenarioItems.find((i: any) => i.id === s.itemId);
                   const allLooked = POSITIONS.every((p) => lookedSpots.has(`${s.itemId}:${p.value}`));
+                  const sprite = spriteForFurniture(item?.category, item?.name_key, item?.name);
                   return {
                     slot: idx,
                     icon: item?.icon,
+                    spriteUrl: sprite ?? undefined,
                     label: item?.name,
                     filled: true,
                     disabled: allLooked,
