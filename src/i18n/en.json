@@ -1113,6 +1113,49 @@
       "feat4": "Story mode with pet and evolution"
     }
   },
+  "apartment": {
+    "title": "Apartment",
+    "rooms": "Rooms",
+    "doors": "Doors",
+    "furniture": "Furniture",
+    "addRoom": "New room",
+    "connect": "Connect",
+    "myRooms": "My rooms",
+    "pieces": "pieces",
+    "addDesc": "Pick a type. You'll then tap a free cell on the map to place it.",
+    "pickCell": "Tap a free cell to place",
+    "cellTaken": "That cell already has a room",
+    "maxRooms": "You have reached the 8-room limit",
+    "pickFirst": "Pick the first room",
+    "pickSecond": "Now pick the second room",
+    "samRoom": "Pick a different room",
+    "errMaxDoors": "One of the rooms is at the door limit",
+    "errDup": "That connection already exists",
+    "doorAdded": "Door added",
+    "removeDoor": "Remove door",
+    "confirmDelete": "Delete this room and its doors? You'll lose the placed furniture.",
+    "roomDeleted": "Room deleted",
+    "free": "Free",
+    "onboarding": {
+      "title": "Your apartment",
+      "b1": "Buy rooms (dining, balcony, kitchen…) as you like.",
+      "b2": "Connect them with doors 🚪 — each room supports up to 2.",
+      "b3": "Tap a room to decorate it with furniture and collection items.",
+      "b4": "You need ≥2 connected rooms and ≥4 pieces to play Personal PvP."
+    }
+  },
+  "room": {
+    "bedroom": "Bedroom",
+    "kitchen": "Kitchen",
+    "dining": "Dining",
+    "bath": "Bathroom",
+    "garden": "Garden",
+    "balcony": "Balcony",
+    "office": "Office",
+    "hall": "Hall",
+    "apartment": "Apartment",
+    "notFound": "Room not found"
+  },
   "space": {
     "title": "My Space",
     "happiness": "Happiness",
