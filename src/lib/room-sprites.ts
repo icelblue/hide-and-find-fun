@@ -194,7 +194,7 @@ const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   [/\b(pilota|ball|os|hueso|bone|joguina|toy)\b/i, sprPettoy],
   // emmagatzematge
   [/\b(armari|ropero|closet|wardrobe|c[oò]moda|comoda|calaix|calaixera|arxivador)\b/i, sprWardrobe],
-  [/\b(prestatge|estanter[ií]a|shelf|bookshelf|biblioteca|llibres?|books?)\b/i, sprShelf],
+  [/\b(prestatg[a-z]*|estanter[ií]a|shelf|bookshelf|biblioteca|llibres?|books?)\b/i, sprShelf],
   [/\b(bagul|ba[uú]l|cofre|chest|caixa|caja|maleta|cistella|paperera|estenedor)\b/i, sprChest],
   // exterior
   [/\b(roca|pedra|piedra|rock|stone|barana|caseta)\b/i, sprRock],
