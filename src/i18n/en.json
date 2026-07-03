@@ -496,7 +496,9 @@
     "comeBackIn": "Come back in {t}",
     "alreadyDone": "You already did today's challenge",
     "error": "Daily challenge error",
-    "consequencesHint": "Consequences will be revealed after you choose"
+    "consequencesHint": "Consequences will be revealed after you choose",
+    "rewardHidden": "Reward applied"
+
   },
   "evolution": {
     "level": "Lv{n}",
@@ -1139,10 +1141,13 @@
     "onboarding": {
       "title": "Your apartment",
       "b1": "Buy rooms (dining, balcony, kitchen…) as you like.",
-      "b2": "Connect them with doors 🚪 — each room supports up to 2.",
+      "b2": "Connect them with doors 🚪 — each type has its own limit.",
       "b3": "Tap a room to decorate it with furniture and collection items.",
       "b4": "You need ≥2 connected rooms and ≥4 pieces to play Personal PvP."
-    }
+    },
+    "moveRoom": "Move room on map",
+    "moved": "Room moved",
+    "moveOutOfBounds": "Off the map"
   },
   "room": {
     "bedroom": "Bedroom",
@@ -1154,8 +1159,12 @@
     "office": "Office",
     "hall": "Hall",
     "apartment": "Apartment",
-    "notFound": "Room not found"
+    "notFound": "Room not found",
+    "onlyCategories": "Only allows",
+    "noAllowedFurniture": "No furniture compatible with this room",
+    "shopFilterHint": "Filtered by compatibility with"
   },
+
   "space": {
     "title": "My Space",
     "happiness": "Happiness",
@@ -1181,8 +1190,12 @@
       "music": "Music",
       "art": "Art",
       "nature": "Nature",
-      "pet": "Pet"
+      "pet": "Pet",
+      "kitchen": "Kitchen",
+      "bath": "Bath",
+      "dining": "Dining"
     },
+
     "tab": {
       "furniture": "Furniture",
       "collection": "Collection"

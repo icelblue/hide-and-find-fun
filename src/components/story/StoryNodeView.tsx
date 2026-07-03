@@ -75,11 +75,10 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
       {revealChoices && !hideChoices && (
         <div className="space-y-2 animate-fade-in">
           {visibleChoices.map((c, i) => {
-            const usesItems = c.requires_items && c.requires_items.length > 0;
-            const usesBond = typeof c.requires_bond === "number";
             const usesTraits = c.requires_traits && Object.keys(c.requires_traits).length > 0;
-            // Bug A fix: NO reveal trait reward bonuses before the choice is made
-            // (the RewardReveal animation handles that after the choice).
+            // Bug fix: NO reveal any reward hint before choosing.
+            // Also do NOT show requires_items (✨) / requires_bond (❤️) / trait badges
+            // — those leak info about the option's flavor/likely reward.
             const isPersonalityChoice = usesTraits;
             return (
               <Button
@@ -88,33 +87,17 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
                 disabled={busy}
                 onClick={() => onChoose(c)}
                 className={`w-full justify-start text-left h-auto py-3 px-4 whitespace-normal ${
-                  isPersonalityChoice ? "border-purple-400/60 bg-purple-500/5"
-                  : usesItems || usesBond ? "border-accent/50" : ""
+                  isPersonalityChoice ? "border-purple-400/30" : ""
                 }`}
               >
                 <div className="flex items-start gap-2 w-full">
                   <span className="text-xs font-bold text-muted-foreground shrink-0 mt-0.5">
                     {i + 1}.
                   </span>
-                  <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">
-                      {usesItems && <span className="text-accent mr-1">✨</span>}
-                      {usesBond && <span className="text-pink-400 mr-1">❤️</span>}
                       {fillPet(c.label, petName)}
                     </p>
-                    {usesTraits && c.requires_traits && (
-                      <div className="flex flex-wrap gap-1">
-                        {Object.keys(c.requires_traits).map((tr) => {
-                          const meta = TRAIT_META[tr as Trait];
-                          if (!meta) return null;
-                          return (
-                            <span key={tr} className={`text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 ${meta.color} font-semibold`}>
-                              {meta.icon} {t(`petTrait.${meta.key}`, meta.label)}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 </div>
               </Button>
@@ -128,3 +111,4 @@ export function StoryNodeView({ node, choices, petName, inventory, state, unlock
     </div>
   );
 }
+

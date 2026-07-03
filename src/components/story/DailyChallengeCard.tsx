@@ -93,11 +93,12 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
       <Card className="glass border-muted/30 mt-4 opacity-80">
         <CardContent className="py-3 px-4 text-center">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{t("daily.completed")}</p>
-          <p className="text-sm font-medium">{rewardLabel(state.lastReward?.reward_type ?? null, state.lastReward?.reward_value)}</p>
+          <p className="text-sm font-medium">{t("daily.rewardHidden", undefined, "Recompensa aplicada")}</p>
           <p className="text-[10px] text-muted-foreground mt-1">{t("daily.comeBackIn", { t: countdown })}</p>
         </CardContent>
       </Card>
     );
+
   }
 
   return (

@@ -496,7 +496,9 @@
     "comeBackIn": "Torna en {t}",
     "alreadyDone": "Ja has fet el repte d'avui",
     "error": "Error al repte diari",
-    "consequencesHint": "Les conseqüències es revelaran després de triar"
+    "consequencesHint": "Les conseqüències es revelaran després de triar",
+    "rewardHidden": "Recompensa aplicada"
+
   },
   "evolution": {
     "level": "Lv{n}",
@@ -1139,10 +1141,15 @@
     "onboarding": {
       "title": "El teu apartament",
       "b1": "Compra sales (menjador, balcó, cuina…) al teu gust.",
-      "b2": "Connecta-les amb portes 🚪 — cada sala admet fins a 2.",
+      "b2": "Connecta-les amb portes 🚪 — cada tipus té un límit propi.",
       "b3": "Toca una sala per decorar-la amb mobles i col·lecció.",
       "b4": "Necessites ≥2 sales connectades i ≥4 mobles per jugar Personal PvP."
-    }
+    },
+    "moveRoom": "Moure sala al mapa",
+    "moved": "Sala moguda",
+    "moveOutOfBounds": "Fora del mapa"
+
+
   },
   "room": {
     "bedroom": "Habitació",
@@ -1154,8 +1161,12 @@
     "office": "Despatx",
     "hall": "Hall",
     "apartment": "Apartament",
-    "notFound": "Sala no trobada"
+    "notFound": "Sala no trobada",
+    "onlyCategories": "Només hi caben",
+    "noAllowedFurniture": "No tens mobles compatibles amb aquesta sala",
+    "shopFilterHint": "Filtrat per compatibilitat amb"
   },
+
   "space": {
     "title": "El meu espai",
     "happiness": "Felicitat",
@@ -1181,8 +1192,12 @@
       "music": "Música",
       "art": "Art",
       "nature": "Natura",
-      "pet": "Mascota"
+      "pet": "Mascota",
+      "kitchen": "Cuina",
+      "bath": "Bany",
+      "dining": "Menjador"
     },
+
     "tab": {
       "furniture": "Mobles",
       "collection": "Col·lecció"

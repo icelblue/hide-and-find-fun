@@ -1,119 +1,126 @@
-## Pla — Espai personal multi-sala amb connexions
 
-### Concepte
+## Què queda del pla i què cal implementar
 
-Ara mateix `/space` = **1 sala** de 4×4. Objectiu: cada jugador té un **apartament** amb N sales (menjador, balcó, cuina…), cada una amb el seu grid 4×4 i mobles, i **portes** que les connecten en un graf que el jugador dibuixa lliurement. Al Personal PvP, aquest graf reemplaça els 7 escenaris fixos actuals.
+He revisat el pla `.lovable/plan.md` (multi-sala) i el codi actual. Les 5 fases del pla original **ja estan fetes**. El que falta és:
 
-### Peces del puzle
+- **Peces del pla anterior no tancades** (D1–D6 de la proposta "sales amb personalitat + moure").
+- **Bug reportat del mode història**: recompenses visibles abans de decidir.
+- **Auditoria general de codi + traduccions**.
 
-1. **Plantilla de sala (room template)** — el que ara és `furniture_catalog` per mobles; nova taula per tipus de sala (menjador, cuina, balcó, dormitori, lavabo, despatx, jardí, hall). Cada plantilla té icona, categoria, `price_coins`, `unlock_level`.
-2. **Instància de sala** — cada sala que el jugador compra i col·loca al seu apartament. Té nom editable ("Menjador principal"), plantilla d'origen, i grid propi de 16 slots.
-3. **Connexió (porta)** — parell ordenat `(sala_A, sala_B)` amb màxim configurable (per defecte 2 portes per sala, ajustable).
-4. **Layout de mobles** — passa de guardar-se global (`player_spaces.layout`) a guardar-se **per instància de sala** (`player_rooms.layout`).
-5. **Adapter Personal PvP** — expandeix `personal-pvp-adapter.ts` per convertir un graf de sales en `scenarios[]` + `scenario_connections[]` + `objects[]` + `items[]` sintètics (avui només genera 1 sala plana).
+Ordeno per prioritat i executo en 3 blocs. Bloc 1 i 2 són cirurgia concreta. Bloc 3 és auditoria (report + fixes petits).
 
-### Estructura de dades
+---
 
-```text
-room_catalog                  (nou — plantilles)
-  id text PK
-  name_key text
-  category text (bedroom|kitchen|dining|bath|garden|balcony|office|hall)
-  icon text
-  price_coins int
-  unlock_level int
-  max_doors int default 2
+## Bloc 1 — Sales amb personalitat i moviment (crític)
 
-player_rooms                  (nou — instàncies)
-  id uuid PK
-  user_id uuid FK auth.users
-  room_template_id text FK room_catalog
-  custom_name text            -- "Menjador 1", "Balcó estrella"
-  layout jsonb                -- [{slot, furniture_id}], mateix format que avui
-  position_x int, position_y int  -- coord al mapa de l'apartament
-  created_at, updated_at
+**Problema:** Ara totes les sales són funcionalment idèntiques. Renombrar "Bany" com "Menjador" trivialitza tot. Tampoc es poden moure. La progressió no té sentit mecànic.
 
-room_connections              (nou — portes)
-  id uuid PK
-  user_id uuid FK
-  room_a_id uuid FK player_rooms
-  room_b_id uuid FK player_rooms
-  UNIQUE(user_id, LEAST(room_a_id,room_b_id), GREATEST(room_a_id,room_b_id))
+**Decisions que aplico** (defaults raonables, si vols canviar-ne alguna digues-m'ho abans d'aprovar):
 
--- Migració retrocompat:
--- Cada jugador amb `player_spaces` existent → generar 1 sala "Habitació"
---   a `player_rooms` copiant el `layout` actual. `player_spaces` queda deprecada
---   però es manté per no trencar codi antic durant una release.
-```
+- **D1 Grid variable per tipus**: SÍ. Cada plantilla té `grid_w`/`grid_h`. RoomPage renderitza dinàmic.
+- **D2 Categories permeses per tipus**: SÍ. `allowed_categories text[]`. Filtra què pots col·locar a cada sala.
+- **D3 Multiplicador felicitat per sala correcta**: SÍ. `happiness_multiplier numeric(3,2)` sobre mobles de categoria pertinent.
+- **D4 Portes variables per tipus**: SÍ. Hall=4, Menjador=3, Balcó/Bany/Despatx=1, resta=2.
+- **D5 Moviment sales**: **fletxes ↑↓←→** al panell de la sala (més robust en mobile que drag).
+- **D6 Renombrar**: llibertat total, però el mapa i llistat mostren SEMPRE la icona del tipus real (impossible enganyar al PvP).
 
-Preus inicials sala:
+### Canvis tècnics
 
-- Sala inicial gratuïta (regalada a la migració).
-- Sales extres: 50🪙 (bedroom/dining), 40🪙 (balcony/office), 80🪙 (kitchen/bath) — nivells 2-5.
+1. **Migració SQL** — `room_catalog`:
+   - `+ grid_w int NOT NULL DEFAULT 4`
+   - `+ grid_h int NOT NULL DEFAULT 4`
+   - `+ allowed_categories text[] NOT NULL DEFAULT '{}'` (buit = tot permès)
+   - `+ happiness_multiplier numeric(3,2) NOT NULL DEFAULT 1.00`
+   - `UPDATE` per cada tipus amb els valors definitius (taula sota).
 
-### Canvis a UI (`/space`)
-
-Nova jerarquia de dues vistes:
+2. **Taula tancada de plantilles**:
 
 ```text
-┌───────────── /space (Apartament) ──────────────┐
-│  Mapa de sales (grid llibre + portes)          │
-│    [Menjador]──[Balcó]                          │
-│         │                                       │
-│    [Cuina]──[Habitació]                         │
-│                                                 │
-│  Botons: [+ Sala nova] [+ Connectar] [Editar]  │
-└─────────────────────────────────────────────────┘
-    ↓ tap a una sala
-┌───────── /space/room/:id (Sala) ───────────────┐
-│  Nom editable + grid 4×4 actual                 │
-│  Inventari (mobles + col·lecció) igual que avui │
-└─────────────────────────────────────────────────┘
+Tipus       grid  slots doors  categories permeses            bonus
+Dormitori   4×4   16    2      (totes)                         1.00×
+Balcó       4×2   8     1      nature,pet                      1.30×
+Menjador    5×4   20    3      dining,music,decor              1.20×
+Cuina       4×4   16    2      kitchen,tech                    1.50×
+Bany        3×3   9     1      bath                            1.30×
+Despatx     4×3   12    1      tech,music                      1.40×
+Jardí       5×4   20    2      nature,pet                      1.30×
+Hall        3×3   9     4      decor                           1.10×
 ```
 
-- Vista **Apartament**: mostra sales com a targetes/nodes en un grid lliure (drag simple o coordenades snap). Les connexions es dibuixen com a línies entre nodes.
-- Vista **Sala**: idèntica a l'actual `/space` (grid 4×4 + inventari + col·lecció).
-- Diàleg "+ Sala nova": llista `room_catalog` amb preus i nivell requerit; en comprar, s'insereix a `player_rooms` amb `custom_name = template.name + " " + n`.
-- Diàleg "+ Connectar": escollir 2 sales; valida que cap superi `max_doors` i que no existeixi ja la connexió.
-- "Editar sala": renombrar, moure de posició, eliminar (retorna preu × 50%).
+3. **`RoomPage.tsx`**:
+   - Grid dinàmic (usar `grid_w`/`grid_h` de la plantilla).
+   - Filtrar `furniture_catalog` per `allowed_categories`.
+   - Mostrar bonus aplicat al comptador de felicitat.
+   - Botonera **moure sala** (4 fletxes) que crida un UPDATE de `player_rooms.position_x/y` validant casella lliure.
 
-### Canvis a Personal PvP (`personal-pvp-adapter.ts`)
+4. **`SpacePage.tsx`**:
+   - Cada targeta de sala del llistat mostra `icona_tipus + nom_editable + tipus_real` per evitar enganys visuals.
+   - Diàleg "Sala nova" mostra grid, portes màx i bonus de cada plantilla.
 
-Substituir el `mergeSnapshots` monolític per un adapter multi-sala:
+5. **`personal-pvp-adapter.ts`**:
+   - Cap canvi funcional (ja llegeix `room_catalog`); només afegir `grid_w/grid_h` als camps si els necessita.
 
-- Load `player_rooms` + `room_connections` per host i guest.
-- Per cada sala instància generar `SynthScenario` (id = `room:<uuid>`, name = `custom_name`, icon = plantilla).
-- Per cada `room_connections` generar `SynthConnection { scenario_a_id, scenario_b_id }` (bidireccional).
-- Els mobles de cada sala → `SynthObject`+`SynthItem` (mantenim la lògica actual per sala).
-- **Merge host+guest**: cada un juga al seu propi apartament (dues cases separades). Decidim que el host amaga a *l'apartament del host*, guest amaga a *l'apartament del guest*, i cada un busca a l'apartament del rival. Això elimina el merge asimètric d'ara.
+6. **Traduccions**: afegir `apartment.grid`, `apartment.bonus`, `apartment.move`, `apartment.moveHint`, `apartment.blockedMove`, i etiquetes de categoria a `ca` i `en`.
 
-Requeriment mínim per Personal PvP: **≥2 sales connectades** i **≥4 mobles totals**. Actualitzar `create_personal_game` RPC i tornar nous codis d'error `host_min_rooms` / `opponent_min_rooms`.
+---
 
-### Migració retrocompat (peça crítica del puzle)
+## Bloc 2 — Bug mode història (recompenses visibles)
 
-Peça 1 — Insert plantilles a `room_catalog` (8 tipus).
-Peça 2 — Per cada fila de `player_spaces` amb layout no buit, inserir 1 `player_rooms` amb `room_template_id='bedroom'`, `custom_name='Habitació'`, `layout=<mateix layout>`, `position_x=0, position_y=0`.
-Peça 3 — `player_spaces` es marca com a legacy però no s'elimina fins la següent iteració.
+**Investigació:** He revisat `StoryNodeView`, `PuzzleNodeView`, `DailyChallengeCard` i `StoryModePage`. El codi **no** mostra `reward_type`/`reward_value` abans de clicar. Però sí:
 
-### Fases d'execució (crèdits estimats)
+- **Icones ✨/❤️ i pastilles morades de trait** als botons de decisió — són indicadors de **requisits**, però visualment el jugador els pot llegir com a "aquesta opció té premi". El comentari `// Bug A fix` a `StoryNodeView.tsx:81` ja va intentar tapar-ho, però només va treure els multiplicadors de trait, no els badges de requisit.
+- **`DailyChallengeCard.tsx:96`**: mostra literalment `rewardLabel(reward_type, reward_value)` de l'anterior repte completat. Això sí és preview directe (encara que sigui d'ahir). Discutible.
+- **Repte diari nou**: no mostra recompensa (correcte).
 
-- **Fase 1 — BD + migració (1 crèdit)**: `room_catalog`, `player_rooms`, `room_connections`, GRANT+RLS, migració retrocompat, actualització RPC `create_personal_game`.
-- **Fase 2 — Vista Apartament (2 crèdits)**: nova ruta `/space`, mapa de sales amb nodes i línies, diàleg "afegir sala", diàleg "connectar", renombrar.
-- **Fase 3 — Vista Sala (0.5 crèdits)**: refactor de l'actual `SpacePage` a `RoomPage` (`/space/room/:id`), reutilitzant grid i inventari.
-- **Fase 4 — Adapter Personal PvP multi-sala (1 crèdit)**: expandir `personal-pvp-adapter.ts` + tests unitaris del graf.
-- **Fase 5 — i18n + polish (0.5 crèdits)**.
+**Fixes:**
 
-**Total estimat: ~5 crèdits.** Es pot partir per fases; la Fase 1 sola ja obre el sistema sense trencar res.
+1. `StoryNodeView.tsx`:
+   - Treure icones ✨/❤️ dels labels de decisió. Els requisits es validen amagant l'opció (ja passa) o bloquejant-la — no cal donar pista visual.
+   - Treure les pastilles de trait requerit (`usesTraits`). El color de fons morat suau (`border-purple-400/60`) es manté només com a senyal subtil, sense text del trait concret.
+2. `DailyChallengeCard.tsx:83-100` (bloc `alreadyDone`): substituir `rewardLabel(...)` per un text genèric "Completat avui" — així no s'insinua què tocarà demà.
+3. Afegir test de regressió a `src/test/`: verificar que `StoryNodeView` renderitzat amb un choice amb `reward_type='xp'` no conté cap `+XP`, `Recompensa`, etc.
 
-### Decisions tancades a confirmar
+---
 
-D1. **Layout del mapa d'apartament** — coordenades lliures (drag) o snap a grid 3×3 fix? Recomanació: snap 3×3 per simplicitat mobile.
-D2. **Portes per sala** — 2 fixes o configurable per plantilla? Recomanació: 2 fixes v1, ampliable via `max_doors` a la taula.
-D3. **Preu i límit total de sales** — cap límit dur, només econòmic? O límit 8 sales v1? Recomanació: 8 v1.
-D4. **Personal PvP** — cada jugador juga a l'apartament del rival (proposta), o mantenim el merge de tots dos com ara? Recomanació: apartaments separats (més clar).
+## Bloc 3 — Auditoria de codi i traduccions (report + fixes petits)
 
-### Fora d'abast
+Aquesta part la faig en el mateix torn però com a **anàlisi + fixes segurs**, no com a refactor gran. Si detecto res crític, ho separo en un nou pla.
 
-- Temes visuals per apartament (fons, papers pintats).
-- Compartir apartament amb visitants no-PvP.
-- Portes especials (tancades amb clau, secretes).
+**Checklist auditoria:**
+
+1. **Traduccions**: `grep` de strings hardcoded fora de fallbacks `t("k", "fallback")` a `src/pages/**`, `src/components/**`. Report de claus faltants entre `ca.json` i `en.json` (comparació estructural).
+2. **Bones pràctiques React**:
+   - `useEffect` amb dependències falses (buscar `// eslint-disable-next-line react-hooks/exhaustive-deps`).
+   - Fetches supabase dins render sense cancel·lació.
+   - Estats no derivats que podrien ser `useMemo`.
+3. **Seguretat**:
+   - Rutes protegides sense guard d'auth.
+   - Consultes supabase sense filtre `user_id` explícit.
+4. **Rendiment**:
+   - Imports pesants sense lazy (`StoryModePage`, `GamePage`).
+5. **Types**: `any` a ubicacions crítiques (`reward_value: any`, `layout: unknown`).
+
+**Entregable Bloc 3:** report en xat + fixes mínims (afegir traduccions faltants, corregir 2–3 casos evidents). Si trobo deute gran, faig un pla nou per separat.
+
+---
+
+## Ordre d'execució i estimació
+
+1. **Bloc 2 (bug història)** — ràpid, alt impacte percebut. ~0.3 crèdits.
+2. **Bloc 1 (sales amb personalitat + moviment)** — migració + refactor `RoomPage`/`SpacePage` + i18n. ~1.5 crèdits.
+3. **Bloc 3 (auditoria + traduccions faltants)** — report + fixes petits. ~0.5 crèdits.
+
+**Total estimat: ~2.3 crèdits.**
+
+---
+
+## Fora d'abast (no faig en aquesta tanda)
+
+- Repintar temes visuals de l'apartament (fons, papers pintats).
+- Refactor gran de `StoryModePage` (738 línies — mereix pla propi si el vols dividir).
+- Migració a React Query / eliminació de `any` sistemàtica.
+- Tests E2E de Playwright del flux d'apartament.
+
+## Confirmació
+
+Aprova per començar per **Bloc 2 → Bloc 1 → Bloc 3** en el mateix torn. Si vols canviar alguna decisió D1–D6 o el mapa de plantilles, digues-m'ho ara i actualitzo el pla abans d'executar.
