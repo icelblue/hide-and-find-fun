@@ -28,3 +28,4 @@ Mestre Col·leccionista (50/50 reward_items): ×2 bonus tokens + +5% prob eines 
 - [Social items](mem://features/social-items) — Plàtan, bomba fum, escut, missatge, espia, swap, barricada, trampa, robar_tornavis
 - [Ranking system](mem://features/ranking) — Elo intern + Lligues Bronze→Diamant
 - [Pet personality](mem://features/pet-personality) — Sistema híbrid traits (Mode Història)
+- [SECURITY DEFINER audit](mem://features/security-definer-audit) — Catalog de les 47 funcions definer, per què cada una és necessària i quines cal blindar
