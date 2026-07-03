@@ -14,16 +14,18 @@ import { useT } from "@/i18n/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
 import { generateTerrain, preferredTerrainForCategory, TERRAIN_BONUS } from "@/lib/terrain";
 import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
 import { themeForCategory } from "@/lib/room-themes";
+import { spriteForFurniture } from "@/lib/room-sprites";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
-// (MAP_SIZE viu ara a SpacePage; el moviment de sales es fa allà via drag&drop)
+type Rotation = 0 | 90 | 180 | 270;
 
 type CatalogItem = {
   id: string;
@@ -35,7 +37,8 @@ type CatalogItem = {
   happiness_bonus: number;
 };
 type RewardItem = { id: string; name: string; icon: string; rarity: string };
-type LayoutSlot = { slot: number; furniture_id: string };
+// `rot` opcional per retrocompatibilitat: layouts antics (sense rot) = 0
+type LayoutSlot = { slot: number; furniture_id: string; rot?: Rotation };
 type RoomRow = {
   id: string;
   custom_name: string;
@@ -81,6 +84,10 @@ export default function RoomPage() {
   const [placedElsewhere, setPlacedElsewhere] = useState<Set<string>>(new Set());
   const [pet, setPet] = useState<{ pet_icon: string; pet_name: string } | null>(null);
   const [isPetHere, setIsPetHere] = useState(false);
+  // Fase C · UX: action sheet + mode moure + animació d'entrada
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [moveFromSlot, setMoveFromSlot] = useState<number | null>(null);
+  const [justPlacedSlot, setJustPlacedSlot] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user || !roomId) return;
@@ -260,10 +267,10 @@ export default function RoomPage() {
   const resolveEntry = useCallback((fid: string) => {
     if (isReward(fid)) {
       const r = rewardById.get(rewardUuid(fid));
-      return r ? { icon: r.icon, name: r.name } : null;
+      return r ? { icon: r.icon, name: r.name, category: "decor", nameKey: undefined as string | undefined } : null;
     }
     const c = catalogById.get(fid);
-    return c ? { icon: c.icon, name: t(c.name_key, c.id) } : null;
+    return c ? { icon: c.icon, name: t(c.name_key, c.id), category: c.category, nameKey: c.name_key } : null;
   }, [catalogById, rewardById, t]);
 
   const persistLayout = useCallback(async (next: LayoutSlot[], prev: LayoutSlot[]) => {
@@ -278,25 +285,73 @@ export default function RoomPage() {
     }
   }, [user, room, t]);
 
+  // Efímera: marca casella com "just placed" i neteja al cap d'una estona
+  const flashPlaced = useCallback((slot: number) => {
+    setJustPlacedSlot(slot);
+    window.setTimeout(() => setJustPlacedSlot((s) => (s === slot ? null : s)), 350);
+  }, []);
+
   const handleSlotClick = useCallback(async (idx: number) => {
     if (!room) return;
     const prev = layout;
     const existing = layout.find((s) => s.slot === idx);
-    let next: LayoutSlot[];
-    if (existing) {
-      // Treure moble del slot
-      next = layout.filter((s) => s.slot !== idx);
-      setSelected(null);
-    } else if (selected) {
-      // Col·locar moble seleccionat (evitant duplicats del mateix id)
-      next = [...layout.filter((s) => s.furniture_id !== selected), { slot: idx, furniture_id: selected }];
-      setSelected(null);
-    } else {
+
+    // Prioritat 1: mode "moure" actiu → traslladar (o intercanviar) i sortir del mode
+    if (moveFromSlot !== null) {
+      if (moveFromSlot === idx) { setMoveFromSlot(null); return; }
+      const src = layout.find((s) => s.slot === moveFromSlot);
+      if (!src) { setMoveFromSlot(null); return; }
+      const filtered = layout.filter((s) => s.slot !== moveFromSlot && s.slot !== idx);
+      const next: LayoutSlot[] = [...filtered, { ...src, slot: idx }];
+      if (existing) next.push({ ...existing, slot: moveFromSlot }); // swap
+      setRoom({ ...room, layout: next });
+      setMoveFromSlot(null);
+      flashPlaced(idx);
+      await persistLayout(next, prev);
       return;
     }
+
+    // Prioritat 2: casella amb moble → obrir action sheet (girar/moure/treure)
+    if (existing) {
+      setActiveSlot(idx);
+      return;
+    }
+
+    // Prioritat 3: hi ha un moble seleccionat de l'inventari → col·locar
+    if (selected) {
+      const next: LayoutSlot[] = [
+        ...layout.filter((s) => s.furniture_id !== selected),
+        { slot: idx, furniture_id: selected, rot: 0 },
+      ];
+      setSelected(null);
+      setRoom({ ...room, layout: next });
+      flashPlaced(idx);
+      await persistLayout(next, prev);
+    }
+  }, [layout, selected, room, moveFromSlot, persistLayout, flashPlaced]);
+
+  // Accions del sheet — cadascuna amb rollback via persistLayout
+  const rotateAtSlot = useCallback(async (idx: number) => {
+    if (!room) return;
+    const prev = layout;
+    const item = layout.find((s) => s.slot === idx);
+    if (!item) return;
+    const nextRot = (((item.rot ?? 0) + 90) % 360) as Rotation;
+    const next = layout.map((s) => (s.slot === idx ? { ...s, rot: nextRot } : s));
     setRoom({ ...room, layout: next });
     await persistLayout(next, prev);
-  }, [layout, selected, room, persistLayout]);
+  }, [layout, room, persistLayout]);
+
+  const removeAtSlot = useCallback(async (idx: number) => {
+    if (!room) return;
+    const prev = layout;
+    const next = layout.filter((s) => s.slot !== idx);
+    setRoom({ ...room, layout: next });
+    setActiveSlot(null);
+    await persistLayout(next, prev);
+  }, [layout, room, persistLayout]);
+
+
 
 
   const handleBuy = useCallback(async (item: CatalogItem) => {
@@ -403,24 +458,38 @@ export default function RoomPage() {
           </CardContent>
         </Card>
 
-        {selectedEntry ? (
+        {moveFromSlot !== null ? (
+          <p className="text-xs text-accent text-center font-medium animate-pulse">
+            ↔️ {t("room.pickTarget", "Toca on vols col·locar-lo")}
+            <button className="ml-2 underline" onClick={() => setMoveFromSlot(null)}>
+              {t("common.cancel", "Cancel·la")}
+            </button>
+          </p>
+        ) : selectedEntry ? (
           <p className="text-xs text-accent text-center">{t("space.tapToPlace")} {selectedEntry.icon}</p>
         ) : (
-          <p className="text-xs text-muted-foreground text-center">{t("space.hint")}</p>
+          <p className="text-xs text-muted-foreground text-center">
+            {t("room.tapHint", "Toca una casella buida per posar · toca un moble per accions")}
+          </p>
         )}
 
-        {/* Grid pixel-art temàtic (Fase A del pla Grid 2D unificat) */}
+        {/* Grid pixel-art temàtic (Fase A/C — sprites + textures) */}
         {(() => {
           const theme = themeForCategory(template?.category);
           const cells: PixelCell[] = Array.from({ length: gridSize }).map((_, idx) => {
             const slot = layout.find((s) => s.slot === idx);
             const entry = slot ? resolveEntry(slot.furniture_id) : null;
+            const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey) : null;
             return {
               slot: idx,
               icon: entry?.icon,
+              spriteUrl: sprite ?? undefined,
               label: entry?.name ?? `casella ${idx + 1}`,
               filled: !!entry,
-              highlighted: !!selected && !entry,
+              highlighted: (!!selected && !entry) || (moveFromSlot !== null && !entry),
+              selectedCell: moveFromSlot === idx,
+              rotation: (slot?.rot ?? 0) as 0 | 90 | 180 | 270,
+              justPlaced: justPlacedSlot === idx,
             };
           });
           return (
@@ -437,15 +506,16 @@ export default function RoomPage() {
               {isPetHere && pet && (
                 <div
                   className="absolute pointer-events-none z-20 flex flex-col items-center animate-bounce"
-                  style={{
-                    // Cantonada inferior-esquerra del grid, dins la sala
-                    left: "10%",
-                    bottom: "10%",
-                  }}
+                  style={{ left: "10%", bottom: "10%" }}
                   aria-label={t("apartment.petHere", "La teva mascota és aquí")}
                   title={`${pet.pet_icon} ${pet.pet_name}`}
                 >
-                  <span className="text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                  <span className="relative text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                    {/* Halo pulsant Fase D */}
+                    <span
+                      className="absolute inset-0 -z-10 rounded-full animate-ping"
+                      style={{ background: "hsl(var(--accent) / 0.35)", filter: "blur(6px)" }}
+                    />
                     {pet.pet_icon}
                   </span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/90 border border-accent/40 font-semibold mt-0.5 shadow">
@@ -456,6 +526,44 @@ export default function RoomPage() {
             </div>
           );
         })()}
+
+        {/* Sheet d'accions per moble col·locat (Fase C · UX) */}
+        <Sheet open={activeSlot !== null} onOpenChange={(o) => !o && setActiveSlot(null)}>
+          <SheetContent side="bottom" className="pb-8">
+            {activeSlot !== null && (() => {
+              const item = layout.find((s) => s.slot === activeSlot);
+              const entry = item ? resolveEntry(item.furniture_id) : null;
+              const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey) : null;
+              return (
+                <>
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2 text-base">
+                      {sprite
+                        ? <img src={sprite} alt="" className="w-8 h-8 object-contain" style={{ imageRendering: "pixelated" }} />
+                        : <span className="text-2xl">{entry?.icon ?? "•"}</span>}
+                      <span className="truncate">{entry?.name ?? t("common.item", "Element")}</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    <Button variant="secondary" onClick={() => rotateAtSlot(activeSlot!)} className="flex-col h-auto py-3 gap-1">
+                      <span className="text-2xl">🔄</span>
+                      <span className="text-[11px]">{t("room.rotate", "Girar")}</span>
+                    </Button>
+                    <Button variant="secondary" onClick={() => { setMoveFromSlot(activeSlot); setActiveSlot(null); }} className="flex-col h-auto py-3 gap-1">
+                      <span className="text-2xl">↔️</span>
+                      <span className="text-[11px]">{t("room.move", "Moure")}</span>
+                    </Button>
+                    <Button variant="destructive" onClick={() => removeAtSlot(activeSlot!)} className="flex-col h-auto py-3 gap-1">
+                      <span className="text-2xl">🗑️</span>
+                      <span className="text-[11px]">{t("room.remove", "Treure")}</span>
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
+          </SheetContent>
+        </Sheet>
+
 
         {/* Moviment de sales: arrossega des del mini-mapa de l'apartament */}
 
