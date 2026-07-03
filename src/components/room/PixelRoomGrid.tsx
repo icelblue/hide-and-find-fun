@@ -99,7 +99,7 @@ export default function PixelRoomGrid({
       }}
     >
       <div
-        className="grid w-full h-full p-1"
+        className="grid w-full h-full p-1 relative"
         style={{
           gridTemplateColumns: `repeat(${gridW}, minmax(0, 1fr))`,
           aspectRatio: `${gridW} / ${gridH}`,
@@ -109,6 +109,28 @@ export default function PixelRoomGrid({
         aria-rowcount={gridH}
         aria-colcount={gridW}
       >
+        {backdrops && backdrops.length > 0 && (
+          <div className="absolute inset-1 pointer-events-none" aria-hidden>
+            {backdrops.map((b, i) => (
+              <img
+                key={i}
+                src={b.sprite}
+                alt=""
+                loading="lazy"
+                className="absolute"
+                style={{
+                  left: `${(b.col / gridW) * 100}%`,
+                  top: `${(b.row / gridH) * 100}%`,
+                  width: `${(b.spanCols / gridW) * 100}%`,
+                  height: `${(b.spanRows / gridH) * 100}%`,
+                  objectFit: b.cover ? "cover" : "contain",
+                  opacity: b.opacity ?? 1,
+                  imageRendering: "pixelated",
+                }}
+              />
+            ))}
+          </div>
+        )}
         {Array.from({ length: size }).map((_, idx) => {
           const cell = cells[idx];
           const filled = !!cell?.filled;
