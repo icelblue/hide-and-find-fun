@@ -88,6 +88,19 @@
     "send": "Send",
     "rivalFound": "Rival found! 🎯",
     "challengeSentRandom": "Challenge sent to a random rival! Wait for them to accept.",
+    "createDialog": {
+      "title": "New game",
+      "desc": "Choose the game mode",
+      "normal": "🎲 Normal (7 rooms)",
+      "normalDesc": "Generates a shareable code",
+      "personal": "🏠 Personal (my 4×4 space)",
+      "personalShortDesc": "Challenge a rival on your own spaces",
+      "personalTitle": "🏠 Personal game",
+      "personalDesc": "Play on your decorated spaces",
+      "needMore": "You need at least 4 pieces of furniture in your space.",
+      "goDecorate": "Decorate my space",
+      "challenge": "Challenge"
+    },
     "languageToggle": "Language"
   },
   "lang": {
