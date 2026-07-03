@@ -49,7 +49,7 @@ export default function FurnitureActionSheet(props: Props) {
         {item && (
           <div className="mt-3">
             {/* Reutilitzem ItemActions però forçant expanded=true (a través d'un wrapper). */}
-            <ItemActions
+            <ItemActionsBody
               item={item}
               positions={rest.positions}
               onLook={(id, pos) => { rest.onLook(id, pos); onClose(); }}
