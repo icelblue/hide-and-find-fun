@@ -174,22 +174,152 @@ export function mergeSnapshots(
   return out;
 }
 
+export type SynthConnection = { scenario_a: string; scenario_b: string };
+
 export type PersonalCombatData = {
   scenarios: SynthScenario[];
   objects: SynthObject[];
   items: SynthItem[];
+  /** Multi-sala v2: connexions entre escenaris (unió host+guest). */
+  connections: SynthConnection[];
+  /** Multi-sala v2: mapa scenarioId → items d'aquell escenari. */
+  itemsByScenario: Map<string, SynthItem[]>;
 };
 
-/** Helper d'una sola crida per a `GamePage`. */
+/** Helper legacy (compatibilitat de tests): 1 sola sala des dels snapshots antics. */
 export async function loadPersonalCombatData(
   hostSnapshot: unknown,
   guestSnapshot: unknown
 ): Promise<PersonalCombatData> {
   const catalog = await loadFurnitureCatalog();
   const merged = mergeSnapshots(parseSnapshot(hostSnapshot), parseSnapshot(guestSnapshot));
+  const items = synthItems(merged, catalog);
+  const itemsByScenario = new Map<string, SynthItem[]>();
+  itemsByScenario.set(PERSONAL_SCENARIO_ID, items);
   return {
     scenarios: [synthScenario()],
     objects: synthObjects(merged, catalog),
-    items: synthItems(merged, catalog),
+    items,
+    connections: [],
+    itemsByScenario,
   };
+}
+
+// ============================================================
+// Multi-sala v2 — nou model basat en `player_rooms` + `room_connections`
+// ============================================================
+
+type PlayerRoomRow = {
+  id: string;
+  user_id: string;
+  room_template_id: string;
+  custom_name: string;
+  layout: LayoutSlot[] | unknown;
+};
+type RoomConnectionRow = { id: string; room_a_id: string; room_b_id: string };
+type RoomTemplateRow = { id: string; icon: string; name_key: string };
+
+/**
+ * Carrega la unió multi-sala de host+guest.
+ * Cada sala d'un jugador es converteix en 1 escenari sintètic (id = `room:<uuid>`).
+ * Les connexions són bidireccionals (l'engine assumeix bidireccional).
+ * Els mobles de cada sala generen items propis d'aquell escenari, i cada moble
+ * únic (per `furniture_id`) genera un objecte amagable a nivell global.
+ */
+export async function loadPersonalCombatDataFromRooms(
+  hostUserId: string,
+  guestUserId: string
+): Promise<PersonalCombatData> {
+  const [furnitureCatalog, roomsRes, connsRes, tplRes] = await Promise.all([
+    loadFurnitureCatalog(),
+    supabase
+      .from("player_rooms")
+      .select("id, user_id, room_template_id, custom_name, layout")
+      .in("user_id", [hostUserId, guestUserId]),
+    supabase
+      .from("room_connections")
+      .select("id, room_a_id, room_b_id")
+      .in("user_id", [hostUserId, guestUserId]),
+    supabase.from("room_catalog").select("id, icon, name_key"),
+  ]);
+
+  const rooms = (roomsRes.data as PlayerRoomRow[] | null) ?? [];
+  const conns = (connsRes.data as RoomConnectionRow[] | null) ?? [];
+  const templates = new Map<string, RoomTemplateRow>();
+  ((tplRes.data as RoomTemplateRow[] | null) ?? []).forEach((r) => templates.set(r.id, r));
+
+  const scenarios: SynthScenario[] = [];
+  const itemsByScenario = new Map<string, SynthItem[]>();
+  const allItems: SynthItem[] = [];
+  const seenFurniture = new Set<string>();
+  const objects: SynthObject[] = [];
+
+  rooms.forEach((room, idx) => {
+    const tpl = templates.get(room.room_template_id);
+    const scenarioId = `room:${room.id}`;
+    scenarios.push({
+      id: scenarioId,
+      name: room.custom_name,
+      icon: tpl?.icon ?? "🏠",
+      display_order: idx,
+    });
+
+    const layout = Array.isArray(room.layout) ? (room.layout as LayoutSlot[]) : [];
+    const roomItems: SynthItem[] = [];
+    layout.forEach((slot) => {
+      const cat = furnitureCatalog.get(slot.furniture_id);
+      if (!cat) return;
+      // Item propi de l'escenari — id únic per (sala, moble)
+      const itemId = `pf:${room.id}:${slot.furniture_id}`;
+      const item: SynthItem = {
+        id: itemId,
+        scenario_id: scenarioId,
+        name: cat.name_key,
+        icon: cat.icon,
+        hidden: false,
+        display_order: slot.slot,
+      };
+      roomItems.push(item);
+      allItems.push(item);
+
+      // Objecte amagable — un per furniture_id únic a tota l'apartament
+      if (!seenFurniture.has(slot.furniture_id)) {
+        seenFurniture.add(slot.furniture_id);
+        objects.push({
+          id: `pf:${slot.furniture_id}`,
+          name: cat.name_key,
+          icon: cat.icon,
+          display_order: objects.length,
+          is_special: false,
+        });
+      }
+    });
+    itemsByScenario.set(scenarioId, roomItems);
+  });
+
+  const connections: SynthConnection[] = conns.map((c) => ({
+    scenario_a: `room:${c.room_a_id}`,
+    scenario_b: `room:${c.room_b_id}`,
+  }));
+
+  return { scenarios, objects, items: allItems, connections, itemsByScenario };
+}
+
+/** Helper: veïns d'un escenari donada la llista de connexions. */
+export function neighborsOf(
+  scenarioId: string,
+  connections: SynthConnection[],
+  scenariosById: Map<string, SynthScenario>
+): SynthScenario[] {
+  const out: SynthScenario[] = [];
+  for (const c of connections) {
+    if (c.scenario_a === scenarioId) {
+      const s = scenariosById.get(c.scenario_b);
+      if (s) out.push(s);
+    } else if (c.scenario_b === scenarioId) {
+      const s = scenariosById.get(c.scenario_a);
+      if (s) out.push(s);
+    }
+  }
+  return out;
 }
