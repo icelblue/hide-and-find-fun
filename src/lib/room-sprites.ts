@@ -150,12 +150,12 @@ const NAME_SPRITE: Record<string, string> = {
 const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   // dormitori
   [/\b(llit|cama|bed|hamaca)\b/i, sprBed],
-  [/\b(sof[àa]|couch|sofa)\b/i, sprSofa],
-  [/\b(cadira|silla|chair|butaca|tamboret|banc|bench)\b/i, sprChair],
-  [/\b(escriptori|desk)\b/i, sprDesk],
-  [/\b(taula|mesa|table)\b/i, sprTable],
+  [/(sof[àa]|couch|sofa)/i, sprSofa],
+  [/(cadira|silla|chair|butaca|tamboret|banc|bench)/i, sprChair],
+  [/(escriptori|desk)/i, sprDesk],
+  [/(taula|mesa|table)/i, sprTable],
   // tech
-  [/\b(televisi[óo]|television|tv|pantalla|monitor)\b/i, sprTv],
+  [/(televisi[óo]|television|\btv\b|pantalla|monitor)/i, sprTv],
   [/\b(ordinador|ordenador|laptop|port[aà]til|computer|pc)\b/i, sprLaptop],
   [/\b(consola|console|videojoc)\b/i, sprConsole],
   [/\b(auriculars|cascos|headphones)\b/i, sprHeadphones],

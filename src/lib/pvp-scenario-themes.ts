@@ -226,11 +226,7 @@ const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
     { sprite: bgWindow, col: 4, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
   ],
   habitacio: [],
-  menjador: [
-    // Cortines als extrems
-    { sprite: bgCurtain, col: 0, row: 0, spanCols: 1, spanRows: 3, opacity: 0.9 },
-    { sprite: bgCurtain, col: 5, row: 0, spanCols: 1, spanRows: 3, opacity: 0.9 },
-  ],
+  menjador: [],
   jardi: [
     // Tanca perimetral fila 0 i fila 4
     { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
