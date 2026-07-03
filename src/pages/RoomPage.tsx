@@ -278,7 +278,6 @@ export default function RoomPage() {
   const selectedEntry = selected ? resolveEntry(selected) : null;
 
 
-  };
 
   return (
     <div className="min-h-screen bg-background pb-8">
