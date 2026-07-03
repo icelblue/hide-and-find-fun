@@ -206,19 +206,19 @@ export default function RoomPage() {
 
   const happiness = useMemo(() => {
     let s = 0;
+    const terrainMult = 1 + terrainBonus;
     for (const x of layout) {
       if (isReward(x.furniture_id)) {
-        s += REWARD_HAPPINESS * multiplier;
+        s += REWARD_HAPPINESS * multiplier * terrainMult;
       } else {
         const c = catalogById.get(x.furniture_id);
         const base = c?.happiness_bonus ?? 0;
-        // Multiplicador s'aplica només si la categoria coincideix amb allowed
         const bonusMult = c && catAllowed(c.category) && allowedCats.length > 0 ? multiplier : 1;
-        s += base * bonusMult;
+        s += base * bonusMult * terrainMult;
       }
     }
     return Math.round(s);
-  }, [layout, catalogById, multiplier, catAllowed, allowedCats.length]);
+  }, [layout, catalogById, multiplier, catAllowed, allowedCats.length, terrainBonus]);
 
   const resolveEntry = useCallback((fid: string) => {
     if (isReward(fid)) {
