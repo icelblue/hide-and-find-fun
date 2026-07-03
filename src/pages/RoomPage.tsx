@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
+import { generateTerrain, preferredTerrainForCategory, TERRAIN_BONUS } from "@/lib/terrain";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
