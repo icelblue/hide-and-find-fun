@@ -392,6 +392,7 @@ export default function LobbyPage() {
       const row = Array.isArray(data) ? data[0] : data;
       if (!row?.game_id) throw new Error("no_game_id");
       toast.success(t("lobby_extra.personalSent").replace("{name}", rivalName));
+      setCreateOpen(false);
       navigate(`/game/${row.game_id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
