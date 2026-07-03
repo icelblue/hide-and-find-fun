@@ -60,6 +60,14 @@ export default function SpacePage() {
   const [placingTemplate, setPlacingTemplate] = useState<RoomTemplate | null>(null);
   const [connectA, setConnectA] = useState<string | null>(null);
 
+  // Drag & drop de sales pel mapa (pointer events, funciona en mòbil)
+  const [dragRoomId, setDragRoomId] = useState<string | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragHoverCell, setDragHoverCell] = useState<{ x: number; y: number } | null>(null);
+  const [dragMoved, setDragMoved] = useState(false);
+  const gridRef = (typeof window !== "undefined" ? useRefLazy() : { current: null }) as React.MutableRefObject<HTMLDivElement | null>;
+
+
   const refresh = useCallback(async () => {
     if (!user) return;
     const [tpls, rms, cns, prof] = await Promise.all([
