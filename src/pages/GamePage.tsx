@@ -551,11 +551,16 @@ export default function GamePage() {
     let cancelled = false;
     (async () => {
       try {
-        const personal = await loadPersonalCombatData(
-          (game as any).host_space_snapshot,
-          (game as any).guest_space_snapshot
-        );
+        const hostId = (game as any).created_by;
+        const guestId = (game as any).invited_user_id;
+        const personal = hostId && guestId
+          ? await loadPersonalCombatDataFromRooms(hostId, guestId)
+          : await loadPersonalCombatData(
+              (game as any).host_space_snapshot,
+              (game as any).guest_space_snapshot
+            );
         if (cancelled) return;
+        personalDataRef.current = personal;
         setScenarios(personal.scenarios);
         setObjects(personal.objects);
       } catch (err: any) {
@@ -564,6 +569,29 @@ export default function GamePage() {
     })();
     return () => { cancelled = true; };
   }, [isPersonalGame, game]);
+
+  // ============================================
+  // HIDING HANDLERS
+  // ============================================
+  const handleSelectScenario = async (id: string) => {
+    setSelectedScenario(id);
+    if (isPersonalGame) {
+      const personal = personalDataRef.current;
+      if (personal) {
+        setItems(personal.itemsByScenario.get(id) ?? []);
+      } else if (game) {
+        const catalog = await loadFurnitureCatalog();
+        const merged = mergeSnapshots(
+          parseSnapshot((game as any).host_space_snapshot),
+          parseSnapshot((game as any).guest_space_snapshot)
+        );
+        setItems(synthItems(merged, catalog));
+      }
+    } else {
+      setItems(await getItemsByScenario(id));
+    }
+    setHideStep(2);
+  };
 
   // ============================================
   // HIDING HANDLERS
