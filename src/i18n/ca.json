@@ -1181,8 +1181,12 @@
       "music": "Música",
       "art": "Art",
       "nature": "Natura",
-      "pet": "Mascota"
+      "pet": "Mascota",
+      "kitchen": "Cuina",
+      "bath": "Bany",
+      "dining": "Menjador"
     },
+
     "tab": {
       "furniture": "Mobles",
       "collection": "Col·lecció"
