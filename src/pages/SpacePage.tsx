@@ -5,7 +5,7 @@
 // snap a coordenades. Botons: afegir sala, connectar sales, entrar
 // a una sala per editar-la.
 // ============================================================
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
