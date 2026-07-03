@@ -190,7 +190,6 @@ export function ItemActionsBody({
             })}
           </div>
         </div>
-      )}
-    </div>
   );
 }
+
