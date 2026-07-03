@@ -1,13 +1,9 @@
 // ============================================================
-// SpacePage — Espai propi de la mascota (Bloc D)
+// SpacePage — Vista Apartament (multi-sala)
 // ============================================================
-// Grid 4×4. Tap a moble de l'inventari → tap a slot per col·locar.
-// Tap a slot ocupat → retorna a inventari.
-// Botiga: compra amb bonus_tokens (= "monedes").
-// Inventari amb 2 pestanyes:
-//   - "Mobles": ítems comprats a `furniture_catalog`.
-//   - "Col·lecció": items guanyats a `reward_items` (via `player_rewards`).
-//     S'emmagatzemen amb prefix `reward:<uuid>` a `layout.furniture_id`.
+// Mostra totes les sales del jugador en un mini-mapa 5×5 amb
+// snap a coordenades. Botons: afegir sala, connectar sales, entrar
+// a una sala per editar-la.
 // ============================================================
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -16,424 +12,406 @@ import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/i18n/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
-import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
 import { toast } from "sonner";
 
-const GRID_SIZE = 16; // 4×4
-const REWARD_HAPPINESS = 2;
+const MAP_SIZE = 5;
 
-type CatalogItem = {
+type RoomTemplate = {
   id: string;
   name_key: string;
-  category: "bed" | "rug" | "plant" | "decor" | "chair" | "desk" | "tech" | "music" | "art" | "nature" | "pet";
+  category: string;
   icon: string;
   price_coins: number;
   unlock_level: number;
-  happiness_bonus: number;
+  max_doors: number;
 };
 
-type RewardItem = { id: string; name: string; icon: string; rarity: string };
+type PlayerRoom = {
+  id: string;
+  room_template_id: string;
+  custom_name: string;
+  layout: Array<{ slot: number; furniture_id: string }>;
+  position_x: number;
+  position_y: number;
+};
 
-type LayoutSlot = { slot: number; furniture_id: string };
-
-/** Detecta si l'entrada del layout és una recompensa. */
-const isReward = (furnitureId: string) => furnitureId.startsWith(REWARD_PREFIX);
-const rewardUuid = (furnitureId: string) => furnitureId.slice(REWARD_PREFIX.length);
+type Connection = { id: string; room_a_id: string; room_b_id: string };
 
 export default function SpacePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const t = useT();
 
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [owned, setOwned] = useState<string[]>([]);
-  const [rewards, setRewards] = useState<RewardItem[]>([]);
-  const [layout, setLayout] = useState<LayoutSlot[]>([]);
-  const [coins, setCoins] = useState<number>(0);
+  const [templates, setTemplates] = useState<RoomTemplate[]>([]);
+  const [rooms, setRooms] = useState<PlayerRoom[]>([]);
+  const [conns, setConns] = useState<Connection[]>([]);
+  const [coins, setCoins] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  // Selecció unificada: `<catalogId>` o `reward:<uuid>`
-  const [selected, setSelected] = useState<string | null>(null);
-  const [shopOpen, setShopOpen] = useState(false);
-  const [invTab, setInvTab] = useState<"furniture" | "collection">("furniture");
 
-  // ---------- Initial fetch ----------
-  useEffect(() => {
+  const [addOpen, setAddOpen] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [placingTemplate, setPlacingTemplate] = useState<RoomTemplate | null>(null);
+  const [connectA, setConnectA] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
     if (!user) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const [cat, own, sp, prof, pr] = await Promise.all([
-        supabase.from("furniture_catalog").select("*").order("unlock_level"),
-        supabase.from("player_furniture").select("furniture_id").eq("user_id", user.id),
-        supabase.from("player_spaces").select("layout").eq("user_id", user.id).maybeSingle(),
-        supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).maybeSingle(),
-        supabase
-          .from("player_rewards")
-          .select("reward_item_id, reward_items(id, name, icon, rarity)")
-          .eq("user_id", user.id),
-      ]);
-      if (cancelled) return;
-      setCatalog((cat.data as CatalogItem[]) ?? []);
-      setOwned(((own.data as Array<{ furniture_id: string }>) ?? []).map((r) => r.furniture_id));
-      const rawLayout = (sp.data as { layout?: LayoutSlot[] } | null)?.layout ?? [];
-      setLayout(Array.isArray(rawLayout) ? rawLayout : []);
-      setCoins((prof.data as { bonus_tokens?: number } | null)?.bonus_tokens ?? 0);
-      // Dedupe rewards (un jugador pot guanyar el mateix ítem 2 cops, aquí només ens interessa el catàleg guanyat).
-      const seen = new Set<string>();
-      const rlist: RewardItem[] = [];
-      ((pr.data as Array<{ reward_items: RewardItem | null }>) ?? []).forEach((row) => {
-        const r = row.reward_items;
-        if (!r || seen.has(r.id)) return;
-        seen.add(r.id);
-        rlist.push(r);
-      });
-      setRewards(rlist);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
+    const [tpls, rms, cns, prof] = await Promise.all([
+      supabase.from("room_catalog").select("*").order("unlock_level"),
+      supabase.from("player_rooms").select("id, room_template_id, custom_name, layout, position_x, position_y").eq("user_id", user.id),
+      supabase.from("room_connections").select("id, room_a_id, room_b_id").eq("user_id", user.id),
+      supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).maybeSingle(),
+    ]);
+    setTemplates((tpls.data as RoomTemplate[]) ?? []);
+    setRooms(((rms.data as unknown as PlayerRoom[]) ?? []).map((r) => ({
+      ...r,
+      layout: Array.isArray(r.layout) ? r.layout : [],
+    })));
+    setConns((cns.data as Connection[]) ?? []);
+    setCoins((prof.data as { bonus_tokens?: number } | null)?.bonus_tokens ?? 0);
+    setLoading(false);
   }, [user]);
 
-  // ---------- Derived ----------
-  const catalogById = useMemo(() => {
-    const m = new Map<string, CatalogItem>();
-    catalog.forEach((c) => m.set(c.id, c));
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const roomById = useMemo(() => {
+    const m = new Map<string, PlayerRoom>();
+    rooms.forEach((r) => m.set(r.id, r));
     return m;
-  }, [catalog]);
-
-  const rewardById = useMemo(() => {
-    const m = new Map<string, RewardItem>();
-    rewards.forEach((r) => m.set(r.id, r));
+  }, [rooms]);
+  const templateById = useMemo(() => {
+    const m = new Map<string, RoomTemplate>();
+    templates.forEach((tpl) => m.set(tpl.id, tpl));
     return m;
-  }, [rewards]);
+  }, [templates]);
 
-  const placedIds = useMemo(() => new Set(layout.map((s) => s.furniture_id)), [layout]);
+  const occupiedCells = useMemo(() => {
+    const s = new Set<string>();
+    rooms.forEach((r) => s.add(`${r.position_x}:${r.position_y}`));
+    return s;
+  }, [rooms]);
 
-  const availableOwned = useMemo(
-    () => owned.filter((id) => !placedIds.has(id)),
-    [owned, placedIds]
-  );
-  const availableRewards = useMemo(
-    () => rewards.filter((r) => !placedIds.has(`${REWARD_PREFIX}${r.id}`)),
-    [rewards, placedIds]
-  );
-
-  const happiness = useMemo(() => {
-    let sum = 0;
-    for (const s of layout) {
-      if (isReward(s.furniture_id)) sum += REWARD_HAPPINESS;
-      else sum += catalogById.get(s.furniture_id)?.happiness_bonus ?? 0;
-    }
-    return sum;
-  }, [layout, catalogById]);
-
-  /** Resol la icona + nom d'una entrada del layout (moble o recompensa). */
-  const resolveEntry = useCallback(
-    (furnitureId: string): { icon: string; name: string } | null => {
-      if (isReward(furnitureId)) {
-        const r = rewardById.get(rewardUuid(furnitureId));
-        return r ? { icon: r.icon, name: r.name } : null;
-      }
-      const c = catalogById.get(furnitureId);
-      return c ? { icon: c.icon, name: t(c.name_key, c.id) } : null;
-    },
-    [catalogById, rewardById, t]
-  );
-
-  // ---------- Persistence ----------
-  const persistLayout = useCallback(
-    async (next: LayoutSlot[]) => {
-      if (!user) return;
-      setSaving(true);
-      const { error } = await supabase
-        .from("player_spaces")
-        .upsert({ user_id: user.id, layout: next as never }, { onConflict: "user_id" });
-      setSaving(false);
-      if (error) {
-        toast.error(t("space.saveError", "No s'ha pogut desar"));
-        return false;
-      }
-      return true;
-    },
-    [user, t]
+  const totalFurniture = useMemo(
+    () => rooms.reduce((n, r) => n + r.layout.length, 0),
+    [rooms]
   );
 
   // ---------- Actions ----------
-  const handleSlotClick = useCallback(
-    async (slotIdx: number) => {
-      const existing = layout.find((s) => s.slot === slotIdx);
-      let next: LayoutSlot[];
-      if (existing) {
-        next = layout.filter((s) => s.slot !== slotIdx);
-        setSelected(null);
-      } else if (selected) {
-        next = [...layout.filter((s) => s.furniture_id !== selected), { slot: slotIdx, furniture_id: selected }];
-        setSelected(null);
-      } else {
-        return;
-      }
-      setLayout(next);
-      await persistLayout(next);
-    },
-    [layout, selected, persistLayout]
-  );
+  const startAdd = (tpl: RoomTemplate) => {
+    if (coins < tpl.price_coins) { toast.error(t("space.notEnough")); return; }
+    if (rooms.length >= 8) { toast.error(t("apartment.maxRooms", "Màxim 8 sales")); return; }
+    setPlacingTemplate(tpl);
+    setAddOpen(false);
+  };
 
-  const handleBuy = useCallback(
-    async (item: CatalogItem) => {
-      if (!user) return;
-      if (coins < item.price_coins) {
-        toast.error(t("space.notEnough", "No tens prou monedes"));
-        return;
-      }
-      const newCoins = coins - item.price_coins;
-      const { error: profErr } = await supabase
-        .from("profiles")
-        .update({ bonus_tokens: newCoins } as never)
-        .eq("user_id", user.id);
-      if (profErr) {
-        toast.error(t("space.buyError", "No s'ha pogut comprar"));
-        return;
-      }
-      const { error: invErr } = await supabase
-        .from("player_furniture")
-        .insert({ user_id: user.id, furniture_id: item.id });
-      if (invErr) {
-        await supabase.from("profiles").update({ bonus_tokens: coins } as never).eq("user_id", user.id);
-        toast.error(t("space.buyError", "No s'ha pogut comprar"));
-        return;
-      }
+  const placeRoomAt = async (x: number, y: number) => {
+    if (!user || !placingTemplate) return;
+    if (occupiedCells.has(`${x}:${y}`)) { toast.error(t("apartment.cellTaken", "Casella ocupada")); return; }
+    const tpl = placingTemplate;
+    const newCoins = coins - tpl.price_coins;
+    // Genera nom "Menjador 1", "Menjador 2"...
+    const sameType = rooms.filter((r) => r.room_template_id === tpl.id).length + 1;
+    const baseName = t(tpl.name_key, tpl.id);
+    const name = sameType > 1 ? `${baseName} ${sameType}` : baseName;
+
+    if (tpl.price_coins > 0) {
+      const { error } = await supabase.from("profiles").update({ bonus_tokens: newCoins } as never).eq("user_id", user.id);
+      if (error) { toast.error(t("space.buyError")); return; }
       setCoins(newCoins);
-      setOwned((prev) => [...prev, item.id]);
-      toast.success(t("space.bought", "Comprat!") + " " + item.icon);
-    },
-    [user, coins, t]
-  );
+    }
+    const { error: e2 } = await supabase.from("player_rooms").insert({
+      user_id: user.id,
+      room_template_id: tpl.id,
+      custom_name: name,
+      layout: [] as never,
+      position_x: x,
+      position_y: y,
+    });
+    if (e2) {
+      const msg = e2.message?.includes("max_rooms_reached")
+        ? t("apartment.maxRooms", "Màxim 8 sales")
+        : t("space.buyError");
+      // rollback coins
+      if (tpl.price_coins > 0) await supabase.from("profiles").update({ bonus_tokens: coins } as never).eq("user_id", user.id);
+      setCoins(coins);
+      toast.error(msg);
+      setPlacingTemplate(null);
+      return;
+    }
+    setPlacingTemplate(null);
+    toast.success(`${tpl.icon} ${name}`);
+    refresh();
+  };
+
+  const handleConnect = async (roomBId: string) => {
+    if (!user || !connectA) return;
+    if (connectA === roomBId) { toast.error(t("apartment.samRoom", "Escull una altra sala")); return; }
+    const { error } = await supabase.from("room_connections").insert({
+      user_id: user.id, room_a_id: connectA, room_b_id: roomBId,
+    });
+    if (error) {
+      const m = (error.message || "").toLowerCase();
+      if (m.includes("max_doors")) toast.error(t("apartment.errMaxDoors", "Una sala ha arribat al límit de portes"));
+      else if (m.includes("duplicate") || m.includes("unique")) toast.error(t("apartment.errDup", "Aquesta connexió ja existeix"));
+      else toast.error(error.message);
+      return;
+    }
+    setConnectA(null);
+    setConnectOpen(false);
+    toast.success("🚪 " + t("apartment.doorAdded", "Porta afegida"));
+    refresh();
+  };
+
+  const deleteRoom = async (r: PlayerRoom) => {
+    if (!user) return;
+    if (!confirm(t("apartment.confirmDelete", "Eliminar aquesta sala i les seves portes? (perds els mobles col·locats)"))) return;
+    const { error } = await supabase.from("player_rooms").delete().eq("id", r.id).eq("user_id", user.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(t("apartment.roomDeleted", "Sala eliminada"));
+    refresh();
+  };
+
+  const deleteConn = async (c: Connection) => {
+    if (!user) return;
+    const { error } = await supabase.from("room_connections").delete().eq("id", c.id).eq("user_id", user.id);
+    if (error) { toast.error(error.message); return; }
+    refresh();
+  };
 
   // ---------- Render ----------
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground animate-pulse">{t("common.loading")}</p>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center bg-background"><p className="text-muted-foreground animate-pulse">{t("common.loading")}</p></div>;
   }
-
-  const selectedEntry = selected ? resolveEntry(selected) : null;
 
   return (
     <div className="min-h-screen bg-background pb-8">
       <OnboardingDialog
-        storageKey="onboarding:space:v1"
+        storageKey="onboarding:apartment:v1"
         icon="🏠"
-        title={t("onboarding.space.title", "El teu espai")}
+        title={t("apartment.onboarding.title", "El teu apartament")}
         bullets={[
-          t("onboarding.space.b1"),
-          t("onboarding.space.b2"),
-          t("onboarding.space.b3"),
-          t("onboarding.space.b4"),
+          t("apartment.onboarding.b1", "Compra sales (menjador, balcó, cuina…) al teu gust."),
+          t("apartment.onboarding.b2", "Connecta-les amb portes (🚪) — cada sala admet fins a 2."),
+          t("apartment.onboarding.b3", "Toca una sala per decorar-la amb mobles i col·lecció."),
+          t("apartment.onboarding.b4", "Necessites ≥2 sales connectades i ≥4 mobles per jugar Personal PvP."),
         ]}
         ctaLabel={t("onboarding.cta", "Entesos!")}
       />
+
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-3 py-2.5 flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="text-sm">
-          {t("common.lobbyShort")}
-        </Button>
-        <h1 className="text-base font-bold">{t("space.title", "El meu espai")}</h1>
-        <div className="text-sm font-semibold flex items-center gap-1">
-          <span>🪙</span>
-          <span>{coins}</span>
-        </div>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="text-sm">← {t("common.lobbyShort")}</Button>
+        <h1 className="text-base font-bold">🏠 {t("apartment.title", "Apartament")}</h1>
+        <div className="text-sm font-semibold flex items-center gap-1">🪙 {coins}</div>
       </div>
 
       <div className="px-3 pt-3 space-y-3">
-        {/* Status */}
         <Card className="glass">
           <CardContent className="py-2.5 flex items-center justify-between text-xs">
-            <span>{t("space.happiness", "Felicitat")}: <span className="font-bold">+{happiness}</span></span>
-            <span className="text-muted-foreground">
-              {layout.length}/{GRID_SIZE} {t("space.slotsUsed", "caselles")}
-            </span>
-            {saving && <span className="text-muted-foreground animate-pulse">⏳</span>}
+            <span>{t("apartment.rooms", "Sales")}: <span className="font-bold">{rooms.length}/8</span></span>
+            <span>{t("apartment.doors", "Portes")}: <span className="font-bold">{conns.length}</span></span>
+            <span className="text-muted-foreground">{t("apartment.furniture", "Mobles")}: {totalFurniture}</span>
           </CardContent>
         </Card>
 
-        {/* Hint */}
-        {selectedEntry ? (
-          <p className="text-xs text-accent text-center">
-            {t("space.tapToPlace", "Toca una casella per col·locar")} {selectedEntry.icon}
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground text-center">
-            {t("space.hint", "Selecciona un moble i toca una casella")}
-          </p>
+        {placingTemplate && (
+          <div className="rounded-xl border border-accent/50 bg-accent/10 p-3 text-center text-sm animate-pulse">
+            {t("apartment.pickCell", "Toca una casella lliure per col·locar")} {placingTemplate.icon}
+            <button className="ml-2 text-xs text-muted-foreground underline" onClick={() => setPlacingTemplate(null)}>
+              {t("common.cancel")}
+            </button>
+          </div>
         )}
 
-        {/* Grid 4×4 */}
-        <div className="aspect-square w-full max-w-[360px] mx-auto bg-muted/30 rounded-2xl p-2 grid grid-cols-4 gap-2 border border-border">
-          {Array.from({ length: GRID_SIZE }).map((_, idx) => {
-            const slot = layout.find((s) => s.slot === idx);
-            const entry = slot ? resolveEntry(slot.furniture_id) : null;
-            const isCenter = idx === 5;
-            return (
-              <button
-                key={idx}
-                onClick={() => handleSlotClick(idx)}
-                className={`aspect-square rounded-lg border transition-all flex items-center justify-center text-2xl ${
-                  entry
-                    ? "bg-card border-accent/40 shadow-sm"
-                    : selected
-                    ? "bg-accent/10 border-accent/60 border-dashed animate-pulse"
-                    : "bg-background/50 border-border/40"
-                }`}
-                aria-label={`slot-${idx}`}
-              >
-                {entry ? entry.icon : isCenter && layout.length === 0 ? "🐾" : ""}
-              </button>
-            );
-          })}
-        </div>
+        {/* Mini-mapa 5×5 amb sales + línies de connexió */}
+        <div className="relative w-full max-w-[360px] mx-auto aspect-square bg-muted/30 rounded-2xl border border-border p-1.5">
+          {/* SVG connections layer */}
+          <svg className="absolute inset-1.5 w-[calc(100%-12px)] h-[calc(100%-12px)] pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {conns.map((c) => {
+              const a = roomById.get(c.room_a_id);
+              const b = roomById.get(c.room_b_id);
+              if (!a || !b) return null;
+              const cell = 100 / MAP_SIZE;
+              const ax = (a.position_x + 0.5) * cell;
+              const ay = (a.position_y + 0.5) * cell;
+              const bx = (b.position_x + 0.5) * cell;
+              const by = (b.position_y + 0.5) * cell;
+              return (
+                <g key={c.id}>
+                  <line x1={ax} y1={ay} x2={bx} y2={by} stroke="hsl(var(--accent))" strokeWidth="0.8" strokeDasharray="2 1" opacity="0.7" />
+                </g>
+              );
+            })}
+          </svg>
 
-        {/* Inventory tabs */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <h2 className="text-sm font-semibold">{t("space.inventory", "Inventari")}</h2>
-            <Button size="sm" variant="secondary" onClick={() => setShopOpen(true)}>
-              🛒 {t("space.shop", "Botiga")}
-            </Button>
+          <div className="relative grid grid-cols-5 gap-1 h-full">
+            {Array.from({ length: MAP_SIZE * MAP_SIZE }).map((_, idx) => {
+              const x = idx % MAP_SIZE;
+              const y = Math.floor(idx / MAP_SIZE);
+              const room = rooms.find((r) => r.position_x === x && r.position_y === y);
+              const tpl = room ? templateById.get(room.room_template_id) : null;
+              const isPlacingHere = !!placingTemplate;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    if (isPlacingHere) placeRoomAt(x, y);
+                    else if (room) navigate(`/space/room/${room.id}`);
+                  }}
+                  className={`relative rounded-lg border transition-all text-center flex flex-col items-center justify-center overflow-hidden ${
+                    room
+                      ? "bg-card border-accent/40 shadow-sm hover:border-accent"
+                      : isPlacingHere
+                      ? "bg-accent/10 border-accent/60 border-dashed animate-pulse"
+                      : "bg-background/40 border-border/30"
+                  }`}
+                  aria-label={room ? room.custom_name : `cell-${x}-${y}`}
+                >
+                  {room && tpl && (
+                    <>
+                      <span className="text-xl leading-none">{tpl.icon}</span>
+                      <span className="text-[8px] font-medium truncate w-full px-0.5 text-foreground/80">{room.custom_name}</span>
+                      <span className="text-[7px] text-muted-foreground">{room.layout.length}📦</span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
           </div>
-
-          <Tabs value={invTab} onValueChange={(v) => setInvTab(v as typeof invTab)}>
-            <TabsList className="w-full grid grid-cols-2 h-9">
-              <TabsTrigger value="furniture" className="text-xs">
-                🛋️ {t("space.tab.furniture", "Mobles")} ({availableOwned.length})
-              </TabsTrigger>
-              <TabsTrigger value="collection" className="text-xs">
-                🏆 {t("space.tab.collection", "Col·lecció")} ({availableRewards.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="furniture" className="mt-2">
-              {availableOwned.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-3">
-                  {t("space.emptyInventory", "Tots els mobles col·locats o cap comprat encara")}
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {availableOwned.map((id) => {
-                    const item = catalogById.get(id);
-                    if (!item) return null;
-                    const isSel = selected === id;
-                    return (
-                      <button
-                        key={id}
-                        onClick={() => setSelected(isSel ? null : id)}
-                        className={`px-3 py-2 rounded-xl border text-2xl transition-all ${
-                          isSel
-                            ? "bg-accent/20 border-accent scale-110"
-                            : "bg-card border-border hover:border-accent/50"
-                        }`}
-                        aria-pressed={isSel}
-                        title={t(item.name_key, item.id)}
-                      >
-                        {item.icon}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="collection" className="mt-2">
-              {availableRewards.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-3">
-                  {rewards.length === 0
-                    ? t("space.noRewards", "Encara no tens ítems de col·lecció. Guanya partides!")
-                    : t("space.allRewardsPlaced", "Tots els ítems ja col·locats")}
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {availableRewards.map((r) => {
-                    const key = `${REWARD_PREFIX}${r.id}`;
-                    const isSel = selected === key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setSelected(isSel ? null : key)}
-                        className={`px-3 py-2 rounded-xl border text-2xl transition-all ${
-                          isSel
-                            ? "bg-primary/20 border-primary scale-110"
-                            : "bg-card border-border hover:border-primary/50"
-                        }`}
-                        aria-pressed={isSel}
-                        title={r.name}
-                      >
-                        {r.icon}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
         </div>
+
+        {/* Action buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={() => setAddOpen(true)} disabled={rooms.length >= 8 || !!placingTemplate}>
+            ➕ {t("apartment.addRoom", "Sala nova")}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => { setConnectA(null); setConnectOpen(true); }}
+            disabled={rooms.length < 2}
+          >
+            🚪 {t("apartment.connect", "Connectar")}
+          </Button>
+        </div>
+
+        {/* Room list with per-room delete + door delete */}
+        {rooms.length > 0 && (
+          <div className="space-y-1.5">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {t("apartment.myRooms", "Les meves sales")}
+            </h2>
+            {rooms.map((r) => {
+              const tpl = templateById.get(r.room_template_id);
+              const doors = conns.filter((c) => c.room_a_id === r.id || c.room_b_id === r.id);
+              return (
+                <div key={r.id} className="rounded-xl bg-card border border-border p-2.5 flex items-center gap-2">
+                  <button onClick={() => navigate(`/space/room/${r.id}`)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
+                    <span className="text-2xl shrink-0">{tpl?.icon ?? "🏠"}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate">{r.custom_name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {r.layout.length} {t("apartment.pieces", "mobles")} · {doors.length}/{tpl?.max_doors ?? 2} 🚪
+                      </p>
+                    </div>
+                  </button>
+                  {doors.map((d) => {
+                    const other = d.room_a_id === r.id ? roomById.get(d.room_b_id) : roomById.get(d.room_a_id);
+                    if (!other) return null;
+                    return (
+                      <button
+                        key={d.id}
+                        onClick={() => deleteConn(d)}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                        title={t("apartment.removeDoor", "Treure porta")}
+                      >
+                        🚪→{other.custom_name.slice(0, 6)}
+                      </button>
+                    );
+                  })}
+                  <button onClick={() => deleteRoom(r)} className="text-xs text-destructive/70 hover:text-destructive p-1" title={t("common.delete", "Eliminar")}>
+                    🗑️
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Shop dialog */}
-      <Dialog open={shopOpen} onOpenChange={setShopOpen}>
+      {/* Add room dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>🛒 {t("space.shop", "Botiga")} · 🪙 {coins}</DialogTitle>
+            <DialogTitle>➕ {t("apartment.addRoom", "Sala nova")}</DialogTitle>
+            <DialogDescription className="text-xs">{t("apartment.addDesc", "Escull el tipus. Es col·locarà després tocant una casella lliure del mapa.")}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-            {(["bed", "rug", "plant", "decor", "chair", "desk", "tech", "music", "art", "nature", "pet"] as const).map((cat) => {
-              const inCat = catalog.filter((c) => c.category === cat);
-              if (inCat.length === 0) return null;
+          <div className="space-y-1.5 max-h-[60vh] overflow-y-auto">
+            {templates.map((tpl) => {
+              const canAfford = coins >= tpl.price_coins;
               return (
-                <div key={cat}>
-                  <h3 className="text-xs font-bold uppercase text-muted-foreground mt-2 mb-1">
-                    {t(`space.cat.${cat}`, cat)}
-                  </h3>
-                  <div className="space-y-1.5">
-                    {inCat.map((item) => {
-                      const isOwned = owned.includes(item.id);
-                      const canAfford = coins >= item.price_coins;
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-2 p-2 rounded-lg bg-card border border-border"
-                        >
-                          <span className="text-2xl">{item.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{t(item.name_key, item.id)}</p>
-                            <p className="text-[11px] text-muted-foreground">
-                              +{item.happiness_bonus} {t("space.happiness", "Felicitat")} · Lv{item.unlock_level}
-                            </p>
-                          </div>
-                          {isOwned ? (
-                            <span className="text-xs text-muted-foreground px-2">
-                              ✓ {t("space.owned", "Tens")}
-                            </span>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant={canAfford ? "default" : "ghost"}
-                              disabled={!canAfford}
-                              onClick={() => handleBuy(item)}
-                            >
-                              🪙 {item.price_coins}
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })}
+                <button
+                  key={tpl.id}
+                  onClick={() => startAdd(tpl)}
+                  disabled={!canAfford}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                    canAfford ? "bg-card border-border hover:border-accent/60" : "bg-muted/20 border-border/40 opacity-60"
+                  }`}
+                >
+                  <span className="text-2xl">{tpl.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{t(tpl.name_key, tpl.id)}</p>
+                    <p className="text-[10px] text-muted-foreground">Lv{tpl.unlock_level} · {tpl.max_doors} 🚪 màx.</p>
                   </div>
-                </div>
+                  <span className={`text-sm font-semibold ${canAfford ? "text-accent" : "text-muted-foreground"}`}>
+                    {tpl.price_coins === 0 ? t("apartment.free", "Gratis") : `🪙 ${tpl.price_coins}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Connect dialog */}
+      <Dialog open={connectOpen} onOpenChange={setConnectOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>🚪 {t("apartment.connect", "Connectar sales")}</DialogTitle>
+            <DialogDescription className="text-xs">
+              {connectA
+                ? t("apartment.pickSecond", "Ara escull la segona sala")
+                : t("apartment.pickFirst", "Escull la primera sala")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 max-h-[60vh] overflow-y-auto">
+            {rooms.map((r) => {
+              const tpl = templateById.get(r.room_template_id);
+              const doorsUsed = conns.filter((c) => c.room_a_id === r.id || c.room_b_id === r.id).length;
+              const maxDoors = tpl?.max_doors ?? 2;
+              const isFull = doorsUsed >= maxDoors;
+              const isSelected = connectA === r.id;
+              return (
+                <button
+                  key={r.id}
+                  disabled={isFull && !isSelected}
+                  onClick={() => {
+                    if (!connectA) setConnectA(r.id);
+                    else handleConnect(r.id);
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                    isSelected ? "bg-accent/20 border-accent"
+                    : isFull ? "bg-muted/20 border-border/40 opacity-60"
+                    : "bg-card border-border hover:border-accent/60"
+                  }`}
+                >
+                  <span className="text-2xl">{tpl?.icon ?? "🏠"}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{r.custom_name}</p>
+                    <p className="text-[10px] text-muted-foreground">{doorsUsed}/{maxDoors} 🚪</p>
+                  </div>
+                  {isSelected && <span className="text-xs text-accent">✓</span>}
+                </button>
               );
             })}
           </div>
