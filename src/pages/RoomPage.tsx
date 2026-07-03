@@ -266,28 +266,38 @@ export default function RoomPage() {
     return c ? { icon: c.icon, name: t(c.name_key, c.id) } : null;
   }, [catalogById, rewardById, t]);
 
-  const persistLayout = useCallback(async (next: LayoutSlot[]) => {
+  const persistLayout = useCallback(async (next: LayoutSlot[], prev: LayoutSlot[]) => {
     if (!user || !room) return;
     setSaving(true);
     const { error } = await supabase.from("player_rooms").update({ layout: next as never }).eq("id", room.id).eq("user_id", user.id);
     setSaving(false);
-    if (error) toast.error(t("space.saveError", "No s'ha pogut desar"));
+    if (error) {
+      // Rollback UI si falla el DB — evita que el moble "desaparegui"
+      setRoom((r) => (r ? { ...r, layout: prev } : r));
+      toast.error(t("space.saveError", "No s'ha pogut desar"));
+    }
   }, [user, room, t]);
 
   const handleSlotClick = useCallback(async (idx: number) => {
     if (!room) return;
+    const prev = layout;
     const existing = layout.find((s) => s.slot === idx);
     let next: LayoutSlot[];
     if (existing) {
+      // Treure moble del slot
       next = layout.filter((s) => s.slot !== idx);
       setSelected(null);
     } else if (selected) {
+      // Col·locar moble seleccionat (evitant duplicats del mateix id)
       next = [...layout.filter((s) => s.furniture_id !== selected), { slot: idx, furniture_id: selected }];
       setSelected(null);
-    } else return;
+    } else {
+      return;
+    }
     setRoom({ ...room, layout: next });
-    await persistLayout(next);
+    await persistLayout(next, prev);
   }, [layout, selected, room, persistLayout]);
+
 
   const handleBuy = useCallback(async (item: CatalogItem) => {
     if (!user) return;
