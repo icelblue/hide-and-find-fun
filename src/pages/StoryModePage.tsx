@@ -61,7 +61,7 @@ export default function StoryModePage() {
   const [playerName, setPlayerName] = useState("");
 
   // Adoption flow
-  const [randomPet, setRandomPet] = useState(PET_OPTIONS[0]);
+  const [randomPet, setRandomPet] = useState<(typeof PET_OPTIONS)[number]>(PET_OPTIONS[0]);
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
   const [petNameInput, setPetNameInput] = useState("");
