@@ -1147,7 +1147,9 @@
     },
     "moveRoom": "Moure sala al mapa",
     "moved": "Sala moguda",
-    "moveOutOfBounds": "Fora del mapa"
+    "moveOutOfBounds": "Fora del mapa",
+    "dragHint": "Arrossega una sala per moure-la · toca per entrar"
+
 
 
   },
