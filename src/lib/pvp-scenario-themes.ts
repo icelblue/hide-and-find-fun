@@ -225,7 +225,6 @@ const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
   ],
   despatx: [
     { sprite: bgDeskSurface, col: 1, row: 1, spanCols: 4, spanRows: 2 },
-    { sprite: bgWindow, col: 4, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
   ],
   habitacio: [
     // Paret de fusta darrere la zona del llit (fila 0-1) — capçalera visual
