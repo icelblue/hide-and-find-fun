@@ -1803,6 +1803,7 @@ export default function GamePage() {
                       cells={cells}
                       seed={`pvp:${player?.current_scenario_id ?? ""}`}
                       seamless
+                      backdrops={backdropsForScenario(scenName)}
                       onCellClick={(idx) => {
                         const s = slots.find((x) => x.cellIndex === idx);
                         if (s) setSheetItemId(s.itemId);
