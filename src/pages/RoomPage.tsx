@@ -79,6 +79,8 @@ export default function RoomPage() {
   const [nameDraft, setNameDraft] = useState("");
   // otherRoomsOccupancy ja no cal aquí (drag & drop viu a SpacePage)
   const [placedElsewhere, setPlacedElsewhere] = useState<Set<string>>(new Set());
+  const [pet, setPet] = useState<{ pet_icon: string; pet_name: string } | null>(null);
+  const [isPetHere, setIsPetHere] = useState(false);
 
   useEffect(() => {
     if (!user || !roomId) return;
