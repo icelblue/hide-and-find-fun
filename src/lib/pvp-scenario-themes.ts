@@ -192,3 +192,70 @@ export function autoLayoutForItems(
   const cells = PRESET_LAYOUTS[n] ?? PRESET_LAYOUTS[Math.min(12, n)];
   return items.slice(0, cells.length).map((it, i) => ({ itemId: it.id, cellIndex: cells[i] }));
 }
+
+// ============================================================
+// BACKDROPS — capa decorativa (mobiliari base) per escenari
+// Cada backdrop cobreix un rectangle del grid [col, row, spanCols, spanRows]
+// i es pinta SOTA els mobles interactius. No captura clicks.
+// ============================================================
+export interface ScenarioBackdrop {
+  sprite: string;
+  col: number;
+  row: number;
+  spanCols: number;
+  spanRows: number;
+  /** 0-1, opacitat opcional (per elements de fons molt suaus) */
+  opacity?: number;
+  /** true = sense object-contain, ocupa tota la cel·la (parets, tanques) */
+  cover?: boolean;
+}
+
+const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
+  cuina: [
+    // Encimera contínua tota la fila 0 (sota nevera/forn/microones/pica/calaix/despensa)
+    { sprite: bgCounter, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true },
+    // Finestra al mig de la paret superior... no hi ha fila 0 lliure, la posem a fila 2
+    { sprite: bgWindow, col: 4, row: 2, spanCols: 2, spanRows: 2, opacity: 0.85 },
+  ],
+  lavabo: [
+    // Paret enrajolada fila 0 (darrere mirall/prestatgeria/pica)
+    { sprite: bgTiledWall, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true, opacity: 0.55 },
+    // Encimera sota la pica (cel·la 7)
+    { sprite: bgCounter, col: 0, row: 1, spanCols: 3, spanRows: 1, cover: true, opacity: 0.9 },
+  ],
+  despatx: [
+    // Superfície d'escriptori sota laptop/ordinador (cel·les 8-11 row 1)
+    { sprite: bgDeskSurface, col: 1, row: 1, spanCols: 4, spanRows: 2 },
+    // Finestra a la paret superior dreta
+    { sprite: bgWindow, col: 4, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
+  ],
+  habitacio: [
+    // Finestra sobre el llit
+    { sprite: bgWindow, col: 2, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
+    // Cortines als laterals de la finestra
+    { sprite: bgCurtain, col: 1, row: 0, spanCols: 1, spanRows: 2, opacity: 0.85 },
+    { sprite: bgCurtain, col: 4, row: 0, spanCols: 1, spanRows: 2, opacity: 0.85 },
+  ],
+  menjador: [
+    // Cortines als extrems
+    { sprite: bgCurtain, col: 0, row: 0, spanCols: 1, spanRows: 3, opacity: 0.9 },
+    { sprite: bgCurtain, col: 5, row: 0, spanCols: 1, spanRows: 3, opacity: 0.9 },
+  ],
+  jardi: [
+    // Tanca perimetral fila 0 i fila 4
+    { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
+    { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
+  ],
+  balco: [
+    // Barana inferior contínua
+    { sprite: bgRailing, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.95 },
+  ],
+};
+
+/** Retorna els backdrops d'un escenari (buit si no en té). */
+export function backdropsForScenario(scenarioName?: string | null): ScenarioBackdrop[] {
+  if (!scenarioName) return [];
+  const key = normScenarioKey(scenarioName);
+  const match = Object.keys(SCENARIO_BACKDROPS).find((k) => key.includes(k));
+  return match ? SCENARIO_BACKDROPS[match] : [];
+}
