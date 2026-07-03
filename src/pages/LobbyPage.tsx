@@ -459,7 +459,7 @@ export default function LobbyPage() {
             <span className="text-xs mt-0.5">{t("lobby.randomRival")}</span>
           </span>
         </Button>
-        <Button onClick={handleCreate} size="lg" disabled={loading} variant="secondary" className="h-14">
+        <Button onClick={openCreateDialog} size="lg" disabled={loading} variant="secondary" className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">➕</span>
             <span className="text-xs mt-0.5">{t("lobby.createGame")}</span>
