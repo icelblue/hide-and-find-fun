@@ -2,8 +2,9 @@
 // RoomPage — Editor d'una sala individual del meu apartament
 // ============================================================
 // Ruta: /space/room/:roomId
-// Grid 4×4 + inventari (mobles + col·lecció) + botiga.
-// Persisteix a `player_rooms[roomId].layout`.
+// Grid variable (segons plantilla) + inventari filtrat per
+// `allowed_categories` + multiplicador de felicitat + fletxes
+// per moure la sala pel mapa 5×5.
 // ============================================================
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -18,8 +19,8 @@ import { Input } from "@/components/ui/input";
 import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
 import { toast } from "sonner";
 
-const GRID_SIZE = 16;
 const REWARD_HAPPINESS = 2;
+const MAP_SIZE = 5;
 
 type CatalogItem = {
   id: string;
@@ -32,8 +33,23 @@ type CatalogItem = {
 };
 type RewardItem = { id: string; name: string; icon: string; rarity: string };
 type LayoutSlot = { slot: number; furniture_id: string };
-type RoomRow = { id: string; custom_name: string; room_template_id: string; layout: LayoutSlot[] };
-type RoomTemplate = { id: string; icon: string; name_key: string };
+type RoomRow = {
+  id: string;
+  custom_name: string;
+  room_template_id: string;
+  layout: LayoutSlot[];
+  position_x: number;
+  position_y: number;
+};
+type RoomTemplate = {
+  id: string;
+  icon: string;
+  name_key: string;
+  grid_w: number;
+  grid_h: number;
+  allowed_categories: string[];
+  happiness_multiplier: number;
+};
 
 const isReward = (id: string) => id.startsWith(REWARD_PREFIX);
 const rewardUuid = (id: string) => id.slice(REWARD_PREFIX.length);
@@ -57,6 +73,8 @@ export default function RoomPage() {
   const [invTab, setInvTab] = useState<"furniture" | "collection">("furniture");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const [otherRoomsOccupancy, setOtherRoomsOccupancy] = useState<Set<string>>(new Set());
+  const [placedElsewhere, setPlacedElsewhere] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user || !roomId) return;
@@ -64,7 +82,7 @@ export default function RoomPage() {
     (async () => {
       setLoading(true);
       const [rm, cat, own, prof, pr] = await Promise.all([
-        supabase.from("player_rooms").select("id, custom_name, room_template_id, layout").eq("id", roomId).eq("user_id", user.id).maybeSingle(),
+        supabase.from("player_rooms").select("id, custom_name, room_template_id, layout, position_x, position_y").eq("id", roomId).eq("user_id", user.id).maybeSingle(),
         supabase.from("furniture_catalog").select("*").order("unlock_level"),
         supabase.from("player_furniture").select("furniture_id").eq("user_id", user.id),
         supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).maybeSingle(),
@@ -82,11 +100,17 @@ export default function RoomPage() {
         custom_name: rm.data.custom_name,
         room_template_id: rm.data.room_template_id,
         layout: Array.isArray(rawLayout) ? (rawLayout as LayoutSlot[]) : [],
+        position_x: rm.data.position_x,
+        position_y: rm.data.position_y,
       });
       setNameDraft(rm.data.custom_name);
 
-      const { data: tpl } = await supabase.from("room_catalog").select("id, icon, name_key").eq("id", rm.data.room_template_id).maybeSingle();
-      if (tpl) setTemplate(tpl as RoomTemplate);
+      const { data: tpl } = await supabase
+        .from("room_catalog")
+        .select("id, icon, name_key, grid_w, grid_h, allowed_categories, happiness_multiplier")
+        .eq("id", rm.data.room_template_id)
+        .maybeSingle();
+      if (tpl) setTemplate(tpl as unknown as RoomTemplate);
 
       setCatalog((cat.data as CatalogItem[]) ?? []);
       setOwned(((own.data as Array<{ furniture_id: string }>) ?? []).map((r) => r.furniture_id));
@@ -119,41 +143,70 @@ export default function RoomPage() {
   const layout = room?.layout ?? [];
   const placedIds = useMemo(() => new Set(layout.map((s) => s.furniture_id)), [layout]);
 
-  // Global placed: mobles no col·locats *en aquesta sala ni cap altra*
-  const [placedElsewhere, setPlacedElsewhere] = useState<Set<string>>(new Set());
+  // Mobles col·locats en altres sales + caselles ocupades del mapa
   useEffect(() => {
     if (!user || !roomId) return;
     (async () => {
-      const { data } = await supabase.from("player_rooms").select("id, layout").eq("user_id", user.id).neq("id", roomId);
-      const s = new Set<string>();
-      (data ?? []).forEach((r: { layout?: unknown }) => {
+      const { data } = await supabase
+        .from("player_rooms")
+        .select("id, position_x, position_y, layout")
+        .eq("user_id", user.id)
+        .neq("id", roomId);
+      const furn = new Set<string>();
+      const occ = new Set<string>();
+      (data ?? []).forEach((r: { position_x: number; position_y: number; layout?: unknown }) => {
+        occ.add(`${r.position_x}:${r.position_y}`);
         const l = Array.isArray(r.layout) ? (r.layout as LayoutSlot[]) : [];
-        l.forEach((x) => s.add(x.furniture_id));
+        l.forEach((x) => furn.add(x.furniture_id));
       });
-      setPlacedElsewhere(s);
+      setPlacedElsewhere(furn);
+      setOtherRoomsOccupancy(occ);
     })();
   }, [user, roomId, room?.layout]);
 
+  // Sizing derivats de la plantilla
+  const gridW = template?.grid_w ?? 4;
+  const gridH = template?.grid_h ?? 4;
+  const gridSize = gridW * gridH;
+  const allowedCats = template?.allowed_categories ?? [];
+  const multiplier = Number(template?.happiness_multiplier ?? 1);
+
+  // Inventari filtrat per categories permeses (buit = tot permès)
+  const catAllowed = useCallback((cat: string) => allowedCats.length === 0 || allowedCats.includes(cat), [allowedCats]);
+
   const availableOwned = useMemo(
-    () => owned.filter((id) => !placedIds.has(id) && !placedElsewhere.has(id)),
-    [owned, placedIds, placedElsewhere]
+    () => owned.filter((id) => {
+      if (placedIds.has(id) || placedElsewhere.has(id)) return false;
+      const it = catalogById.get(id);
+      return !!it && catAllowed(it.category);
+    }),
+    [owned, placedIds, placedElsewhere, catalogById, catAllowed]
   );
   const availableRewards = useMemo(
     () => rewards.filter((r) => {
       const k = `${REWARD_PREFIX}${r.id}`;
-      return !placedIds.has(k) && !placedElsewhere.has(k);
+      if (placedIds.has(k) || placedElsewhere.has(k)) return false;
+      // Rewards categoritzats com "decor" per defecte a l'espai personal
+      return catAllowed("decor") || allowedCats.length === 0;
     }),
-    [rewards, placedIds, placedElsewhere]
+    [rewards, placedIds, placedElsewhere, catAllowed, allowedCats.length]
   );
 
   const happiness = useMemo(() => {
     let s = 0;
     for (const x of layout) {
-      if (isReward(x.furniture_id)) s += REWARD_HAPPINESS;
-      else s += catalogById.get(x.furniture_id)?.happiness_bonus ?? 0;
+      if (isReward(x.furniture_id)) {
+        s += REWARD_HAPPINESS * multiplier;
+      } else {
+        const c = catalogById.get(x.furniture_id);
+        const base = c?.happiness_bonus ?? 0;
+        // Multiplicador s'aplica només si la categoria coincideix amb allowed
+        const bonusMult = c && catAllowed(c.category) && allowedCats.length > 0 ? multiplier : 1;
+        s += base * bonusMult;
+      }
     }
-    return s;
-  }, [layout, catalogById]);
+    return Math.round(s);
+  }, [layout, catalogById, multiplier, catAllowed, allowedCats.length]);
 
   const resolveEntry = useCallback((fid: string) => {
     if (isReward(fid)) {
@@ -215,11 +268,40 @@ export default function RoomPage() {
     setRoom({ ...room, custom_name: trimmed });
   }, [user, room, nameDraft, t]);
 
+  const handleMove = useCallback(async (dx: number, dy: number) => {
+    if (!room) return;
+    const nx = room.position_x + dx;
+    const ny = room.position_y + dy;
+    if (nx < 0 || nx >= MAP_SIZE || ny < 0 || ny >= MAP_SIZE) {
+      toast.error(t("apartment.moveOutOfBounds", "Fora del mapa"));
+      return;
+    }
+    if (otherRoomsOccupancy.has(`${nx}:${ny}`)) {
+      toast.error(t("apartment.cellTaken", "Casella ocupada"));
+      return;
+    }
+    const { error } = await supabase.rpc("move_player_room", { _room_id: room.id, _new_x: nx, _new_y: ny });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setRoom({ ...room, position_x: nx, position_y: ny });
+    toast.success(t("apartment.moved", "Sala moguda"));
+  }, [room, otherRoomsOccupancy, t]);
+
   if (loading || !room) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><p className="text-muted-foreground animate-pulse">{t("common.loading")}</p></div>;
   }
 
   const selectedEntry = selected ? resolveEntry(selected) : null;
+
+  // Botons de moviment: comprovem límits + ocupació per activar/desactivar
+  const canMove = (dx: number, dy: number) => {
+    const nx = room.position_x + dx;
+    const ny = room.position_y + dy;
+    if (nx < 0 || nx >= MAP_SIZE || ny < 0 || ny >= MAP_SIZE) return false;
+    return !otherRoomsOccupancy.has(`${nx}:${ny}`);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -248,10 +330,32 @@ export default function RoomPage() {
       </div>
 
       <div className="px-3 pt-3 space-y-3">
+        {/* Metadades de plantilla: revela què fa la sala perquè hi hagi diferència real */}
+        {template && (
+          <Card className="glass border-accent/20">
+            <CardContent className="py-2 px-3 flex items-center justify-between text-[11px]">
+              <span className="flex items-center gap-1">
+                <span className="text-base">{template.icon}</span>
+                <span className="text-muted-foreground">{t(template.name_key, template.id)}</span>
+              </span>
+              <span className="text-muted-foreground">{gridW}×{gridH}</span>
+              {multiplier > 1 && (
+                <span className="text-accent font-semibold">×{multiplier.toFixed(2)} 😊</span>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {allowedCats.length > 0 && (
+          <p className="text-[10px] text-center text-muted-foreground">
+            {t("room.onlyCategories", "Només hi caben")}: {allowedCats.map((c) => t(`space.cat.${c}`, c)).join(" · ")}
+          </p>
+        )}
+
         <Card className="glass">
           <CardContent className="py-2.5 flex items-center justify-between text-xs">
             <span>{t("space.happiness")}: <span className="font-bold">+{happiness}</span></span>
-            <span className="text-muted-foreground">{layout.length}/{GRID_SIZE}</span>
+            <span className="text-muted-foreground">{layout.length}/{gridSize}</span>
             {saving && <span className="text-muted-foreground animate-pulse">⏳</span>}
           </CardContent>
         </Card>
@@ -262,8 +366,15 @@ export default function RoomPage() {
           <p className="text-xs text-muted-foreground text-center">{t("space.hint")}</p>
         )}
 
-        <div className="aspect-square w-full max-w-[360px] mx-auto bg-muted/30 rounded-2xl p-2 grid grid-cols-4 gap-2 border border-border">
-          {Array.from({ length: GRID_SIZE }).map((_, idx) => {
+        {/* Grid dinàmic amb gridTemplateColumns per suport de mides no estàndard */}
+        <div
+          className="w-full max-w-[360px] mx-auto bg-muted/30 rounded-2xl p-2 grid gap-2 border border-border"
+          style={{
+            gridTemplateColumns: `repeat(${gridW}, minmax(0, 1fr))`,
+            aspectRatio: `${gridW} / ${gridH}`,
+          }}
+        >
+          {Array.from({ length: gridSize }).map((_, idx) => {
             const slot = layout.find((s) => s.slot === idx);
             const entry = slot ? resolveEntry(slot.furniture_id) : null;
             return (
@@ -283,6 +394,26 @@ export default function RoomPage() {
           })}
         </div>
 
+        {/* Fletxes per moure la sala pel mapa */}
+        <Card className="glass">
+          <CardContent className="py-2 px-3">
+            <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider mb-1.5">
+              {t("apartment.moveRoom", "Moure sala al mapa")} ({room.position_x + 1},{room.position_y + 1})
+            </p>
+            <div className="grid grid-cols-3 gap-1 max-w-[140px] mx-auto">
+              <span />
+              <Button size="sm" variant="outline" disabled={!canMove(0, -1)} onClick={() => handleMove(0, -1)} className="h-8">↑</Button>
+              <span />
+              <Button size="sm" variant="outline" disabled={!canMove(-1, 0)} onClick={() => handleMove(-1, 0)} className="h-8">←</Button>
+              <span className="text-center text-[10px] self-center text-muted-foreground">{template?.icon}</span>
+              <Button size="sm" variant="outline" disabled={!canMove(1, 0)} onClick={() => handleMove(1, 0)} className="h-8">→</Button>
+              <span />
+              <Button size="sm" variant="outline" disabled={!canMove(0, 1)} onClick={() => handleMove(0, 1)} className="h-8">↓</Button>
+              <span />
+            </div>
+          </CardContent>
+        </Card>
+
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <h2 className="text-sm font-semibold">{t("space.inventory")}</h2>
@@ -296,7 +427,11 @@ export default function RoomPage() {
             </TabsList>
             <TabsContent value="furniture" className="mt-2">
               {availableOwned.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-3">{t("space.emptyInventory")}</p>
+                <p className="text-xs text-muted-foreground text-center py-3">
+                  {allowedCats.length > 0
+                    ? t("room.noAllowedFurniture", "No tens mobles compatibles amb aquesta sala")
+                    : t("space.emptyInventory")}
+                </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {availableOwned.map((id) => {
@@ -338,9 +473,14 @@ export default function RoomPage() {
       <Dialog open={shopOpen} onOpenChange={setShopOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>🛒 {t("space.shop")} · 🪙 {coins}</DialogTitle></DialogHeader>
+          {allowedCats.length > 0 && (
+            <p className="text-[11px] text-center text-muted-foreground -mt-2">
+              {t("room.shopFilterHint", "Filtrat per compatibilitat amb")} {template && t(template.name_key, template.id)}
+            </p>
+          )}
           <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-            {(["bed","rug","plant","decor","chair","desk","tech","music","art","nature","pet"] as const).map((cat) => {
-              const inCat = catalog.filter((c) => c.category === cat);
+            {(["bed","rug","plant","decor","chair","desk","tech","music","art","nature","pet","kitchen","bath","dining"] as const).map((cat) => {
+              const inCat = catalog.filter((c) => c.category === cat && catAllowed(c.category));
               if (!inCat.length) return null;
               return (
                 <div key={cat}>
