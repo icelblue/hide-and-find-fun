@@ -59,6 +59,7 @@ import sprSwing from "@/assets/room/spr-swing.png";
 import sprFountain from "@/assets/room/spr-fountain.png";
 import sprPool from "@/assets/room/spr-pool.png";
 import sprCastle from "@/assets/room/spr-castle.png";
+import sprNightstand from "@/assets/room/spr-nightstand.png";
 
 import type { ThemeKey } from "./room-themes";
 
@@ -157,6 +158,8 @@ const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   [/(sof[àa]|couch|sofa)/i, sprSofa],
   [/(cadira|silla|chair|butaca|tamboret|banc|bench)/i, sprChair],
   [/(escriptori|desk)/i, sprDesk],
+  // ⚠️ Tauleta ABANS que taula (no conté "taula" com a substring, però sí "taul")
+  [/(tauleta|nightstand|mesita)/i, sprNightstand],
   [/(taula|mesa|table)/i, sprTable],
   // tech
   [/(televisi[óo]|television|\btv\b|pantalla|monitor)/i, sprTv],
