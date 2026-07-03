@@ -88,6 +88,19 @@
     "send": "Enviar",
     "rivalFound": "Rival trobat! 🎯",
     "challengeSentRandom": "Repte enviat a un rival aleatori! Espera que accepti.",
+    "createDialog": {
+      "title": "Nova partida",
+      "desc": "Escull el mode de joc",
+      "normal": "🎲 Normal (7 sales)",
+      "normalDesc": "Genera un codi per compartir",
+      "personal": "🏠 Personal (el meu espai 4×4)",
+      "personalShortDesc": "Repte a un rival amb el vostre propi espai",
+      "personalTitle": "🏠 Partida personal",
+      "personalDesc": "Jugueu als vostres espais decorats",
+      "needMore": "Necessites almenys 4 mobles al teu espai.",
+      "goDecorate": "Decorar el meu espai",
+      "challenge": "Repte"
+    },
     "languageToggle": "Idioma"
   },
   "lang": {
