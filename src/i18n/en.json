@@ -1118,8 +1118,21 @@
       "bed": "Beds",
       "rug": "Rugs",
       "plant": "Plants",
-      "decor": "Decor"
-    }
+      "decor": "Decor",
+      "chair": "Chairs",
+      "desk": "Desks",
+      "tech": "Tech",
+      "music": "Music",
+      "art": "Art",
+      "nature": "Nature",
+      "pet": "Pet"
+    },
+    "tab": {
+      "furniture": "Furniture",
+      "collection": "Collection"
+    },
+    "noRewards": "No collection items yet. Win games!",
+    "allRewardsPlaced": "All collection items placed"
   },
   "furniture": {
     "bed_basic": "Basic bed",
@@ -1141,7 +1154,19 @@
     "tech_tv": "TV",
     "tech_console": "Retro console",
     "music_guitar": "Guitar",
-    "art_sculpture": "Sculpture"
+    "art_sculpture": "Sculpture",
+    "nature_flowers": "Flowers",
+    "nature_cactus": "Cactus",
+    "nature_mushroom": "Deco mushroom",
+    "pet_bone": "Bone",
+    "pet_ball": "Ball",
+    "pet_fishtank": "Fish tank",
+    "tech_laptop": "Laptop",
+    "tech_headphones": "Headphones",
+    "music_piano": "Piano",
+    "music_drums": "Drums",
+    "decor_mirror": "Mirror",
+    "decor_candles": "Candles"
   },
   "lobby_extra": {
     "spaceMenu": "My space",
