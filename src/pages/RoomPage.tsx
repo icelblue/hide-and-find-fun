@@ -414,15 +414,36 @@ export default function RoomPage() {
             };
           });
           return (
-            <PixelRoomGrid
-              theme={theme}
-              gridW={gridW}
-              gridH={gridH}
-              cells={cells}
-              seed={room.id}
-              onCellClick={handleSlotClick}
-              ariaLabelPrefix="slot"
-            />
+            <div className="relative">
+              <PixelRoomGrid
+                theme={theme}
+                gridW={gridW}
+                gridH={gridH}
+                cells={cells}
+                seed={room.id}
+                onCellClick={handleSlotClick}
+                ariaLabelPrefix="slot"
+              />
+              {isPetHere && pet && (
+                <div
+                  className="absolute pointer-events-none z-20 flex flex-col items-center animate-bounce"
+                  style={{
+                    // Cantonada inferior-esquerra del grid, dins la sala
+                    left: "10%",
+                    bottom: "10%",
+                  }}
+                  aria-label={t("apartment.petHere", "La teva mascota és aquí")}
+                  title={`${pet.pet_icon} ${pet.pet_name}`}
+                >
+                  <span className="text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                    {pet.pet_icon}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/90 border border-accent/40 font-semibold mt-0.5 shadow">
+                    {pet.pet_name}
+                  </span>
+                </div>
+              )}
+            </div>
           );
         })()}
 
