@@ -53,6 +53,34 @@ export default function ItemActions({
       </button>
 
       {expanded && (
+        <ItemActionsBody
+          item={item} positions={positions} onLook={onLook} disabled={disabled}
+          tokensRemaining={tokensRemaining} lookedSpots={lookedSpots}
+          bananaBlockedSpot={bananaBlockedSpot} revealedSpecials={revealedSpecials}
+          interactions={interactions} onInteraction={onInteraction}
+          moveHistory={moveHistory} playerTools={playerTools} gameBreaks={gameBreaks}
+          onTagAction={onTagAction} dirtyItems={dirtyItems} breakableItems={breakableItems}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Cos d'accions d'un moble, sense el toggle expandir/plegar.
+ * Reutilitzable des de FurnitureActionSheet (Fase B Grid PvP).
+ */
+export function ItemActionsBody({
+  item, positions, onLook, disabled, tokensRemaining, lookedSpots, bananaBlockedSpot,
+  revealedSpecials, interactions, onInteraction, moveHistory, playerTools, gameBreaks,
+  onTagAction, dirtyItems, breakableItems,
+}: ItemActionsProps) {
+  const t = useT();
+  const tagActions = getTagActions(item, playerTools ?? {}, gameBreaks ?? new Set(), dirtyItems, breakableItems);
+  const hasInteractions = interactions && interactions.length > 0;
+  const isBroken = gameBreaks?.has(item.id);
+  const isDirty = dirtyItems?.has(item.id) && !gameBreaks?.has(`clean:${item.id}`);
+  return (
         <div className="border-t border-border/30 p-2.5">
           {/* Tag-based actions */}
           {tagActions.length > 0 && onTagAction && (
