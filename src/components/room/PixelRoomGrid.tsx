@@ -28,6 +28,16 @@ export interface PixelCell {
   justPlaced?: boolean;     // per animació d'entrada
 }
 
+export interface GridBackdrop {
+  sprite: string;
+  col: number;
+  row: number;
+  spanCols: number;
+  spanRows: number;
+  opacity?: number;
+  cover?: boolean;
+}
+
 interface Props {
   theme: RoomTheme;
   gridW: number;
@@ -40,6 +50,8 @@ interface Props {
   seamless?: boolean;
   /** Si false, utilitza el patró CSS del tema (útil per PvP simple) */
   useTexture?: boolean;
+  /** Capa decorativa (mobiliari base) sota els mobles interactius */
+  backdrops?: GridBackdrop[];
 }
 
 export default function PixelRoomGrid({
