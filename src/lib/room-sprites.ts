@@ -170,7 +170,7 @@ const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   [/\b(nevera|frigor[ií]fic|refrigerador|fridge)\b/i, sprFridge],
   [/\b(microones|microondas|microwave)\b/i, sprMicrowave],
   [/\b(fogons?|forn|estufa|barbacoa|stove|oven|hornalla)\b/i, sprStove],
-  [/\b(pica|aig[üu]era|sink|fregadero|regadora)\b/i, sprSink],
+  [/\b(pica|aig[üu]era|sink|fregadero)\b/i, sprSink],
   [/\b(despensa|pantry|aparador|vitrina)\b/i, sprShelf],
   [/\b(rentadora|lavadora|secadora|washer|dryer)\b/i, sprWasher],
   // bany
