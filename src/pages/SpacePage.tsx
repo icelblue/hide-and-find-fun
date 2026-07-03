@@ -265,8 +265,8 @@ export default function SpacePage() {
         title={t("apartment.onboarding.title", "El teu apartament")}
         bullets={[
           t("apartment.onboarding.b1", "Compra sales (menjador, balcó, cuina…) al teu gust."),
-          t("apartment.onboarding.b2", "Connecta-les amb portes (🚪) — cada sala admet fins a 2."),
-          t("apartment.onboarding.b3", "Toca una sala per decorar-la amb mobles i col·lecció."),
+          t("apartment.onboarding.b2", "Connecta-les amb portes (🚪) — cada tipus de sala té un límit propi (1–4)."),
+          t("apartment.onboarding.b3", "Toca una sala per decorar-la; arrossega-la al mapa per moure-la."),
           t("apartment.onboarding.b4", "Necessites ≥2 sales connectades i ≥4 mobles per jugar Personal PvP."),
         ]}
         ctaLabel={t("onboarding.cta", "Entesos!")}
