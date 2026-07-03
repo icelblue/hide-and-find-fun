@@ -212,8 +212,6 @@ const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
   cuina: [
     // Encimera contínua tota la fila 0 (sota nevera/forn/microones/pica/calaix/despensa)
     { sprite: bgCounter, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true },
-    // Finestra al mig de la paret superior... no hi ha fila 0 lliure, la posem a fila 2
-    { sprite: bgWindow, col: 4, row: 2, spanCols: 2, spanRows: 2, opacity: 0.85 },
   ],
   lavabo: [
     // Paret enrajolada fila 0 (darrere mirall/prestatgeria/pica)
@@ -227,13 +225,7 @@ const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
     // Finestra a la paret superior dreta
     { sprite: bgWindow, col: 4, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
   ],
-  habitacio: [
-    // Finestra sobre el llit
-    { sprite: bgWindow, col: 2, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
-    // Cortines als laterals de la finestra
-    { sprite: bgCurtain, col: 1, row: 0, spanCols: 1, spanRows: 2, opacity: 0.85 },
-    { sprite: bgCurtain, col: 4, row: 0, spanCols: 1, spanRows: 2, opacity: 0.85 },
-  ],
+  habitacio: [],
   menjador: [
     // Cortines als extrems
     { sprite: bgCurtain, col: 0, row: 0, spanCols: 1, spanRows: 3, opacity: 0.9 },
