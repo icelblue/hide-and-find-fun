@@ -279,14 +279,22 @@ export default function LobbyPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from("player_spaces").select("layout").eq("user_id", user.id).maybeSingle();
-      const raw = (data as { layout?: unknown } | null)?.layout;
-      const count = Array.isArray(raw) ? raw.length : 0;
-      setPersonalPlacedCount(count);
+      const [roomsRes, connsRes] = await Promise.all([
+        supabase.from("player_rooms").select("layout").eq("user_id", user.id),
+        supabase.from("room_connections").select("id").eq("user_id", user.id),
+      ]);
+      const rooms = (roomsRes.data as Array<{ layout?: unknown }> | null) ?? [];
+      const totalFurn = rooms.reduce((n, r) => n + (Array.isArray(r.layout) ? r.layout.length : 0), 0);
+      const roomsCount = rooms.length;
+      const connsCount = (connsRes.data ?? []).length;
+      // Reaprofita el mateix count: guarda min(furniture, sales, connexions*99) per mostrar el CTA
+      // Guardem 0 si falla algun requisit; el CTA "decorar" cobreix tots els casos.
+      const passes = roomsCount >= 2 && connsCount >= 1 && totalFurn >= 4;
+      setPersonalPlacedCount(passes ? totalFurn : 0);
       setCreateMode("personal");
     } finally { setLoading(false); }
   };
+
 
   const searchForPersonal = async () => {
     if (!user || personalSearch.length < 2) return;
