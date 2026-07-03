@@ -1113,6 +1113,49 @@
       "feat4": "Mode Història amb mascota i evolució"
     }
   },
+  "apartment": {
+    "title": "Apartament",
+    "rooms": "Sales",
+    "doors": "Portes",
+    "furniture": "Mobles",
+    "addRoom": "Sala nova",
+    "connect": "Connectar",
+    "myRooms": "Les meves sales",
+    "pieces": "mobles",
+    "addDesc": "Escull el tipus. Es col·locarà després tocant una casella lliure del mapa.",
+    "pickCell": "Toca una casella lliure per col·locar",
+    "cellTaken": "Aquesta casella ja té una sala",
+    "maxRooms": "Has arribat al màxim de 8 sales",
+    "pickFirst": "Escull la primera sala",
+    "pickSecond": "Ara escull la segona sala",
+    "samRoom": "Escull una altra sala diferent",
+    "errMaxDoors": "Una de les sales ha arribat al límit de portes",
+    "errDup": "Aquesta connexió ja existeix",
+    "doorAdded": "Porta afegida",
+    "removeDoor": "Treure porta",
+    "confirmDelete": "Eliminar aquesta sala i les seves portes? Perds els mobles col·locats.",
+    "roomDeleted": "Sala eliminada",
+    "free": "Gratis",
+    "onboarding": {
+      "title": "El teu apartament",
+      "b1": "Compra sales (menjador, balcó, cuina…) al teu gust.",
+      "b2": "Connecta-les amb portes 🚪 — cada sala admet fins a 2.",
+      "b3": "Toca una sala per decorar-la amb mobles i col·lecció.",
+      "b4": "Necessites ≥2 sales connectades i ≥4 mobles per jugar Personal PvP."
+    }
+  },
+  "room": {
+    "bedroom": "Habitació",
+    "kitchen": "Cuina",
+    "dining": "Menjador",
+    "bath": "Lavabo",
+    "garden": "Jardí",
+    "balcony": "Balcó",
+    "office": "Despatx",
+    "hall": "Hall",
+    "apartment": "Apartament",
+    "notFound": "Sala no trobada"
+  },
   "space": {
     "title": "El meu espai",
     "happiness": "Felicitat",
