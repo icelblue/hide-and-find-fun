@@ -6,7 +6,7 @@
 // per no duplicar lògica de tokens/accions/interaccions.
 // ============================================================
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import ItemActions from "@/components/game/ItemActions";
+import { ItemActionsBody } from "@/components/game/ItemActions";
 import type { PlayerTools, Position } from "@/lib/game-types";
 
 interface Props {
