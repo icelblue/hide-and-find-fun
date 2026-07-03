@@ -318,23 +318,35 @@ export default function SpacePage() {
             })}
           </svg>
 
-          <div className="relative grid grid-cols-5 gap-1 h-full">
+          <div ref={gridRef} className="relative grid grid-cols-5 gap-1 h-full touch-none select-none">
             {Array.from({ length: MAP_SIZE * MAP_SIZE }).map((_, idx) => {
               const x = idx % MAP_SIZE;
               const y = Math.floor(idx / MAP_SIZE);
               const room = rooms.find((r) => r.position_x === x && r.position_y === y);
               const tpl = room ? templateById.get(room.room_template_id) : null;
               const isPlacingHere = !!placingTemplate;
+              const isHoverDrop = dragRoomId && dragHoverCell?.x === x && dragHoverCell?.y === y;
+              const isDragging = room && dragRoomId === room.id;
               return (
-                <button
+                <div
                   key={idx}
                   onClick={() => {
                     if (isPlacingHere) placeRoomAt(x, y);
-                    else if (room) navigate(`/space/room/${room.id}`);
+                    // Navegació passa per pointerup; no fem res aquí per sales (evita doble)
                   }}
-                  className={`relative rounded-lg border transition-all text-center flex flex-col items-center justify-center overflow-hidden ${
-                    room
+                  onPointerDown={room ? (e) => onCellPointerDown(e, room) : undefined}
+                  onPointerMove={room ? onCellPointerMove : undefined}
+                  onPointerUp={room ? (e) => onCellPointerUp(e, room) : undefined}
+                  onPointerCancel={() => { setDragRoomId(null); setDragPos(null); setDragHoverCell(null); setDragMoved(false); }}
+                  role="button"
+                  tabIndex={0}
+                  className={`relative rounded-lg border transition-all text-center flex flex-col items-center justify-center overflow-hidden cursor-pointer ${
+                    isDragging
+                      ? "opacity-30 border-accent"
+                      : room
                       ? "bg-card border-accent/40 shadow-sm hover:border-accent"
+                      : isHoverDrop
+                      ? "bg-accent/20 border-accent border-dashed"
                       : isPlacingHere
                       ? "bg-accent/10 border-accent/60 border-dashed animate-pulse"
                       : "bg-background/40 border-border/30"
@@ -348,11 +360,32 @@ export default function SpacePage() {
                       <span className="text-[7px] text-muted-foreground">{room.layout.length}📦</span>
                     </>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
+
+          {/* Ghost element seguint el punter mentre s'arrossega */}
+          {dragRoomId && dragPos && (() => {
+            const dr = rooms.find((r) => r.id === dragRoomId);
+            const dt = dr ? templateById.get(dr.room_template_id) : null;
+            if (!dr || !dt) return null;
+            return (
+              <div
+                className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border-2 border-accent shadow-xl px-2 py-1 flex flex-col items-center"
+                style={{ left: dragPos.x, top: dragPos.y }}
+              >
+                <span className="text-2xl leading-none">{dt.icon}</span>
+                <span className="text-[9px] font-medium">{dr.custom_name}</span>
+              </div>
+            );
+          })()}
         </div>
+
+        <p className="text-[10px] text-center text-muted-foreground italic -mt-1">
+          {t("apartment.dragHint", "Arrossega una sala per moure-la · toca per entrar")}
+        </p>
+
 
         {/* Action buttons */}
         <div className="grid grid-cols-2 gap-2">
