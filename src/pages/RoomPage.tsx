@@ -73,7 +73,7 @@ export default function RoomPage() {
   const [invTab, setInvTab] = useState<"furniture" | "collection">("furniture");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [otherRoomsOccupancy, setOtherRoomsOccupancy] = useState<Set<string>>(new Set());
+  // otherRoomsOccupancy ja no cal aquí (drag & drop viu a SpacePage)
   const [placedElsewhere, setPlacedElsewhere] = useState<Set<string>>(new Set());
 
   useEffect(() => {
