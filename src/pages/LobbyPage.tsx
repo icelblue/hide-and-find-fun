@@ -392,6 +392,8 @@ export default function LobbyPage() {
         const msg = (error.message || "").toLowerCase();
         if (msg.includes("host_no_space")) throw new Error(t("lobby_extra.errHostNoSpace"));
         if (msg.includes("opponent_no_space")) throw new Error(t("lobby_extra.errOpponentNoSpace"));
+        if (msg.includes("host_min_rooms")) throw new Error(t("lobby_extra.errHostMinRooms", "Necessites almenys 2 sales connectades al teu apartament."));
+        if (msg.includes("opponent_min_rooms")) throw new Error(t("lobby_extra.errOpponentMinRooms", "L'oponent no té 2 sales connectades."));
         if (msg.includes("host_min_furniture")) throw new Error(t("lobby_extra.errHostMinFurniture"));
         if (msg.includes("opponent_min_furniture")) throw new Error(t("lobby_extra.errOpponentMinFurniture"));
         if (msg.includes("cannot_challenge_self")) throw new Error(t("lobby_extra.errCannotChallengeSelf"));
