@@ -245,7 +245,12 @@ const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
     { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
   ],
   balco: [
-    { sprite: bgRailing, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.95 },
+    // Cel amb skyline al fons (files 0-1)
+    { sprite: bgSkyline, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true },
+    // Terra de terracota (files 3-4)
+    { sprite: bgBalconyFloor, col: 0, row: 3, spanCols: 6, spanRows: 2, cover: true, opacity: 0.85 },
+    // Barana de forja a la fila 2 (línia horitzó separa cel de terra)
+    { sprite: bgRailing, col: 0, row: 2, spanCols: 6, spanRows: 1, cover: true },
   ],
 };
 
