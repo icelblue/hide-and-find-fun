@@ -88,6 +88,19 @@
     "send": "Enviar",
     "rivalFound": "Rival trobat! 🎯",
     "challengeSentRandom": "Repte enviat a un rival aleatori! Espera que accepti.",
+    "createDialog": {
+      "title": "Nova partida",
+      "desc": "Escull el mode de joc",
+      "normal": "🎲 Normal (7 sales)",
+      "normalDesc": "Genera un codi per compartir",
+      "personal": "🏠 Personal (el meu espai 4×4)",
+      "personalShortDesc": "Repte a un rival amb el vostre propi espai",
+      "personalTitle": "🏠 Partida personal",
+      "personalDesc": "Jugueu als vostres espais decorats",
+      "needMore": "Necessites almenys 4 mobles al teu espai.",
+      "goDecorate": "Decorar el meu espai",
+      "challenge": "Repte"
+    },
     "languageToggle": "Idioma"
   },
   "lang": {
@@ -1118,8 +1131,21 @@
       "bed": "Llits",
       "rug": "Catifes",
       "plant": "Plantes",
-      "decor": "Decoració"
-    }
+      "decor": "Decoració",
+      "chair": "Cadires",
+      "desk": "Escriptoris",
+      "tech": "Tecnologia",
+      "music": "Música",
+      "art": "Art",
+      "nature": "Natura",
+      "pet": "Mascota"
+    },
+    "tab": {
+      "furniture": "Mobles",
+      "collection": "Col·lecció"
+    },
+    "noRewards": "Encara no tens ítems de col·lecció. Guanya partides!",
+    "allRewardsPlaced": "Tots els ítems de col·lecció ja col·locats"
   },
   "furniture": {
     "bed_basic": "Llit bàsic",
@@ -1141,7 +1167,19 @@
     "tech_tv": "Televisió",
     "tech_console": "Consola retro",
     "music_guitar": "Guitarra",
-    "art_sculpture": "Escultura"
+    "art_sculpture": "Escultura",
+    "nature_flowers": "Flors",
+    "nature_cactus": "Cactus",
+    "nature_mushroom": "Bolet decoratiu",
+    "pet_bone": "Os",
+    "pet_ball": "Pilota",
+    "pet_fishtank": "Peixera",
+    "tech_laptop": "Portàtil",
+    "tech_headphones": "Auriculars",
+    "music_piano": "Piano",
+    "music_drums": "Bateria",
+    "decor_mirror": "Mirall",
+    "decor_candles": "Espelmes"
   },
   "lobby_extra": {
     "spaceMenu": "El meu espai",

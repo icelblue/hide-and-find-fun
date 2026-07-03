@@ -30,6 +30,7 @@ import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_VERSION } from "@/lib/constants";
 import { InstallBanner } from "@/components/InstallBanner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useT } from "@/i18n/LanguageProvider";
 import { LanguageSwitcherCompact } from "@/i18n/LanguageSwitcher";
 
@@ -189,6 +190,14 @@ export default function LobbyPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
 
+  // Create game dialog state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<"pick" | "personal">("pick");
+  const [personalPlacedCount, setPersonalPlacedCount] = useState<number | null>(null);
+  const [personalSearch, setPersonalSearch] = useState("");
+  const [personalResults, setPersonalResults] = useState<any[]>([]);
+  const [personalSearching, setPersonalSearching] = useState(false);
+
   const { data: games = [] } = useQuery({
     queryKey: ["lobby", "available", user?.id],
     queryFn: () => getAvailableGames(user!.id),
@@ -250,10 +259,46 @@ export default function LobbyPage() {
     try {
       const game = await createGame(user.id);
       toast.success(`${t("lobby.createGame")}: ${game.code}`);
+      setCreateOpen(false);
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
   };
+
+  // Obre el diàleg de creació i reseteja estat
+  const openCreateDialog = () => {
+    setCreateMode("pick");
+    setPersonalSearch("");
+    setPersonalResults([]);
+    setPersonalPlacedCount(null);
+    setCreateOpen(true);
+  };
+
+  // Comprova pre-requisit personal PvP: ≥4 mobles col·locats a l'espai propi
+  const enterPersonalMode = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from("player_spaces").select("layout").eq("user_id", user.id).maybeSingle();
+      const raw = (data as { layout?: unknown } | null)?.layout;
+      const count = Array.isArray(raw) ? raw.length : 0;
+      setPersonalPlacedCount(count);
+      setCreateMode("personal");
+    } finally { setLoading(false); }
+  };
+
+  const searchForPersonal = async () => {
+    if (!user || personalSearch.length < 2) return;
+    setPersonalSearching(true);
+    try {
+      const results = await searchPlayers(personalSearch, user.id);
+      setPersonalResults(results);
+      if (results.length === 0) toast.info(t("lobby.noPlayerFound"));
+    } catch (err: any) { toast.error(err.message); }
+    finally { setPersonalSearching(false); }
+  };
+
 
   const handleRandomMatch = async () => {
     if (!user) return;
@@ -347,6 +392,7 @@ export default function LobbyPage() {
       const row = Array.isArray(data) ? data[0] : data;
       if (!row?.game_id) throw new Error("no_game_id");
       toast.success(t("lobby_extra.personalSent").replace("{name}", rivalName));
+      setCreateOpen(false);
       navigate(`/game/${row.game_id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
@@ -413,7 +459,7 @@ export default function LobbyPage() {
             <span className="text-xs mt-0.5">{t("lobby.randomRival")}</span>
           </span>
         </Button>
-        <Button onClick={handleCreate} size="lg" disabled={loading} variant="secondary" className="h-14">
+        <Button onClick={openCreateDialog} size="lg" disabled={loading} variant="secondary" className="h-14">
           <span className="flex flex-col items-center">
             <span className="text-lg">➕</span>
             <span className="text-xs mt-0.5">{t("lobby.createGame")}</span>
@@ -601,6 +647,107 @@ export default function LobbyPage() {
           </Card>
         </div>
       )}
+
+      {/* Create-game mode selector */}
+      <Dialog open={createOpen} onOpenChange={(v) => { setCreateOpen(v); if (!v) setCreateMode("pick"); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {createMode === "pick"
+                ? t("lobby.createDialog.title", "Nova partida")
+                : t("lobby.createDialog.personalTitle", "🏠 Partida personal")}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {createMode === "pick"
+                ? t("lobby.createDialog.desc", "Escull el mode de joc")
+                : t("lobby.createDialog.personalDesc", "Jugueu als vostres espais decorats")}
+            </DialogDescription>
+          </DialogHeader>
+
+          {createMode === "pick" && (
+            <div className="space-y-2">
+              <button
+                onClick={handleCreate}
+                disabled={loading}
+                className="w-full text-left rounded-xl border border-border bg-card p-3 hover:border-primary/60 transition-all disabled:opacity-50"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🎲</span>
+                  <div>
+                    <p className="text-sm font-semibold">{t("lobby.createDialog.normal", "Normal (7 sales)")}</p>
+                    <p className="text-[11px] text-muted-foreground">{t("lobby.createDialog.normalDesc", "Genera un codi per compartir")}</p>
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={enterPersonalMode}
+                disabled={loading}
+                className="w-full text-left rounded-xl border border-border bg-card p-3 hover:border-accent/60 transition-all disabled:opacity-50"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🏠</span>
+                  <div>
+                    <p className="text-sm font-semibold">{t("lobby.createDialog.personal", "Personal (el meu espai 4×4)")}</p>
+                    <p className="text-[11px] text-muted-foreground">{t("lobby.createDialog.personalShortDesc", "Repte a un rival concret")}</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {createMode === "personal" && (
+            <div className="space-y-3">
+              {personalPlacedCount !== null && personalPlacedCount < 4 ? (
+                <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 space-y-2">
+                  <p className="text-sm">
+                    ⚠️ {t("lobby.createDialog.needMore", "Necessites almenys 4 mobles al teu espai.")}
+                    <span className="text-muted-foreground"> ({personalPlacedCount}/4)</span>
+                  </p>
+                  <Button size="sm" className="w-full" onClick={() => { setCreateOpen(false); navigate("/space"); }}>
+                    🏠 {t("lobby.createDialog.goDecorate", "Decorar el meu espai")}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={t("lobby.searchPlaceholder")}
+                      value={personalSearch}
+                      onChange={e => setPersonalSearch(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && searchForPersonal()}
+                      className="text-sm bg-muted/50 border-border/50"
+                    />
+                    <Button size="sm" onClick={searchForPersonal} disabled={personalSearching || personalSearch.length < 2}>
+                      {personalSearching ? "..." : "🔍"}
+                    </Button>
+                  </div>
+                  {personalResults.length > 0 && (
+                    <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                      {personalResults.map((p: any) => (
+                        <div key={p.user_id} className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2 border border-border/20">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm">{leagueBadge[p.league] ?? "🥉"}</span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold truncate">{p.display_name}</p>
+                              <span className="text-[10px] text-muted-foreground">Elo {p.elo}</span>
+                            </div>
+                          </div>
+                          <Button size="sm" onClick={() => handlePersonalChallenge(p.user_id, p.display_name)} disabled={loading}>
+                            🏠 {t("lobby.createDialog.challenge", "Repte")}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setCreateMode("pick")}>
+                ← {t("common.back", "Tornar")}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

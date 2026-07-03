@@ -128,14 +128,25 @@ export function synthConnections(): SynthScenario[] {
   return [];
 }
 
-/** Carrega el catàleg complet de mobles (id → item). Es pot cachejar per partida. */
+/** Prefix used to store `reward_items` uuids inside `player_spaces.layout.furniture_id`. */
+export const REWARD_PREFIX = "reward:";
+
+/** Carrega el catàleg complet de mobles (id → item). Inclou reward_items amb prefix `reward:<uuid>`. */
 export async function loadFurnitureCatalog(): Promise<Map<string, FurnitureCatalogItem>> {
-  const { data, error } = await supabase
-    .from("furniture_catalog")
-    .select("id, name_key, icon, category");
-  if (error) throw error;
+  const [fc, ri] = await Promise.all([
+    supabase.from("furniture_catalog").select("id, name_key, icon, category"),
+    supabase.from("reward_items").select("id, name, icon"),
+  ]);
+  if (fc.error) throw fc.error;
   const m = new Map<string, FurnitureCatalogItem>();
-  (data ?? []).forEach((row) => m.set(row.id, row as FurnitureCatalogItem));
+  (fc.data ?? []).forEach((row) => m.set(row.id, row as FurnitureCatalogItem));
+  // Reward items exposats com a pseudo-mobles amb ID `reward:<uuid>`
+  if (!ri.error) {
+    (ri.data ?? []).forEach((row: { id: string; name: string; icon: string }) => {
+      const key = `${REWARD_PREFIX}${row.id}`;
+      m.set(key, { id: key, name_key: row.name, icon: row.icon, category: "reward" });
+    });
+  }
   return m;
 }
 
