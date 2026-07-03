@@ -246,16 +246,6 @@ const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
     { sprite: bgRailing, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.95 },
   ],
 };
-  jardi: [
-    // Tanca perimetral fila 0 i fila 4
-    { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
-    { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
-  ],
-  balco: [
-    // Barana inferior contínua
-    { sprite: bgRailing, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.95 },
-  ],
-};
 
 /** Retorna els backdrops d'un escenari (buit si no en té). */
 export function backdropsForScenario(scenarioName?: string | null): ScenarioBackdrop[] {
