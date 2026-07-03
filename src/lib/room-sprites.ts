@@ -177,7 +177,7 @@ export const SPRITE_RULES: SpriteRule[] = [
   // natura (arbre ABANS que altres plantes)
   { id: "tree", pattern: /\b(arbre|árbol|arbol|tree|bosc)\b/i, sprite: sprTree },
   { id: "cactus", pattern: /\b(cactus|c[aà]ctus)\b/i, sprite: sprCactus },
-  { id: "flowers", pattern: /\b(flor|flores|flowers|bouquet|ram)\b/i, sprite: sprFlowers },
+  { id: "flowers", pattern: /\b(flors?|flores|flowers|bouquet|ram)\b/i, sprite: sprFlowers },
   { id: "mushroom", pattern: /\b(bolet|seta|mushroom|fong)\b/i, sprite: sprMushroom },
   { id: "bonsai", pattern: /\b(bonsai|bons[aá]i)\b/i, sprite: sprBonsai },
   { id: "plant", pattern: /\b(jardinera|test|maceta|planta|plant|regadora|testos|arbust|bush)\b/i, sprite: sprPlant },
