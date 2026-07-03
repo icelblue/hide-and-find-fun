@@ -27,6 +27,8 @@ import {
 } from "@/lib/supabase-helpers";
 import {
   loadPersonalCombatData,
+  loadPersonalCombatDataFromRooms,
+  neighborsOf,
   parseSnapshot,
   synthScenario,
   synthObjects,
