@@ -170,7 +170,7 @@ const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   [/\b(nevera|frigor[ií]fic|refrigerador|fridge)\b/i, sprFridge],
   [/\b(microones|microondas|microwave)\b/i, sprMicrowave],
   [/\b(fogons?|forn|estufa|barbacoa|stove|oven|hornalla)\b/i, sprStove],
-  [/\b(pica|aig[üu]era|sink|fregadero|regadora)\b/i, sprSink],
+  [/\b(pica|aig[üu]era|sink|fregadero)\b/i, sprSink],
   [/\b(despensa|pantry|aparador|vitrina)\b/i, sprShelf],
   [/\b(rentadora|lavadora|secadora|washer|dryer)\b/i, sprWasher],
   // bany
@@ -194,7 +194,7 @@ const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   [/\b(pilota|ball|os|hueso|bone|joguina|toy)\b/i, sprPettoy],
   // emmagatzematge
   [/\b(armari|ropero|closet|wardrobe|c[oò]moda|comoda|calaix|calaixera|arxivador)\b/i, sprWardrobe],
-  [/\b(prestatge|estanter[ií]a|shelf|bookshelf|biblioteca|llibres?|books?)\b/i, sprShelf],
+  [/\b(prestatg[a-z]*|estanter[ií]a|shelf|bookshelf|biblioteca|llibres?|books?)\b/i, sprShelf],
   [/\b(bagul|ba[uú]l|cofre|chest|caixa|caja|maleta|cistella|paperera|estenedor)\b/i, sprChest],
   // exterior
   [/\b(roca|pedra|piedra|rock|stone|barana|caseta)\b/i, sprRock],
