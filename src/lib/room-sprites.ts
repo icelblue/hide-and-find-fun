@@ -55,6 +55,10 @@ import sprSculpture from "@/assets/room/spr-sculpture.png";
 import sprVase from "@/assets/room/spr-vase.png";
 import sprMicrowave from "@/assets/room/spr-microwave.png";
 import sprWasher from "@/assets/room/spr-washer.png";
+import sprSwing from "@/assets/room/spr-swing.png";
+import sprFountain from "@/assets/room/spr-fountain.png";
+import sprPool from "@/assets/room/spr-pool.png";
+import sprCastle from "@/assets/room/spr-castle.png";
 
 import type { ThemeKey } from "./room-themes";
 
@@ -197,7 +201,12 @@ const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   [/\b(prestatg[a-z]*|estanter[ií]a|shelf|bookshelf|biblioteca|llibres?|books?)\b/i, sprShelf],
   [/\b(bagul|ba[uú]l|cofre|chest|caixa|caja|maleta|cistella|paperera|estenedor)\b/i, sprChest],
   // exterior
-  [/\b(roca|pedra|piedra|rock|stone|barana|caseta)\b/i, sprRock],
+  // exterior / reward items lúdics
+  [/(roca|pedra|piedra|rock|stone|barana|caseta)/i, sprRock],
+  [/(gronxador|swing|columpio|gronx)/i, sprSwing],
+  [/(font.?d.?aigua|font d'aigua|fountain|fuente)/i, sprFountain],
+  [/(piscina|pool|jacuzzi|spa)/i, sprPool],
+  [/(castell|castillo|castle|inflable)/i, sprCastle],
 ];
 
 /**
