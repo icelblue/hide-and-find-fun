@@ -14,16 +14,18 @@ import { useT } from "@/i18n/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
 import { generateTerrain, preferredTerrainForCategory, TERRAIN_BONUS } from "@/lib/terrain";
 import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
 import { themeForCategory } from "@/lib/room-themes";
+import { spriteForFurniture } from "@/lib/room-sprites";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
-// (MAP_SIZE viu ara a SpacePage; el moviment de sales es fa allà via drag&drop)
+type Rotation = 0 | 90 | 180 | 270;
 
 type CatalogItem = {
   id: string;
@@ -35,7 +37,8 @@ type CatalogItem = {
   happiness_bonus: number;
 };
 type RewardItem = { id: string; name: string; icon: string; rarity: string };
-type LayoutSlot = { slot: number; furniture_id: string };
+// `rot` opcional per retrocompatibilitat: layouts antics (sense rot) = 0
+type LayoutSlot = { slot: number; furniture_id: string; rot?: Rotation };
 type RoomRow = {
   id: string;
   custom_name: string;
