@@ -111,6 +111,18 @@ export default function SpacePage() {
     return s;
   }, [rooms]);
 
+  // Terreny 2D determinista per usuari (grid[y][x])
+  const terrain = useMemo(() => generateTerrain(user?.id ?? "guest"), [user?.id]);
+
+  // Sala on viu la mascota: preferència dormitori → primera per posició (y·5+x)
+  const petRoomId = useMemo(() => {
+    if (!pet || rooms.length === 0) return null;
+    const bedroom = rooms.find((r) => templateById.get(r.room_template_id)?.name_key === "room.bedroom");
+    if (bedroom) return bedroom.id;
+    const sorted = [...rooms].sort((a, b) => (a.position_y * MAP_SIZE + a.position_x) - (b.position_y * MAP_SIZE + b.position_x));
+    return sorted[0]?.id ?? null;
+  }, [pet, rooms, templateById]);
+
   const totalFurniture = useMemo(
     () => rooms.reduce((n, r) => n + r.layout.length, 0),
     [rooms]
