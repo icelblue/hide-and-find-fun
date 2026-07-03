@@ -20,7 +20,7 @@ import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
-const MAP_SIZE = 5;
+// (MAP_SIZE viu ara a SpacePage; el moviment de sales es fa allà via drag&drop)
 
 type CatalogItem = {
   id: string;
@@ -73,7 +73,7 @@ export default function RoomPage() {
   const [invTab, setInvTab] = useState<"furniture" | "collection">("furniture");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [otherRoomsOccupancy, setOtherRoomsOccupancy] = useState<Set<string>>(new Set());
+  // otherRoomsOccupancy ja no cal aquí (drag & drop viu a SpacePage)
   const [placedElsewhere, setPlacedElsewhere] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -153,14 +153,12 @@ export default function RoomPage() {
         .eq("user_id", user.id)
         .neq("id", roomId);
       const furn = new Set<string>();
-      const occ = new Set<string>();
-      (data ?? []).forEach((r: { position_x: number; position_y: number; layout?: unknown }) => {
-        occ.add(`${r.position_x}:${r.position_y}`);
+      (data ?? []).forEach((r: { layout?: unknown }) => {
         const l = Array.isArray(r.layout) ? (r.layout as LayoutSlot[]) : [];
         l.forEach((x) => furn.add(x.furniture_id));
       });
       setPlacedElsewhere(furn);
-      setOtherRoomsOccupancy(occ);
+
     })();
   }, [user, roomId, room?.layout]);
 
@@ -268,26 +266,8 @@ export default function RoomPage() {
     setRoom({ ...room, custom_name: trimmed });
   }, [user, room, nameDraft, t]);
 
-  const handleMove = useCallback(async (dx: number, dy: number) => {
-    if (!room) return;
-    const nx = room.position_x + dx;
-    const ny = room.position_y + dy;
-    if (nx < 0 || nx >= MAP_SIZE || ny < 0 || ny >= MAP_SIZE) {
-      toast.error(t("apartment.moveOutOfBounds", "Fora del mapa"));
-      return;
-    }
-    if (otherRoomsOccupancy.has(`${nx}:${ny}`)) {
-      toast.error(t("apartment.cellTaken", "Casella ocupada"));
-      return;
-    }
-    const { error } = await supabase.rpc("move_player_room", { _room_id: room.id, _new_x: nx, _new_y: ny });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setRoom({ ...room, position_x: nx, position_y: ny });
-    toast.success(t("apartment.moved", "Sala moguda"));
-  }, [room, otherRoomsOccupancy, t]);
+  // Moviment ara es fa arrossegant al mini-mapa (SpacePage). Codi eliminat aquí.
+
 
   if (loading || !room) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><p className="text-muted-foreground animate-pulse">{t("common.loading")}</p></div>;
@@ -295,13 +275,7 @@ export default function RoomPage() {
 
   const selectedEntry = selected ? resolveEntry(selected) : null;
 
-  // Botons de moviment: comprovem límits + ocupació per activar/desactivar
-  const canMove = (dx: number, dy: number) => {
-    const nx = room.position_x + dx;
-    const ny = room.position_y + dy;
-    if (nx < 0 || nx >= MAP_SIZE || ny < 0 || ny >= MAP_SIZE) return false;
-    return !otherRoomsOccupancy.has(`${nx}:${ny}`);
-  };
+
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -394,25 +368,8 @@ export default function RoomPage() {
           })}
         </div>
 
-        {/* Fletxes per moure la sala pel mapa */}
-        <Card className="glass">
-          <CardContent className="py-2 px-3">
-            <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider mb-1.5">
-              {t("apartment.moveRoom", "Moure sala al mapa")} ({room.position_x + 1},{room.position_y + 1})
-            </p>
-            <div className="grid grid-cols-3 gap-1 max-w-[140px] mx-auto">
-              <span />
-              <Button size="sm" variant="outline" disabled={!canMove(0, -1)} onClick={() => handleMove(0, -1)} className="h-8">↑</Button>
-              <span />
-              <Button size="sm" variant="outline" disabled={!canMove(-1, 0)} onClick={() => handleMove(-1, 0)} className="h-8">←</Button>
-              <span className="text-center text-[10px] self-center text-muted-foreground">{template?.icon}</span>
-              <Button size="sm" variant="outline" disabled={!canMove(1, 0)} onClick={() => handleMove(1, 0)} className="h-8">→</Button>
-              <span />
-              <Button size="sm" variant="outline" disabled={!canMove(0, 1)} onClick={() => handleMove(0, 1)} className="h-8">↓</Button>
-              <span />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Moviment de sales: arrossega des del mini-mapa de l'apartament */}
+
 
         <div>
           <div className="flex items-center justify-between mb-1.5">

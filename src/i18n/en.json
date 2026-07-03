@@ -1147,7 +1147,9 @@
     },
     "moveRoom": "Move room on map",
     "moved": "Room moved",
-    "moveOutOfBounds": "Off the map"
+    "moveOutOfBounds": "Off the map",
+    "dragHint": "Drag a room to move it · tap to enter"
+
   },
   "room": {
     "bedroom": "Bedroom",

@@ -5,7 +5,7 @@
 // snap a coordenades. Botons: afegir sala, connectar sales, entrar
 // a una sala per editar-la.
 // ============================================================
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -59,6 +59,15 @@ export default function SpacePage() {
   const [connectOpen, setConnectOpen] = useState(false);
   const [placingTemplate, setPlacingTemplate] = useState<RoomTemplate | null>(null);
   const [connectA, setConnectA] = useState<string | null>(null);
+
+  // Drag & drop de sales pel mapa (pointer events, funciona en mòbil)
+  const [dragRoomId, setDragRoomId] = useState<string | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragHoverCell, setDragHoverCell] = useState<{ x: number; y: number } | null>(null);
+  const [dragMoved, setDragMoved] = useState(false);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -184,6 +193,65 @@ export default function SpacePage() {
     refresh();
   };
 
+  // ---------- Drag & drop de sales ----------
+  const cellFromPointer = useCallback((clientX: number, clientY: number): { x: number; y: number } | null => {
+    const el = gridRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const cellW = rect.width / MAP_SIZE;
+    const cellH = rect.height / MAP_SIZE;
+    const cx = Math.floor((clientX - rect.left) / cellW);
+    const cy = Math.floor((clientY - rect.top) / cellH);
+    if (cx < 0 || cx >= MAP_SIZE || cy < 0 || cy >= MAP_SIZE) return null;
+    return { x: cx, y: cy };
+  }, []);
+
+  const onCellPointerDown = (e: React.PointerEvent, room: PlayerRoom) => {
+    // No arrossegar si estem col·locant una nova sala
+    if (placingTemplate) return;
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    setDragRoomId(room.id);
+    setDragPos({ x: e.clientX, y: e.clientY });
+    setDragHoverCell({ x: room.position_x, y: room.position_y });
+    setDragMoved(false);
+  };
+
+  const onCellPointerMove = (e: React.PointerEvent) => {
+    if (!dragRoomId) return;
+    setDragPos({ x: e.clientX, y: e.clientY });
+    const cell = cellFromPointer(e.clientX, e.clientY);
+    if (cell) {
+      setDragHoverCell(cell);
+      setDragMoved(true);
+    }
+  };
+
+  const onCellPointerUp = async (e: React.PointerEvent, room: PlayerRoom) => {
+    if (!dragRoomId) return;
+    const cell = cellFromPointer(e.clientX, e.clientY);
+    const rid = dragRoomId;
+    setDragRoomId(null);
+    setDragPos(null);
+    setDragHoverCell(null);
+    if (!cell || !dragMoved) {
+      // Click net (sense moviment) → navega a la sala
+      setDragMoved(false);
+      if (!dragMoved && rid === room.id) navigate(`/space/room/${room.id}`);
+      return;
+    }
+    setDragMoved(false);
+    if (cell.x === room.position_x && cell.y === room.position_y) return;
+    const occupied = rooms.find((r) => r.id !== rid && r.position_x === cell.x && r.position_y === cell.y);
+    if (occupied) { toast.error(t("apartment.cellTaken", "Casella ocupada")); return; }
+    // Optimista
+    setRooms((prev) => prev.map((r) => r.id === rid ? { ...r, position_x: cell.x, position_y: cell.y } : r));
+    const { error } = await supabase.rpc("move_player_room", { _room_id: rid, _new_x: cell.x, _new_y: cell.y });
+    if (error) { toast.error(error.message); refresh(); return; }
+    toast.success(t("apartment.moved", "Sala moguda"));
+  };
+
+
+
   // ---------- Render ----------
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><p className="text-muted-foreground animate-pulse">{t("common.loading")}</p></div>;
@@ -250,23 +318,35 @@ export default function SpacePage() {
             })}
           </svg>
 
-          <div className="relative grid grid-cols-5 gap-1 h-full">
+          <div ref={gridRef} className="relative grid grid-cols-5 gap-1 h-full touch-none select-none">
             {Array.from({ length: MAP_SIZE * MAP_SIZE }).map((_, idx) => {
               const x = idx % MAP_SIZE;
               const y = Math.floor(idx / MAP_SIZE);
               const room = rooms.find((r) => r.position_x === x && r.position_y === y);
               const tpl = room ? templateById.get(room.room_template_id) : null;
               const isPlacingHere = !!placingTemplate;
+              const isHoverDrop = dragRoomId && dragHoverCell?.x === x && dragHoverCell?.y === y;
+              const isDragging = room && dragRoomId === room.id;
               return (
-                <button
+                <div
                   key={idx}
                   onClick={() => {
                     if (isPlacingHere) placeRoomAt(x, y);
-                    else if (room) navigate(`/space/room/${room.id}`);
+                    // Navegació passa per pointerup; no fem res aquí per sales (evita doble)
                   }}
-                  className={`relative rounded-lg border transition-all text-center flex flex-col items-center justify-center overflow-hidden ${
-                    room
+                  onPointerDown={room ? (e) => onCellPointerDown(e, room) : undefined}
+                  onPointerMove={room ? onCellPointerMove : undefined}
+                  onPointerUp={room ? (e) => onCellPointerUp(e, room) : undefined}
+                  onPointerCancel={() => { setDragRoomId(null); setDragPos(null); setDragHoverCell(null); setDragMoved(false); }}
+                  role="button"
+                  tabIndex={0}
+                  className={`relative rounded-lg border transition-all text-center flex flex-col items-center justify-center overflow-hidden cursor-pointer ${
+                    isDragging
+                      ? "opacity-30 border-accent"
+                      : room
                       ? "bg-card border-accent/40 shadow-sm hover:border-accent"
+                      : isHoverDrop
+                      ? "bg-accent/20 border-accent border-dashed"
                       : isPlacingHere
                       ? "bg-accent/10 border-accent/60 border-dashed animate-pulse"
                       : "bg-background/40 border-border/30"
@@ -280,11 +360,32 @@ export default function SpacePage() {
                       <span className="text-[7px] text-muted-foreground">{room.layout.length}📦</span>
                     </>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
+
+          {/* Ghost element seguint el punter mentre s'arrossega */}
+          {dragRoomId && dragPos && (() => {
+            const dr = rooms.find((r) => r.id === dragRoomId);
+            const dt = dr ? templateById.get(dr.room_template_id) : null;
+            if (!dr || !dt) return null;
+            return (
+              <div
+                className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border-2 border-accent shadow-xl px-2 py-1 flex flex-col items-center"
+                style={{ left: dragPos.x, top: dragPos.y }}
+              >
+                <span className="text-2xl leading-none">{dt.icon}</span>
+                <span className="text-[9px] font-medium">{dr.custom_name}</span>
+              </div>
+            );
+          })()}
         </div>
+
+        <p className="text-[10px] text-center text-muted-foreground italic -mt-1">
+          {t("apartment.dragHint", "Arrossega una sala per moure-la · toca per entrar")}
+        </p>
+
 
         {/* Action buttons */}
         <div className="grid grid-cols-2 gap-2">
@@ -314,12 +415,21 @@ export default function SpacePage() {
                   <button onClick={() => navigate(`/space/room/${r.id}`)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
                     <span className="text-2xl shrink-0">{tpl?.icon ?? "🏠"}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{r.custom_name}</p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-sm font-semibold truncate">{r.custom_name}</p>
+                        {/* D6: sempre visible el tipus real per evitar enganys al PvP */}
+                        {tpl && (
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-muted/60 text-muted-foreground shrink-0 uppercase tracking-wider">
+                            {t(tpl.name_key, tpl.id)}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-muted-foreground">
                         {r.layout.length} {t("apartment.pieces", "mobles")} · {doors.length}/{tpl?.max_doors ?? 2} 🚪
                       </p>
                     </div>
                   </button>
+
                   {doors.map((d) => {
                     const other = d.room_a_id === r.id ? roomById.get(d.room_b_id) : roomById.get(d.room_a_id);
                     if (!other) return null;
