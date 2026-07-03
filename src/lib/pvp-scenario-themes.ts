@@ -93,17 +93,17 @@ const SCENARIO_LAYOUTS: Record<string, CellRule[]> = {
     { pattern: /cadira|chair/i, cell: 14 },        // davant escriptori
     { pattern: /paperera|bin|trash/i, cell: 18 },
   ],
-  // MENJADOR: taula centre, sofà baix, tele a paret
+  // MENJADOR: TV a paret superior, sofà DAVANT la TV (mateixa columna), taula/cadires a un costat
   menjador: [
     { pattern: /vitrina/i, cell: 0 },
     { pattern: /quadre|painting/i, cell: 2 },
     { pattern: /televisi|\btv\b/i, cell: 3 },
     { pattern: /llum|lamp/i, cell: 4 },
     { pattern: /aparador/i, cell: 5 },
-    { pattern: /taula|table/i, cell: 14 },
-    { pattern: /cadira|chair/i, cell: 15 },
-    { pattern: /sof[àa]|couch/i, cell: 19 },
-    { pattern: /catifa|rug/i, cell: 21 },
+    { pattern: /sof[àa]|couch/i, cell: 15 },   // davant la TV
+    { pattern: /taula|table/i, cell: 20 },
+    { pattern: /cadira|chair/i, cell: 22 },
+    { pattern: /catifa|rug/i, cell: 26 },
   ],
   // JARDÍ: arbre a un costat, caseta a l'altre, elements dispersos
   jardi: [
