@@ -415,12 +415,21 @@ export default function SpacePage() {
                   <button onClick={() => navigate(`/space/room/${r.id}`)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
                     <span className="text-2xl shrink-0">{tpl?.icon ?? "🏠"}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{r.custom_name}</p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-sm font-semibold truncate">{r.custom_name}</p>
+                        {/* D6: sempre visible el tipus real per evitar enganys al PvP */}
+                        {tpl && (
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-muted/60 text-muted-foreground shrink-0 uppercase tracking-wider">
+                            {t(tpl.name_key, tpl.id)}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-muted-foreground">
                         {r.layout.length} {t("apartment.pieces", "mobles")} · {doors.length}/{tpl?.max_doors ?? 2} 🚪
                       </p>
                     </div>
                   </button>
+
                   {doors.map((d) => {
                     const other = d.room_a_id === r.id ? roomById.get(d.room_b_id) : roomById.get(d.room_a_id);
                     if (!other) return null;
