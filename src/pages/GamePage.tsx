@@ -65,6 +65,9 @@ import { useT } from "@/i18n/LanguageProvider";
 
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
+import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
+import FurnitureActionSheet from "@/components/game/FurnitureActionSheet";
+import { themeForScenarioName, autoLayoutForItems, PVP_GRID_W, PVP_GRID_H } from "@/lib/pvp-scenario-themes";
 import { SpecialReveal, type SpecialRevealData } from "@/components/game/SpecialReveal";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
@@ -124,6 +127,10 @@ export default function GamePage() {
 
   // Playing state
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
+  const [pixelView, setPixelView] = useState<boolean>(() => {
+    try { return localStorage.getItem("pvp:pixelView") !== "false"; } catch { return true; }
+  });
+  const [sheetItemId, setSheetItemId] = useState<string | null>(null);
   const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
@@ -1749,18 +1756,98 @@ export default function GamePage() {
             {bananaEffect && bananaBlockedSpot && (
               <p className="text-xs text-destructive mt-1 animate-pulse">{t("game.search.bananaBlocked")}</p>
             )}
-            <div className="space-y-1.5 mt-2">
-              {currentScenarioItems.map(item => (
-                <ItemActions key={item.id} item={item} positions={POSITIONS}
-                  onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
-                  lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
-                  revealedSpecials={revealedSpecials}
-                  interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
-                  onInteraction={handleInteraction} moveHistory={moveHistory}
-                  playerTools={playerTools} gameBreaks={gameBreaks}
-                  onTagAction={handleTagAction} dirtyItems={dirtyItems} breakableItems={breakableItems} />
-              ))}
+            {/* Toggle vista pixel ↔ clàssica */}
+            <div className="flex items-center justify-end gap-1 mb-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !pixelView;
+                  setPixelView(next);
+                  try { localStorage.setItem("pvp:pixelView", String(next)); } catch { /* ignore */ }
+                }}
+                className="text-[10px] px-2 py-1 rounded-md border border-border/40 bg-muted/30 hover:bg-muted/50 transition"
+                aria-label={pixelView ? "Canviar a vista clàssica" : "Canviar a vista pixel art"}
+              >
+                {pixelView ? "🎨 Pixel · canvia a llista" : "📋 Llista · canvia a pixel"}
+              </button>
             </div>
+
+            {pixelView ? (
+              (() => {
+                const scenName = currentScenario?.name ?? "";
+                const theme = themeForScenarioName(scenName);
+                const slots = autoLayoutForItems(currentScenarioItems);
+                const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => {
+                  const s = slots.find((x) => x.cellIndex === idx);
+                  if (!s) return { slot: idx };
+                  const item = currentScenarioItems.find((i: any) => i.id === s.itemId);
+                  const allLooked = POSITIONS.every((p) => lookedSpots.has(`${s.itemId}:${p.value}`));
+                  return {
+                    slot: idx,
+                    icon: item?.icon,
+                    label: item?.name,
+                    filled: true,
+                    disabled: allLooked,
+                    selectedCell: sheetItemId === s.itemId,
+                  };
+                });
+                return (
+                  <div className="mt-2">
+                    <PixelRoomGrid
+                      theme={theme}
+                      gridW={PVP_GRID_W}
+                      gridH={PVP_GRID_H}
+                      cells={cells}
+                      seed={`pvp:${player?.current_scenario_id ?? ""}`}
+                      seamless
+                      onCellClick={(idx) => {
+                        const s = slots.find((x) => x.cellIndex === idx);
+                        if (s) setSheetItemId(s.itemId);
+                      }}
+                      ariaLabelPrefix="pvp-slot"
+                    />
+                    <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+                      {t("game.pixel.tapItem", "Toca un moble per veure les accions")}
+                    </p>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="space-y-1.5 mt-2">
+                {currentScenarioItems.map(item => (
+                  <ItemActions key={item.id} item={item} positions={POSITIONS}
+                    onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
+                    lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
+                    revealedSpecials={revealedSpecials}
+                    interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
+                    onInteraction={handleInteraction} moveHistory={moveHistory}
+                    playerTools={playerTools} gameBreaks={gameBreaks}
+                    onTagAction={handleTagAction} dirtyItems={dirtyItems} breakableItems={breakableItems} />
+                ))}
+              </div>
+            )}
+
+            {/* Sheet d'accions per la vista pixel */}
+            <FurnitureActionSheet
+              open={!!sheetItemId}
+              onClose={() => setSheetItemId(null)}
+              item={sheetItemId ? currentScenarioItems.find((i: any) => i.id === sheetItemId) ?? null : null}
+              positions={POSITIONS}
+              onLook={handleLook}
+              disabled={actionLoading}
+              tokensRemaining={player.tokens_remaining}
+              lookedSpots={lookedSpots}
+              bananaBlockedSpot={bananaBlockedSpot}
+              revealedSpecials={revealedSpecials}
+              interactions={sheetItemId ? itemInteractions.filter((ia: any) => ia.item_id === sheetItemId) : []}
+              onInteraction={handleInteraction}
+              moveHistory={moveHistory}
+              playerTools={playerTools}
+              gameBreaks={gameBreaks}
+              onTagAction={handleTagAction}
+              dirtyItems={dirtyItems}
+              breakableItems={breakableItems}
+            />
           </div>
           )}
 
@@ -1774,6 +1861,7 @@ export default function GamePage() {
               currentScenarioId={player?.current_scenario_id}
               currentScenarioItems={currentScenarioItems} />
           )}
+
 
           {/* History */}
           {moveHistory.length > 0 && (
