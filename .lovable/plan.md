@@ -1,126 +1,92 @@
 
-## Què queda del pla i què cal implementar
+## Pla: Terreny 2D + Mascota al mapa + QA traduccions
 
-He revisat el pla `.lovable/plan.md` (multi-sala) i el codi actual. Les 5 fases del pla original **ja estan fetes**. El que falta és:
-
-- **Peces del pla anterior no tancades** (D1–D6 de la proposta "sales amb personalitat + moure").
-- **Bug reportat del mode història**: recompenses visibles abans de decidir.
-- **Auditoria general de codi + traduccions**.
-
-Ordeno per prioritat i executo en 3 blocs. Bloc 1 i 2 són cirurgia concreta. Bloc 3 és auditoria (report + fixes petits).
+Executo els 3 blocs en un sol torn. Decisions ja tancades (D7 seed determinista, D8 bonus sense restricció, D9 mascota estàtica).
 
 ---
 
-## Bloc 1 — Sales amb personalitat i moviment (crític)
+### Bloc A — Terreny 2D estil pixel-art clàssic
 
-**Problema:** Ara totes les sales són funcionalment idèntiques. Renombrar "Bany" com "Menjador" trivialitza tot. Tampoc es poden moure. La progressió no té sentit mecànic.
+**Objectiu:** El grid 5×5 de `SpacePage.tsx` deixa de ser cel·les buides i passa a ser un mapa amb terrenys (gespa, terra, aigua, roca, sorra). Quan hi col·loques una sala, es tapa amb el tile temàtic de la sala.
 
-**Decisions que aplico** (defaults raonables, si vols canviar-ne alguna digues-m'ho abans d'aprovar):
-
-- **D1 Grid variable per tipus**: SÍ. Cada plantilla té `grid_w`/`grid_h`. RoomPage renderitza dinàmic.
-- **D2 Categories permeses per tipus**: SÍ. `allowed_categories text[]`. Filtra què pots col·locar a cada sala.
-- **D3 Multiplicador felicitat per sala correcta**: SÍ. `happiness_multiplier numeric(3,2)` sobre mobles de categoria pertinent.
-- **D4 Portes variables per tipus**: SÍ. Hall=4, Menjador=3, Balcó/Bany/Despatx=1, resta=2.
-- **D5 Moviment sales**: **fletxes ↑↓←→** al panell de la sala (més robust en mobile que drag).
-- **D6 Renombrar**: llibertat total, però el mapa i llistat mostren SEMPRE la icona del tipus real (impossible enganyar al PvP).
-
-### Canvis tècnics
-
-1. **Migració SQL** — `room_catalog`:
-   - `+ grid_w int NOT NULL DEFAULT 4`
-   - `+ grid_h int NOT NULL DEFAULT 4`
-   - `+ allowed_categories text[] NOT NULL DEFAULT '{}'` (buit = tot permès)
-   - `+ happiness_multiplier numeric(3,2) NOT NULL DEFAULT 1.00`
-   - `UPDATE` per cada tipus amb els valors definitius (taula sota).
-
-2. **Taula tancada de plantilles**:
-
-```text
-Tipus       grid  slots doors  categories permeses            bonus
-Dormitori   4×4   16    2      (totes)                         1.00×
-Balcó       4×2   8     1      nature,pet                      1.30×
-Menjador    5×4   20    3      dining,music,decor              1.20×
-Cuina       4×4   16    2      kitchen,tech                    1.50×
-Bany        3×3   9     1      bath                            1.30×
-Despatx     4×3   12    1      tech,music                      1.40×
-Jardí       5×4   20    2      nature,pet                      1.30×
-Hall        3×3   9     4      decor                           1.10×
+**Model de terreny:**
+```
+5 tipus: grass | dirt | water | rock | sand
 ```
 
-3. **`RoomPage.tsx`**:
-   - Grid dinàmic (usar `grid_w`/`grid_h` de la plantilla).
-   - Filtrar `furniture_catalog` per `allowed_categories`.
-   - Mostrar bonus aplicat al comptador de felicitat.
-   - Botonera **moure sala** (4 fletxes) que crida un UPDATE de `player_rooms.position_x/y` validant casella lliure.
+**Generació:** funció pura `generateTerrain(userId: string): TerrainType[][]` amb PRNG seedejat (mulberry32 + hash del uuid). Mateix usuari → mateix mapa sempre. Sense BD nova.
 
-4. **`SpacePage.tsx`**:
-   - Cada targeta de sala del llistat mostra `icona_tipus + nom_editable + tipus_real` per evitar enganys visuals.
-   - Diàleg "Sala nova" mostra grid, portes màx i bonus de cada plantilla.
+**Regles de generació (per fer mapes creïbles, no soroll):**
+- 1 massa d'aigua contínua (2-4 cel·les) a un cantó aleatori.
+- 1-2 roques dispersades.
+- 1 zona de sorra tocant l'aigua.
+- Resta: gespa (majoritari) + alguna cel·la de terra.
 
-5. **`personal-pvp-adapter.ts`**:
-   - Cap canvi funcional (ja llegeix `room_catalog`); només afegir `grid_w/grid_h` als camps si els necessita.
+**Bonus terreny-sala (D8):** taula constant al frontend:
+```
+Jardí   → prefereix grass  (+10% happiness_multiplier)
+Balcó   → prefereix rock   (+10%)
+Bany    → prefereix water  (+10%)
+Cuina   → prefereix dirt   (+10%)
+Menjador→ prefereix grass  (+5%)
+```
+Es mostra al tooltip de la sala i al càlcul de felicitat de `RoomPage`.
 
-6. **Traduccions**: afegir `apartment.grid`, `apartment.bonus`, `apartment.move`, `apartment.moveHint`, `apartment.blockedMove`, i etiquetes de categoria a `ca` i `en`.
+**Estil visual:** SVG inline (no assets externs, zero pes extra). Cada tile 48×48px amb patró CSS + colors del design system. Estil top-down tipus Stardew:
+- `grass`: verd tou amb 2-3 puntets més foscos
+- `water`: blau amb ones (2 línies clares)
+- `rock`: gris amb esquerdes
+- `dirt`: marró amb textura granulada
+- `sand`: groc clar
 
----
-
-## Bloc 2 — Bug mode història (recompenses visibles)
-
-**Investigació:** He revisat `StoryNodeView`, `PuzzleNodeView`, `DailyChallengeCard` i `StoryModePage`. El codi **no** mostra `reward_type`/`reward_value` abans de clicar. Però sí:
-
-- **Icones ✨/❤️ i pastilles morades de trait** als botons de decisió — són indicadors de **requisits**, però visualment el jugador els pot llegir com a "aquesta opció té premi". El comentari `// Bug A fix` a `StoryNodeView.tsx:81` ja va intentar tapar-ho, però només va treure els multiplicadors de trait, no els badges de requisit.
-- **`DailyChallengeCard.tsx:96`**: mostra literalment `rewardLabel(reward_type, reward_value)` de l'anterior repte completat. Això sí és preview directe (encara que sigui d'ahir). Discutible.
-- **Repte diari nou**: no mostra recompensa (correcte).
-
-**Fixes:**
-
-1. `StoryNodeView.tsx`:
-   - Treure icones ✨/❤️ dels labels de decisió. Els requisits es validen amagant l'opció (ja passa) o bloquejant-la — no cal donar pista visual.
-   - Treure les pastilles de trait requerit (`usesTraits`). El color de fons morat suau (`border-purple-400/60`) es manté només com a senyal subtil, sense text del trait concret.
-2. `DailyChallengeCard.tsx:83-100` (bloc `alreadyDone`): substituir `rewardLabel(...)` per un text genèric "Completat avui" — així no s'insinua què tocarà demà.
-3. Afegir test de regressió a `src/test/`: verificar que `StoryNodeView` renderitzat amb un choice amb `reward_type='xp'` no conté cap `+XP`, `Recompensa`, etc.
+**Sales col·locades:** overlay damunt del terreny amb la icona del tipus + `custom_name`. Quan arrossegues per moure (D5 ja implementat), el terreny de sota es fa visible transitòriament.
 
 ---
 
-## Bloc 3 — Auditoria de codi i traduccions (report + fixes petits)
+### Bloc B — Mascota al mapa (estàtica)
 
-Aquesta part la faig en el mateix torn però com a **anàlisi + fixes segurs**, no com a refactor gran. Si detecto res crític, ho separo en un nou pla.
+**Objectiu:** Sprite petit de la mascota apareix a la cel·la de la sala "preferida".
 
-**Checklist auditoria:**
+**Regla de sala preferida (determinista, sense estat nou):**
+- Si el jugador té una sala tipus `dormitori` → la mascota va allà.
+- Si no, primera sala per ordre de compra.
 
-1. **Traduccions**: `grep` de strings hardcoded fora de fallbacks `t("k", "fallback")` a `src/pages/**`, `src/components/**`. Report de claus faltants entre `ca.json` i `en.json` (comparació estructural).
-2. **Bones pràctiques React**:
-   - `useEffect` amb dependències falses (buscar `// eslint-disable-next-line react-hooks/exhaustive-deps`).
-   - Fetches supabase dins render sense cancel·lació.
-   - Estats no derivats que podrien ser `useMemo`.
-3. **Seguretat**:
-   - Rutes protegides sense guard d'auth.
-   - Consultes supabase sense filtre `user_id` explícit.
-4. **Rendiment**:
-   - Imports pesants sense lazy (`StoryModePage`, `GamePage`).
-5. **Types**: `any` a ubicacions crítiques (`reward_value: any`, `layout: unknown`).
+**Renderitzat:** dins la targeta de la sala al mapa, un `<span>🐾</span>` amb l'icona de l'espècie de `player_pets` (o emoji fallback). Posició absoluta cantonada inferior-dreta de la cel·la. Animació sutil `animate-bounce` cada 3s.
 
-**Entregable Bloc 3:** report en xat + fixes mínims (afegir traduccions faltants, corregir 2–3 casos evidents). Si trobo deute gran, faig un pla nou per separat.
+**Interacció:** clicar la mascota obre un `Sheet` amb `PetStatsBar` + accés ràpid a la sala on és.
+
+**Zero canvis a BD.** Només llegir `player_pets` (ja carregat a `SpacePage`).
 
 ---
 
-## Ordre d'execució i estimació
+### Bloc C — QA final traduccions
 
-1. **Bloc 2 (bug història)** — ràpid, alt impacte percebut. ~0.3 crèdits.
-2. **Bloc 1 (sales amb personalitat + moviment)** — migració + refactor `RoomPage`/`SpacePage` + i18n. ~1.5 crèdits.
-3. **Bloc 3 (auditoria + traduccions faltants)** — report + fixes petits. ~0.5 crèdits.
-
-**Total estimat: ~2.3 crèdits.**
+Passada agressiva:
+1. `grep -r "ca:" src/` i `grep -rn '["'\'']>[A-Z]' src/pages src/components` per detectar strings hardcoded.
+2. Diff estructural `ca.json` vs `en.json` (ja sincronitzats, però reverifico).
+3. Afegir claus noves d'aquesta iteració: `terrain.grass`, `terrain.water`, `apartment.terrainBonus`, `apartment.petHere`, etc. a ambdós idiomes.
+4. Report final al xat amb qualsevol string trobat sense traduir.
 
 ---
 
-## Fora d'abast (no faig en aquesta tanda)
+### Fitxers a tocar
 
-- Repintar temes visuals de l'apartament (fons, papers pintats).
-- Refactor gran de `StoryModePage` (738 línies — mereix pla propi si el vols dividir).
-- Migració a React Query / eliminació de `any` sistemàtica.
-- Tests E2E de Playwright del flux d'apartament.
+- `src/lib/terrain.ts` (nou) — generador PRNG + tipus + bonus map.
+- `src/components/space/TerrainTile.tsx` (nou) — SVG tile per tipus.
+- `src/components/space/PetOnMap.tsx` (nou) — sprite mascota + sheet.
+- `src/pages/SpacePage.tsx` — integració terreny + mascota + tooltip bonus.
+- `src/pages/RoomPage.tsx` — aplicar `terrain_bonus` al càlcul de felicitat.
+- `src/i18n/ca.json` + `en.json` — claus noves.
+- `src/test/terrain.test.ts` (nou) — verificar determinisme i regles de generació.
 
-## Confirmació
+**Sense migracions SQL.** Tot al frontend perquè és presentació + càlcul derivat.
 
-Aprova per començar per **Bloc 2 → Bloc 1 → Bloc 3** en el mateix torn. Si vols canviar alguna decisió D1–D6 o el mapa de plantilles, digues-m'ho ara i actualitzo el pla abans d'executar.
+---
+
+### Verificació
+
+- Tests unitaris del generador (determinisme + coherència).
+- 205+ tests existents han de continuar passant.
+- Screenshot Playwright del `SpacePage` per confirmar visual.
+
+**Estimació:** ~1.5 crèdits. Risc: baix (0 canvis a BD, 0 canvis a lògica de joc).
