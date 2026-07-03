@@ -18,6 +18,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { REWARD_PREFIX } from "@/lib/personal-pvp-adapter";
 import { generateTerrain, preferredTerrainForCategory, TERRAIN_BONUS } from "@/lib/terrain";
+import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
+import { themeForCategory } from "@/lib/room-themes";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
@@ -362,33 +364,32 @@ export default function RoomPage() {
           <p className="text-xs text-muted-foreground text-center">{t("space.hint")}</p>
         )}
 
-        {/* Grid dinàmic amb gridTemplateColumns per suport de mides no estàndard */}
-        <div
-          className="w-full max-w-[360px] mx-auto bg-muted/30 rounded-2xl p-2 grid gap-2 border border-border"
-          style={{
-            gridTemplateColumns: `repeat(${gridW}, minmax(0, 1fr))`,
-            aspectRatio: `${gridW} / ${gridH}`,
-          }}
-        >
-          {Array.from({ length: gridSize }).map((_, idx) => {
+        {/* Grid pixel-art temàtic (Fase A del pla Grid 2D unificat) */}
+        {(() => {
+          const theme = themeForCategory(template?.category);
+          const cells: PixelCell[] = Array.from({ length: gridSize }).map((_, idx) => {
             const slot = layout.find((s) => s.slot === idx);
             const entry = slot ? resolveEntry(slot.furniture_id) : null;
-            return (
-              <button
-                key={idx}
-                onClick={() => handleSlotClick(idx)}
-                className={`aspect-square rounded-lg border transition-all flex items-center justify-center text-2xl ${
-                  entry ? "bg-card border-accent/40 shadow-sm"
-                  : selected ? "bg-accent/10 border-accent/60 border-dashed animate-pulse"
-                  : "bg-background/50 border-border/40"
-                }`}
-                aria-label={`slot-${idx}`}
-              >
-                {entry ? entry.icon : ""}
-              </button>
-            );
-          })}
-        </div>
+            return {
+              slot: idx,
+              icon: entry?.icon,
+              label: entry?.name ?? `casella ${idx + 1}`,
+              filled: !!entry,
+              highlighted: !!selected && !entry,
+            };
+          });
+          return (
+            <PixelRoomGrid
+              theme={theme}
+              gridW={gridW}
+              gridH={gridH}
+              cells={cells}
+              seed={room.id}
+              onCellClick={handleSlotClick}
+              ariaLabelPrefix="slot"
+            />
+          );
+        })()}
 
         {/* Moviment de sales: arrossega des del mini-mapa de l'apartament */}
 
