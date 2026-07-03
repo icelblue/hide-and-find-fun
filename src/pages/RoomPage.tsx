@@ -143,23 +143,25 @@ export default function RoomPage() {
   const layout = room?.layout ?? [];
   const placedIds = useMemo(() => new Set(layout.map((s) => s.furniture_id)), [layout]);
 
-  // Mobles col·locats en altres sales + caselles ocupades del mapa
+  // Mobles col·locats en altres sales (per no duplicar entre sales)
   useEffect(() => {
     if (!user || !roomId) return;
+    let cancel = false;
     (async () => {
       const { data } = await supabase
         .from("player_rooms")
         .select("id, position_x, position_y, layout")
         .eq("user_id", user.id)
         .neq("id", roomId);
+      if (cancel) return;
       const furn = new Set<string>();
       (data ?? []).forEach((r: { layout?: unknown }) => {
         const l = Array.isArray(r.layout) ? (r.layout as LayoutSlot[]) : [];
         l.forEach((x) => furn.add(x.furniture_id));
       });
       setPlacedElsewhere(furn);
-
     })();
+    return () => { cancel = true; };
   }, [user, roomId, room?.layout]);
 
   // Sizing derivats de la plantilla
