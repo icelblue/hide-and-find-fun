@@ -2,6 +2,13 @@
 // pvp-scenario-themes.ts — Mapping escenari PvP → tema + layout
 // ============================================================
 import { ROOM_THEMES, type RoomTheme } from "@/lib/room-themes";
+import bgCounter from "@/assets/room/bg-counter.png";
+import bgDeskSurface from "@/assets/room/bg-desk-surface.png";
+import bgTiledWall from "@/assets/room/bg-tiled-wall.png";
+import bgFence from "@/assets/room/bg-fence.png";
+import bgWindow from "@/assets/room/bg-window.png";
+import bgCurtain from "@/assets/room/bg-curtain.png";
+import bgRailing from "@/assets/room/bg-railing.png";
 
 /** Retorna el tema visual d'un escenari PvP a partir del seu nom. */
 export function themeForScenarioName(name: string | null | undefined): RoomTheme {
