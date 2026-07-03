@@ -149,26 +149,59 @@ export default function RoomPage() {
   const layout = room?.layout ?? [];
   const placedIds = useMemo(() => new Set(layout.map((s) => s.furniture_id)), [layout]);
 
-  // Mobles col·locats en altres sales (per no duplicar entre sales)
+  // Mobles col·locats en altres sales + càlcul de si la mascota viu aquí
+  // (mateixa lògica que SpacePage: dormitori si existeix, sinó primera per posició)
   useEffect(() => {
     if (!user || !roomId) return;
     let cancel = false;
     (async () => {
-      const { data } = await supabase
-        .from("player_rooms")
-        .select("id, position_x, position_y, layout")
-        .eq("user_id", user.id)
-        .neq("id", roomId);
+      const [allRooms, petRes] = await Promise.all([
+        supabase
+          .from("player_rooms")
+          .select("id, position_x, position_y, layout, room_template_id")
+          .eq("user_id", user.id),
+        supabase
+          .from("player_pets")
+          .select("pet_icon, pet_name")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
       if (cancel) return;
+      const rows = (allRooms.data ?? []) as Array<{
+        id: string; position_x: number; position_y: number;
+        layout?: unknown; room_template_id: string;
+      }>;
+
+      // Furn en altres sales (per no duplicar)
       const furn = new Set<string>();
-      (data ?? []).forEach((r: { layout?: unknown }) => {
+      rows.filter((r) => r.id !== roomId).forEach((r) => {
         const l = Array.isArray(r.layout) ? (r.layout as LayoutSlot[]) : [];
         l.forEach((x) => furn.add(x.furniture_id));
       });
       setPlacedElsewhere(furn);
+
+      // Determinar sala on viu la mascota
+      const petData = petRes.data as { pet_icon: string; pet_name: string } | null;
+      setPet(petData);
+      if (petData && rows.length > 0) {
+        const tplIds = Array.from(new Set(rows.map((r) => r.room_template_id)));
+        const { data: tpls } = await supabase
+          .from("room_catalog")
+          .select("id, category")
+          .in("id", tplIds);
+        if (cancel) return;
+        const catById = new Map(((tpls ?? []) as Array<{ id: string; category: string }>).map((t) => [t.id, t.category]));
+        const bedroom = rows.find((r) => catById.get(r.room_template_id) === "bedroom");
+        const petRoomId = bedroom?.id
+          ?? [...rows].sort((a, b) => (a.position_y * 100 + a.position_x) - (b.position_y * 100 + b.position_x))[0]?.id;
+        setIsPetHere(petRoomId === roomId);
+      } else {
+        setIsPetHere(false);
+      }
     })();
     return () => { cancel = true; };
   }, [user, roomId, room?.layout]);
+
 
   // Sizing derivats de la plantilla
   const gridW = template?.grid_w ?? 4;
