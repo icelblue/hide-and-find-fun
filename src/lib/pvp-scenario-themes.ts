@@ -9,6 +9,9 @@ import bgFence from "@/assets/room/bg-fence.png";
 import bgWindow from "@/assets/room/bg-window.png";
 import bgCurtain from "@/assets/room/bg-curtain.png";
 import bgRailing from "@/assets/room/bg-railing.png";
+import bgWallWood from "@/assets/room/bg-wall-wood.png";
+import bgRugLarge from "@/assets/room/bg-rug-large.png";
+import bgBacksplash from "@/assets/room/bg-backsplash.png";
 
 /** Retorna el tema visual d'un escenari PvP a partir del seu nom. */
 export function themeForScenarioName(name: string | null | undefined): RoomTheme {
