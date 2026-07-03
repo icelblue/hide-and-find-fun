@@ -122,17 +122,18 @@ const SCENARIO_LAYOUTS: Record<string, CellRule[]> = {
     { pattern: /regadora|watering/i, cell: 21 },
     { pattern: /ba[uú]l|chest/i, cell: 23 },
   ],
-  // BALCÓ (grid més estret, però mantenim 6x5): barana baixa, taula centre
+  // BALCÓ: cel + skyline fila 0-1, barana fila 2 (línia horitzó), terra fila 3-4
   balco: [
+    // Fila 0-1: coses "penjades" o altes davant del cel
     { pattern: /jardinera|planter/i, cell: 0 },
-    { pattern: /estenedor|clothesline/i, cell: 1 },
-    { pattern: /gerro|vase/i, cell: 4 },
+    { pattern: /estenedor|clothesline/i, cell: 2 },
     { pattern: /testos|plant|maceta/i, cell: 5 },
-    { pattern: /fanal|lantern|lamp/i, cell: 11 },
-    { pattern: /cadira|chair/i, cell: 14 },
-    { pattern: /taula|table/i, cell: 15 },
-    { pattern: /barana|railing/i, cell: 17 },
-    { pattern: /catifa|rug/i, cell: 21 },
+    { pattern: /fanal|lantern|lamp/i, cell: 6 },
+    { pattern: /gerro|vase/i, cell: 11 },
+    // Fila 3-4: mobiliari de terra
+    { pattern: /cadira|chair/i, cell: 20 },
+    { pattern: /taula|table/i, cell: 21 },
+    { pattern: /catifa|rug/i, cell: 26 },
     { pattern: /caixa|box/i, cell: 23 },
   ],
 };
