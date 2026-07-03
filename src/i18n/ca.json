@@ -1147,8 +1147,8 @@
     },
     "moveRoom": "Moure sala al mapa",
     "moved": "Sala moguda",
-    "moveOutOfBounds": "Fora del mapa",
-    "pieces_dup_ignore": "mobles"
+    "moveOutOfBounds": "Fora del mapa"
+
 
   },
   "room": {
