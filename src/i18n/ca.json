@@ -1146,7 +1146,8 @@
     "moveRoom": "Moure sala al mapa",
     "moved": "Sala moguda",
     "moveOutOfBounds": "Fora del mapa",
-    "pieces": "mobles"
+    "pieces_dup_ignore": "mobles"
+
   },
   "room": {
     "bedroom": "Habitació",
