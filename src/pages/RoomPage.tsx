@@ -173,6 +173,16 @@ export default function RoomPage() {
   const allowedCats = template?.allowed_categories ?? [];
   const multiplier = Number(template?.happiness_multiplier ?? 1);
 
+  // Bonus terreny: si la sala està sobre el seu terreny preferit al mapa 5×5, +10%
+  const terrainBonus = useMemo(() => {
+    if (!template || !room || !user) return 0;
+    const pref = preferredTerrainForCategory(template.category);
+    if (!pref) return 0;
+    const grid = generateTerrain(user.id);
+    const cell = grid[room.position_y]?.[room.position_x];
+    return cell === pref ? TERRAIN_BONUS : 0;
+  }, [template, room, user]);
+
   // Inventari filtrat per categories permeses (buit = tot permès)
   const catAllowed = useCallback((cat: string) => allowedCats.length === 0 || allowedCats.includes(cat), [allowedCats]);
 
