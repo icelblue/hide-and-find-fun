@@ -19,6 +19,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const PlayerProfilePage = lazy(() => import("./pages/PlayerProfilePage"));
 const StoryModePage = lazy(() => import("./pages/StoryModePage"));
 const SpacePage = lazy(() => import("./pages/SpacePage"));
+const RoomPage = lazy(() => import("./pages/RoomPage"));
 const ClaimReminderPage = lazy(() => import("./pages/ClaimReminderPage"));
 const DemoPage = lazy(() => import("./pages/DemoPage"));
 const JoinGamePage = lazy(() => import("./pages/JoinGamePage"));
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
               <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
               <Route path="/space" element={<ProtectedRoute><SpacePage /></ProtectedRoute>} />
+              <Route path="/space/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
               <Route path="/claim" element={<ClaimReminderPage />} />
               <Route path="/demo" element={<DemoPage />} />
               <Route path="/join/:gameId" element={<JoinGamePage />} />

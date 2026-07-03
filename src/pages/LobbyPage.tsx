@@ -279,14 +279,22 @@ export default function LobbyPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from("player_spaces").select("layout").eq("user_id", user.id).maybeSingle();
-      const raw = (data as { layout?: unknown } | null)?.layout;
-      const count = Array.isArray(raw) ? raw.length : 0;
-      setPersonalPlacedCount(count);
+      const [roomsRes, connsRes] = await Promise.all([
+        supabase.from("player_rooms").select("layout").eq("user_id", user.id),
+        supabase.from("room_connections").select("id").eq("user_id", user.id),
+      ]);
+      const rooms = (roomsRes.data as Array<{ layout?: unknown }> | null) ?? [];
+      const totalFurn = rooms.reduce((n, r) => n + (Array.isArray(r.layout) ? r.layout.length : 0), 0);
+      const roomsCount = rooms.length;
+      const connsCount = (connsRes.data ?? []).length;
+      // Reaprofita el mateix count: guarda min(furniture, sales, connexions*99) per mostrar el CTA
+      // Guardem 0 si falla algun requisit; el CTA "decorar" cobreix tots els casos.
+      const passes = roomsCount >= 2 && connsCount >= 1 && totalFurn >= 4;
+      setPersonalPlacedCount(passes ? totalFurn : 0);
       setCreateMode("personal");
     } finally { setLoading(false); }
   };
+
 
   const searchForPersonal = async () => {
     if (!user || personalSearch.length < 2) return;
@@ -384,6 +392,8 @@ export default function LobbyPage() {
         const msg = (error.message || "").toLowerCase();
         if (msg.includes("host_no_space")) throw new Error(t("lobby_extra.errHostNoSpace"));
         if (msg.includes("opponent_no_space")) throw new Error(t("lobby_extra.errOpponentNoSpace"));
+        if (msg.includes("host_min_rooms")) throw new Error(t("lobby_extra.errHostMinRooms", "Necessites almenys 2 sales connectades al teu apartament."));
+        if (msg.includes("opponent_min_rooms")) throw new Error(t("lobby_extra.errOpponentMinRooms", "L'oponent no té 2 sales connectades."));
         if (msg.includes("host_min_furniture")) throw new Error(t("lobby_extra.errHostMinFurniture"));
         if (msg.includes("opponent_min_furniture")) throw new Error(t("lobby_extra.errOpponentMinFurniture"));
         if (msg.includes("cannot_challenge_self")) throw new Error(t("lobby_extra.errCannotChallengeSelf"));
@@ -697,11 +707,10 @@ export default function LobbyPage() {
 
           {createMode === "personal" && (
             <div className="space-y-3">
-              {personalPlacedCount !== null && personalPlacedCount < 4 ? (
+              {personalPlacedCount !== null && personalPlacedCount === 0 ? (
                 <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 space-y-2">
                   <p className="text-sm">
-                    ⚠️ {t("lobby.createDialog.needMore", "Necessites almenys 4 mobles al teu espai.")}
-                    <span className="text-muted-foreground"> ({personalPlacedCount}/4)</span>
+                    ⚠️ {t("lobby.createDialog.needMoreV2", "Necessites almenys 2 sales connectades amb portes i 4 mobles en total al teu apartament.")}
                   </p>
                   <Button size="sm" className="w-full" onClick={() => { setCreateOpen(false); navigate("/space"); }}>
                     🏠 {t("lobby.createDialog.goDecorate", "Decorar el meu espai")}

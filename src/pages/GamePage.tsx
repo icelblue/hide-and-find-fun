@@ -27,6 +27,8 @@ import {
 } from "@/lib/supabase-helpers";
 import {
   loadPersonalCombatData,
+  loadPersonalCombatDataFromRooms,
+  neighborsOf,
   parseSnapshot,
   synthScenario,
   synthObjects,
@@ -138,6 +140,8 @@ export default function GamePage() {
   // Wave A UI polish: track newly-revealed specials to animate them once
   const [pendingReveal, setPendingReveal] = useState<SpecialRevealData | null>(null);
   const seenRevealMoveIdsRef = useRef<Set<string>>(new Set());
+  // Personal PvP v2: cache multi-sala carregada un cop per partida
+  const personalDataRef = useRef<import("@/lib/personal-pvp-adapter").PersonalCombatData | null>(null);
 
   // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
@@ -290,14 +294,25 @@ export default function GamePage() {
       let loadedInteractions: any[] = [];
 
       if (isPlaying && isPersonalGame) {
-        // ── Personal PvP: deriva items del snapshot, sense connexions ni dirty/breakable ──
+        // ── Personal PvP v2: multi-sala des de player_rooms ──
         try {
-          const personal = await loadPersonalCombatData(
-            (gameData as any)?.host_space_snapshot,
-            (gameData as any)?.guest_space_snapshot
-          );
-          loadedItems = personal.items;
-          setConnectedScenarios([]);
+          const hostId = (gameData as any)?.created_by;
+          const guestId = (gameData as any)?.invited_user_id;
+          const personal = hostId && guestId
+            ? await loadPersonalCombatDataFromRooms(hostId, guestId)
+            : await loadPersonalCombatData(
+                (gameData as any)?.host_space_snapshot,
+                (gameData as any)?.guest_space_snapshot
+              );
+          personalDataRef.current = personal;
+          // Items de l'escenari actual (si n'hi ha) o cap
+          loadedItems = currentScenId
+            ? (personal.itemsByScenario.get(currentScenId) ?? [])
+            : personal.items;
+          // Connexions veïnes de l'escenari actual
+          const scenariosById = new Map(personal.scenarios.map((s) => [s.id, s]));
+          const neighbors = currentScenId ? neighborsOf(currentScenId, personal.connections, scenariosById) : [];
+          setConnectedScenarios(neighbors);
           setDirtyItems(new Set());
           setBreakableItems(new Set());
         } catch (err: any) {
@@ -536,11 +551,16 @@ export default function GamePage() {
     let cancelled = false;
     (async () => {
       try {
-        const personal = await loadPersonalCombatData(
-          (game as any).host_space_snapshot,
-          (game as any).guest_space_snapshot
-        );
+        const hostId = (game as any).created_by;
+        const guestId = (game as any).invited_user_id;
+        const personal = hostId && guestId
+          ? await loadPersonalCombatDataFromRooms(hostId, guestId)
+          : await loadPersonalCombatData(
+              (game as any).host_space_snapshot,
+              (game as any).guest_space_snapshot
+            );
         if (cancelled) return;
+        personalDataRef.current = personal;
         setScenarios(personal.scenarios);
         setObjects(personal.objects);
       } catch (err: any) {
@@ -555,18 +575,26 @@ export default function GamePage() {
   // ============================================
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
-    if (isPersonalGame && game) {
-      const catalog = await loadFurnitureCatalog();
-      const merged = mergeSnapshots(
-        parseSnapshot((game as any).host_space_snapshot),
-        parseSnapshot((game as any).guest_space_snapshot)
-      );
-      setItems(synthItems(merged, catalog));
+    if (isPersonalGame) {
+      const personal = personalDataRef.current;
+      if (personal) {
+        setItems(personal.itemsByScenario.get(id) ?? []);
+      } else if (game) {
+        const catalog = await loadFurnitureCatalog();
+        const merged = mergeSnapshots(
+          parseSnapshot((game as any).host_space_snapshot),
+          parseSnapshot((game as any).guest_space_snapshot)
+        );
+        setItems(synthItems(merged, catalog));
+      }
     } else {
       setItems(await getItemsByScenario(id));
     }
     setHideStep(2);
   };
+
+  // (handleSelectScenario definit més amunt amb suport multi-sala)
+
 
   const handleSelectObject = async (objId: string) => {
     setSelectedObject(objId);

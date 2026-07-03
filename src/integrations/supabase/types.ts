@@ -1038,6 +1038,50 @@ export type Database = {
           },
         ]
       }
+      player_rooms: {
+        Row: {
+          created_at: string
+          custom_name: string
+          id: string
+          layout: Json
+          position_x: number
+          position_y: number
+          room_template_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_name: string
+          id?: string
+          layout?: Json
+          position_x?: number
+          position_y?: number
+          room_template_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string
+          id?: string
+          layout?: Json
+          position_x?: number
+          position_y?: number
+          room_template_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_rooms_room_template_id_fkey"
+            columns: ["room_template_id"]
+            isOneToOne: false
+            referencedRelation: "room_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_spaces: {
         Row: {
           created_at: string
@@ -1228,6 +1272,78 @@ export type Database = {
             columns: ["placed_in_scenario_id"]
             isOneToOne: false
             referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          icon: string
+          id: string
+          max_doors: number
+          name_key: string
+          price_coins: number
+          unlock_level: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          icon: string
+          id: string
+          max_doors?: number
+          name_key: string
+          price_coins?: number
+          unlock_level?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          max_doors?: number
+          name_key?: string
+          price_coins?: number
+          unlock_level?: number
+        }
+        Relationships: []
+      }
+      room_connections: {
+        Row: {
+          created_at: string
+          id: string
+          room_a_id: string
+          room_b_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          room_a_id: string
+          room_b_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          room_a_id?: string
+          room_b_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_connections_room_a_id_fkey"
+            columns: ["room_a_id"]
+            isOneToOne: false
+            referencedRelation: "player_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_connections_room_b_id_fkey"
+            columns: ["room_b_id"]
+            isOneToOne: false
+            referencedRelation: "player_rooms"
             referencedColumns: ["id"]
           },
         ]
