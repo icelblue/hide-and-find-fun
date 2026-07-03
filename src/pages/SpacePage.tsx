@@ -15,8 +15,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { toast } from "sonner";
+import { TerrainTile } from "@/components/space/TerrainTile";
+import { generateTerrain, preferredTerrainForCategory, MAP_SIZE, TERRAIN_BONUS } from "@/lib/terrain";
 
-const MAP_SIZE = 5;
+type Pet = { pet_icon: string; pet_name: string };
 
 type RoomTemplate = {
   id: string;
