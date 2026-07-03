@@ -66,6 +66,7 @@ import { useT } from "@/i18n/LanguageProvider";
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
 import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
+import { spriteForFurniture } from "@/lib/room-sprites";
 import FurnitureActionSheet from "@/components/game/FurnitureActionSheet";
 import { themeForScenarioName, autoLayoutForItems, PVP_GRID_W, PVP_GRID_H } from "@/lib/pvp-scenario-themes";
 import { SpecialReveal, type SpecialRevealData } from "@/components/game/SpecialReveal";
@@ -1782,9 +1783,11 @@ export default function GamePage() {
                   if (!s) return { slot: idx };
                   const item = currentScenarioItems.find((i: any) => i.id === s.itemId);
                   const allLooked = POSITIONS.every((p) => lookedSpots.has(`${s.itemId}:${p.value}`));
+                  const sprite = spriteForFurniture(item?.category, item?.name_key, item?.name);
                   return {
                     slot: idx,
                     icon: item?.icon,
+                    spriteUrl: sprite ?? undefined,
                     label: item?.name,
                     filled: true,
                     disabled: allLooked,
