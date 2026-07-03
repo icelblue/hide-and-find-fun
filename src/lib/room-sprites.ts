@@ -158,6 +158,8 @@ const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   [/(sof[àa]|couch|sofa)/i, sprSofa],
   [/(cadira|silla|chair|butaca|tamboret|banc|bench)/i, sprChair],
   [/(escriptori|desk)/i, sprDesk],
+  // ⚠️ Tauleta ABANS que taula (no conté "taula" com a substring, però sí "taul")
+  [/(tauleta|nightstand|mesita)/i, sprNightstand],
   [/(taula|mesa|table)/i, sprTable],
   // tech
   [/(televisi[óo]|television|\btv\b|pantalla|monitor)/i, sprTv],
