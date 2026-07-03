@@ -294,14 +294,25 @@ export default function GamePage() {
       let loadedInteractions: any[] = [];
 
       if (isPlaying && isPersonalGame) {
-        // ── Personal PvP: deriva items del snapshot, sense connexions ni dirty/breakable ──
+        // ── Personal PvP v2: multi-sala des de player_rooms ──
         try {
-          const personal = await loadPersonalCombatData(
-            (gameData as any)?.host_space_snapshot,
-            (gameData as any)?.guest_space_snapshot
-          );
-          loadedItems = personal.items;
-          setConnectedScenarios([]);
+          const hostId = (gameData as any)?.created_by;
+          const guestId = (gameData as any)?.invited_user_id;
+          const personal = hostId && guestId
+            ? await loadPersonalCombatDataFromRooms(hostId, guestId)
+            : await loadPersonalCombatData(
+                (gameData as any)?.host_space_snapshot,
+                (gameData as any)?.guest_space_snapshot
+              );
+          personalDataRef.current = personal;
+          // Items de l'escenari actual (si n'hi ha) o cap
+          loadedItems = currentScenId
+            ? (personal.itemsByScenario.get(currentScenId) ?? [])
+            : personal.items;
+          // Connexions veïnes de l'escenari actual
+          const scenariosById = new Map(personal.scenarios.map((s) => [s.id, s]));
+          const neighbors = currentScenId ? neighborsOf(currentScenId, personal.connections, scenariosById) : [];
+          setConnectedScenarios(neighbors);
           setDirtyItems(new Set());
           setBreakableItems(new Set());
         } catch (err: any) {
