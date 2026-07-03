@@ -55,6 +55,7 @@ export default function SpacePage() {
   const [rooms, setRooms] = useState<PlayerRoom[]>([]);
   const [conns, setConns] = useState<Connection[]>([]);
   const [coins, setCoins] = useState(0);
+  const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [addOpen, setAddOpen] = useState(false);
