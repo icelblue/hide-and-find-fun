@@ -31,6 +31,7 @@ import sprFridge from "@/assets/room/spr-fridge.png";
 import sprBath from "@/assets/room/spr-bath.png";
 import sprRug from "@/assets/room/spr-rug.png";
 import sprLamp from "@/assets/room/spr-lamp.png";
+import sprTable from "@/assets/room/spr-table.png";
 
 import type { ThemeKey } from "./room-themes";
 
@@ -77,6 +78,9 @@ const NAME_SPRITE: Record<string, string> = {
   "space.item.fridge": sprFridge,
   "space.item.refrigerator": sprFridge,
   "space.item.bathtub": sprBath,
+  "space.item.table": sprTable,
+  "space.item.diningtable": sprTable,
+  "space.item.coffeetable": sprTable,
 };
 
 /**
