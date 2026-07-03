@@ -496,7 +496,9 @@
     "comeBackIn": "Torna en {t}",
     "alreadyDone": "Ja has fet el repte d'avui",
     "error": "Error al repte diari",
-    "consequencesHint": "Les conseqüències es revelaran després de triar"
+    "consequencesHint": "Les conseqüències es revelaran després de triar",
+    "rewardHidden": "Recompensa aplicada"
+
   },
   "evolution": {
     "level": "Lv{n}",
