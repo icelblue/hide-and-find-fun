@@ -100,8 +100,6 @@ const SCENARIO_LAYOUTS: Record<string, CellRule[]> = {
     { pattern: /televisi|\btv\b/i, cell: 3 },
     { pattern: /llum|lamp/i, cell: 4 },
     { pattern: /aparador/i, cell: 5 },
-    { pattern: /prestatg/i, cell: 6 },
-    { pattern: /calaix/i, cell: 11 },
     { pattern: /taula|table/i, cell: 14 },
     { pattern: /cadira|chair/i, cell: 15 },
     { pattern: /sof[àa]|couch/i, cell: 19 },
