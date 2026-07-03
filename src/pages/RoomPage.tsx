@@ -277,12 +277,7 @@ export default function RoomPage() {
 
   const selectedEntry = selected ? resolveEntry(selected) : null;
 
-  // Botons de moviment: comprovem límits + ocupació per activar/desactivar
-  const canMove = (dx: number, dy: number) => {
-    const nx = room.position_x + dx;
-    const ny = room.position_y + dy;
-    if (nx < 0 || nx >= MAP_SIZE || ny < 0 || ny >= MAP_SIZE) return false;
-    return !otherRoomsOccupancy.has(`${nx}:${ny}`);
+
   };
 
   return (
