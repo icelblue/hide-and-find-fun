@@ -1,82 +1,69 @@
-# Pla: Grid 2D Pixel Art unificat (PvP + Espai Personal)
+# Pla: Backdrops pixel art per escenari PvP
 
-## Objectiu
+## Problema
 
-Substituir els `<Select>` de mobles del PvP i el grid abstracte de l'Espai Personal per un **mateix sistema de grid 2D pixel art** on cada sala té un mapa temàtic coherent (cuina té taulell/nevera/foguer; habitació té llit/armari/tauleta; jardí té gespa/arbres/tanca...). Els mobles es col·loquen a caselles fixes del grid; clicar-ne un obre un popover d'accions (PvP) o d'interaccions (Espai).
+Ara mateix els mobles "floten" sobre el terra: la pica de la cuina apareix directament sobre la rajola, l'ordinador del despatx sense taula sota, el vàter sense paret enrajolada al darrere. Falta **mobiliari-context** que aguanti visualment els items interactius.
 
-Un únic motor de renderitzat serveix les dues vistes → cost molt inferior a fer-ho dues vegades.
+## Solució: capa de "backdrop" per cel·la
 
-## Principis (tancats abans de codi)
+Afegim una **segona capa de sprites decoratius no interactius** que es pinta a sota dels mobles jugables, definida per escenari. No canvia lògica de joc — només render.
 
-1. **Un sol motor** `<PixelRoomGrid>` reutilitzat per PvP i Espai. Diferència = mode (`"pvp" | "personal"`) i handler de clic.
-2. **Grid fix 6×5** (240 cel·les màx per sala) — encaixa a 390px amb cel·les de 60px + gap 2px.
-3. **Layouts declaratius** a `src/lib/room-layouts.ts`: 1 arxiu, 1 layout per sala del catàleg (7 escenaris PvP + N sales personals per tema).
-4. **Sprites compartits**: la nevera del PvP "Cuina" és el mateix sprite que la nevera de la cuina personal. 1 sprite = molts usos.
-5. **Terreny per tema**, no per seed a l'Espai: la sala "Cuina" sempre té terra de rajola; "Jardí" sempre gespa. El seed que vam introduir queda **només per zones buides** entre sales.
-6. **Fallback accessible**: toggle "vista clàssica" (Select) es manté a settings — no eliminem els components actuals fins que el grid estigui validat.
+### Arquitectura (3 peces)
+
+1. **Nous sprites de "mobiliari base"** (~8 sprites reutilitzables):
+   - `spr-counter.png` — encimera de cuina (rectangle horitzontal, marbre/fusta)
+   - `spr-desk-surface.png` — superfície d'escriptori (per despatx)
+   - `spr-tiled-wall.png` — paret enrajolada (bany + cuina back)
+   - `spr-bath-tiles.png` — terra/paret lavabo amb sanefa
+   - `spr-nightstand.png` — tauleta petita (habitació, sota làmpada)
+   - `spr-garden-fence.png` — tanca de fusta (jardí, balcó)
+   - `spr-window.png` — finestra amb cel (paret superior sales interiors)
+   - `spr-curtain.png` — cortina lateral (menjador, habitació)
+
+2. **`SCENARIO_BACKDROPS`** a `pvp-scenario-themes.ts`:
+   ```ts
+   { cell: 6, sprite: sprCounter, span: 3 }  // encimera cel·les 6-8
+   { cell: 0, sprite: sprWindow, span: 2 }   // finestra paret superior
+   ```
+   Cada escenari té la seva llista fixa de decoracions posicionades.
+
+3. **`PixelRoomGrid` renderitza en 2 capes**:
+   - Capa 0: textura terreny (ja existeix)
+   - **Capa 1 (nova): backdrops** — sprites decoratius, `pointer-events: none`
+   - Capa 2: mobles interactius (ja existeix)
+
+### Layouts per escenari (context visual)
+
+| Escenari | Backdrops |
+|---|---|
+| **Cuina** | Encimera continua a fila 1 (sota nevera/forn/pica/microones), finestra paret superior |
+| **Lavabo** | Paret enrajolada superior, terra amb sanefa, encimera sota la pica |
+| **Despatx** | Superfície d'escriptori sota laptop/monitor, finestra, prestatgeria de fons |
+| **Habitació** | Tauleta al costat del llit, catifa de fons, finestra amb cortines |
+| **Menjador** | Cortines laterals, paret amb sanefa decorativa |
+| **Jardí** | Tanca perimetral, cel de fons a fila 0 |
+| **Balcó** | Barana inferior contínua, cel a fils 0-1 |
+
+També ajusto els `SCENARIO_LAYOUTS` perquè els mobles jugables encaixin **sobre** els seus backdrops (ex: la pica a cel·la 7 justament sobre l'encimera 6-8).
 
 ## Fases
 
-### Fase A — Motor + layouts (sense sprites)
-- `src/lib/room-layouts.ts` — coordenades `{itemId, x, y, w, h, spriteKey}` per **totes** les sales (7 PvP + tots els `room_catalog` temes personals).
-- `src/components/room/PixelRoomGrid.tsx` — grid CSS, cel·les buides = terreny temàtic (color pla), mobles = quadrats de color amb label.
-- Integració a `SpacePage` i vista PvP en mode "preview" (rere flag).
-- **Verificació**: render correcte a 390px, cap solapament, tots els mobles hi caben.
+**Fase 1** — Generació sprites backdrop (~8 imatges, ~0.5 crèdits) + tipus a `room-sprites.ts`.
 
-### Fase B — Popover d'accions (PvP) + interaccions (Personal)
-- `src/components/room/FurnitureActionSheet.tsx` — substitueix el `<Select>` del PvP amb el mateix menú d'accions (Observar/Moure), mateix cost, mateix efecte.
-- Mode "personal": clic obre accions "Netejar / Interactuar mascota / Moure moble" (les que ja existeixen).
-- Manteniment del `<Select>` clàssic sota flag `settings.classicView`.
-- **Verificació**: partida PvP completa jugable des del grid, sense regressió de tokens/moviments.
+**Fase 2** — `SCENARIO_BACKDROPS` map + render de capa 1 a `PixelRoomGrid`.
 
-### Fase C — Sprites pixel art
-- Generació de sprites (~60 únics: 40 mobles PvP + 20 extres personals) amb `imagegen` en batch, 64×64 transparent PNG.
-- 7 tilesets de terreny (rajola cuina, parquet habitació, gespa jardí, terra despatx, aigua lavabo, marbre menjador, fusta balcó).
-- Mascota com a sprite estàtic col·locat a la sala escollida (feature ja existent, només canvia el render).
-- **Verificació**: batch d'imatges revisat visualment; consistència d'estil (paleta limitada, mateix pixel size).
-
-### Fase D — Polish
-- Micro-animacions: hover casella, pulse a moble seleccionat, walk cycle de la mascota (2 frames).
-- SFX opcional (clic, obrir popover).
-- Traduccions dels nous strings d'acció (ja existeixen la majoria).
-
-## Riscos i mitigació
-
-| Risc | Mitigació |
-|---|---|
-| **Sales personals sense layout definit** (usuari afegeix sales custom) | Layout per defecte "graella lliure" 6×5 amb mobles auto-col·locats per ordre d'inserció; el layout temàtic només aplica si `room_catalog.theme` coincideix. |
-| **Sprites inconsistents** (imagegen varia estil) | Prompt mestre fixat + revisió humana batch abans de fase D. Si un sprite desentona, es regenera individualment. |
-| **Cost imagegen alt** (60+ sprites) | Reutilització agressiva: sprite "cadira" serveix a totes les sales. Total real ~35-40 sprites únics. |
-| **Regressió jugabilitat PvP** | Flag `classicView`, tests E2E (pla separat ja acordat) abans de retirar el `<Select>`. |
-| **Mòbil 390px estret** | Cel·les 60px validades en Fase A abans de fer sprites. Si no cap, baixem a grid 5×5. |
-| **Sales personals amb molts mobles** (>30) | Grid amb scroll vertical (afegim files, no columnes). |
-| **Terreny per seed vs per tema conflicteix** | Decisió tancada: seed només per zones exteriors entre sales. Dins la sala mana el tema. |
+**Fase 3** — Reajust de `SCENARIO_LAYOUTS` perquè cada moble caigui sobre el seu backdrop (pica sobre encimera, laptop sobre escriptori, vàter contra paret enrajolada).
 
 ## Cost estimat
 
-| Fase | Cost | Entregable |
-|---|---|---|
-| A. Motor + layouts | ~1 crèdit | Grid funcional sense art |
-| B. Popover + integració | ~1 crèdit | PvP + Personal jugables amb grid |
-| C. Sprites pixel art | ~1.5 crèdits | Art complet |
-| D. Polish | ~0.5 crèdits | Animacions + so |
-| **Total** | **~4 crèdits** | Sistema unificat complet |
+~1 crèdit total (0.5 sprites + 0.5 codi).
 
-## Ordre d'execució recomanat
+## Fora d'abast
 
-1. **A+B en un sol lliurament** (2 crèdits) — valida jugabilitat i UX abans d'invertir en art.
-2. Pausa: user prova, decideix si continuar.
-3. **C** — sprites en batch.
-4. **D** — polish final.
+- Animar backdrops (aigua a la pica, foc al forn) → fase posterior si vols.
+- Backdrops per Espai Personal → primer validem a PvP, després reutilitzem.
 
-## Fora d'abast (plans separats ja acordats)
+## Confirmar abans de construir
 
-- Eina admin translations.
-- Tests E2E Playwright del flux apartament (recomanable abans de retirar `<Select>` clàssic).
-- Refactor `StoryModePage`.
-
-## Decisions que necessito confirmar
-
-1. **Grid 6×5 fix per totes les sales?** (alternativa: mida variable per sala)
-2. **A+B junts primer i pausa abans de C+D?** (alternativa: tot d'un cop)
-3. **Sales personals custom sense tema** → layout genèric "graella lliure" OK?
+1. **Els 8 backdrops proposats són suficients** o vols algun específic (ex: llar de foc al menjador, mirall gran al lavabo com a peça central)?
+2. **Reajusto els layouts** perquè els mobles quedin ben posicionats sobre els backdrops (recomanat) o mantinc les cel·les actuals?
