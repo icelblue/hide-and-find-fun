@@ -46,6 +46,7 @@ type RoomTemplate = {
   id: string;
   icon: string;
   name_key: string;
+  category: string;
   grid_w: number;
   grid_h: number;
   allowed_categories: string[];
