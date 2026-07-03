@@ -1848,6 +1848,20 @@ export default function GamePage() {
               dirtyItems={dirtyItems}
               breakableItems={breakableItems}
             />
+          </div>
+          )}
+
+          {/* Social items (PvP only) */}
+          {!isStory && (
+            <SocialItemsPanel showPanel={showSocialPanel} setShowPanel={setShowSocialPanel}
+              player={player} onSendSocial={handleSendSocial}
+              messageInput={messageInput} setMessageInput={setMessageInput}
+              actionLoading={actionLoading}
+              connectedScenarios={connectedScenarios}
+              currentScenarioId={player?.current_scenario_id}
+              currentScenarioItems={currentScenarioItems} />
+          )}
+
 
           {/* History */}
           {moveHistory.length > 0 && (
