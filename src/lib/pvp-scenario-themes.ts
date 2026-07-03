@@ -1,12 +1,14 @@
 // ============================================================
-// pvp-scenario-themes.ts — Mapping escenari PvP → tema + layout
+// pvp-scenario-themes.ts — Configuració unificada d'escenaris PvP
+// ------------------------------------------------------------
+// Una única font de veritat per escenari (tema, layout, backdrops,
+// fallback cells). Helpers `cell(col,row)` per evitar índexs màgics.
 // ============================================================
 import { ROOM_THEMES, type RoomTheme } from "@/lib/room-themes";
 import bgCounter from "@/assets/room/bg-counter.png";
 import bgDeskSurface from "@/assets/room/bg-desk-surface.png";
 import bgTiledWall from "@/assets/room/bg-tiled-wall.png";
 import bgFence from "@/assets/room/bg-fence.png";
-import bgWindow from "@/assets/room/bg-window.png";
 import bgCurtain from "@/assets/room/bg-curtain.png";
 import bgRailing from "@/assets/room/bg-railing.png";
 import bgWallWood from "@/assets/room/bg-wall-wood.png";
@@ -15,191 +17,19 @@ import bgBacksplash from "@/assets/room/bg-backsplash.png";
 import bgSkyline from "@/assets/room/bg-skyline.png";
 import bgBalconyFloor from "@/assets/room/bg-balcony-floor.png";
 
-/** Retorna el tema visual d'un escenari PvP a partir del seu nom. */
-export function themeForScenarioName(name: string | null | undefined): RoomTheme {
-  if (!name) return ROOM_THEMES.hall;
-  const n = normScenarioKey(name);
-  if (n.includes("cuina") || n.includes("kitchen")) return ROOM_THEMES.kitchen;
-  if (n.includes("habitac") || n.includes("bedroom") || n.includes("dorm")) return ROOM_THEMES.bedroom;
-  if (n.includes("lavabo") || n.includes("bath")) return ROOM_THEMES.bath;
-  if (n.includes("menjador") || n.includes("dining")) return ROOM_THEMES.dining;
-  if (n.includes("despatx") || n.includes("office")) return ROOM_THEMES.office;
-  if (n.includes("jardi") || n.includes("garden")) return ROOM_THEMES.garden;
-  if (n.includes("balco") || n.includes("balcony")) return ROOM_THEMES.balcony;
-  if (n.includes("sala") || n.includes("living")) return ROOM_THEMES.livingroom;
-  return ROOM_THEMES.hall;
-}
+// ---------- Grid ----------
+export const PVP_GRID_W = 6;
+export const PVP_GRID_H = 5;
+export const PVP_GRID_CELLS = PVP_GRID_W * PVP_GRID_H;
+
+/** Converteix (col,row) → cell index. Evita hardcodejar 15, 22, etc. */
+export const cell = (col: number, row: number): number => row * PVP_GRID_W + col;
 
 export interface PvPGridSlot {
   itemId: string;
   cellIndex: number;
 }
 
-export const PVP_GRID_W = 6;
-export const PVP_GRID_H = 5;
-
-function normScenarioKey(name: string) {
-  return name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-// ============================================================
-// Layouts semàntics per escenari (grid 6×5 = 30 cel·les)
-// Indexació: idx = row * 6 + col. Fila 0 = paret superior.
-// Cada regla mapeja un patró de nom → cel·la ideal. Els mobles
-// sense match cauen als "fallback" per omplir sense superposar.
-// ============================================================
-type CellRule = { pattern: RegExp; cell: number };
-
-const SCENARIO_LAYOUTS: Record<string, CellRule[]> = {
-  // LAVABO: banyera a la paret llarga, WC en cantonada, pica sota mirall
-  lavabo: [
-    { pattern: /mirall|mirror/i, cell: 1 },       // paret sobre pica
-    { pattern: /prestatg/i, cell: 4 },            // paret dreta amunt
-    { pattern: /pica|sink/i, cell: 7 },           // sota mirall
-    { pattern: /tovalloler|towel/i, cell: 10 },   // costat
-    { pattern: /v[aà]ter|wc|toilet/i, cell: 11 }, // cantonada dreta
-    { pattern: /calaix|drawer/i, cell: 8 },
-    { pattern: /banyera|dutxa|bath/i, cell: 18 }, // paret baixa esq
-    { pattern: /cistella|paperera|basket/i, cell: 20 },
-    { pattern: /rentadora|washer|lavadora/i, cell: 22 },
-    { pattern: /secadora|dryer/i, cell: 23 },     // al costat rentadora
-  ],
-  // CUINA: electrodomèstics alineats a paret, taula al centre
-  cuina: [
-    { pattern: /nevera|fridge/i, cell: 0 },
-    { pattern: /forn|stove|oven/i, cell: 1 },
-    { pattern: /microones|microwave/i, cell: 2 },
-    { pattern: /pica|sink/i, cell: 3 },
-    { pattern: /calaix|drawer/i, cell: 4 },
-    { pattern: /despensa|pantry/i, cell: 5 },
-    { pattern: /taula|table/i, cell: 14 },        // centre
-    { pattern: /cadira|chair/i, cell: 15 },       // al costat taula
-  ],
-  // HABITACIÓ: llit centrat, armari a paret, escriptori cantonada
-  habitacio: [
-    { pattern: /armari|wardrobe/i, cell: 0 },
-    { pattern: /prestatg/i, cell: 1 },
-    { pattern: /c[oò]moda/i, cell: 4 },
-    { pattern: /calaixera/i, cell: 5 },
-    { pattern: /llit|bed|hamaca/i, cell: 8 },     // centre-esq
-    { pattern: /tauleta|nightstand/i, cell: 10 }, // costat llit
-    { pattern: /escriptori|desk/i, cell: 18 },
-    { pattern: /catifa|rug/i, cell: 21 },         // terra centre
-    { pattern: /caixa|box/i, cell: 23 },
-  ],
-  // DESPATX: escriptori centre, cadira al costat, arxius a paret
-  despatx: [
-    { pattern: /prestatg/i, cell: 0 },
-    { pattern: /arxivador|filing/i, cell: 5 },
-    { pattern: /llum|lamp/i, cell: 7 },
-    { pattern: /escriptori|desk/i, cell: 8 },
-    { pattern: /ordinador|laptop|computer/i, cell: 9 }, // sobre escriptori
-    { pattern: /calaix|drawer/i, cell: 11 },
-    { pattern: /cadira|chair/i, cell: 14 },        // davant escriptori
-    { pattern: /paperera|bin|trash/i, cell: 18 },
-  ],
-  // MENJADOR: TV a paret superior, sofà DAVANT la TV (mateixa columna), taula/cadires a un costat
-  menjador: [
-    { pattern: /vitrina/i, cell: 0 },
-    { pattern: /quadre|painting/i, cell: 2 },
-    { pattern: /televisi|\btv\b/i, cell: 3 },
-    { pattern: /llum|lamp/i, cell: 4 },
-    { pattern: /aparador/i, cell: 5 },
-    { pattern: /sof[àa]|couch/i, cell: 15 },   // davant la TV
-    { pattern: /taula|table/i, cell: 20 },
-    { pattern: /cadira|chair/i, cell: 22 },
-    { pattern: /catifa|rug/i, cell: 26 },
-  ],
-  // JARDÍ: arbre a un costat, caseta a l'altre, elements dispersos
-  jardi: [
-    { pattern: /arbre|tree/i, cell: 0 },
-    { pattern: /caseta|shed/i, cell: 5 },
-    { pattern: /hamaca/i, cell: 8 },
-    { pattern: /jardinera|planter/i, cell: 11 },
-    { pattern: /banc|bench/i, cell: 15 },
-    { pattern: /pedra|rock|stone/i, cell: 18 },
-    { pattern: /barbacoa|bbq|grill/i, cell: 19 },
-    { pattern: /regadora|watering/i, cell: 21 },
-    { pattern: /ba[uú]l|chest/i, cell: 23 },
-  ],
-  // BALCÓ: cel + skyline fila 0-1 (buides visualment), barana fila 2, mobles a terra fila 3-4
-  balco: [
-    { pattern: /jardinera|planter/i, cell: 18 },
-    { pattern: /testos|plant|maceta/i, cell: 24 },
-    { pattern: /estenedor|clothesline/i, cell: 19 },
-    { pattern: /fanal|lantern|lamp/i, cell: 20 },
-    { pattern: /taula|table/i, cell: 21 },
-    { pattern: /gerro|vase/i, cell: 22 },
-    { pattern: /catifa|rug/i, cell: 26 },
-    { pattern: /cadira|chair/i, cell: 27 },
-    { pattern: /caixa|box/i, cell: 28 },
-  ],
-};
-
-// Fallback per escenaris sense layout — distribució en balconet
-const PRESET_LAYOUTS: Record<number, number[]> = {
-  4:  [8, 11, 20, 23],
-  5:  [7, 10, 13, 20, 23],
-  6:  [7, 10, 13, 19, 22, 25],
-  7:  [7, 10, 13, 19, 22, 25, 28],
-  8:  [6, 8, 10, 12, 18, 20, 22, 24],
-  9:  [6, 8, 10, 12, 18, 20, 22, 24, 27],
-  10: [6, 8, 10, 12, 18, 20, 22, 24, 26, 28],
-  11: [6, 8, 10, 12, 14, 18, 20, 22, 24, 26, 28],
-  12: [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28],
-};
-
-// Ordre preferent per omplir mobles sense regla (evita paret superior i cantonades ja usades)
-const FALLBACK_CELLS = [13, 16, 20, 22, 7, 10, 25, 26, 27, 28, 9, 12, 6, 17, 3, 4, 2];
-
-/**
- * Auto-layout d'items en la graella PvP. Si l'escenari té un layout semàntic
- * definit, col·loca cada moble a la cel·la lògica pel seu tipus (banyera al
- * lloc de la banyera, nevera a la cuina, etc). La resta cau a cel·les lliures.
- */
-export function autoLayoutForItems(
-  items: Array<{ id: string; name?: string; name_key?: string }>,
-  scenarioName?: string | null,
-): PvPGridSlot[] {
-  if (items.length === 0) return [];
-
-  const scenKey = scenarioName ? normScenarioKey(scenarioName) : "";
-  const layoutKey = Object.keys(SCENARIO_LAYOUTS).find((k) => scenKey.includes(k));
-  const rules = layoutKey ? SCENARIO_LAYOUTS[layoutKey] : null;
-
-  if (rules) {
-    const used = new Set<number>();
-    const result: PvPGridSlot[] = [];
-    const unmatched: typeof items = [];
-    for (const it of items) {
-      const hay = `${it.name ?? ""} ${it.name_key ?? ""}`;
-      const rule = rules.find((r) => r.pattern.test(hay) && !used.has(r.cell));
-      if (rule) {
-        used.add(rule.cell);
-        result.push({ itemId: it.id, cellIndex: rule.cell });
-      } else {
-        unmatched.push(it);
-      }
-    }
-    for (const it of unmatched) {
-      const cell = FALLBACK_CELLS.find((c) => !used.has(c)) ?? [...Array(30).keys()].find((c) => !used.has(c)) ?? 0;
-      used.add(cell);
-      result.push({ itemId: it.id, cellIndex: cell });
-    }
-    return result;
-  }
-
-  // Fallback genèric per escenaris desconeguts
-  const n = items.length;
-  const cells = PRESET_LAYOUTS[n] ?? PRESET_LAYOUTS[Math.min(12, n)];
-  return items.slice(0, cells.length).map((it, i) => ({ itemId: it.id, cellIndex: cells[i] }));
-}
-
-// ============================================================
-// BACKDROPS — capa decorativa (mobiliari base) per escenari
-// Cada backdrop cobreix un rectangle del grid [col, row, spanCols, spanRows]
-// i es pinta SOTA els mobles interactius. No captura clicks.
-// ============================================================
 export interface ScenarioBackdrop {
   sprite: string;
   col: number;
@@ -212,50 +42,263 @@ export interface ScenarioBackdrop {
   cover?: boolean;
 }
 
-const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
-  cuina: [
-    // Encimera contínua fila 0
-    { sprite: bgCounter, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true },
-    // Rajola "backsplash" a la fila 1 (paret sobre l'encimera) — dóna profunditat
-    { sprite: bgBacksplash, col: 0, row: 1, spanCols: 6, spanRows: 1, cover: true, opacity: 0.55 },
-  ],
-  lavabo: [
-    { sprite: bgTiledWall, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true, opacity: 0.55 },
-    { sprite: bgCounter, col: 0, row: 1, spanCols: 3, spanRows: 1, cover: true, opacity: 0.9 },
-  ],
-  despatx: [
-    { sprite: bgDeskSurface, col: 1, row: 1, spanCols: 4, spanRows: 2 },
-  ],
-  habitacio: [
-    // Paret de fusta darrere la zona del llit (fila 0-1) — capçalera visual
-    { sprite: bgWallWood, col: 1, row: 0, spanCols: 4, spanRows: 2, cover: true, opacity: 0.55 },
-    // Catifa gran centrada sota el llit i la tauleta
-    { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 2, opacity: 0.8 },
-  ],
-  menjador: [
-    // Paret de fusta amb TV al centre (fila 0)
-    { sprite: bgWallWood, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.7 },
-    // Catifa gran davall de sofà + taula (files 2-4)
-    { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 3, opacity: 0.75 },
-  ],
-  jardi: [
-    { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
-    { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
-  ],
-  balco: [
-    // Cel amb skyline al fons (files 0-1)
-    { sprite: bgSkyline, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true },
-    // Terra de terracota (files 3-4)
-    { sprite: bgBalconyFloor, col: 0, row: 3, spanCols: 6, spanRows: 2, cover: true, opacity: 0.85 },
-    // Barana de forja a la fila 2 (línia horitzó separa cel de terra)
-    { sprite: bgRailing, col: 0, row: 2, spanCols: 6, spanRows: 1, cover: true },
-  ],
+type CellRule = { pattern: RegExp; cell: number };
+
+interface ScenarioConfig {
+  /** Alies/normalitzats que fan match amb aquest escenari */
+  aliases: string[];
+  theme: RoomTheme;
+  layout: CellRule[];
+  backdrops: ScenarioBackdrop[];
+  /** Cel·les preferides per items sense regla — han d'evitar zones tapades pel backdrop */
+  fallbackCells: number[];
+}
+
+function normScenarioKey(name: string) {
+  return name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// ============================================================
+// SCENARIO_CONFIG — única font de veritat per escenari
+// Layout: idx = row*6 + col. Fila 0 = paret superior.
+// ============================================================
+const SCENARIO_CONFIG: Record<string, ScenarioConfig> = {
+  cuina: {
+    aliases: ["cuina", "kitchen"],
+    theme: ROOM_THEMES.kitchen,
+    layout: [
+      { pattern: /nevera|fridge/i, cell: cell(0, 0) },
+      { pattern: /forn|stove|oven/i, cell: cell(1, 0) },
+      { pattern: /microones|microwave/i, cell: cell(2, 0) },
+      { pattern: /pica|sink/i, cell: cell(3, 0) },
+      { pattern: /calaix|drawer/i, cell: cell(4, 0) },
+      { pattern: /despensa|pantry/i, cell: cell(5, 0) },
+      { pattern: /taula|table/i, cell: cell(2, 2) },
+      { pattern: /cadira|chair/i, cell: cell(3, 2) },
+    ],
+    backdrops: [
+      { sprite: bgCounter, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true },
+      { sprite: bgBacksplash, col: 0, row: 1, spanCols: 6, spanRows: 1, cover: true, opacity: 0.55 },
+    ],
+    // Evitem fila 0 (encimera) i fila 1 (backsplash opac)
+    fallbackCells: [cell(1, 2), cell(4, 2), cell(0, 3), cell(2, 3), cell(4, 3), cell(0, 4), cell(2, 4), cell(4, 4), cell(5, 4)],
+  },
+  lavabo: {
+    aliases: ["lavabo", "bath"],
+    theme: ROOM_THEMES.bath,
+    layout: [
+      { pattern: /mirall|mirror/i, cell: cell(1, 0) },
+      { pattern: /prestatg/i, cell: cell(4, 0) },
+      { pattern: /pica|sink/i, cell: cell(1, 1) },
+      { pattern: /tovalloler|towel/i, cell: cell(4, 1) },
+      { pattern: /v[aà]ter|wc|toilet/i, cell: cell(5, 1) },
+      { pattern: /calaix|drawer/i, cell: cell(2, 1) },
+      { pattern: /banyera|dutxa|bath/i, cell: cell(0, 3) },
+      { pattern: /cistella|paperera|basket/i, cell: cell(2, 3) },
+      { pattern: /rentadora|washer|lavadora/i, cell: cell(4, 3) },
+      { pattern: /secadora|dryer/i, cell: cell(5, 3) },
+    ],
+    backdrops: [
+      { sprite: bgTiledWall, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true, opacity: 0.55 },
+      { sprite: bgCounter, col: 0, row: 1, spanCols: 3, spanRows: 1, cover: true, opacity: 0.9 },
+    ],
+    fallbackCells: [cell(0, 2), cell(2, 2), cell(4, 2), cell(1, 4), cell(3, 4), cell(5, 4)],
+  },
+  habitacio: {
+    aliases: ["habitac", "bedroom", "dorm"],
+    theme: ROOM_THEMES.bedroom,
+    layout: [
+      { pattern: /armari|wardrobe/i, cell: cell(0, 0) },
+      { pattern: /prestatg/i, cell: cell(1, 0) },
+      { pattern: /c[oò]moda/i, cell: cell(4, 0) },
+      { pattern: /calaixera/i, cell: cell(5, 0) },
+      { pattern: /llit|bed|hamaca/i, cell: cell(2, 1) },
+      { pattern: /tauleta|nightstand/i, cell: cell(4, 1) },
+      { pattern: /escriptori|desk/i, cell: cell(0, 3) },
+      { pattern: /catifa|rug/i, cell: cell(3, 3) },
+      { pattern: /caixa|box/i, cell: cell(5, 3) },
+    ],
+    backdrops: [
+      { sprite: bgWallWood, col: 1, row: 0, spanCols: 4, spanRows: 2, cover: true, opacity: 0.55 },
+      { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 2, opacity: 0.8 },
+    ],
+    // Fila 4 lliure + cantonades no cobertes
+    fallbackCells: [cell(0, 4), cell(1, 4), cell(2, 4), cell(3, 4), cell(4, 4), cell(5, 4), cell(0, 2), cell(5, 2)],
+  },
+  despatx: {
+    aliases: ["despatx", "office"],
+    theme: ROOM_THEMES.office,
+    layout: [
+      { pattern: /prestatg/i, cell: cell(0, 0) },
+      { pattern: /arxivador|filing/i, cell: cell(5, 0) },
+      { pattern: /llum|lamp/i, cell: cell(1, 1) },
+      { pattern: /escriptori|desk/i, cell: cell(2, 1) },
+      { pattern: /ordinador|laptop|computer/i, cell: cell(3, 1) },
+      { pattern: /calaix|drawer/i, cell: cell(5, 1) },
+      { pattern: /cadira|chair/i, cell: cell(2, 2) },
+      { pattern: /paperera|bin|trash/i, cell: cell(0, 3) },
+    ],
+    backdrops: [
+      { sprite: bgDeskSurface, col: 1, row: 1, spanCols: 4, spanRows: 2 },
+    ],
+    fallbackCells: [cell(2, 0), cell(3, 0), cell(0, 4), cell(2, 4), cell(4, 4), cell(5, 4), cell(0, 2), cell(5, 3)],
+  },
+  menjador: {
+    aliases: ["menjador", "dining"],
+    theme: ROOM_THEMES.dining,
+    layout: [
+      { pattern: /vitrina/i, cell: cell(0, 0) },
+      { pattern: /quadre|painting/i, cell: cell(2, 0) },
+      { pattern: /televisi|\btv\b/i, cell: cell(3, 0) },
+      { pattern: /llum|lamp/i, cell: cell(4, 0) },
+      { pattern: /aparador/i, cell: cell(5, 0) },
+      { pattern: /sof[àa]|couch/i, cell: cell(3, 2) },
+      { pattern: /taula|table/i, cell: cell(2, 3) },
+      { pattern: /cadira|chair/i, cell: cell(4, 3) },
+      { pattern: /catifa|rug/i, cell: cell(2, 4) },
+    ],
+    backdrops: [
+      { sprite: bgWallWood, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.7 },
+      { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 3, opacity: 0.75 },
+    ],
+    fallbackCells: [cell(0, 2), cell(5, 2), cell(0, 3), cell(5, 3), cell(0, 4), cell(5, 4), cell(1, 1), cell(4, 1)],
+  },
+  jardi: {
+    aliases: ["jardi", "garden"],
+    theme: ROOM_THEMES.garden,
+    layout: [
+      { pattern: /arbre|tree/i, cell: cell(0, 0) },
+      { pattern: /caseta|shed/i, cell: cell(5, 0) },
+      { pattern: /hamaca/i, cell: cell(2, 1) },
+      { pattern: /jardinera|planter/i, cell: cell(5, 1) },
+      { pattern: /banc|bench/i, cell: cell(3, 2) },
+      { pattern: /pedra|rock|stone/i, cell: cell(0, 3) },
+      { pattern: /barbacoa|bbq|grill/i, cell: cell(1, 3) },
+      { pattern: /regadora|watering/i, cell: cell(3, 3) },
+      { pattern: /ba[uú]l|chest/i, cell: cell(5, 3) },
+    ],
+    backdrops: [
+      { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
+      { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
+    ],
+    // Evitem files 0 i 4 (tanques opaques)
+    fallbackCells: [cell(1, 1), cell(3, 1), cell(0, 2), cell(1, 2), cell(4, 2), cell(5, 2), cell(2, 3), cell(4, 3)],
+  },
+  balco: {
+    aliases: ["balco", "balcony"],
+    theme: ROOM_THEMES.balcony,
+    layout: [
+      { pattern: /jardinera|planter/i, cell: cell(0, 3) },
+      { pattern: /testos|plant|maceta/i, cell: cell(0, 4) },
+      { pattern: /estenedor|clothesline/i, cell: cell(1, 3) },
+      { pattern: /fanal|lantern|lamp/i, cell: cell(2, 3) },
+      { pattern: /taula|table/i, cell: cell(3, 3) },
+      { pattern: /gerro|vase/i, cell: cell(4, 3) },
+      { pattern: /catifa|rug/i, cell: cell(2, 4) },
+      { pattern: /cadira|chair/i, cell: cell(3, 4) },
+      { pattern: /caixa|box/i, cell: cell(4, 4) },
+    ],
+    backdrops: [
+      { sprite: bgSkyline, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true },
+      { sprite: bgBalconyFloor, col: 0, row: 3, spanCols: 6, spanRows: 2, cover: true, opacity: 0.85 },
+      { sprite: bgRailing, col: 0, row: 2, spanCols: 6, spanRows: 1, cover: true },
+    ],
+    // Fila 0-2 són cel + barana (no s'hi posen mobles). Ompler només fila 3-4.
+    fallbackCells: [cell(5, 3), cell(1, 4), cell(5, 4), cell(0, 3), cell(0, 4)],
+  },
+  sala: {
+    aliases: ["sala", "living"],
+    theme: ROOM_THEMES.livingroom,
+    layout: [],
+    backdrops: [],
+    fallbackCells: [],
+  },
 };
+
+// Fallback global (per escenaris sense config o quan la per-escenari s'esgota)
+const DEFAULT_FALLBACK_CELLS = [
+  cell(1, 2), cell(4, 2), cell(2, 3), cell(4, 3),
+  cell(1, 1), cell(4, 1), cell(1, 4), cell(4, 4),
+  cell(0, 2), cell(5, 2), cell(0, 3), cell(5, 3),
+];
+
+// Fallback per escenaris sense layout — distribució uniforme
+const PRESET_LAYOUTS: Record<number, number[]> = {
+  4:  [8, 11, 20, 23],
+  5:  [7, 10, 13, 20, 23],
+  6:  [7, 10, 13, 19, 22, 25],
+  7:  [7, 10, 13, 19, 22, 25, 28],
+  8:  [6, 8, 10, 12, 18, 20, 22, 24],
+  9:  [6, 8, 10, 12, 18, 20, 22, 24, 27],
+  10: [6, 8, 10, 12, 18, 20, 22, 24, 26, 28],
+  11: [6, 8, 10, 12, 14, 18, 20, 22, 24, 26, 28],
+  12: [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28],
+};
+
+/** Resol la config d'un escenari a partir del seu nom (o null). */
+function configForScenario(scenarioName?: string | null): ScenarioConfig | null {
+  if (!scenarioName) return null;
+  const key = normScenarioKey(scenarioName);
+  for (const cfg of Object.values(SCENARIO_CONFIG)) {
+    if (cfg.aliases.some((a) => key.includes(a))) return cfg;
+  }
+  return null;
+}
+
+/** Retorna el tema visual d'un escenari PvP a partir del seu nom. */
+export function themeForScenarioName(name: string | null | undefined): RoomTheme {
+  return configForScenario(name)?.theme ?? ROOM_THEMES.hall;
+}
 
 /** Retorna els backdrops d'un escenari (buit si no en té). */
 export function backdropsForScenario(scenarioName?: string | null): ScenarioBackdrop[] {
-  if (!scenarioName) return [];
-  const key = normScenarioKey(scenarioName);
-  const match = Object.keys(SCENARIO_BACKDROPS).find((k) => key.includes(k));
-  return match ? SCENARIO_BACKDROPS[match] : [];
+  return configForScenario(scenarioName)?.backdrops ?? [];
 }
+
+/**
+ * Auto-layout d'items en la graella PvP. Si l'escenari té un layout semàntic
+ * definit, col·loca cada moble a la cel·la lògica pel seu tipus. La resta cau
+ * a cel·les de fallback específiques (que eviten zones tapades pel backdrop).
+ */
+export function autoLayoutForItems(
+  items: Array<{ id: string; name?: string; name_key?: string }>,
+  scenarioName?: string | null,
+): PvPGridSlot[] {
+  if (items.length === 0) return [];
+
+  const cfg = configForScenario(scenarioName);
+
+  if (cfg && cfg.layout.length > 0) {
+    const used = new Set<number>();
+    const result: PvPGridSlot[] = [];
+    const unmatched: typeof items = [];
+    for (const it of items) {
+      const hay = `${it.name ?? ""} ${it.name_key ?? ""}`;
+      const rule = cfg.layout.find((r) => r.pattern.test(hay) && !used.has(r.cell));
+      if (rule) {
+        used.add(rule.cell);
+        result.push({ itemId: it.id, cellIndex: rule.cell });
+      } else {
+        unmatched.push(it);
+      }
+    }
+    const fallbacks = [...cfg.fallbackCells, ...DEFAULT_FALLBACK_CELLS];
+    for (const it of unmatched) {
+      const c =
+        fallbacks.find((k) => !used.has(k)) ??
+        [...Array(PVP_GRID_CELLS).keys()].find((k) => !used.has(k)) ??
+        0;
+      used.add(c);
+      result.push({ itemId: it.id, cellIndex: c });
+    }
+    return result;
+  }
+
+  // Fallback genèric per escenaris desconeguts
+  const n = items.length;
+  const cells = PRESET_LAYOUTS[n] ?? PRESET_LAYOUTS[Math.min(12, n)];
+  return items.slice(0, cells.length).map((it, i) => ({ itemId: it.id, cellIndex: cells[i] }));
+}
+
+// bgCurtain queda importat per si un futur escenari (ex. sala) el reutilitza.
+void bgCurtain;
