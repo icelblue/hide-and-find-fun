@@ -109,7 +109,7 @@ export default function RoomPage() {
 
       const { data: tpl } = await supabase
         .from("room_catalog")
-        .select("id, icon, name_key, grid_w, grid_h, allowed_categories, happiness_multiplier")
+        .select("id, icon, name_key, category, grid_w, grid_h, allowed_categories, happiness_multiplier")
         .eq("id", rm.data.room_template_id)
         .maybeSingle();
       if (tpl) setTemplate(tpl as unknown as RoomTemplate);
