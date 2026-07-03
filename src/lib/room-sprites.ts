@@ -150,7 +150,7 @@ const NAME_SPRITE: Record<string, string> = {
 const KEYWORD_SPRITE: Array<[RegExp, string]> = [
   // dormitori
   [/\b(llit|cama|bed|hamaca)\b/i, sprBed],
-  [/\b(sof[àa]|couch|sofa|tauleta)\b/i, sprSofa],
+  [/\b(sof[àa]|couch|sofa)\b/i, sprSofa],
   [/\b(cadira|silla|chair|butaca|tamboret|banc|bench)\b/i, sprChair],
   [/\b(escriptori|desk)\b/i, sprDesk],
   [/\b(taula|mesa|table)\b/i, sprTable],
