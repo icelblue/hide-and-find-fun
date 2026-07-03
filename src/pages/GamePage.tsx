@@ -127,6 +127,10 @@ export default function GamePage() {
 
   // Playing state
   const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
+  const [pixelView, setPixelView] = useState<boolean>(() => {
+    try { return localStorage.getItem("pvp:pixelView") !== "false"; } catch { return true; }
+  });
+  const [sheetItemId, setSheetItemId] = useState<string | null>(null);
   const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
