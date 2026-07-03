@@ -1278,8 +1278,12 @@ export type Database = {
       }
       room_catalog: {
         Row: {
+          allowed_categories: string[]
           category: string
           created_at: string
+          grid_h: number
+          grid_w: number
+          happiness_multiplier: number
           icon: string
           id: string
           max_doors: number
@@ -1288,8 +1292,12 @@ export type Database = {
           unlock_level: number
         }
         Insert: {
+          allowed_categories?: string[]
           category: string
           created_at?: string
+          grid_h?: number
+          grid_w?: number
+          happiness_multiplier?: number
           icon: string
           id: string
           max_doors?: number
@@ -1298,8 +1306,12 @@ export type Database = {
           unlock_level?: number
         }
         Update: {
+          allowed_categories?: string[]
           category?: string
           created_at?: string
+          grid_h?: number
+          grid_w?: number
+          happiness_multiplier?: number
           icon?: string
           id?: string
           max_doors?: number
@@ -2064,6 +2076,10 @@ export type Database = {
         Returns: boolean
       }
       join_game_by_link: { Args: { _game_id: string }; Returns: Json }
+      move_player_room: {
+        Args: { _new_x: number; _new_y: number; _room_id: string }
+        Returns: undefined
+      }
       place_reward_item: {
         Args: { _player_reward_id: string; _scenario_id: string }
         Returns: undefined
