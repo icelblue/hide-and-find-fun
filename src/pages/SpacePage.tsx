@@ -366,11 +366,20 @@ export default function SpacePage() {
                   <span className="text-2xl">{tpl.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{t(tpl.name_key, tpl.id)}</p>
-                    <p className="text-[10px] text-muted-foreground">Lv{tpl.unlock_level} · {tpl.max_doors} 🚪 màx.</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Lv{tpl.unlock_level} · {tpl.grid_w}×{tpl.grid_h} · {tpl.max_doors}🚪
+                      {Number(tpl.happiness_multiplier) > 1 && ` · ×${Number(tpl.happiness_multiplier).toFixed(2)}😊`}
+                    </p>
+                    {tpl.allowed_categories && tpl.allowed_categories.length > 0 && (
+                      <p className="text-[9px] text-muted-foreground/70 truncate">
+                        {tpl.allowed_categories.map((c) => t(`space.cat.${c}`, c)).join(" · ")}
+                      </p>
+                    )}
                   </div>
                   <span className={`text-sm font-semibold ${canAfford ? "text-accent" : "text-muted-foreground"}`}>
                     {tpl.price_coins === 0 ? t("apartment.free", "Gratis") : `🪙 ${tpl.price_coins}`}
                   </span>
+
                 </button>
               );
             })}
