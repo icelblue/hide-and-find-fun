@@ -259,10 +259,46 @@ export default function LobbyPage() {
     try {
       const game = await createGame(user.id);
       toast.success(`${t("lobby.createGame")}: ${game.code}`);
+      setCreateOpen(false);
       navigate(`/game/${game.id}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setLoading(false); }
   };
+
+  // Obre el diàleg de creació i reseteja estat
+  const openCreateDialog = () => {
+    setCreateMode("pick");
+    setPersonalSearch("");
+    setPersonalResults([]);
+    setPersonalPlacedCount(null);
+    setCreateOpen(true);
+  };
+
+  // Comprova pre-requisit personal PvP: ≥4 mobles col·locats a l'espai propi
+  const enterPersonalMode = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from("player_spaces").select("layout").eq("user_id", user.id).maybeSingle();
+      const raw = (data as { layout?: unknown } | null)?.layout;
+      const count = Array.isArray(raw) ? raw.length : 0;
+      setPersonalPlacedCount(count);
+      setCreateMode("personal");
+    } finally { setLoading(false); }
+  };
+
+  const searchForPersonal = async () => {
+    if (!user || personalSearch.length < 2) return;
+    setPersonalSearching(true);
+    try {
+      const results = await searchPlayers(personalSearch, user.id);
+      setPersonalResults(results);
+      if (results.length === 0) toast.info(t("lobby.noPlayerFound"));
+    } catch (err: any) { toast.error(err.message); }
+    finally { setPersonalSearching(false); }
+  };
+
 
   const handleRandomMatch = async () => {
     if (!user) return;
