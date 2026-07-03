@@ -55,6 +55,10 @@ import sprSculpture from "@/assets/room/spr-sculpture.png";
 import sprVase from "@/assets/room/spr-vase.png";
 import sprMicrowave from "@/assets/room/spr-microwave.png";
 import sprWasher from "@/assets/room/spr-washer.png";
+import sprSwing from "@/assets/room/spr-swing.png";
+import sprFountain from "@/assets/room/spr-fountain.png";
+import sprPool from "@/assets/room/spr-pool.png";
+import sprCastle from "@/assets/room/spr-castle.png";
 
 import type { ThemeKey } from "./room-themes";
 
