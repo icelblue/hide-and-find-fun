@@ -153,14 +153,12 @@ export default function RoomPage() {
         .eq("user_id", user.id)
         .neq("id", roomId);
       const furn = new Set<string>();
-      const occ = new Set<string>();
-      (data ?? []).forEach((r: { position_x: number; position_y: number; layout?: unknown }) => {
-        occ.add(`${r.position_x}:${r.position_y}`);
+      (data ?? []).forEach((r: { layout?: unknown }) => {
         const l = Array.isArray(r.layout) ? (r.layout as LayoutSlot[]) : [];
         l.forEach((x) => furn.add(x.furniture_id));
       });
       setPlacedElsewhere(furn);
-      setOtherRoomsOccupancy(occ);
+
     })();
   }, [user, roomId, room?.layout]);
 
