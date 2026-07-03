@@ -330,6 +330,14 @@ export default function RoomPage() {
               {multiplier > 1 && (
                 <span className="text-accent font-semibold">×{multiplier.toFixed(2)} 😊</span>
               )}
+              {terrainBonus > 0 && (
+                <span
+                  className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold"
+                  title={t("apartment.terrainBonusTip", "Sala en el seu terreny preferit: +10% felicitat")}
+                >
+                  🌱 +{Math.round(terrainBonus * 100)}%
+                </span>
+              )}
             </CardContent>
           </Card>
         )}
