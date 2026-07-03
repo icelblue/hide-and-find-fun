@@ -1118,8 +1118,21 @@
       "bed": "Llits",
       "rug": "Catifes",
       "plant": "Plantes",
-      "decor": "Decoració"
-    }
+      "decor": "Decoració",
+      "chair": "Cadires",
+      "desk": "Escriptoris",
+      "tech": "Tecnologia",
+      "music": "Música",
+      "art": "Art",
+      "nature": "Natura",
+      "pet": "Mascota"
+    },
+    "tab": {
+      "furniture": "Mobles",
+      "collection": "Col·lecció"
+    },
+    "noRewards": "Encara no tens ítems de col·lecció. Guanya partides!",
+    "allRewardsPlaced": "Tots els ítems de col·lecció ja col·locats"
   },
   "furniture": {
     "bed_basic": "Llit bàsic",
@@ -1141,7 +1154,19 @@
     "tech_tv": "Televisió",
     "tech_console": "Consola retro",
     "music_guitar": "Guitarra",
-    "art_sculpture": "Escultura"
+    "art_sculpture": "Escultura",
+    "nature_flowers": "Flors",
+    "nature_cactus": "Cactus",
+    "nature_mushroom": "Bolet decoratiu",
+    "pet_bone": "Os",
+    "pet_ball": "Pilota",
+    "pet_fishtank": "Peixera",
+    "tech_laptop": "Portàtil",
+    "tech_headphones": "Auriculars",
+    "music_piano": "Piano",
+    "music_drums": "Bateria",
+    "decor_mirror": "Mirall",
+    "decor_candles": "Espelmes"
   },
   "lobby_extra": {
     "spaceMenu": "El meu espai",
