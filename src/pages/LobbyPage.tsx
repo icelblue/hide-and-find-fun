@@ -707,11 +707,10 @@ export default function LobbyPage() {
 
           {createMode === "personal" && (
             <div className="space-y-3">
-              {personalPlacedCount !== null && personalPlacedCount < 4 ? (
+              {personalPlacedCount !== null && personalPlacedCount === 0 ? (
                 <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 space-y-2">
                   <p className="text-sm">
-                    ⚠️ {t("lobby.createDialog.needMore", "Necessites almenys 4 mobles al teu espai.")}
-                    <span className="text-muted-foreground"> ({personalPlacedCount}/4)</span>
+                    ⚠️ {t("lobby.createDialog.needMoreV2", "Necessites almenys 2 sales connectades amb portes i 4 mobles en total al teu apartament.")}
                   </p>
                   <Button size="sm" className="w-full" onClick={() => { setCreateOpen(false); navigate("/space"); }}>
                     🏠 {t("lobby.createDialog.goDecorate", "Decorar el meu espai")}
