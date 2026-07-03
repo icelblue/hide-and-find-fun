@@ -74,11 +74,12 @@ export default function SpacePage() {
 
   const refresh = useCallback(async () => {
     if (!user) return;
-    const [tpls, rms, cns, prof] = await Promise.all([
+    const [tpls, rms, cns, prof, pt] = await Promise.all([
       supabase.from("room_catalog").select("*").order("unlock_level"),
       supabase.from("player_rooms").select("id, room_template_id, custom_name, layout, position_x, position_y").eq("user_id", user.id),
       supabase.from("room_connections").select("id, room_a_id, room_b_id").eq("user_id", user.id),
       supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).maybeSingle(),
+      supabase.from("player_pets").select("pet_icon, pet_name").eq("user_id", user.id).maybeSingle(),
     ]);
     setTemplates((tpls.data as RoomTemplate[]) ?? []);
     setRooms(((rms.data as unknown as PlayerRoom[]) ?? []).map((r) => ({
@@ -87,6 +88,7 @@ export default function SpacePage() {
     })));
     setConns((cns.data as Connection[]) ?? []);
     setCoins((prof.data as { bonus_tokens?: number } | null)?.bonus_tokens ?? 0);
+    setPet((pt.data as Pet | null) ?? null);
     setLoading(false);
   }, [user]);
 
