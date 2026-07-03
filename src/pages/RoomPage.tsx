@@ -268,26 +268,8 @@ export default function RoomPage() {
     setRoom({ ...room, custom_name: trimmed });
   }, [user, room, nameDraft, t]);
 
-  const handleMove = useCallback(async (dx: number, dy: number) => {
-    if (!room) return;
-    const nx = room.position_x + dx;
-    const ny = room.position_y + dy;
-    if (nx < 0 || nx >= MAP_SIZE || ny < 0 || ny >= MAP_SIZE) {
-      toast.error(t("apartment.moveOutOfBounds", "Fora del mapa"));
-      return;
-    }
-    if (otherRoomsOccupancy.has(`${nx}:${ny}`)) {
-      toast.error(t("apartment.cellTaken", "Casella ocupada"));
-      return;
-    }
-    const { error } = await supabase.rpc("move_player_room", { _room_id: room.id, _new_x: nx, _new_y: ny });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setRoom({ ...room, position_x: nx, position_y: ny });
-    toast.success(t("apartment.moved", "Sala moguda"));
-  }, [room, otherRoomsOccupancy, t]);
+  // Moviment ara es fa arrossegant al mini-mapa (SpacePage). Codi eliminat aquí.
+
 
   if (loading || !room) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><p className="text-muted-foreground animate-pulse">{t("common.loading")}</p></div>;
