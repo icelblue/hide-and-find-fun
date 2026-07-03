@@ -200,7 +200,7 @@ export default function RoomPage() {
       }
     })();
     return () => { cancel = true; };
-  }, [user, roomId, room?.layout]);
+  }, [user, roomId]);
 
 
   // Sizing derivats de la plantilla
