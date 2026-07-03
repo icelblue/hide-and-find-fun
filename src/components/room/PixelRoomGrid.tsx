@@ -57,6 +57,7 @@ interface Props {
 export default function PixelRoomGrid({
   theme, gridW, gridH, cells, seed = "default", onCellClick,
   ariaLabelPrefix = "slot", className = "", seamless = true, useTexture = true,
+  backdrops,
 }: Props) {
   const size = gridW * gridH;
 
