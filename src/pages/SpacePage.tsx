@@ -26,7 +26,12 @@ type RoomTemplate = {
   price_coins: number;
   unlock_level: number;
   max_doors: number;
+  grid_w: number;
+  grid_h: number;
+  allowed_categories: string[];
+  happiness_multiplier: number;
 };
+
 
 type PlayerRoom = {
   id: string;
