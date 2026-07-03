@@ -59,6 +59,7 @@ import sprSwing from "@/assets/room/spr-swing.png";
 import sprFountain from "@/assets/room/spr-fountain.png";
 import sprPool from "@/assets/room/spr-pool.png";
 import sprCastle from "@/assets/room/spr-castle.png";
+import sprNightstand from "@/assets/room/spr-nightstand.png";
 
 import type { ThemeKey } from "./room-themes";
 
