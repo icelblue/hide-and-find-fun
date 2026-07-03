@@ -1777,7 +1777,7 @@ export default function GamePage() {
               (() => {
                 const scenName = currentScenario?.name ?? "";
                 const theme = themeForScenarioName(scenName);
-                const slots = autoLayoutForItems(currentScenarioItems);
+                const slots = autoLayoutForItems(currentScenarioItems, scenName);
                 const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => {
                   const s = slots.find((x) => x.cellIndex === idx);
                   if (!s) return { slot: idx };
