@@ -30,6 +30,7 @@ import { HelpButton } from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
 import { APP_VERSION } from "@/lib/constants";
 import { InstallBanner } from "@/components/InstallBanner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useT } from "@/i18n/LanguageProvider";
 import { LanguageSwitcherCompact } from "@/i18n/LanguageSwitcher";
 
