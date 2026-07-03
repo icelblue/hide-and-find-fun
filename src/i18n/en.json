@@ -1188,8 +1188,12 @@
       "music": "Music",
       "art": "Art",
       "nature": "Nature",
-      "pet": "Pet"
+      "pet": "Pet",
+      "kitchen": "Kitchen",
+      "bath": "Bath",
+      "dining": "Dining"
     },
+
     "tab": {
       "furniture": "Furniture",
       "collection": "Collection"
