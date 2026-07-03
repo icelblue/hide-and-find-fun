@@ -73,6 +73,7 @@ const App = () => (
               <Route path="/player/:userId" element={<ProtectedRoute><PlayerProfilePage /></ProtectedRoute>} />
               <Route path="/story" element={<ProtectedRoute><StoryModePage /></ProtectedRoute>} />
               <Route path="/space" element={<ProtectedRoute><SpacePage /></ProtectedRoute>} />
+              <Route path="/space/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
               <Route path="/claim" element={<ClaimReminderPage />} />
               <Route path="/demo" element={<DemoPage />} />
               <Route path="/join/:gameId" element={<JoinGamePage />} />
