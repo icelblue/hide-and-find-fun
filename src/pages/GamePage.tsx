@@ -68,7 +68,7 @@ import ItemActions from "@/components/game/ItemActions";
 import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
 import { spriteForFurniture } from "@/lib/room-sprites";
 import FurnitureActionSheet from "@/components/game/FurnitureActionSheet";
-import { themeForScenarioName, autoLayoutForItems, PVP_GRID_W, PVP_GRID_H } from "@/lib/pvp-scenario-themes";
+import { themeForScenarioName, autoLayoutForItems, backdropsForScenario, PVP_GRID_W, PVP_GRID_H } from "@/lib/pvp-scenario-themes";
 import { SpecialReveal, type SpecialRevealData } from "@/components/game/SpecialReveal";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
