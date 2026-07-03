@@ -458,24 +458,38 @@ export default function RoomPage() {
           </CardContent>
         </Card>
 
-        {selectedEntry ? (
+        {moveFromSlot !== null ? (
+          <p className="text-xs text-accent text-center font-medium animate-pulse">
+            ↔️ {t("room.pickTarget", "Toca on vols col·locar-lo")}
+            <button className="ml-2 underline" onClick={() => setMoveFromSlot(null)}>
+              {t("common.cancel", "Cancel·la")}
+            </button>
+          </p>
+        ) : selectedEntry ? (
           <p className="text-xs text-accent text-center">{t("space.tapToPlace")} {selectedEntry.icon}</p>
         ) : (
-          <p className="text-xs text-muted-foreground text-center">{t("space.hint")}</p>
+          <p className="text-xs text-muted-foreground text-center">
+            {t("room.tapHint", "Toca una casella buida per posar · toca un moble per accions")}
+          </p>
         )}
 
-        {/* Grid pixel-art temàtic (Fase A del pla Grid 2D unificat) */}
+        {/* Grid pixel-art temàtic (Fase A/C — sprites + textures) */}
         {(() => {
           const theme = themeForCategory(template?.category);
           const cells: PixelCell[] = Array.from({ length: gridSize }).map((_, idx) => {
             const slot = layout.find((s) => s.slot === idx);
             const entry = slot ? resolveEntry(slot.furniture_id) : null;
+            const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey) : null;
             return {
               slot: idx,
               icon: entry?.icon,
+              spriteUrl: sprite ?? undefined,
               label: entry?.name ?? `casella ${idx + 1}`,
               filled: !!entry,
-              highlighted: !!selected && !entry,
+              highlighted: (!!selected && !entry) || (moveFromSlot !== null && !entry),
+              selectedCell: moveFromSlot === idx,
+              rotation: (slot?.rot ?? 0) as 0 | 90 | 180 | 270,
+              justPlaced: justPlacedSlot === idx,
             };
           });
           return (
@@ -492,15 +506,16 @@ export default function RoomPage() {
               {isPetHere && pet && (
                 <div
                   className="absolute pointer-events-none z-20 flex flex-col items-center animate-bounce"
-                  style={{
-                    // Cantonada inferior-esquerra del grid, dins la sala
-                    left: "10%",
-                    bottom: "10%",
-                  }}
+                  style={{ left: "10%", bottom: "10%" }}
                   aria-label={t("apartment.petHere", "La teva mascota és aquí")}
                   title={`${pet.pet_icon} ${pet.pet_name}`}
                 >
-                  <span className="text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                  <span className="relative text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                    {/* Halo pulsant Fase D */}
+                    <span
+                      className="absolute inset-0 -z-10 rounded-full animate-ping"
+                      style={{ background: "hsl(var(--accent) / 0.35)", filter: "blur(6px)" }}
+                    />
                     {pet.pet_icon}
                   </span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/90 border border-accent/40 font-semibold mt-0.5 shadow">
@@ -511,6 +526,44 @@ export default function RoomPage() {
             </div>
           );
         })()}
+
+        {/* Sheet d'accions per moble col·locat (Fase C · UX) */}
+        <Sheet open={activeSlot !== null} onOpenChange={(o) => !o && setActiveSlot(null)}>
+          <SheetContent side="bottom" className="pb-8">
+            {activeSlot !== null && (() => {
+              const item = layout.find((s) => s.slot === activeSlot);
+              const entry = item ? resolveEntry(item.furniture_id) : null;
+              const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey) : null;
+              return (
+                <>
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2 text-base">
+                      {sprite
+                        ? <img src={sprite} alt="" className="w-8 h-8 object-contain" style={{ imageRendering: "pixelated" }} />
+                        : <span className="text-2xl">{entry?.icon ?? "•"}</span>}
+                      <span className="truncate">{entry?.name ?? t("common.item", "Element")}</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    <Button variant="secondary" onClick={() => rotateAtSlot(activeSlot!)} className="flex-col h-auto py-3 gap-1">
+                      <span className="text-2xl">🔄</span>
+                      <span className="text-[11px]">{t("room.rotate", "Girar")}</span>
+                    </Button>
+                    <Button variant="secondary" onClick={() => { setMoveFromSlot(activeSlot); setActiveSlot(null); }} className="flex-col h-auto py-3 gap-1">
+                      <span className="text-2xl">↔️</span>
+                      <span className="text-[11px]">{t("room.move", "Moure")}</span>
+                    </Button>
+                    <Button variant="destructive" onClick={() => removeAtSlot(activeSlot!)} className="flex-col h-auto py-3 gap-1">
+                      <span className="text-2xl">🗑️</span>
+                      <span className="text-[11px]">{t("room.remove", "Treure")}</span>
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
+          </SheetContent>
+        </Sheet>
+
 
         {/* Moviment de sales: arrossega des del mini-mapa de l'apartament */}
 
