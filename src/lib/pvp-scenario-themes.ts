@@ -213,23 +213,39 @@ export interface ScenarioBackdrop {
 
 const SCENARIO_BACKDROPS: Record<string, ScenarioBackdrop[]> = {
   cuina: [
-    // Encimera contínua tota la fila 0 (sota nevera/forn/microones/pica/calaix/despensa)
+    // Encimera contínua fila 0
     { sprite: bgCounter, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true },
+    // Rajola "backsplash" a la fila 1 (paret sobre l'encimera) — dóna profunditat
+    { sprite: bgBacksplash, col: 0, row: 1, spanCols: 6, spanRows: 1, cover: true, opacity: 0.55 },
   ],
   lavabo: [
-    // Paret enrajolada fila 0 (darrere mirall/prestatgeria/pica)
     { sprite: bgTiledWall, col: 0, row: 0, spanCols: 6, spanRows: 2, cover: true, opacity: 0.55 },
-    // Encimera sota la pica (cel·la 7)
     { sprite: bgCounter, col: 0, row: 1, spanCols: 3, spanRows: 1, cover: true, opacity: 0.9 },
   ],
   despatx: [
-    // Superfície d'escriptori sota laptop/ordinador (cel·les 8-11 row 1)
     { sprite: bgDeskSurface, col: 1, row: 1, spanCols: 4, spanRows: 2 },
-    // Finestra a la paret superior dreta
     { sprite: bgWindow, col: 4, row: 0, spanCols: 2, spanRows: 1, opacity: 0.9 },
   ],
-  habitacio: [],
-  menjador: [],
+  habitacio: [
+    // Paret de fusta darrere la zona del llit (fila 0-1) — capçalera visual
+    { sprite: bgWallWood, col: 1, row: 0, spanCols: 4, spanRows: 2, cover: true, opacity: 0.55 },
+    // Catifa gran centrada sota el llit i la tauleta
+    { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 2, opacity: 0.8 },
+  ],
+  menjador: [
+    // Paret de fusta amb TV al centre (fila 0)
+    { sprite: bgWallWood, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.7 },
+    // Catifa gran davall de sofà + taula (files 2-4)
+    { sprite: bgRugLarge, col: 1, row: 2, spanCols: 4, spanRows: 3, opacity: 0.75 },
+  ],
+  jardi: [
+    { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
+    { sprite: bgFence, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
+  ],
+  balco: [
+    { sprite: bgRailing, col: 0, row: 4, spanCols: 6, spanRows: 1, cover: true, opacity: 0.95 },
+  ],
+};
   jardi: [
     // Tanca perimetral fila 0 i fila 4
     { sprite: bgFence, col: 0, row: 0, spanCols: 6, spanRows: 1, cover: true, opacity: 0.9 },
