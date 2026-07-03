@@ -1,92 +1,82 @@
+# Pla: Grid 2D Pixel Art unificat (PvP + Espai Personal)
 
-## Pla: Terreny 2D + Mascota al mapa + QA traduccions
+## Objectiu
 
-Executo els 3 blocs en un sol torn. Decisions ja tancades (D7 seed determinista, D8 bonus sense restricció, D9 mascota estàtica).
+Substituir els `<Select>` de mobles del PvP i el grid abstracte de l'Espai Personal per un **mateix sistema de grid 2D pixel art** on cada sala té un mapa temàtic coherent (cuina té taulell/nevera/foguer; habitació té llit/armari/tauleta; jardí té gespa/arbres/tanca...). Els mobles es col·loquen a caselles fixes del grid; clicar-ne un obre un popover d'accions (PvP) o d'interaccions (Espai).
 
----
+Un únic motor de renderitzat serveix les dues vistes → cost molt inferior a fer-ho dues vegades.
 
-### Bloc A — Terreny 2D estil pixel-art clàssic
+## Principis (tancats abans de codi)
 
-**Objectiu:** El grid 5×5 de `SpacePage.tsx` deixa de ser cel·les buides i passa a ser un mapa amb terrenys (gespa, terra, aigua, roca, sorra). Quan hi col·loques una sala, es tapa amb el tile temàtic de la sala.
+1. **Un sol motor** `<PixelRoomGrid>` reutilitzat per PvP i Espai. Diferència = mode (`"pvp" | "personal"`) i handler de clic.
+2. **Grid fix 6×5** (240 cel·les màx per sala) — encaixa a 390px amb cel·les de 60px + gap 2px.
+3. **Layouts declaratius** a `src/lib/room-layouts.ts`: 1 arxiu, 1 layout per sala del catàleg (7 escenaris PvP + N sales personals per tema).
+4. **Sprites compartits**: la nevera del PvP "Cuina" és el mateix sprite que la nevera de la cuina personal. 1 sprite = molts usos.
+5. **Terreny per tema**, no per seed a l'Espai: la sala "Cuina" sempre té terra de rajola; "Jardí" sempre gespa. El seed que vam introduir queda **només per zones buides** entre sales.
+6. **Fallback accessible**: toggle "vista clàssica" (Select) es manté a settings — no eliminem els components actuals fins que el grid estigui validat.
 
-**Model de terreny:**
-```
-5 tipus: grass | dirt | water | rock | sand
-```
+## Fases
 
-**Generació:** funció pura `generateTerrain(userId: string): TerrainType[][]` amb PRNG seedejat (mulberry32 + hash del uuid). Mateix usuari → mateix mapa sempre. Sense BD nova.
+### Fase A — Motor + layouts (sense sprites)
+- `src/lib/room-layouts.ts` — coordenades `{itemId, x, y, w, h, spriteKey}` per **totes** les sales (7 PvP + tots els `room_catalog` temes personals).
+- `src/components/room/PixelRoomGrid.tsx` — grid CSS, cel·les buides = terreny temàtic (color pla), mobles = quadrats de color amb label.
+- Integració a `SpacePage` i vista PvP en mode "preview" (rere flag).
+- **Verificació**: render correcte a 390px, cap solapament, tots els mobles hi caben.
 
-**Regles de generació (per fer mapes creïbles, no soroll):**
-- 1 massa d'aigua contínua (2-4 cel·les) a un cantó aleatori.
-- 1-2 roques dispersades.
-- 1 zona de sorra tocant l'aigua.
-- Resta: gespa (majoritari) + alguna cel·la de terra.
+### Fase B — Popover d'accions (PvP) + interaccions (Personal)
+- `src/components/room/FurnitureActionSheet.tsx` — substitueix el `<Select>` del PvP amb el mateix menú d'accions (Observar/Moure), mateix cost, mateix efecte.
+- Mode "personal": clic obre accions "Netejar / Interactuar mascota / Moure moble" (les que ja existeixen).
+- Manteniment del `<Select>` clàssic sota flag `settings.classicView`.
+- **Verificació**: partida PvP completa jugable des del grid, sense regressió de tokens/moviments.
 
-**Bonus terreny-sala (D8):** taula constant al frontend:
-```
-Jardí   → prefereix grass  (+10% happiness_multiplier)
-Balcó   → prefereix rock   (+10%)
-Bany    → prefereix water  (+10%)
-Cuina   → prefereix dirt   (+10%)
-Menjador→ prefereix grass  (+5%)
-```
-Es mostra al tooltip de la sala i al càlcul de felicitat de `RoomPage`.
+### Fase C — Sprites pixel art
+- Generació de sprites (~60 únics: 40 mobles PvP + 20 extres personals) amb `imagegen` en batch, 64×64 transparent PNG.
+- 7 tilesets de terreny (rajola cuina, parquet habitació, gespa jardí, terra despatx, aigua lavabo, marbre menjador, fusta balcó).
+- Mascota com a sprite estàtic col·locat a la sala escollida (feature ja existent, només canvia el render).
+- **Verificació**: batch d'imatges revisat visualment; consistència d'estil (paleta limitada, mateix pixel size).
 
-**Estil visual:** SVG inline (no assets externs, zero pes extra). Cada tile 48×48px amb patró CSS + colors del design system. Estil top-down tipus Stardew:
-- `grass`: verd tou amb 2-3 puntets més foscos
-- `water`: blau amb ones (2 línies clares)
-- `rock`: gris amb esquerdes
-- `dirt`: marró amb textura granulada
-- `sand`: groc clar
+### Fase D — Polish
+- Micro-animacions: hover casella, pulse a moble seleccionat, walk cycle de la mascota (2 frames).
+- SFX opcional (clic, obrir popover).
+- Traduccions dels nous strings d'acció (ja existeixen la majoria).
 
-**Sales col·locades:** overlay damunt del terreny amb la icona del tipus + `custom_name`. Quan arrossegues per moure (D5 ja implementat), el terreny de sota es fa visible transitòriament.
+## Riscos i mitigació
 
----
+| Risc | Mitigació |
+|---|---|
+| **Sales personals sense layout definit** (usuari afegeix sales custom) | Layout per defecte "graella lliure" 6×5 amb mobles auto-col·locats per ordre d'inserció; el layout temàtic només aplica si `room_catalog.theme` coincideix. |
+| **Sprites inconsistents** (imagegen varia estil) | Prompt mestre fixat + revisió humana batch abans de fase D. Si un sprite desentona, es regenera individualment. |
+| **Cost imagegen alt** (60+ sprites) | Reutilització agressiva: sprite "cadira" serveix a totes les sales. Total real ~35-40 sprites únics. |
+| **Regressió jugabilitat PvP** | Flag `classicView`, tests E2E (pla separat ja acordat) abans de retirar el `<Select>`. |
+| **Mòbil 390px estret** | Cel·les 60px validades en Fase A abans de fer sprites. Si no cap, baixem a grid 5×5. |
+| **Sales personals amb molts mobles** (>30) | Grid amb scroll vertical (afegim files, no columnes). |
+| **Terreny per seed vs per tema conflicteix** | Decisió tancada: seed només per zones exteriors entre sales. Dins la sala mana el tema. |
 
-### Bloc B — Mascota al mapa (estàtica)
+## Cost estimat
 
-**Objectiu:** Sprite petit de la mascota apareix a la cel·la de la sala "preferida".
+| Fase | Cost | Entregable |
+|---|---|---|
+| A. Motor + layouts | ~1 crèdit | Grid funcional sense art |
+| B. Popover + integració | ~1 crèdit | PvP + Personal jugables amb grid |
+| C. Sprites pixel art | ~1.5 crèdits | Art complet |
+| D. Polish | ~0.5 crèdits | Animacions + so |
+| **Total** | **~4 crèdits** | Sistema unificat complet |
 
-**Regla de sala preferida (determinista, sense estat nou):**
-- Si el jugador té una sala tipus `dormitori` → la mascota va allà.
-- Si no, primera sala per ordre de compra.
+## Ordre d'execució recomanat
 
-**Renderitzat:** dins la targeta de la sala al mapa, un `<span>🐾</span>` amb l'icona de l'espècie de `player_pets` (o emoji fallback). Posició absoluta cantonada inferior-dreta de la cel·la. Animació sutil `animate-bounce` cada 3s.
+1. **A+B en un sol lliurament** (2 crèdits) — valida jugabilitat i UX abans d'invertir en art.
+2. Pausa: user prova, decideix si continuar.
+3. **C** — sprites en batch.
+4. **D** — polish final.
 
-**Interacció:** clicar la mascota obre un `Sheet` amb `PetStatsBar` + accés ràpid a la sala on és.
+## Fora d'abast (plans separats ja acordats)
 
-**Zero canvis a BD.** Només llegir `player_pets` (ja carregat a `SpacePage`).
+- Eina admin translations.
+- Tests E2E Playwright del flux apartament (recomanable abans de retirar `<Select>` clàssic).
+- Refactor `StoryModePage`.
 
----
+## Decisions que necessito confirmar
 
-### Bloc C — QA final traduccions
-
-Passada agressiva:
-1. `grep -r "ca:" src/` i `grep -rn '["'\'']>[A-Z]' src/pages src/components` per detectar strings hardcoded.
-2. Diff estructural `ca.json` vs `en.json` (ja sincronitzats, però reverifico).
-3. Afegir claus noves d'aquesta iteració: `terrain.grass`, `terrain.water`, `apartment.terrainBonus`, `apartment.petHere`, etc. a ambdós idiomes.
-4. Report final al xat amb qualsevol string trobat sense traduir.
-
----
-
-### Fitxers a tocar
-
-- `src/lib/terrain.ts` (nou) — generador PRNG + tipus + bonus map.
-- `src/components/space/TerrainTile.tsx` (nou) — SVG tile per tipus.
-- `src/components/space/PetOnMap.tsx` (nou) — sprite mascota + sheet.
-- `src/pages/SpacePage.tsx` — integració terreny + mascota + tooltip bonus.
-- `src/pages/RoomPage.tsx` — aplicar `terrain_bonus` al càlcul de felicitat.
-- `src/i18n/ca.json` + `en.json` — claus noves.
-- `src/test/terrain.test.ts` (nou) — verificar determinisme i regles de generació.
-
-**Sense migracions SQL.** Tot al frontend perquè és presentació + càlcul derivat.
-
----
-
-### Verificació
-
-- Tests unitaris del generador (determinisme + coherència).
-- 205+ tests existents han de continuar passant.
-- Screenshot Playwright del `SpacePage` per confirmar visual.
-
-**Estimació:** ~1.5 crèdits. Risc: baix (0 canvis a BD, 0 canvis a lògica de joc).
+1. **Grid 6×5 fix per totes les sales?** (alternativa: mida variable per sala)
+2. **A+B junts primer i pausa abans de C+D?** (alternativa: tot d'un cop)
+3. **Sales personals custom sense tema** → layout genèric "graella lliure" OK?
