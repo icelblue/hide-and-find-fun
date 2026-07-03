@@ -533,7 +533,7 @@ export default function RoomPage() {
             {activeSlot !== null && (() => {
               const item = layout.find((s) => s.slot === activeSlot);
               const entry = item ? resolveEntry(item.furniture_id) : null;
-              const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey) : null;
+              const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey, entry.name) : null;
               return (
                 <>
                   <SheetHeader>
