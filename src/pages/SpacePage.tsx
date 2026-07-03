@@ -65,7 +65,8 @@ export default function SpacePage() {
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const [dragHoverCell, setDragHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [dragMoved, setDragMoved] = useState(false);
-  const gridRef = (typeof window !== "undefined" ? useRefLazy() : { current: null }) as React.MutableRefObject<HTMLDivElement | null>;
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
 
 
   const refresh = useCallback(async () => {
