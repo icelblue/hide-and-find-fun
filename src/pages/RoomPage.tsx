@@ -84,6 +84,10 @@ export default function RoomPage() {
   const [placedElsewhere, setPlacedElsewhere] = useState<Set<string>>(new Set());
   const [pet, setPet] = useState<{ pet_icon: string; pet_name: string } | null>(null);
   const [isPetHere, setIsPetHere] = useState(false);
+  // Fase C · UX: action sheet + mode moure + animació d'entrada
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [moveFromSlot, setMoveFromSlot] = useState<number | null>(null);
+  const [justPlacedSlot, setJustPlacedSlot] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user || !roomId) return;
@@ -263,10 +267,10 @@ export default function RoomPage() {
   const resolveEntry = useCallback((fid: string) => {
     if (isReward(fid)) {
       const r = rewardById.get(rewardUuid(fid));
-      return r ? { icon: r.icon, name: r.name } : null;
+      return r ? { icon: r.icon, name: r.name, category: "decor", nameKey: undefined as string | undefined } : null;
     }
     const c = catalogById.get(fid);
-    return c ? { icon: c.icon, name: t(c.name_key, c.id) } : null;
+    return c ? { icon: c.icon, name: t(c.name_key, c.id), category: c.category, nameKey: c.name_key } : null;
   }, [catalogById, rewardById, t]);
 
   const persistLayout = useCallback(async (next: LayoutSlot[], prev: LayoutSlot[]) => {
@@ -281,25 +285,73 @@ export default function RoomPage() {
     }
   }, [user, room, t]);
 
+  // Efímera: marca casella com "just placed" i neteja al cap d'una estona
+  const flashPlaced = useCallback((slot: number) => {
+    setJustPlacedSlot(slot);
+    window.setTimeout(() => setJustPlacedSlot((s) => (s === slot ? null : s)), 350);
+  }, []);
+
   const handleSlotClick = useCallback(async (idx: number) => {
     if (!room) return;
     const prev = layout;
     const existing = layout.find((s) => s.slot === idx);
-    let next: LayoutSlot[];
-    if (existing) {
-      // Treure moble del slot
-      next = layout.filter((s) => s.slot !== idx);
-      setSelected(null);
-    } else if (selected) {
-      // Col·locar moble seleccionat (evitant duplicats del mateix id)
-      next = [...layout.filter((s) => s.furniture_id !== selected), { slot: idx, furniture_id: selected }];
-      setSelected(null);
-    } else {
+
+    // Prioritat 1: mode "moure" actiu → traslladar (o intercanviar) i sortir del mode
+    if (moveFromSlot !== null) {
+      if (moveFromSlot === idx) { setMoveFromSlot(null); return; }
+      const src = layout.find((s) => s.slot === moveFromSlot);
+      if (!src) { setMoveFromSlot(null); return; }
+      const filtered = layout.filter((s) => s.slot !== moveFromSlot && s.slot !== idx);
+      const next: LayoutSlot[] = [...filtered, { ...src, slot: idx }];
+      if (existing) next.push({ ...existing, slot: moveFromSlot }); // swap
+      setRoom({ ...room, layout: next });
+      setMoveFromSlot(null);
+      flashPlaced(idx);
+      await persistLayout(next, prev);
       return;
     }
+
+    // Prioritat 2: casella amb moble → obrir action sheet (girar/moure/treure)
+    if (existing) {
+      setActiveSlot(idx);
+      return;
+    }
+
+    // Prioritat 3: hi ha un moble seleccionat de l'inventari → col·locar
+    if (selected) {
+      const next: LayoutSlot[] = [
+        ...layout.filter((s) => s.furniture_id !== selected),
+        { slot: idx, furniture_id: selected, rot: 0 },
+      ];
+      setSelected(null);
+      setRoom({ ...room, layout: next });
+      flashPlaced(idx);
+      await persistLayout(next, prev);
+    }
+  }, [layout, selected, room, moveFromSlot, persistLayout, flashPlaced]);
+
+  // Accions del sheet — cadascuna amb rollback via persistLayout
+  const rotateAtSlot = useCallback(async (idx: number) => {
+    if (!room) return;
+    const prev = layout;
+    const item = layout.find((s) => s.slot === idx);
+    if (!item) return;
+    const nextRot = (((item.rot ?? 0) + 90) % 360) as Rotation;
+    const next = layout.map((s) => (s.slot === idx ? { ...s, rot: nextRot } : s));
     setRoom({ ...room, layout: next });
     await persistLayout(next, prev);
-  }, [layout, selected, room, persistLayout]);
+  }, [layout, room, persistLayout]);
+
+  const removeAtSlot = useCallback(async (idx: number) => {
+    if (!room) return;
+    const prev = layout;
+    const next = layout.filter((s) => s.slot !== idx);
+    setRoom({ ...room, layout: next });
+    setActiveSlot(null);
+    await persistLayout(next, prev);
+  }, [layout, room, persistLayout]);
+
+
 
 
   const handleBuy = useCallback(async (item: CatalogItem) => {
