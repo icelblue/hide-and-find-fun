@@ -26,6 +26,8 @@ export interface PixelCell {
   disabled?: boolean;
   rotation?: 0 | 90 | 180 | 270;
   justPlaced?: boolean;     // per animació d'entrada
+  dirty?: boolean;          // estat: brut → filtre gris + overlay pols
+  broken?: boolean;         // estat: trencat → filtre apagat + overlay esquerda + inclinació
 }
 
 export interface GridBackdrop {
@@ -137,6 +139,16 @@ export default function PixelRoomGrid({
           const decor = !filled ? emptyDecor[idx] : null;
           const rotation = cell?.rotation ?? 0;
           const hasSprite = filled && !!cell?.spriteUrl;
+          const isBroken = filled && !!cell?.broken;
+          const isDirty = filled && !!cell?.dirty && !isBroken;
+          // Filtre CSS combinat: brut → grisós/apagat, trencat → contrast baix + sèpia
+          const stateFilter = isBroken
+            ? "grayscale(0.4) contrast(0.85) brightness(0.75) sepia(0.25)"
+            : isDirty
+              ? "grayscale(0.65) brightness(0.82) saturate(0.7)"
+              : undefined;
+          // Trencat inclina lleugerament el moble
+          const stateRotation = isBroken ? rotation - 4 : rotation;
           return (
             <button
               key={idx}
@@ -181,18 +193,63 @@ export default function PixelRoomGrid({
                       loading="lazy"
                       className="w-[88%] h-[88%] object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)] transition-transform duration-200"
                       style={{
-                        transform: `rotate(${rotation}deg)`,
+                        transform: `rotate(${stateRotation}deg)`,
                         imageRendering: "pixelated",
+                        filter: stateFilter,
                       }}
                     />
                   ) : (
                     <span
                       aria-hidden
                       className="drop-shadow-sm relative z-10 transition-transform duration-200"
-                      style={{ transform: `rotate(${rotation}deg)` }}
+                      style={{ transform: `rotate(${stateRotation}deg)`, filter: stateFilter }}
                     >
                       {cell?.icon ?? "•"}
                     </span>
+                  )}
+                  {/* Overlay POLS (brut): punts translúcids beige */}
+                  {isDirty && (
+                    <svg
+                      className="absolute inset-0 w-full h-full pointer-events-none"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <circle cx="6" cy="7" r="1.1" fill="#c9b98a" opacity="0.55" />
+                      <circle cx="17" cy="5" r="0.8" fill="#b8a878" opacity="0.5" />
+                      <circle cx="19" cy="14" r="1" fill="#d4c496" opacity="0.55" />
+                      <circle cx="8" cy="17" r="0.7" fill="#a89568" opacity="0.5" />
+                      <circle cx="13" cy="11" r="0.6" fill="#e0d3a8" opacity="0.45" />
+                      <circle cx="4" cy="19" r="0.9" fill="#b8a878" opacity="0.5" />
+                    </svg>
+                  )}
+                  {/* Overlay ESQUERDA (trencat): zigzag blanc contornejat negre */}
+                  {isBroken && (
+                    <svg
+                      className="absolute inset-0 w-full h-full pointer-events-none"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <polyline
+                        points="4,4 9,10 6,13 12,17 10,20 16,22"
+                        fill="none"
+                        stroke="rgba(0,0,0,0.7)"
+                        strokeWidth="1.6"
+                        strokeLinejoin="miter"
+                      />
+                      <polyline
+                        points="4,4 9,10 6,13 12,17 10,20 16,22"
+                        fill="none"
+                        stroke="rgba(255,255,255,0.85)"
+                        strokeWidth="0.7"
+                        strokeLinejoin="miter"
+                      />
+                      <polyline
+                        points="14,3 12,8 17,11 15,15 20,18"
+                        fill="none"
+                        stroke="rgba(0,0,0,0.55)"
+                        strokeWidth="1.2"
+                      />
+                    </svg>
                   )}
                   {cell?.selectedCell && (
                     <span
@@ -200,7 +257,24 @@ export default function PixelRoomGrid({
                       style={{ boxShadow: `0 0 0 3px hsl(var(--accent) / 0.85)` }}
                     />
                   )}
-                  {cell?.label && <span className="sr-only">{cell.label}</span>}
+                  {/* Badge d'estat cantonada superior dreta */}
+                  {(isDirty || isBroken) && (
+                    <span
+                      className="absolute top-0 right-0 text-[10px] leading-none px-0.5 rounded-bl-md pointer-events-none"
+                      style={{
+                        background: isBroken ? "hsl(0 70% 45% / 0.9)" : "hsl(45 60% 40% / 0.85)",
+                        color: "white",
+                      }}
+                      aria-hidden
+                    >
+                      {isBroken ? "💥" : "🧹"}
+                    </span>
+                  )}
+                  {cell?.label && (
+                    <span className="sr-only">
+                      {cell.label}{isBroken ? " (trencat)" : isDirty ? " (brut)" : ""}
+                    </span>
+                  )}
                 </>
               ) : decor ? (
                 <span aria-hidden className="opacity-60 text-sm select-none">{decor}</span>
