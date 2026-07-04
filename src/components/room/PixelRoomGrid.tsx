@@ -26,6 +26,8 @@ export interface PixelCell {
   disabled?: boolean;
   rotation?: 0 | 90 | 180 | 270;
   justPlaced?: boolean;     // per animació d'entrada
+  dirty?: boolean;          // estat: brut → filtre gris + overlay pols
+  broken?: boolean;         // estat: trencat → filtre apagat + overlay esquerda + inclinació
 }
 
 export interface GridBackdrop {
