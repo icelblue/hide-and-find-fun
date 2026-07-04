@@ -139,6 +139,16 @@ export default function PixelRoomGrid({
           const decor = !filled ? emptyDecor[idx] : null;
           const rotation = cell?.rotation ?? 0;
           const hasSprite = filled && !!cell?.spriteUrl;
+          const isBroken = filled && !!cell?.broken;
+          const isDirty = filled && !!cell?.dirty && !isBroken;
+          // Filtre CSS combinat: brut → grisós/apagat, trencat → contrast baix + sèpia
+          const stateFilter = isBroken
+            ? "grayscale(0.4) contrast(0.85) brightness(0.75) sepia(0.25)"
+            : isDirty
+              ? "grayscale(0.65) brightness(0.82) saturate(0.7)"
+              : undefined;
+          // Trencat inclina lleugerament el moble
+          const stateRotation = isBroken ? rotation - 4 : rotation;
           return (
             <button
               key={idx}
