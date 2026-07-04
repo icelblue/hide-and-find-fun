@@ -1786,6 +1786,8 @@ export default function GamePage() {
                   const item = currentScenarioItems.find((i: any) => i.id === s.itemId);
                   const allLooked = POSITIONS.every((p) => lookedSpots.has(`${s.itemId}:${p.value}`));
                   const sprite = spriteForFurniture(item?.category, item?.name_key, item?.name);
+                  const isBroken = gameBreaks.has(s.itemId);
+                  const isDirty = dirtyItems.has(s.itemId) && !gameBreaks.has(`clean:${s.itemId}`);
                   return {
                     slot: idx,
                     icon: item?.icon,
@@ -1794,6 +1796,8 @@ export default function GamePage() {
                     filled: true,
                     disabled: allLooked,
                     selectedCell: sheetItemId === s.itemId,
+                    dirty: isDirty,
+                    broken: isBroken,
                   };
                 });
                 return (
