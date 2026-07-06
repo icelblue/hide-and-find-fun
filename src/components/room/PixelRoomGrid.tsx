@@ -223,35 +223,42 @@ export default function PixelRoomGrid({
                       <circle cx="4" cy="19" r="0.9" fill="#b8a878" opacity="0.5" />
                     </svg>
                   )}
-                  {/* Overlay ESQUERDA (trencat): zigzag blanc contornejat negre */}
+                  {/* Overlay ESQUERDA (trencat): línia diagonal fina amb bifurcació subtil */}
                   {isBroken && (
                     <svg
                       className="absolute inset-0 w-full h-full pointer-events-none"
                       viewBox="0 0 24 24"
                       aria-hidden
                     >
-                      <polyline
-                        points="4,4 9,10 6,13 12,17 10,20 16,22"
+                      {/* Contorn fosc per contrast sobre qualsevol sprite */}
+                      <path
+                        d="M5 3 L11 11 L9 13 L14 18 L12 21"
                         fill="none"
-                        stroke="rgba(0,0,0,0.7)"
-                        strokeWidth="1.6"
-                        strokeLinejoin="miter"
-                      />
-                      <polyline
-                        points="4,4 9,10 6,13 12,17 10,20 16,22"
-                        fill="none"
-                        stroke="rgba(255,255,255,0.85)"
-                        strokeWidth="0.7"
-                        strokeLinejoin="miter"
-                      />
-                      <polyline
-                        points="14,3 12,8 17,11 15,15 20,18"
-                        fill="none"
-                        stroke="rgba(0,0,0,0.55)"
+                        stroke="rgba(0,0,0,0.65)"
                         strokeWidth="1.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {/* Bifurcació lateral curta */}
+                      <path
+                        d="M11 11 L15 12"
+                        fill="none"
+                        stroke="rgba(0,0,0,0.5)"
+                        strokeWidth="0.9"
+                        strokeLinecap="round"
+                      />
+                      {/* Highlight blanc a sobre per efecte "esquerda oberta" */}
+                      <path
+                        d="M5 3 L11 11 L9 13 L14 18 L12 21"
+                        fill="none"
+                        stroke="rgba(255,255,255,0.75)"
+                        strokeWidth="0.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
                     </svg>
                   )}
+
                   {cell?.selectedCell && (
                     <span
                       className="absolute inset-0 rounded-md pointer-events-none animate-pulse"
