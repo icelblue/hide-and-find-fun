@@ -147,8 +147,9 @@ export default function PixelRoomGrid({
             : isDirty
               ? "grayscale(0.65) brightness(0.82) saturate(0.7)"
               : undefined;
-          // Trencat inclina lleugerament el moble
-          const stateRotation = isBroken ? rotation - 4 : rotation;
+          // Trencat inclina molt lleugerament el moble (subtil, manté llegibilitat)
+          const stateRotation = isBroken ? rotation - 2 : rotation;
+
           return (
             <button
               key={idx}
