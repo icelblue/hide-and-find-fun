@@ -148,8 +148,7 @@ export default function GamePage() {
   // Wave A UI polish: track newly-revealed specials to animate them once
   const [pendingReveal, setPendingReveal] = useState<SpecialRevealData | null>(null);
   const seenRevealMoveIdsRef = useRef<Set<string>>(new Set());
-  // Personal PvP v2: cache multi-sala carregada un cop per partida
-  const personalDataRef = useRef<import("@/lib/personal-pvp-adapter").PersonalCombatData | null>(null);
+
 
   // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
