@@ -245,14 +245,22 @@ function configForScenario(scenarioName?: string | null): ScenarioConfig | null 
   return null;
 }
 
-/** Retorna el tema visual d'un escenari PvP a partir del seu nom. */
-export function themeForScenarioName(name: string | null | undefined): RoomTheme {
-  return configForScenario(name)?.theme ?? ROOM_THEMES.hall;
+/**
+ * Resol la config d'un escenari usant primer un hint explícit (ex. room_template_id
+ * de l'Espai Personal: "kitchen", "bath"…) i, si no hi ha match, provant amb el nom.
+ */
+function resolveConfig(scenarioName?: string | null, hint?: string | null): ScenarioConfig | null {
+  return configForScenario(hint) ?? configForScenario(scenarioName);
+}
+
+/** Retorna el tema visual d'un escenari PvP a partir del seu nom (o hint de plantilla). */
+export function themeForScenarioName(name: string | null | undefined, hint?: string | null): RoomTheme {
+  return resolveConfig(name, hint)?.theme ?? ROOM_THEMES.hall;
 }
 
 /** Retorna els backdrops d'un escenari (buit si no en té). */
-export function backdropsForScenario(scenarioName?: string | null): ScenarioBackdrop[] {
-  return configForScenario(scenarioName)?.backdrops ?? [];
+export function backdropsForScenario(scenarioName?: string | null, hint?: string | null): ScenarioBackdrop[] {
+  return resolveConfig(scenarioName, hint)?.backdrops ?? [];
 }
 
 /**
@@ -263,10 +271,12 @@ export function backdropsForScenario(scenarioName?: string | null): ScenarioBack
 export function autoLayoutForItems(
   items: Array<{ id: string; name?: string; name_key?: string }>,
   scenarioName?: string | null,
+  hint?: string | null,
 ): PvPGridSlot[] {
+
   if (items.length === 0) return [];
 
-  const cfg = configForScenario(scenarioName);
+  const cfg = resolveConfig(scenarioName, hint);
 
   if (cfg && cfg.layout.length > 0) {
     const used = new Set<number>();

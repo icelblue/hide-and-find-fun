@@ -26,7 +26,10 @@ export type SynthScenario = {
   name: string;
   icon: string;
   display_order: number;
+  /** Room template id (kitchen/bath/bedroom/…) usat per resoldre tema i backdrops. */
+  themeHint?: string;
 };
+
 
 export type SynthObject = {
   id: string;
@@ -262,7 +265,9 @@ export async function loadPersonalCombatDataFromRooms(
       name: room.custom_name,
       icon: tpl?.icon ?? "🏠",
       display_order: idx,
+      themeHint: room.room_template_id,
     });
+
 
     const layout = Array.isArray(room.layout) ? (room.layout as LayoutSlot[]) : [];
     const roomItems: SynthItem[] = [];
