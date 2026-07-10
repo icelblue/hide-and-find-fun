@@ -76,6 +76,8 @@ import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMes
 import WaitingScreen from "@/components/game/WaitingScreen";
 import ScenarioPicker from "@/components/game/ScenarioPicker";
 import { usePersonalCombat } from "@/hooks/game/usePersonalCombat";
+import { useGameLoader } from "@/hooks/game/useGameLoader";
+
 
 
 const CPU_ID = "00000000-0000-0000-0000-000000000001";
