@@ -265,7 +265,9 @@ export async function loadPersonalCombatDataFromRooms(
       name: room.custom_name,
       icon: tpl?.icon ?? "🏠",
       display_order: idx,
+      themeHint: room.room_template_id,
     });
+
 
     const layout = Array.isArray(room.layout) ? (room.layout as LayoutSlot[]) : [];
     const roomItems: SynthItem[] = [];
