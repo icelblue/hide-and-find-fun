@@ -1778,8 +1778,9 @@ export default function GamePage() {
             {pixelView ? (
               (() => {
                 const scenName = currentScenario?.name ?? "";
-                const theme = themeForScenarioName(scenName);
-                const slots = autoLayoutForItems(currentScenarioItems, scenName);
+                const themeHint = (currentScenario as any)?.themeHint as string | undefined;
+                const theme = themeForScenarioName(scenName, themeHint);
+                const slots = autoLayoutForItems(currentScenarioItems, scenName, themeHint);
                 const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => {
                   const s = slots.find((x) => x.cellIndex === idx);
                   if (!s) return { slot: idx };
@@ -1809,7 +1810,8 @@ export default function GamePage() {
                       cells={cells}
                       seed={`pvp:${player?.current_scenario_id ?? ""}`}
                       seamless
-                      backdrops={backdropsForScenario(scenName)}
+                      backdrops={backdropsForScenario(scenName, themeHint)}
+
                       onCellClick={(idx) => {
                         const s = slots.find((x) => x.cellIndex === idx);
                         if (s) setSheetItemId(s.itemId);
