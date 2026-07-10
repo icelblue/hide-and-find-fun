@@ -269,8 +269,6 @@ export default function GamePage() {
   }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem, scheduleLoadGame]);
 
 
-  // ── Personal PvP: override scenaris/objectes amb el snapshot (via hook) ──
-  const { isPersonalGame, personalDataRef } = usePersonalCombat({ game, setScenarios, setObjects });
 
 
 
