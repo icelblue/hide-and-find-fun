@@ -77,6 +77,8 @@ import WaitingScreen from "@/components/game/WaitingScreen";
 import ScenarioPicker from "@/components/game/ScenarioPicker";
 import { usePersonalCombat } from "@/hooks/game/usePersonalCombat";
 import { useGameLoader } from "@/hooks/game/useGameLoader";
+import { useGameRealtime } from "@/hooks/game/useGameRealtime";
+
 
 
 
