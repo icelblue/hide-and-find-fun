@@ -107,26 +107,27 @@ export default function GamePage() {
   const [objects, setObjects] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
 
-  // Hiding state
-  const [selectedScenario, setSelectedScenario] = useState("");
-  const [selectedObject, setSelectedObject] = useState("");
-  const [selectedItem, setSelectedItem] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState<Position | "">("");
-  const [hideStep, setHideStep] = useState(0);
-  const [objectSpecial, setObjectSpecial] = useState<any>(null);
-  const [specialInput, setSpecialInput] = useState("");
-  const [selectedVariant, setSelectedVariant] = useState<any>(null);
-  const [hideMessage, setHideMessage] = useState("");
-  const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
-
-  // Custom object (player-defined): icon + name + size + material
-  const [customObjectIcon, setCustomObjectIcon] = useState("");
-  const [customObjectName, setCustomObjectName] = useState("");
-  const [customObjectSize, setCustomObjectSize] = useState<CustomObjectSize>(2);
-  const [customObjectMaterial, setCustomObjectMaterial] = useState<CustomObjectMaterial>("generic");
-  const [customObjectTrait1, setCustomObjectTrait1] = useState("");
-  const [customObjectTrait2, setCustomObjectTrait2] = useState("");
-  const [customObjectData, setCustomObjectData] = useState<ReturnType<typeof buildCustomObjectSpecialData> | null>(null);
+  // Hiding state (agrupat en hook)
+  const hiding = useHidingFlowState();
+  const {
+    selectedScenario, setSelectedScenario,
+    selectedObject, setSelectedObject,
+    selectedItem, setSelectedItem,
+    selectedPosition, setSelectedPosition,
+    hideStep, setHideStep,
+    objectSpecial, setObjectSpecial,
+    specialInput, setSpecialInput,
+    selectedVariant, setSelectedVariant,
+    hideMessage, setHideMessage,
+    showHideMessagePopup, setShowHideMessagePopup,
+    customObjectIcon, setCustomObjectIcon,
+    customObjectName, setCustomObjectName,
+    customObjectSize, setCustomObjectSize,
+    customObjectMaterial, setCustomObjectMaterial,
+    customObjectTrait1, setCustomObjectTrait1,
+    customObjectTrait2, setCustomObjectTrait2,
+    customObjectData, setCustomObjectData,
+  } = hiding;
 
   // My hiding-spot reminder (lazy-loaded on demand)
   const [showMyHideout, setShowMyHideout] = useState(false);
@@ -137,17 +138,23 @@ export default function GamePage() {
   const [pixelView, setPixelView] = useState<boolean>(() => {
     try { return localStorage.getItem("pvp:pixelView") !== "false"; } catch { return true; }
   });
-  const [sheetItemId, setSheetItemId] = useState<string | null>(null);
-  const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
-  const [moveHistory, setMoveHistory] = useState<any[]>([]);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [itemInteractions, setItemInteractions] = useState<any[]>([]);
-  const [playerTools, setPlayerTools] = useState<PlayerTools>(parseTools(null));
-  const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
-  const [breakableItems, setBreakableItems] = useState<Set<string>>(new Set());
-  const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
-  const [illuminatedScenarios, setIlluminatedScenarios] = useState<Set<string>>(new Set());
-  const [scenarioIsDarkState, setScenarioIsDarkState] = useState(false);
+
+  // Search state (agrupat en hook)
+  const search = useSearchFlowState();
+  const {
+    sheetItemId, setSheetItemId,
+    connectedScenarios, setConnectedScenarios,
+    moveHistory, setMoveHistory,
+    actionLoading, setActionLoading,
+    itemInteractions, setItemInteractions,
+    playerTools, setPlayerTools,
+    dirtyItems, setDirtyItems,
+    breakableItems, setBreakableItems,
+    gameBreaks, setGameBreaks,
+    illuminatedScenarios, setIlluminatedScenarios,
+    scenarioIsDarkState, setScenarioIsDarkState,
+  } = search;
+
   const isLoadingGameRef = useRef(false);
   const pendingReloadRef = useRef(false);
   const realtimeReloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
