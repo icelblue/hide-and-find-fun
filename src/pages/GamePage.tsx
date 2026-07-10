@@ -179,7 +179,11 @@ export default function GamePage() {
   const storyChapter: number | undefined = undefined;
   const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: any; consumable?: any } | null>(null);
 
+  // ── Personal PvP: override scenaris/objectes amb el snapshot (via hook) ──
+  const { isPersonalGame, personalDataRef } = usePersonalCombat({ game, setScenarios, setObjects });
+
   // ============================================
+
   // LOAD GAME — via useGameLoader hook
   // ============================================
   const { loadGame, scheduleLoadGame } = useGameLoader({
