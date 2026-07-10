@@ -205,72 +205,16 @@ export default function GamePage() {
   });
 
 
-  const handleRealtimeSocialItem = useCallback(async (item: any) => {
-    if (!user || item?.to_player_id !== user.id || item?.processed) return;
-
-    if (item.blocked_by_shield) return;
-
-    if (item.item_type === "banana") {
-      const scenarioItems = currentScenarioItems.length > 0
-        ? currentScenarioItems
-        : player?.current_scenario_id
-          ? await getItemsByScenario(player.current_scenario_id)
-          : [];
-
-      if (scenarioItems.length > 0) {
-        const allPositions = ["sobre", "sota", "dins"] as const;
-        const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
-        const randomItem = scenarioItems[Math.floor(Math.random() * scenarioItems.length)];
-        setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
-      }
-
-      setBananaEffect(true);
-      toast.warning(t("game.toasts.bananaHit"), { duration: 5000 });
-      setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
-      setTimeout(() => setTrollEffect(null), 4000);
-      await markSocialItemProcessed(item.id);
-      return;
-    }
-
-    if (item.item_type === "message" && item.message_text) {
-      setReceivedMessage(item.message_text);
-      await markSocialItemProcessed(item.id);
-      return;
-    }
-
-    if (item.item_type === "smoke_bomb") {
-      toast.warning(t("game.toasts.smokeBombUsed"), { duration: 5000 });
-      await markSocialItemProcessed(item.id);
-    }
-  }, [currentScenarioItems, player?.current_scenario_id, user]);
-
   // ============================================
-  // EFFECTS
+  // REALTIME — via useGameRealtime hook (subscription + initial load + social handler)
   // ============================================
-  useEffect(() => {
-    if (!gameId || !user) return;
-    void loadGame();
-    getScenarios().then(setScenarios).catch(() => toast.error(t("game.errors.loadScenarios")));
-    getObjects().then(setObjects).catch(() => toast.error(t("game.errors.loadObjects")));
+  useGameRealtime({
+    gameId, user, isStory, t, loadGame, scheduleLoadGame,
+    currentScenarioItems, player,
+    setScenarios, setObjects,
+    setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage,
+  });
 
-    if (isStory) return;
-
-    const channel = supabase
-      .channel(`game-${gameId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => scheduleLoadGame())
-      .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${gameId}` }, () => scheduleLoadGame())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload: any) => {
-        void handleRealtimeSocialItem(payload.new);
-      })
-      .subscribe();
-    return () => {
-      if (realtimeReloadTimeoutRef.current) {
-        clearTimeout(realtimeReloadTimeoutRef.current);
-        realtimeReloadTimeoutRef.current = null;
-      }
-      supabase.removeChannel(channel);
-    };
-  }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem, scheduleLoadGame]);
 
 
 
