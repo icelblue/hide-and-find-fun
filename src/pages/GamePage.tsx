@@ -551,31 +551,11 @@ export default function GamePage() {
     };
   }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem, scheduleLoadGame]);
 
-  // ── Personal PvP: override scenaris/objectes amb el snapshot ──
-  const isPersonalGame = (game as any)?.game_mode === "personal_pvp";
-  useEffect(() => {
-    if (!isPersonalGame || !game) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const hostId = (game as any).created_by;
-        const guestId = (game as any).invited_user_id;
-        const personal = hostId && guestId
-          ? await loadPersonalCombatDataFromRooms(hostId, guestId)
-          : await loadPersonalCombatData(
-              (game as any).host_space_snapshot,
-              (game as any).guest_space_snapshot
-            );
-        if (cancelled) return;
-        personalDataRef.current = personal;
-        setScenarios(personal.scenarios);
-        setObjects(personal.objects);
-      } catch (err: any) {
-        logError(err.message, err.stack, "GamePage:personal effect");
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [isPersonalGame, game]);
+
+  // ── Personal PvP: override scenaris/objectes amb el snapshot (via hook) ──
+  const { isPersonalGame, personalDataRef } = usePersonalCombat({ game, setScenarios, setObjects });
+
+
 
   // ============================================
   // HIDING HANDLERS
