@@ -78,6 +78,9 @@ import ScenarioPicker from "@/components/game/ScenarioPicker";
 import { usePersonalCombat } from "@/hooks/game/usePersonalCombat";
 import { useGameLoader } from "@/hooks/game/useGameLoader";
 import { useGameRealtime } from "@/hooks/game/useGameRealtime";
+import { useHidingFlowState } from "@/hooks/game/useHidingFlowState";
+import { useSearchFlowState } from "@/hooks/game/useSearchFlowState";
+
 
 
 
