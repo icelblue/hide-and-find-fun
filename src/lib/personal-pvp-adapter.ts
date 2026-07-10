@@ -26,7 +26,10 @@ export type SynthScenario = {
   name: string;
   icon: string;
   display_order: number;
+  /** Room template id (kitchen/bath/bedroom/…) usat per resoldre tema i backdrops. */
+  themeHint?: string;
 };
+
 
 export type SynthObject = {
   id: string;
