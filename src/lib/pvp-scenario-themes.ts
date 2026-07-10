@@ -276,7 +276,7 @@ export function autoLayoutForItems(
 
   if (items.length === 0) return [];
 
-  const cfg = configForScenario(scenarioName);
+  const cfg = resolveConfig(scenarioName, hint);
 
   if (cfg && cfg.layout.length > 0) {
     const used = new Set<number>();
