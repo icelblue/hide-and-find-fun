@@ -387,7 +387,12 @@ export default function GamePage() {
       setHideStep(4);
       toast.success(t("game.toasts.objectHidden"));
       if (await checkBothPlayersHidden(gameId)) {
-        await startGame(gameId);
+        try {
+          await startGame(gameId);
+        } catch (startErr: any) {
+          const message = String(startErr?.message ?? "");
+          if (!message.includes("Game not in hiding phase")) throw startErr;
+        }
         await loadGame();
         toast.success(t("game.toasts.searchStarted"));
       }
