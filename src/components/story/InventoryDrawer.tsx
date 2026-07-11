@@ -77,7 +77,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
     setTx(map);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [userId, triggerCount, lang]);
+  useEffect(() => { load();   }, [userId, triggerCount, lang]);
 
   const handleUseItem = async (item: InventoryItem) => {
     setBusy(true);

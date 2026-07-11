@@ -690,7 +690,7 @@ export async function getMyGames(userId: string) {
   const allGameIds = all.map((gp: any) => gp.game_id);
   const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];
 
-  let rivalMap = new Map<string, string>();
+  const rivalMap = new Map<string, string>();
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase.rpc("get_game_participants" as any, { _game_ids: allGameIds });
     const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== userId);
