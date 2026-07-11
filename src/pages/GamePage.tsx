@@ -132,6 +132,7 @@ export default function GamePage() {
     customObjectTrait2, setCustomObjectTrait2,
     customObjectData, setCustomObjectData,
   } = hiding;
+  const [objectSpecialLoaded, setObjectSpecialLoaded] = useState(false);
 
   // My hiding-spot reminder (lazy-loaded on demand)
   const [showMyHideout, setShowMyHideout] = useState(false);
@@ -261,10 +262,12 @@ export default function GamePage() {
 
   const handleSelectObject = async (objId: string) => {
     setSelectedObject(objId);
+    setObjectSpecialLoaded(false);
     setActionLoading(true);
     try {
       const special = await getObjectSpecial(objId);
       setObjectSpecial(special);
+      setObjectSpecialLoaded(true);
       setSpecialInput("");
       setSelectedVariant(null);
       setHideMessage("");
@@ -297,6 +300,7 @@ export default function GamePage() {
     setSpecialInput("");
     setSelectedVariant(null);
     setHideMessage("");
+    setObjectSpecialLoaded(true);
     setCustomObjectData(buildCustomObjectSpecialData(input as any));
     setHideStep(1);
   };
@@ -331,10 +335,11 @@ export default function GamePage() {
 
     // Re-fetch objectSpecial if lost (robustness against race conditions)
     let special = objectSpecial;
-    if (!special && selectedObject) {
+    if (!special && selectedObject && !objectSpecialLoaded) {
       try {
         special = await getObjectSpecial(selectedObject);
         if (special) setObjectSpecial(special);
+        setObjectSpecialLoaded(true);
       } catch { /* proceed without special */ }
     }
 
@@ -1125,10 +1130,11 @@ export default function GamePage() {
                   const blockedDins = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
                   const blockedDarrere = pos.value === "darrere" && (itm as any)?.can_behind === false;
                   const blocked = blockedDins || blockedDarrere;
+                  const selected = selectedPosition === pos.value;
                   const blockReason = blockedDins ? t("game.hide.noFit") : blockedDarrere ? t("game.hide.cannot") : "";
                   return (
                     <Card key={pos.value}
-                      className={`glass transition-all active:scale-[0.97] ${blocked || actionLoading ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
+                      className={`glass transition-all active:scale-[0.97] ${selected ? "border-primary glow-primary" : ""} ${blocked || actionLoading ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
                       onClick={() => !blocked && !actionLoading && handleSelectPosition(pos.value)}>
                       <CardContent className="py-6 text-center">
                         <div className="text-4xl mb-2">{pos.icon}</div>
