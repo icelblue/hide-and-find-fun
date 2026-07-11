@@ -579,7 +579,7 @@ export default function GamePage() {
           }
         } else {
           // PvP win: fetch revealed rival data FIRST (RLS hides hidden_object_id until game finishes)
-          const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+          const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
           const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p: any) => p.user_id !== user.id) ?? rival;
           setRival(resolvedRival);
 
