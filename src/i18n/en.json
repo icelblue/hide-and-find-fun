@@ -1351,7 +1351,10 @@
     "petIsHere": "Your pet is here",
     "newCompanion": "{icon} {name} is your companion!",
     "activityOf": "🐾 {name}'s activity",
-    "thePet": "the pet"
+    "thePet": "the pet",
+    "tapToPet": "Tap to pet your companion",
+    "pettedToast": "💕 They loved it! Bond: {bond}/100",
+    "pettingCooldown": "😌 You petted them recently. Come back later!"
   },
   "claim": {
     "invalidLink": "This link is not valid.",
@@ -1376,5 +1379,19 @@
   },
   "install": {
     "selectInstall": "Select"
+  },
+  "garden": {
+    "carrot": "Carrot",
+    "tomato": "Tomato",
+    "strawberry": "Strawberry",
+    "pickSeed": "What do you want to plant?",
+    "planted": "🌱 Seed planted!",
+    "plantLabel": "Plant",
+    "harvested": "{icon} Harvested! +{coins}🪙",
+    "stillGrowing": "{icon} Still growing… {time} left",
+    "errMaxPlots": "Maximum {max} plants per room",
+    "errOccupied": "This cell is occupied",
+    "errPlanting": "Couldn't plant",
+    "errHarvest": "Couldn't harvest"
   }
 }

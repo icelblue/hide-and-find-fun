@@ -851,7 +851,7 @@ export async function ensureTokensReset(player: any) {
   await supabase
     .from("game_players")
     .update({
-      tokens_remaining: 4.0,
+      tokens_remaining: 5.0,
       tokens_last_reset: today,
       social_item_used_today: false,
     })
