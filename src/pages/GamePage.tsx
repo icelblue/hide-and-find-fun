@@ -75,6 +75,7 @@ import SocialItemsPanel from "@/components/game/SocialItemsPanel";
 import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup, WinFoundPopup } from "@/components/game/GamePopups";
 import WaitingScreen from "@/components/game/WaitingScreen";
 import ScenarioPicker from "@/components/game/ScenarioPicker";
+import ObjectIcon from "@/components/game/ObjectIcon";
 import { usePersonalCombat } from "@/hooks/game/usePersonalCombat";
 import { useGameLoader } from "@/hooks/game/useGameLoader";
 import { useGameRealtime } from "@/hooks/game/useGameRealtime";
