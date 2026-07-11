@@ -1,102 +1,91 @@
-# Refactor de GamePage.tsx en hooks
+
+# Pla: joc 100% pixel art coherent
+
+## Estat actual (auditoria)
+
+**Ja pixel art:**
+- 55 sprites `spr-*` + 12 backdrops `bg-*` + 6 textures `tex-*` de terreny.
+- 32/32 mobles del `furniture_catalog` mapejats a sprite (`src/lib/room-sprites.ts`).
+- Escenaris PvP i Espai Personal ja usen `PixelRoomGrid` amb textures.
+
+**El que trenca la coherència pixel art:**
+1. **30 "objectes amagables"** (taula `objects`: Anell, Clau, Cullera, Llibre, Mitjó, Moneda, Pilota, Plàtan podrit, ratolí PC, etc.) → renderitzats amb **emoji del sistema operatiu** (💍🔑🥄📖🧦🪙⚽🍌🖱️…). Trenquen tot l'estil pixel als moments clau: amagar i buscar.
+2. **9 items socials** (Plàtan, Bomba fum, Escut, Espia, Swap, Barricada, Trampa, Missatge, Robar tornavís) → emojis al `SocialItemsPanel`.
+3. **Icones d'eines** (🔨 martell, 🧹 drap, 🔧 tornavís, 🔦 llanterna) → emoji al HUD i FurnitureActionSheet.
+4. **Overlays d'estat** (💥 trencat, 🧹 brut) → emoji sobre sprite pixel.
+5. **UI genèrica**: mascota, banner d'inici, avatars, croneta de tokens, cartes de recompensa → mix d'emojis + gradients no-pixel.
 
 ## Objectiu
-Reduir `GamePage.tsx` de ~1960 línies a **~600-800 línies** (només JSX + orquestració), sense canviar cap comportament ni cap test. Extreure la lògica en 5 hooks amb responsabilitats netes. Deixar el fitxer preparat per Wave D sense fer-hi cirurgia futura de risc.
 
-## Principis (no negociables)
-- **Zero canvi de comportament**: mateix ordre d'efectes, mateixes dependències, mateix RPC. Els 260 tests han de passar sense modificar-ne cap.
-- **Un hook = una responsabilitat**. No barrejar estat de UI amb estat de partida.
-- **Refs compartides es passen com a arguments**, no s'amaguen dins hooks separats que caldria sincronitzar.
-- **Sense abstraccions especulatives**: si un estat només l'usa el JSX, es queda al component.
+Que **tot** el que apareix dins d'una partida (amagar, buscar, HUD, popups) sigui pixel art amb la mateixa paleta i escala. La UI perimetral (menús, auth, perfil) pot quedar plana — no és on es juga.
 
-## Arquitectura de destí
+## Llistat exhaustiu d'assets a crear
 
-```text
-src/pages/GamePage.tsx                       (~700 línies: JSX + orquestració)
-src/hooks/game/
-  ├─ useGameLoader.ts        loadGame + scheduleLoadGame + refs de reload
-  ├─ useGameRealtime.ts      subscripció a game_moves / social_items + reload debounced
-  ├─ usePersonalCombat.ts    override d'scenaris/objectes per mode personal_pvp
-  ├─ useHidingFlow.ts        estat i handlers de la fase "hide" (steps, custom object, special)
-  └─ useSearchFlow.ts        estat de "search" (lookedSpots, sheetItemId, handleLook, handleMove, tools)
-src/lib/game/
-  └─ game-derived.ts         helpers purs (derivats: isPersonalGame, isOutdoor, tokensRemaining, …)
-```
+### A. Objectes amagables (30 sprites — **crítics**, són l'ànima del joc)
+Anell, Bola de neu, Botó, Calces, Carta, Clau, Cor de vidre, Cullera, Dau, Foto, Gel, Joguina (osset), Llapis, Llibre, Mitjó, Mitjó pudent, Mocador, Moneda, Nas de pallasso, Pastís, Petard, Pilota, Pinta, Plàtan podrit, Ratolí PC, Rellotge, Rosa, Sabatilla, Xapa, Xiulet.
++ 1 placeholder `__custom__` (objecte personalitzat del jugador).
 
-## Ordre d'extracció (5 passes petits, cadascun verificable amb tests)
+### B. Items socials (9 sprites)
+Plàtan, Bomba de fum, Escut, Missatge, Espia, Swap, Barricada, Trampa, Robar tornavís.
 
-**Pas 1 — `usePersonalCombat`** (~60 línies, risc baix)
-- Encapsula l'`useEffect` de línies 555-579 + `personalDataRef`.
-- Retorna `{ isPersonalGame, personalData, scenariosOverride, objectsOverride }`.
-- GamePage substitueix `setScenarios/setObjects` per l'ús directe del retorn quan `isPersonalGame`.
+### C. Eines (4 sprites) + tokens (2)
+Martell, Drap, Llanterna, Tornavís, Moneda (token principal), Cor/vida.
 
-**Pas 2 — `useGameLoader`** (~320 línies, risc mitjà)
-- Mou `loadGame` (línies 182-477) + `scheduleLoadGame` + `isLoadingGameRef` + `pendingReloadRef` + `realtimeReloadTimeoutRef`.
-- Rep com a paràmetre `{ gameId, user, isPersonalGame, personalData }` i setters d'estat que ja viuen al component (via un objecte `setters`).
-- Retorna `{ loadGame, scheduleLoadGame }`.
-- **Nota**: no mou l'estat, només la funció. Això evita rewire complet dels 20+ `useState`.
+### D. Overlays d'estat (2 sprites petits, 16×16)
+Esclat "trencat", núvol de pols "brut". Substitueixen els emojis 💥/🧹.
 
-**Pas 3 — `useGameRealtime`** (~200 línies, risc mitjà)
-- Encapsula els dos `useEffect` grans (530-553 i 557-1101) que subscriuen canals de Supabase.
-- Rep `{ gameId, user, loadGame, scheduleLoadGame, handleRealtimeSocialItem, isStory }`.
-- Manté `seenRevealMoveIdsRef` internament (només aquest hook el consumeix).
+### E. Retrat de la mascota — pixel (4 estats)
+Neutral, feliç, trist, gana. Reutilitzable a `PetHealthBadge`, `WhileAwayDialog`, feed.
 
-**Pas 4 — `useHidingFlow`** (~120 línies, risc baix)
-- Agrupa tot l'estat de la fase "hide": `selectedScenario`, `selectedObject`, `selectedItem`, `selectedPosition`, `hideStep`, `objectSpecial`, `specialInput`, `selectedVariant`, `hideMessage`, `showHideMessagePopup`, tots els `customObject*`.
-- Exposa handlers: `handleSelectScenario`, `handleSelectObject`, `handleHide`, `resetHiding`.
+### F. Frames decoratius (2-3)
+Marc pixel per cartes de recompensa i popup de "trobat!".
 
-**Pas 5 — `useSearchFlow`** (~100 línies, risc baix)
-- Agrupa estat de "search": `sheetItemId`, `connectedScenarios`, `moveHistory`, `actionLoading`, `itemInteractions`, `playerTools`, `dirtyItems`, `breakableItems`, `gameBreaks`, `illuminatedScenarios`, `scenarioIsDarkState`.
-- Handlers: `handleLook`, `handleMove`, `handleToggleLight`, `handleTagAction`.
+**Total: ~55 sprites nous.** Cap altre asset. Tots via `imagegen` amb prompt unificat i pujats amb `lovable-assets`.
 
-## Detalls tècnics
+## Directrius artístiques (una sola línia visual)
 
-**Estat que NO es mou** (queda al component perquè el consumeix el JSX directament):
-- `game`, `player`, `rival`, `phase`, `scenarios`, `objects`, `items`, `currentScenarioItems`
-- Estat de popups: `pendingReveal`, `showSpecialFoundPopup`, `winFoundPopup`, `trollEffect`, `receivedMessage`, `bananaBlockedSpot`, `rivalSmokeBombAt`
-- `pixelView`, `showSocialPanel`, `showMyHideout`, `myHideoutData`
+- Estil: **32×32 chunky pixel art**, 4-6 colors per sprite, contorn negre suau (1px), ombra plana sota.
+- Paleta: reutilitzar la ja existent dels sprites de mobles (fusta clara/fosca, verd planta, blau bany, taronja cuina) per garantir cohesió.
+- Fons: **transparent** (PNG amb canal alpha). Ja tenim un test que ho bloqueja si algú puja un JPG.
+- Escala: tots els objectes amagables mateix bounding box perquè encaixin dins la cel·la del grid sense saltar.
 
-**Contracte dels hooks** (exemple `useGameLoader`):
-```ts
-export function useGameLoader(opts: {
-  gameId: string | undefined;
-  user: User | null;
-  isPersonalGame: boolean;
-  personalDataRef: MutableRefObject<PersonalCombatData | null>;
-  setters: {
-    setGame: Dispatch<SetStateAction<any>>;
-    setPlayer: Dispatch<SetStateAction<any>>;
-    // …tots els setters que loadGame toca
-  };
-}): {
-  loadGame: () => Promise<void>;
-  scheduleLoadGame: (delay?: number) => void;
-};
-```
-Passem el paquet de setters explícit → cap acoblament ocult, cap "context màgic".
+## Implementació per ones (ordre de valor)
 
-**Els refs (`isLoadingGameRef`, `pendingReloadRef`, `realtimeReloadTimeoutRef`, `seenRevealMoveIdsRef`, `personalDataRef`)** viuen al hook que els usa. Si dos hooks els comparteixen (`useGameLoader` + `useGameRealtime` comparteixen `isLoadingGameRef`), es creen al component i es passen per opts.
+### Ona 1 — Objectes amagables (crítica, ~4 crèdits)
+Sense això, la fase d'amagar/buscar es veu barrejada. És on es passa el 70% del temps de partida.
 
-## Verificació per pas
-Després de cada pas:
-1. `bunx tsgo --noEmit` (typecheck)
-2. `bunx vitest run` (260 tests han de continuar en verd)
-3. Smoke manual mental: waiting → hide → search → finished renderitzen igual
+1. Generar 31 sprites (A) amb `imagegen` batch (transparents).
+2. Pujar amb `lovable-assets` → `src/assets/objects/spr-obj-*.png`.
+3. Nou fitxer `src/lib/object-sprites.ts`: map `object.name → spriteUrl` (mateix patró que `room-sprites.ts`).
+4. Modificar `ItemActions.tsx`, `GamePopups.tsx`, `ScenarioPicker.tsx`, `SocialItemsPanel.tsx` per renderitzar `<img>` en comptes d'emoji quan hi ha sprite. Fallback a emoji si no.
+5. Test regressió: cada `objects.name` de la BD ha de tenir sprite o fallback conegut.
 
-Si algun pas falla en tests, es reverteix aquell pas sol (no tota la refactor).
+### Ona 2 — Items socials + eines + estats (~2 crèdits)
+6. Generar B + C + D (15 sprites).
+7. Reemplaçar emojis a `SocialItemsPanel`, `FurnitureActionSheet`, HUD de tokens/eines.
+8. Substituir badges 💥/🧹 dins `PixelRoomGrid` pels sprites d'overlay.
 
-## Cost estimat
-- Pas 1: 0.3 crèdits
-- Pas 2: 0.7 crèdits (el més gran)
-- Pas 3: 0.6 crèdits
-- Pas 4: 0.4 crèdits
-- Pas 5: 0.4 crèdits
-- **Total: ~2.4 crèdits**
+### Ona 3 — Mascota + frames (~1 crèdit)
+9. Generar E + F (7 sprites).
+10. Aplicar a `PetHealthBadge`, `RewardReveal`, popup de "trobat".
 
-## Resultat final
-`GamePage.tsx` queda amb: imports, declaració de tots els `useState` que sobreviuen, 5 crides a hooks, els handlers de UI simples, i el JSX. Res més. Wave D podrà tocar mecàniques sense navegar per 1960 línies.
+### Ona 4 — Polir (opcional, 0.5 crèdits)
+11. Fons pixel per la `WaitingScreen` i el marc del popup de partida acabada.
+12. Font pixel (Press Start 2P o VT323) només per titulars dins la partida — no per tota la UI, mataria la llegibilitat.
 
-## Fora d'aquesta feina (deixem per després)
-- Extreure sub-components de render (ex. `<HidePhase>`, `<SearchPhase>`). El JSX es queda tal qual — un altre dia.
-- Tipar bé els `any` (`game`, `player`, `rival`). No és refactor, és tipatge; es fa quan calgui.
-- Tests unitaris nous per als hooks. Els regressions actuals ja cobreixen el comportament end-to-end.
+## Salvaguardes tècniques
+
+- **Test transparència sprites** (ja existent) cobreix Ones 1-3 automàticament.
+- Nou test: cada `objects.name` i cada `social_item_type` té una entrada al map de sprites (fallback controlat, no emoji sorpresa).
+- Cap canvi de schema BD. Cap canvi de lògica de joc. Només presentació.
+- Reversible: si un sprite queda lleig, l'emoji fallback torna a funcionar sense codi extra.
+
+## Cost i decisió
+
+- Total estimat: **~7.5 crèdits** (Ona 1 = 4, Ona 2 = 2, Ona 3 = 1, Ona 4 = 0.5).
+- Recomanació: fer **Ona 1 primer i validar visualment** abans de continuar. Si el resultat convenç, seguir amb 2 i 3 en la mateixa sessió.
+
+## Preguntes abans d'implementar
+
+1. Confirmes fer **només Ona 1** ara (objectes amagables) o vols anar directe fins l'Ona 3?
+2. Vols que generi 2-3 sprites d'exemple primer com a **prova d'estil** (0.3 crèdits) perquè validis paleta abans de tirar les 30?
