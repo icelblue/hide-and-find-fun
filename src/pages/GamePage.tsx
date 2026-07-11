@@ -928,7 +928,7 @@ export default function GamePage() {
             const renderCard = (o: any) => (
               <Card key={o.id} className={`glass transition-all active:scale-[0.97] relative ${actionLoading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-secondary/40"}`} onClick={() => !actionLoading && handleSelectObject(o.id)}>
                 <CardContent className="py-3 text-center">
-                  <div className="text-2xl mb-1">{o.icon}</div>
+                  <div className="flex justify-center mb-1"><ObjectIcon name={o.name} emoji={o.icon} size={40} /></div>
                   <div className="text-[11px] font-medium">{o.name}</div>
                 </CardContent>
               </Card>
@@ -1136,7 +1136,7 @@ export default function GamePage() {
         <div className="py-4">
           <Card className="glass glow-accent">
             <CardContent className="py-6 text-center">
-              <div className="text-4xl mb-3">{objects.find((o: any) => o.id === selectedObject)?.icon}</div>
+              <div className="flex justify-center mb-3">{(() => { const o = objects.find((x: any) => x.id === selectedObject); return <ObjectIcon name={o?.name} emoji={o?.icon} size={64} />; })()}</div>
               <p className="font-bold mb-1">{t("game.hide.specialTitle")}</p>
               <p className="text-sm text-muted-foreground mb-4">{objectSpecial.prompt_text}</p>
 
