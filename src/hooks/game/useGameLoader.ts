@@ -136,13 +136,15 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         batch.connected = getConnectedScenarios(currentScenId);
         batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
       }
-      batch.moves = supabase.from("game_moves")
-        .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
-        .eq("game_id", gameId).eq("player_id", user.id)
-        .order("turn_number", { ascending: false });
-      batch.tagMoves = supabase.from("game_moves").select("bonus_value, player_id")
-        .eq("game_id", gameId).like("bonus_value", "tag:%")
-        .order("created_at", { ascending: true });
+      if (isPlaying || isFinished) {
+        batch.moves = supabase.from("game_moves")
+          .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
+          .eq("game_id", gameId).eq("player_id", user.id)
+          .order("turn_number", { ascending: false });
+        batch.tagMoves = supabase.from("game_moves").select("bonus_value, player_id")
+          .eq("game_id", gameId).like("bonus_value", "tag:%")
+          .order("created_at", { ascending: true });
+      }
 
       if (isFinished && gameData?.winner_id === user.id) {
         batch.reward = getGameReward(gameId, user.id);
@@ -277,9 +279,9 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           if (val === `tag:light_on:${currentScenId}`) indoorLightOff = false;
         }
       }
-      const scenarioIsDark = isPersonalGame
-        ? false
-        : (isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff);
+      const scenarioIsDark = isPlaying && !isPersonalGame
+        ? (isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff)
+        : false;
       S.setScenarioIsDarkState(scenarioIsDark);
 
       const visibleItems = loadedItems.filter((i: any) => {

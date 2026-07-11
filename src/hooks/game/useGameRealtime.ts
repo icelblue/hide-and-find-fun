@@ -5,7 +5,7 @@
 // handler d'items socials entrants. També fa el load inicial + pobla scenaris/
 // objects globals. Comportament idèntic al codi que abans vivia inline.
 // ============================================================
-import { useCallback, useEffect, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -37,15 +37,25 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
     setTrollEffect, setReceivedMessage,
   } = opts;
 
+  const currentScenarioItemsRef = useRef(currentScenarioItems);
+  const playerRef = useRef(player);
+
+  useEffect(() => {
+    currentScenarioItemsRef.current = currentScenarioItems;
+    playerRef.current = player;
+  }, [currentScenarioItems, player]);
+
   const handleRealtimeSocialItem = useCallback(async (item: any) => {
     if (!user || item?.to_player_id !== user.id || item?.processed) return;
     if (item.blocked_by_shield) return;
 
     if (item.item_type === "banana") {
-      const scenarioItems = currentScenarioItems.length > 0
-        ? currentScenarioItems
-        : player?.current_scenario_id
-          ? await getItemsByScenario(player.current_scenario_id)
+      const latestItems = currentScenarioItemsRef.current;
+      const latestPlayer = playerRef.current;
+      const scenarioItems = latestItems.length > 0
+        ? latestItems
+        : latestPlayer?.current_scenario_id
+          ? await getItemsByScenario(latestPlayer.current_scenario_id)
           : [];
 
       if (scenarioItems.length > 0) {
@@ -73,7 +83,7 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
       toast.warning(t("game.toasts.smokeBombUsed"), { duration: 5000 });
       await markSocialItemProcessed(item.id);
     }
-  }, [currentScenarioItems, player?.current_scenario_id, user, t, setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage]);
+  }, [user, t, setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage]);
 
   useEffect(() => {
     if (!gameId || !user) return;

@@ -8,7 +8,7 @@
 //   - GamePopups → src/components/game/GamePopups.tsx
 // ============================================================
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { logError } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -200,6 +200,15 @@ export default function GamePage() {
 
   // LOAD GAME — via useGameLoader hook
   // ============================================
+  const gameLoaderSetters = useMemo(() => ({
+    setGame, setPlayer, setRival, setPhase, setPlayerTools, setHideStep,
+    setBonusAvailable, setRivalNearby, setRivalTraits,
+    setConnectedScenarios, setDirtyItems, setBreakableItems, setItemInteractions,
+    setMoveHistory, setGameBreaks, setIlluminatedScenarios, setScenarioIsDarkState,
+    setCurrentScenarioItems, setReward, setRivalSmokeBombAt,
+    setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage,
+  }), []);
+
   const { loadGame, scheduleLoadGame } = useGameLoader({
     gameId,
     user,
@@ -208,14 +217,7 @@ export default function GamePage() {
     isLoadingGameRef,
     pendingReloadRef,
     realtimeReloadTimeoutRef,
-    setters: {
-      setGame, setPlayer, setRival, setPhase, setPlayerTools, setHideStep,
-      setBonusAvailable, setRivalNearby, setRivalTraits,
-      setConnectedScenarios, setDirtyItems, setBreakableItems, setItemInteractions,
-      setMoveHistory, setGameBreaks, setIlluminatedScenarios, setScenarioIsDarkState,
-      setCurrentScenarioItems, setReward, setRivalSmokeBombAt,
-      setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage,
-    },
+    setters: gameLoaderSetters,
   });
 
 
