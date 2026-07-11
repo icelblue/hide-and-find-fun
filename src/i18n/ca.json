@@ -1351,7 +1351,10 @@
     "petIsHere": "La teva mascota és aquí",
     "newCompanion": "{icon} {name} és el teu company!",
     "activityOf": "🐾 Activitat de {name}",
-    "thePet": "la mascota"
+    "thePet": "la mascota",
+    "tapToPet": "Toca per acariciar la mascota",
+    "pettedToast": "💕 Li ha encantat! Vincle: {bond}/100",
+    "pettingCooldown": "😌 Ja l'has acariciat fa poc. Torna més tard!"
   },
   "claim": {
     "invalidLink": "Aquest enllaç no és vàlid.",
@@ -1376,5 +1379,19 @@
   },
   "install": {
     "selectInstall": "Selecciona"
+  },
+  "garden": {
+    "carrot": "Pastanaga",
+    "tomato": "Tomàquet",
+    "strawberry": "Maduixa",
+    "pickSeed": "Què vols plantar?",
+    "planted": "🌱 Llavor plantada!",
+    "plantLabel": "Planta",
+    "harvested": "{icon} Collit! +{coins}🪙",
+    "stillGrowing": "{icon} Encara creix… falten {time}",
+    "errMaxPlots": "Màxim {max} plantes per sala",
+    "errOccupied": "Aquesta casella està ocupada",
+    "errPlanting": "No s'ha pogut plantar",
+    "errHarvest": "No s'ha pogut collir"
   }
 }

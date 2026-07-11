@@ -146,30 +146,25 @@ export default function SpacePage() {
     const baseName = t(tpl.name_key, tpl.id);
     const name = sameType > 1 ? `${baseName} ${sameType}` : baseName;
 
-    if (tpl.price_coins > 0) {
-      const { error } = await supabase.from("profiles").update({ bonus_tokens: newCoins } as never).eq("user_id", user.id);
-      if (error) { toast.error(t("space.buyError")); return; }
-      setCoins(newCoins);
-    }
-    const { error: e2 } = await supabase.from("player_rooms").insert({
-      user_id: user.id,
-      room_template_id: tpl.id,
-      custom_name: name,
-      layout: [] as never,
-      position_x: x,
-      position_y: y,
-    });
+    // Compra atòmica i validada al servidor (RPC buy_room):
+    // el saldo, el preu i el límit de sales es comproven a la BD.
+    const { data, error: e2 } = await supabase.rpc("buy_room" as never, {
+      _template_id: tpl.id,
+      _custom_name: name,
+      _pos_x: x,
+      _pos_y: y,
+    } as never);
     if (e2) {
-      const msg = e2.message?.includes("max_rooms_reached")
-        ? t("apartment.maxRooms", "Màxim 8 sales")
+      const m = e2.message ?? "";
+      const msg = m.includes("max_rooms_reached") ? t("apartment.maxRooms", "Màxim 8 sales")
+        : m.includes("not_enough_coins") ? t("space.notEnough")
         : t("space.buyError");
-      // rollback coins
-      if (tpl.price_coins > 0) await supabase.from("profiles").update({ bonus_tokens: coins } as never).eq("user_id", user.id);
-      setCoins(coins);
       toast.error(msg);
       setPlacingTemplate(null);
       return;
     }
+    const coinsLeft = (data as { coins_left?: number } | null)?.coins_left;
+    if (typeof coinsLeft === "number") setCoins(coinsLeft); else setCoins(newCoins);
     setPlacingTemplate(null);
     toast.success(`${tpl.icon} ${name}`);
     refresh();

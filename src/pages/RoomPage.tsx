@@ -22,6 +22,12 @@ import { generateTerrain, preferredTerrainForCategory, TERRAIN_BONUS } from "@/l
 import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
 import { themeForCategory } from "@/lib/room-themes";
 import { spriteForFurniture } from "@/lib/room-sprites";
+import {
+  GARDEN_CATEGORIES, MAX_PLOTS_PER_ROOM, getGardenCatalog, getPlantsForRoom,
+  plantSeed, harvestPlant, petThePet, growthStage, minutesUntilReady,
+  iconForStage, formatRemaining,
+  type GardenCatalogItem, type GardenPlant,
+} from "@/lib/garden-helpers";
 import { toast } from "sonner";
 
 const REWARD_HAPPINESS = 2;
@@ -87,6 +93,14 @@ export default function RoomPage() {
   // Fase C · UX: action sheet + mode moure + animació d'entrada
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [moveFromSlot, setMoveFromSlot] = useState<number | null>(null);
+  // Jardí
+  const [gardenCatalog, setGardenCatalog] = useState<GardenCatalogItem[]>([]);
+  const [plants, setPlants] = useState<GardenPlant[]>([]);
+  const [seedPickerSlot, setSeedPickerSlot] = useState<number | null>(null);
+  const [gardenTick, setGardenTick] = useState(0); // refresc visual de fases
+  // Mascota
+  const [petting, setPetting] = useState(false);
+  const [showHearts, setShowHearts] = useState(false);
   const [justPlacedSlot, setJustPlacedSlot] = useState<number | null>(null);
 
   useEffect(() => {
@@ -154,6 +168,84 @@ export default function RoomPage() {
   }, [rewards]);
 
   const layout = useMemo(() => room?.layout ?? [], [room?.layout]);
+  const isGardenRoom = !!template && (GARDEN_CATEGORIES as readonly string[]).includes(template.category);
+
+  // Carrega catàleg i plantes quan la sala és jardí/balcó
+  useEffect(() => {
+    if (!isGardenRoom || !room) return;
+    getGardenCatalog().then(setGardenCatalog).catch(() => {});
+    getPlantsForRoom(room.id).then(setPlants).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- room.id es l'unica dependencia real
+  }, [isGardenRoom, room?.id]);
+
+  // Tic cada 30s per refrescar fases de creixement sense recarregar
+  useEffect(() => {
+    if (!isGardenRoom || plants.length === 0) return;
+    const id = window.setInterval(() => setGardenTick((n) => n + 1), 30000);
+    return () => window.clearInterval(id);
+  }, [isGardenRoom, plants.length]);
+
+  const plantBySlot = useMemo(() => {
+    const m = new Map<number, GardenPlant>();
+    plants.forEach((p) => m.set(p.slot, p));
+    return m;
+  }, [plants]);
+  const gardenCatalogById = useMemo(() => {
+    const m = new Map<string, GardenCatalogItem>();
+    gardenCatalog.forEach((c) => m.set(c.id, c));
+    return m;
+  }, [gardenCatalog]);
+
+  // Accions del jardí
+  const doPlant = useCallback(async (slot: number, plantType: string) => {
+    if (!room) return;
+    setSeedPickerSlot(null);
+    try {
+      await plantSeed(room.id, slot, plantType);
+      setPlants(await getPlantsForRoom(room.id));
+      toast.success(t("garden.planted"));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("max_plots")) toast.error(t("garden.errMaxPlots", { max: MAX_PLOTS_PER_ROOM }));
+      else if (msg.includes("slot_occupied")) toast.error(t("garden.errOccupied"));
+      else toast.error(t("garden.errPlanting"));
+    }
+  }, [room, t]);
+
+  const doHarvestOrInfo = useCallback(async (plant: GardenPlant) => {
+    const cat = gardenCatalogById.get(plant.plant_type);
+    if (!cat) return;
+    const stage = growthStage(plant.planted_at, cat.growth_minutes);
+    if (stage !== "ready") {
+      const left = formatRemaining(minutesUntilReady(plant.planted_at, cat.growth_minutes));
+      toast.info(t("garden.stillGrowing", { icon: iconForStage(stage, cat), time: left }));
+      return;
+    }
+    try {
+      const res = await harvestPlant(plant.id);
+      setPlants((ps) => ps.filter((p) => p.id !== plant.id));
+      toast.success(t("garden.harvested", { icon: res.icon, coins: res.yield }));
+    } catch {
+      toast.error(t("garden.errHarvest"));
+    }
+  }, [gardenCatalogById, t]);
+
+  // Acariciar la mascota (cooldown 4h validat al servidor)
+  const doPetThePet = useCallback(async () => {
+    if (petting) return;
+    setPetting(true);
+    try {
+      const res = await petThePet();
+      if (res.petted) {
+        setShowHearts(true);
+        window.setTimeout(() => setShowHearts(false), 1500);
+        toast.success(t("pet.pettedToast", { bond: res.bond }));
+      } else {
+        toast.info(t("pet.pettingCooldown"));
+      }
+    } catch { /* silenci: no crític */ }
+    finally { setPetting(false); }
+  }, [petting, t]);
   const placedIds = useMemo(() => new Set(layout.map((s) => s.furniture_id)), [layout]);
 
   // Mobles col·locats en altres sales + càlcul de si la mascota viu aquí
@@ -317,7 +409,21 @@ export default function RoomPage() {
       return;
     }
 
-    // Prioritat 3: hi ha un moble seleccionat de l'inventari → col·locar
+    // Prioritat 3 (jardí): casella amb planta → collir o info
+    const plantHere = plantBySlot.get(idx);
+    if (plantHere) { void doHarvestOrInfo(plantHere); return; }
+
+    // Prioritat 4 (jardí): casella buida sense moble seleccionat → plantar
+    if (isGardenRoom && !selected) {
+      if (plants.length >= MAX_PLOTS_PER_ROOM) {
+        toast.error(t("garden.errMaxPlots", { max: MAX_PLOTS_PER_ROOM }));
+        return;
+      }
+      setSeedPickerSlot(idx);
+      return;
+    }
+
+    // Prioritat 5: hi ha un moble seleccionat de l'inventari → col·locar
     if (selected) {
       const next: LayoutSlot[] = [
         ...layout.filter((s) => s.furniture_id !== selected),
@@ -328,7 +434,7 @@ export default function RoomPage() {
       flashPlaced(idx);
       await persistLayout(next, prev);
     }
-  }, [layout, selected, room, moveFromSlot, persistLayout, flashPlaced]);
+  }, [layout, selected, room, moveFromSlot, persistLayout, flashPlaced, plantBySlot, doHarvestOrInfo, isGardenRoom, plants.length, t]);
 
   // Accions del sheet — cadascuna amb rollback via persistLayout
   const rotateAtSlot = useCallback(async (idx: number) => {
@@ -480,12 +586,18 @@ export default function RoomPage() {
             const slot = layout.find((s) => s.slot === idx);
             const entry = slot ? resolveEntry(slot.furniture_id) : null;
             const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey, entry.name) : null;
+            const plantAt = plantBySlot.get(idx);
+            const plantCat = plantAt ? gardenCatalogById.get(plantAt.plant_type) : undefined;
+            const plantIcon = plantAt && plantCat
+              ? iconForStage(growthStage(plantAt.planted_at, plantCat.growth_minutes), plantCat)
+              : undefined;
+            void gardenTick; // força re-render periòdic de les fases
             return {
               slot: idx,
-              icon: entry?.icon,
-              spriteUrl: sprite ?? undefined,
-              label: entry?.name ?? `casella ${idx + 1}`,
-              filled: !!entry,
+              icon: plantIcon ?? entry?.icon,
+              spriteUrl: plantAt ? undefined : (sprite ?? undefined),
+              label: plantAt ? t("garden.plantLabel") : (entry?.name ?? `casella ${idx + 1}`),
+              filled: !!entry || !!plantAt,
               highlighted: (!!selected && !entry) || (moveFromSlot !== null && !entry),
               selectedCell: moveFromSlot === idx,
               rotation: (slot?.rot ?? 0) as 0 | 90 | 180 | 270,
@@ -504,12 +616,20 @@ export default function RoomPage() {
                 ariaLabelPrefix="slot"
               />
               {isPetHere && pet && (
-                <div
-                  className="absolute pointer-events-none z-20 flex flex-col items-center animate-bounce"
+                <button
+                  type="button"
+                  onClick={doPetThePet}
+                  disabled={petting}
+                  className="absolute z-20 flex flex-col items-center animate-bounce cursor-pointer bg-transparent border-0 p-0"
                   style={{ left: "10%", bottom: "10%" }}
-                  aria-label={t("apartment.petHere", "La teva mascota és aquí")}
+                  aria-label={t("pet.tapToPet")}
                   title={`${pet.pet_icon} ${pet.pet_name}`}
                 >
+                  {showHearts && (
+                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xl animate-in fade-in slide-in-from-bottom-2 duration-500" aria-hidden>
+                      💕
+                    </span>
+                  )}
                   <span className="relative text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
                     {/* Halo pulsant Fase D */}
                     <span
@@ -521,11 +641,41 @@ export default function RoomPage() {
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/90 border border-accent/40 font-semibold mt-0.5 shadow">
                     {pet.pet_name}
                   </span>
-                </div>
+                </button>
               )}
             </div>
           );
         })()}
+
+        {/* Diàleg de tria de llavor (jardí) */}
+        <Dialog open={seedPickerSlot !== null} onOpenChange={(o) => !o && setSeedPickerSlot(null)}>
+          <DialogContent className="max-w-xs">
+            <DialogHeader>
+              <DialogTitle>🌱 {t("garden.pickSeed")}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-2">
+              {gardenCatalog.map((c) => (
+                <Button
+                  key={c.id}
+                  variant="outline"
+                  className="justify-between h-auto py-2"
+                  onClick={() => seedPickerSlot !== null && doPlant(seedPickerSlot, c.id)}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-xl">{c.icon}</span>
+                    <span>{t(c.name_key)}</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ⏱ {formatRemaining(c.growth_minutes)} · +{c.yield_coins}🪙
+                  </span>
+                </Button>
+              ))}
+              {gardenCatalog.length === 0 && (
+                <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Sheet d'accions per moble col·locat (Fase C · UX) */}
         <Sheet open={activeSlot !== null} onOpenChange={(o) => !o && setActiveSlot(null)}>
