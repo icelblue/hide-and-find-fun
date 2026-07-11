@@ -1393,5 +1393,9 @@
     "errOccupied": "This cell is occupied",
     "errPlanting": "Couldn't plant",
     "errHarvest": "Couldn't harvest"
+  },
+  "errors": {
+    "somethingFailed": "Something went wrong",
+    "autoReported": "The error was reported automatically. Please try again."
   }
 }

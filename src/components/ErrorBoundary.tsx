@@ -19,6 +19,37 @@
 import { Component, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import caStrings from "@/i18n/ca.json";
+import enStrings from "@/i18n/en.json";
+
+/** Traducció mínima per a aquest fitxer (ErrorBoundary és un
+ *  component de classe i no pot usar el hook useT). */
+function tBoundary(key: string): string {
+  const lang = typeof window !== "undefined" && localStorage.getItem("lang") === "en" ? "en" : "ca";
+  const bundle: Record<string, unknown> = lang === "en" ? enStrings : caStrings;
+  const val = key.split(".").reduce<unknown>((acc, k) =>
+    acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined, bundle);
+  return typeof val === "string" ? val : key;
+}
+
+// ---- Anti-spam: dedupe + límit de freqüència ----
+// Un bucle de renderitzat o un error recurrent no ha d'inundar
+// la taula error_logs: màxim 10 informes per sessió i mai el
+// mateix missatge dues vegades en 60s.
+const _reported = new Map<string, number>();
+let _reportCount = 0;
+const MAX_REPORTS_PER_SESSION = 10;
+const DEDUPE_WINDOW_MS = 60_000;
+
+function shouldReport(message: string): boolean {
+  if (_reportCount >= MAX_REPORTS_PER_SESSION) return false;
+  const now = Date.now();
+  const last = _reported.get(message);
+  if (last && now - last < DEDUPE_WINDOW_MS) return false;
+  _reported.set(message, now);
+  _reportCount++;
+  return true;
+}
 
 interface Props {
   children: ReactNode;
@@ -55,12 +86,12 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
           <div className="text-center max-w-sm">
             <div className="text-6xl mb-4">💥</div>
-            <h2 className="text-xl font-bold mb-2">Alguna cosa ha fallat</h2>
+            <h2 className="text-xl font-bold mb-2">{tBoundary("errors.somethingFailed")}</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              L'error ha estat reportat automàticament. Torna-ho a provar.
+              {tBoundary("errors.autoReported")}
             </p>
             <Button onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = "/"; }}>
-              Tornar al lobby
+              {tBoundary("common.lobby")}
             </Button>
           </div>
         </div>
@@ -82,6 +113,7 @@ export async function logError(
   metadata?: Record<string, any>
 ) {
   try {
+    if (!shouldReport(message)) return;
     const { data: { user } } = await supabase.auth.getUser();
     // Only log if user is authenticated (anon insert policy removed for security)
     if (!user) return;
