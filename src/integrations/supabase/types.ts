@@ -1986,6 +1986,7 @@ export type Database = {
         Args: { _game_id: string; _item_id: string }
         Returns: Json
       }
+      finish_game_setup: { Args: { _game_id: string }; Returns: undefined }
       generate_referral_code: {
         Args: { _display_name: string }
         Returns: string
