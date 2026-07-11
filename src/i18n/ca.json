@@ -1393,5 +1393,9 @@
     "errOccupied": "Aquesta casella està ocupada",
     "errPlanting": "No s'ha pogut plantar",
     "errHarvest": "No s'ha pogut collir"
+  },
+  "errors": {
+    "somethingFailed": "Alguna cosa ha fallat",
+    "autoReported": "L'error s'ha reportat automàticament. Torna-ho a provar."
   }
 }

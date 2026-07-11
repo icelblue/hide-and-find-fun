@@ -91,15 +91,49 @@ export default function PixelRoomGrid({
           : theme.terrainBg,
       };
 
+  // Variació subtil de terra per cel·la (determinista) — trenca la monotonia
+  const floorTints = useMemo(() => {
+    const rnd = deterministicPRNG(`${seed}:floor:${gridW}x${gridH}`);
+    return Array.from({ length: size }, () => {
+      const v = rnd();
+      if (v < 0.33) return "hsl(0 0% 0% / 0.05)";
+      if (v < 0.66) return "transparent";
+      return "hsl(0 0% 100% / 0.04)";
+    });
+  }, [seed, gridW, gridH, size]);
+
   return (
     <div
       className={`w-full max-w-[380px] mx-auto rounded-2xl overflow-hidden ${className}`}
       style={{
-        ...backgroundStyle,
         border: `3px solid ${theme.gridBorder}`,
         boxShadow: `inset 0 0 24px hsl(0 0% 0% / 0.18), 0 6px 20px hsl(0 0% 0% / 0.2)`,
       }}
     >
+      {/* Paret superior estil joc 2D: franja fosca amb sòcol */}
+      <div
+        aria-hidden
+        className="relative w-full"
+        style={{
+          height: "clamp(18px, 7cqw, 28px)",
+          background: `linear-gradient(180deg, ${theme.gridBorder} 0%, ${theme.filledBg} 100%)`,
+          borderBottom: `2px solid hsl(0 0% 0% / 0.35)`,
+        }}
+      >
+        {/* Sòcol clar just sobre el terra */}
+        <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: "hsl(0 0% 100% / 0.18)" }} />
+      </div>
+      <div className="relative" style={backgroundStyle}>
+      {/* Il·luminació ambient: llum suau des de dalt + vinyeta */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none z-[1]"
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(0 0% 100% / 0.10) 0%, transparent 30%)," +
+            "radial-gradient(120% 90% at 50% 40%, transparent 55%, hsl(0 0% 0% / 0.16) 100%)",
+        }}
+      />
       <div
         className="grid w-full h-full p-1 relative"
         style={{
@@ -162,12 +196,12 @@ export default function PixelRoomGrid({
               } ${cell?.selectedCell ? "z-20 scale-110" : ""} ${cell?.justPlaced ? "animate-scale-in" : ""}`}
               style={{
                 background: hasSprite
-                  ? "transparent"
+                  ? floorTints[idx]
                   : filled
                     ? theme.filledBg
                     : cell?.highlighted
                       ? "hsl(0 0% 100% / 0.22)"
-                      : "transparent",
+                      : floorTints[idx],
                 border: hasSprite
                   ? "2px solid transparent"
                   : filled
@@ -187,6 +221,16 @@ export default function PixelRoomGrid({
               {filled ? (
                 <>
                   {hasSprite ? (
+                    <>
+                    <span
+                      aria-hidden
+                      className="absolute bottom-[6%] left-1/2 -translate-x-1/2 pointer-events-none"
+                      style={{
+                        width: "62%",
+                        height: "16%",
+                        background: "radial-gradient(ellipse at center, hsl(0 0% 0% / 0.30) 0%, transparent 70%)",
+                      }}
+                    />
                     <img
                       src={cell!.spriteUrl}
                       alt=""
@@ -199,6 +243,7 @@ export default function PixelRoomGrid({
                         filter: stateFilter,
                       }}
                     />
+                    </>
                   ) : (
                     <span
                       aria-hidden
@@ -290,6 +335,7 @@ export default function PixelRoomGrid({
             </button>
           );
         })}
+      </div>
       </div>
     </div>
   );
