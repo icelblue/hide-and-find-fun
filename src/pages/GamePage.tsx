@@ -302,6 +302,7 @@ export default function GamePage() {
   };
 
   const handleSelectPosition = async (pos: Position) => {
+    if (actionLoading) return;
     const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
     const obj = isCustom
       ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
@@ -353,7 +354,7 @@ export default function GamePage() {
 
   const doHide = async (pos?: Position, extraSpecialData?: any) => {
     const finalPos = pos || selectedPosition as Position;
-    if (!gameId || !user || !finalPos) return;
+    if (!gameId || !user || !finalPos || actionLoading) return;
     setActionLoading(true);
     try {
       let specialData = extraSpecialData || undefined;
@@ -365,10 +366,22 @@ export default function GamePage() {
         specialData = { ...(specialData || {}), ...customObjectData };
       }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
+      // Optimistic local state: don't wait for realtime to reflect the successful hide.
+      // Without this, `hideStep=4` + stale `player.has_hidden=false` can render an empty
+      // waiting screen until the backend event arrives, which feels like the click did nothing.
+      setPlayer((prev: any) => prev ? {
+        ...prev,
+        hidden_object_id: selectedObject,
+        hidden_item_id: selectedItem,
+        hidden_position: finalPos,
+        has_hidden: true,
+        ...(specialData ? { special_data: specialData } : {}),
+      } : prev);
       setHideStep(4);
       toast.success(t("game.toasts.objectHidden"));
       if (await checkBothPlayersHidden(gameId)) {
         await startGame(gameId);
+        await loadGame();
         toast.success(t("game.toasts.searchStarted"));
       }
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
@@ -1115,8 +1128,8 @@ export default function GamePage() {
                   const blockReason = blockedDins ? t("game.hide.noFit") : blockedDarrere ? t("game.hide.cannot") : "";
                   return (
                     <Card key={pos.value}
-                      className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
-                      onClick={() => !blocked && handleSelectPosition(pos.value)}>
+                      className={`glass transition-all active:scale-[0.97] ${blocked || actionLoading ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
+                      onClick={() => !blocked && !actionLoading && handleSelectPosition(pos.value)}>
                       <CardContent className="py-6 text-center">
                         <div className="text-4xl mb-2">{pos.icon}</div>
                         <div className="text-sm font-semibold">{posLabel(pos.value)}</div>
