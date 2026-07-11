@@ -329,7 +329,7 @@ export default function LobbyPage() {
     try {
       const { data: game } = await supabase
         .from("games").select("id, status")
-        .eq("code", joinCode.toUpperCase()).single();
+        .eq("code", joinCode.trim().toUpperCase()).maybeSingle();
       if (!game) throw new Error(t("lobby.gameNotFound"));
       if (game.status !== "waiting") throw new Error(t("lobby.gameAlreadyStarted"));
       await joinGame(game.id, user.id);

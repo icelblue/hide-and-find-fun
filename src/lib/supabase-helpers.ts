@@ -669,16 +669,17 @@ export async function getMyInvites(userId: string) {
 }
 
 export async function getMyGames(userId: string) {
-  const { data: joined } = await supabase
-    .from("game_players")
-    .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id, game_mode)")
-    .eq("user_id", userId);
-
-  const { data: pendingInvites } = await supabase
-    .from("games")
-    .select("id, code, status, created_by, created_at, invited_user_id, game_mode")
-    .eq("status", "waiting")
-    .eq("invited_user_id", userId);
+  const [{ data: joined }, { data: pendingInvites }] = await Promise.all([
+    supabase
+      .from("game_players")
+      .select("game_id, games!inner(id, code, status, created_by, created_at, invited_user_id, game_mode)")
+      .eq("user_id", userId),
+    supabase
+      .from("games")
+      .select("id, code, status, created_by, created_at, invited_user_id, game_mode")
+      .eq("status", "waiting")
+      .eq("invited_user_id", userId),
+  ]);
 
   const joinedIds = new Set((joined ?? []).map((gp: any) => gp.game_id));
   const pendingFormatted = (pendingInvites ?? [])
@@ -691,20 +692,12 @@ export async function getMyGames(userId: string) {
   const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];
 
   const rivalMap = new Map<string, string>();
+  const rivalUserIds: string[] = [];
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: allGameIds });
     const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== userId);
-    const rivalUserIds = [...new Set(filteredPlayers.map((p: any) => p.user_id as string))];
-    if (rivalUserIds.length > 0) {
-      const { data: rivalProfiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .in("user_id", rivalUserIds);
-      const rpMap = new Map(rivalProfiles?.map((p) => [p.user_id, p.display_name]) ?? []);
-      for (const p of filteredPlayers) {
-        rivalMap.set(p.game_id, rpMap.get(p.user_id) ?? "Anònim");
-      }
-    }
+    rivalUserIds.push(...new Set(filteredPlayers.map((p: any) => p.user_id as string)));
+    for (const p of filteredPlayers) rivalMap.set(p.game_id, p.user_id);
   }
 
   const invitedUserIds = [
@@ -716,16 +709,7 @@ export async function getMyGames(userId: string) {
         .map((gp: any) => gp.games.invited_user_id),
     ),
   ];
-  let invitedProfileMap = new Map<string, string>();
-  if (invitedUserIds.length > 0) {
-    const { data: invProfiles } = await supabase
-      .from("profiles")
-      .select("user_id, display_name")
-      .in("user_id", invitedUserIds);
-    invitedProfileMap = new Map(invProfiles?.map((p) => [p.user_id, p.display_name ?? "Anònim"]) ?? []);
-  }
-
-  const allProfileIds = [...new Set([...creatorIds, ...invitedUserIds])];
+  const allProfileIds = [...new Set([...creatorIds, ...invitedUserIds, ...rivalUserIds])];
   const { data: allProfiles } =
     allProfileIds.length > 0
       ? await supabase.from("profiles").select("user_id, display_name").in("user_id", allProfileIds)
@@ -735,7 +719,8 @@ export async function getMyGames(userId: string) {
   for (const gp of all) {
     const game = (gp as any).games;
     (gp as any)._creator_name = profileMap.get(game.created_by) ?? "Anònim";
-    let rivalName = rivalMap.get((gp as any).game_id) ?? null;
+    const rivalId = rivalMap.get((gp as any).game_id) ?? null;
+    let rivalName = rivalId ? profileMap.get(rivalId) ?? "Anònim" : null;
     if (!rivalName && game.status === "waiting" && game.invited_user_id) {
       if (game.created_by === userId && game.invited_user_id !== userId) {
         rivalName = profileMap.get(game.invited_user_id) ?? "Anònim";
