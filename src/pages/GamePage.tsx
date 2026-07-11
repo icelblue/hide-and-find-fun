@@ -8,7 +8,7 @@
 //   - GamePopups → src/components/game/GamePopups.tsx
 // ============================================================
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { logError } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -163,6 +163,7 @@ export default function GamePage() {
   const isLoadingGameRef = useRef(false);
   const pendingReloadRef = useRef(false);
   const realtimeReloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hidingSubmitRef = useRef(false);
   // Wave A UI polish: track newly-revealed specials to animate them once
   const [pendingReveal, setPendingReveal] = useState<SpecialRevealData | null>(null);
   const seenRevealMoveIdsRef = useRef<Set<string>>(new Set());
@@ -200,6 +201,15 @@ export default function GamePage() {
 
   // LOAD GAME — via useGameLoader hook
   // ============================================
+  const gameLoaderSetters = useMemo(() => ({
+    setGame, setPlayer, setRival, setPhase, setPlayerTools, setHideStep,
+    setBonusAvailable, setRivalNearby, setRivalTraits,
+    setConnectedScenarios, setDirtyItems, setBreakableItems, setItemInteractions,
+    setMoveHistory, setGameBreaks, setIlluminatedScenarios, setScenarioIsDarkState,
+    setCurrentScenarioItems, setReward, setRivalSmokeBombAt,
+    setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage,
+  }), []);
+
   const { loadGame, scheduleLoadGame } = useGameLoader({
     gameId,
     user,
@@ -208,14 +218,7 @@ export default function GamePage() {
     isLoadingGameRef,
     pendingReloadRef,
     realtimeReloadTimeoutRef,
-    setters: {
-      setGame, setPlayer, setRival, setPhase, setPlayerTools, setHideStep,
-      setBonusAvailable, setRivalNearby, setRivalTraits,
-      setConnectedScenarios, setDirtyItems, setBreakableItems, setItemInteractions,
-      setMoveHistory, setGameBreaks, setIlluminatedScenarios, setScenarioIsDarkState,
-      setCurrentScenarioItems, setReward, setRivalSmokeBombAt,
-      setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage,
-    },
+    setters: gameLoaderSetters,
   });
 
 
@@ -306,7 +309,7 @@ export default function GamePage() {
   };
 
   const handleSelectPosition = async (pos: Position) => {
-    if (actionLoading) return;
+    if (actionLoading || hidingSubmitRef.current) return;
     const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
     const obj = isCustom
       ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
@@ -332,34 +335,41 @@ export default function GamePage() {
       return;
     }
     setSelectedPosition(pos);
+    hidingSubmitRef.current = true;
+    setActionLoading(true);
 
-    // Re-fetch objectSpecial if lost (robustness against race conditions)
-    let special = objectSpecial;
-    if (!special && selectedObject && !objectSpecialLoaded) {
-      try {
-        special = await getObjectSpecial(selectedObject);
-        if (special) setObjectSpecial(special);
-        setObjectSpecialLoaded(true);
-      } catch { /* proceed without special */ }
+    try {
+      // Re-fetch objectSpecial if lost (robustness against race conditions)
+      let special = objectSpecial;
+      if (!special && selectedObject && !objectSpecialLoaded) {
+        try {
+          special = await getObjectSpecial(selectedObject);
+          if (special) setObjectSpecial(special);
+          setObjectSpecialLoaded(true);
+        } catch { /* proceed without special */ }
+      }
+
+      // Show hide message popup if object supports it
+      if (special && (special as any).has_hide_message) {
+        setShowHideMessagePopup(true);
+        return;
+      }
+
+      if (special && special.prompt_on === "hide") {
+        setHideStep(5);
+        return;
+      }
+
+      await doHide(pos);
+    } finally {
+      hidingSubmitRef.current = false;
+      setActionLoading(false);
     }
-
-    // Show hide message popup if object supports it
-    if (special && (special as any).has_hide_message) {
-      setShowHideMessagePopup(true);
-      return;
-    }
-
-    if (special && special.prompt_on === "hide") {
-      setHideStep(5);
-      return;
-    }
-
-    await doHide(pos);
   };
 
   const doHide = async (pos?: Position, extraSpecialData?: any) => {
     const finalPos = pos || selectedPosition as Position;
-    if (!gameId || !user || !finalPos || actionLoading) return;
+    if (!gameId || !user || !finalPos || (actionLoading && !hidingSubmitRef.current)) return;
     setActionLoading(true);
     try {
       let specialData = extraSpecialData || undefined;
@@ -385,8 +395,13 @@ export default function GamePage() {
       setHideStep(4);
       toast.success(t("game.toasts.objectHidden"));
       if (await checkBothPlayersHidden(gameId)) {
-        await startGame(gameId);
-        await loadGame();
+        try {
+          await startGame(gameId);
+        } catch (startErr: any) {
+          const message = String(startErr?.message ?? "");
+          if (!message.includes("Game not in hiding phase")) throw startErr;
+        }
+        scheduleLoadGame(120);
         toast.success(t("game.toasts.searchStarted"));
       }
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
