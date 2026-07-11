@@ -321,19 +321,19 @@ export function getTagActions(
 }
 
 export async function executeFillWater(gameId: string, itemId: string) {
-  const { data, error } = await supabase.rpc("execute_fill_water" as any, { _game_id: gameId, _item_id: itemId });
+  const { data, error } = await supabase.rpc("execute_fill_water", { _game_id: gameId, _item_id: itemId });
   if (error) throw new Error(error.message);
   return data as any;
 }
 
 export async function executePolish(gameId: string, itemId: string) {
-  const { data, error } = await supabase.rpc("execute_polish" as any, { _game_id: gameId, _item_id: itemId });
+  const { data, error } = await supabase.rpc("execute_polish", { _game_id: gameId, _item_id: itemId });
   if (error) throw new Error(error.message);
   return data as any;
 }
 
 export async function rollGalledaDrop(gameId: string) {
-  const { data, error } = await supabase.rpc("roll_galleda_drop" as any, { _game_id: gameId });
+  const { data, error } = await supabase.rpc("roll_galleda_drop", { _game_id: gameId });
   if (error) return { dropped: false };
   return data as any;
 }
@@ -348,7 +348,7 @@ export const TOOLS_PER_GAME: Record<ToolType, number> = {
 
 /** Get how many of each tool have been found in this game (both players combined) */
 async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, number>> {
-  const { data: players } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+  const { data: players } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
 
   const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0, galleda: 0, drap_mullat: 0 };
   for (const p of (players as any[]) ?? []) {
@@ -441,7 +441,7 @@ export async function toggleLight(
   turnOff: boolean,
   scenarioName?: string,
 ) {
-  const { data, error } = await supabase.rpc("execute_toggle_light" as any, {
+  const { data, error } = await supabase.rpc("execute_toggle_light", {
     _game_id: gameId,
     _scenario_id: scenarioId,
     _turn_off: turnOff,
@@ -462,7 +462,7 @@ export async function performTagAction(
   actionKey: string,
   playerTools: Record<string, number>,
 ) {
-  const { data, error } = await supabase.rpc("execute_tag_action" as any, {
+  const { data, error } = await supabase.rpc("execute_tag_action", {
     _game_id: gameId,
     _item_id: itemId,
     _action_key: actionKey,
@@ -562,7 +562,7 @@ export async function joinGame(gameId: string, userId: string) {
     throw new Error(tt("game.errors.gameIsPrivate"));
   }
 
-  const { data: playerCount } = await supabase.rpc("count_game_players" as any, { _game_id: gameId });
+  const { data: playerCount } = await supabase.rpc("count_game_players", { _game_id: gameId });
   if ((playerCount ?? 0) >= 2) throw new Error(tt("game.errors.gameFull"));
 
   const { error } = await supabase.from("game_players").insert({ game_id: gameId, user_id: userId });
@@ -692,7 +692,7 @@ export async function getMyGames(userId: string) {
 
   const rivalMap = new Map<string, string>();
   if (allGameIds.length > 0) {
-    const { data: allPlayers } = await supabase.rpc("get_game_participants" as any, { _game_ids: allGameIds });
+    const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: allGameIds });
     const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== userId);
     const rivalUserIds = [...new Set(filteredPlayers.map((p: any) => p.user_id as string))];
     if (rivalUserIds.length > 0) {
@@ -828,13 +828,13 @@ export async function autoFixMissingScenario(gameId: string, userId: string, hid
 }
 
 export async function checkBothPlayersHidden(gameId: string) {
-  const { data, error } = await supabase.rpc("check_both_hidden" as any, { _game_id: gameId });
+  const { data, error } = await supabase.rpc("check_both_hidden", { _game_id: gameId });
   if (error) throw error;
   return !!data;
 }
 
 export async function startGame(gameId: string) {
-  const { error } = await supabase.rpc("start_game_setup" as any, { _game_id: gameId });
+  const { error } = await supabase.rpc("start_game_setup", { _game_id: gameId });
   if (error) throw new Error(error.message);
 }
 
@@ -862,7 +862,7 @@ export async function ensureTokensReset(player: any) {
 
 export async function redeemBonusTokens(gameId: string, userId: string, amount: number) {
   if (amount <= 0) throw new Error("Has de triar almenys 0.5 tokens!");
-  const { data, error } = await supabase.rpc("redeem_bonus_tokens" as any, {
+  const { data, error } = await supabase.rpc("redeem_bonus_tokens", {
     _game_id: gameId,
     _amount: amount,
   });
@@ -879,7 +879,7 @@ export async function performMove(
   targetPosition?: Position,
   isStory?: boolean,
 ) {
-  const { data, error } = await supabase.rpc("execute_game_move" as any, {
+  const { data, error } = await supabase.rpc("execute_game_move", {
     _game_id: gameId,
     _action: action,
     _target_scenario_id: targetScenarioId ?? null,
@@ -971,7 +971,7 @@ export async function sendSocialItem(
   }
 
   // Use safe RPC to read opponent data (SELECT restricted to own rows)
-  const { data: safePlayers } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+  const { data: safePlayers } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
   const toPlayer = ((safePlayers as any[]) ?? []).find((p: any) => p.user_id === toPlayerId) ?? null;
 
   const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis" || itemType === "barricada"));
@@ -983,7 +983,7 @@ export async function sendSocialItem(
   // Wave B: deduct social cost BEFORE any action (RPC handles validation + reset)
   const cost = SOCIAL_COSTS[itemType] ?? 0;
   if (cost > 0 && !blocked) {
-    const { error: costErr } = await supabase.rpc("consume_social_cost" as any, {
+    const { error: costErr } = await supabase.rpc("consume_social_cost", {
       _game_id: gameId, _cost: cost,
     });
     if (costErr) throw new Error(costErr.message);
@@ -996,7 +996,7 @@ export async function sendSocialItem(
     if (itemType === "shield") {
       await supabase.from("game_players").update({ shield_active: true }).eq("id", fromPlayer.id);
     } else if (itemType === "smoke_bomb") {
-      const { data: bombResult, error: bombErr } = await supabase.rpc("execute_smoke_bomb" as any, { _game_id: gameId });
+      const { data: bombResult, error: bombErr } = await supabase.rpc("execute_smoke_bomb", { _game_id: gameId });
       if (bombErr) throw new Error(bombErr.message);
       supabase.functions.invoke("send-push", {
         body: {
@@ -1009,7 +1009,7 @@ export async function sendSocialItem(
       }).catch(() => {});
       return { blocked: false, espiaResult: null, smokeBombResult: bombResult as any };
     } else if (itemType === "swap") {
-      const { error: swapErr } = await supabase.rpc("execute_swap" as any, { _game_id: gameId });
+      const { error: swapErr } = await supabase.rpc("execute_swap", { _game_id: gameId });
       if (swapErr) throw new Error(swapErr.message);
     } else if (itemType === "espia") {
       // Trail: últims escenaris on s'ha mogut el rival (incloent l'actual)
@@ -1048,16 +1048,16 @@ export async function sendSocialItem(
         espiaResult = labels.join(" ← ");
       }
     } else if (itemType === "robar_tornavis") {
-      const { error: robarErr } = await supabase.rpc("execute_robar_tornavis" as any, { _game_id: gameId });
+      const { error: robarErr } = await supabase.rpc("execute_robar_tornavis", { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
     } else if (itemType === "robar_llanterna") {
-      const { error: robarErr } = await supabase.rpc("execute_robar_llanterna" as any, { _game_id: gameId });
+      const { error: robarErr } = await supabase.rpc("execute_robar_llanterna", { _game_id: gameId });
       if (robarErr) throw new Error(robarErr.message);
       // RPC ja insereix a game_social_items, no marquem social_item_used_today (és gratis)
       return { blocked: false, espiaResult: null };
     } else if (itemType === "barricada") {
       if (!extraData?.scenarioFrom || !extraData?.scenarioTo) throw new Error(tt("game.errors.mustSelectPath"));
-      const { data: barResult, error: barErr } = await supabase.rpc("execute_barricada" as any, {
+      const { data: barResult, error: barErr } = await supabase.rpc("execute_barricada", {
         _game_id: gameId, _scenario_from: extraData.scenarioFrom, _scenario_to: extraData.scenarioTo,
       });
       if (barErr) throw new Error(barErr.message);
@@ -1075,7 +1075,7 @@ export async function sendSocialItem(
       return { blocked: false, espiaResult: null, barricadaResult: barResult as any };
     } else if (itemType === "trampa") {
       if (!extraData?.itemId) throw new Error("Has de seleccionar un moble!");
-      const { data: trapResult, error: trapErr } = await supabase.rpc("execute_trampa" as any, {
+      const { data: trapResult, error: trapErr } = await supabase.rpc("execute_trampa", {
         _game_id: gameId, _item_id: extraData.itemId,
       });
       if (trapErr) throw new Error(trapErr.message);
