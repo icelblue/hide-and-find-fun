@@ -2,6 +2,7 @@
 // en perfil propi i perfil públic d'altres jugadors).
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useT } from "@/i18n/LanguageProvider";
 import { outcomeLabel, type RecentVisit } from "@/lib/pet-social";
 
 interface Props {
@@ -15,11 +16,12 @@ interface Props {
 
 export function PetActivityFeed({ visits, ownUserId, isOwn, petName }: Props) {
   const navigate = useNavigate();
+  const t = useT();
   if (!visits || visits.length === 0) return null;
 
   const title = isOwn
-    ? "🐾 Activitat recent · visites de mascotes"
-    : `🐾 Activitat de ${petName ?? "la mascota"}`;
+    ? t("pet.activityFeed")
+    : t("pet.activityOf", { name: petName ?? t("pet.thePet") });
 
   return (
     <div className="mb-4">

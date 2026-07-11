@@ -108,7 +108,7 @@ export default function ProfilePage() {
         if (topId) {
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", topId[0]).single();
           const rivalName = rivalProf?.display_name;
-          if (rivalName && rivalName !== "Anònim" && rivalName.trim()) {
+          if (rivalName && rivalName !== t("common.anonymous") && rivalName.trim()) {
             setTopRival({ name: rivalName, count: topId[1], userId: topId[0] });
           } else { setTopRival(null); }
         }
@@ -120,7 +120,7 @@ export default function ProfilePage() {
       const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
       const { data: authors } = await supabase.from("profiles").select("user_id, display_name").in("user_id", authorIds);
       const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
-      for (const m of wallMsgs) { m._author_name = authorMap.get(m.author_user_id) ?? "Anònim"; }
+      for (const m of wallMsgs) { m._author_name = authorMap.get(m.author_user_id) ?? t("common.anonymous"); }
     }
     setWallMessages(wallMsgs);
 
@@ -145,10 +145,10 @@ export default function ProfilePage() {
         let rivalNameMap = new Map<string, string>();
         if (rivalUserIds.length > 0) {
           const { data: rivalProfs } = await supabase.from("profiles").select("user_id, display_name").in("user_id", rivalUserIds);
-          rivalNameMap = new Map((rivalProfs ?? []).map(p => [p.user_id, p.display_name ?? "Anònim"]));
+          rivalNameMap = new Map((rivalProfs ?? []).map(p => [p.user_id, p.display_name ?? t("common.anonymous")]));
         }
         const gameRivalMap = new Map<string, string>();
-        for (const rp of rivalPlayers) { gameRivalMap.set(rp.game_id, rivalNameMap.get(rp.user_id) ?? "Anònim"); }
+        for (const rp of rivalPlayers) { gameRivalMap.set(rp.game_id, rivalNameMap.get(rp.user_id) ?? t("common.anonymous")); }
 
         // Translate object/item/scenario names via supabase-helpers? They go via direct queries here.
         // Apply lightweight translation via translateRows for consistency.

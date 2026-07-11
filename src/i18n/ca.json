@@ -13,7 +13,10 @@
     "lobby": "Lobby",
     "backToLobby": "← Tornar al Lobby",
     "lobbyShort": "← Lobby",
-    "storyModeShort": "← Mode Història"
+    "storyModeShort": "← Mode Història",
+    "anonymous": "Anònim",
+    "install": "Instal·lar",
+    "installApp": "Instal·lar aplicació"
   },
   "petTier": {
     "baby": "Bebè",
@@ -35,7 +38,8 @@
     "healthy": "Saludable ✅"
   },
   "notFound": {
-    "message": "Aquesta pàgina no existeix"
+    "message": "Aquesta pàgina no existeix",
+    "pageNotExists": "Aquesta pàgina no existeix"
   },
   "lobby": {
     "myGames": "Les meves partides",
@@ -101,7 +105,8 @@
       "goDecorate": "Decorar el meu espai",
       "challenge": "Repte"
     },
-    "languageToggle": "Idioma"
+    "languageToggle": "Idioma",
+    "opponentNeedsRooms": "L'oponent no té 2 sales connectades."
   },
   "lang": {
     "ca": "Català",
@@ -356,15 +361,42 @@
     }
   },
   "storyEffect": {
-    "eat": { "label": "{icon} Donar menjar", "verb": "menja" },
-    "devour": { "label": "{icon} Donar", "verb": "devora" },
-    "taste": { "label": "{icon} Donar", "verb": "tasta" },
-    "drink": { "label": "{icon} Donar de beure", "verb": "beu" },
-    "rest": { "label": "{icon} Acotxar", "verb": "es relaxa amb" },
-    "play": { "label": "{icon} Jugar", "verb": "juga amb" },
-    "calm": { "label": "{icon} Calmar", "verb": "pren" },
-    "gift": { "label": "{icon} Regalar", "verb": "rep" },
-    "music": { "label": "{icon} Calmar amb música", "verb": "escolta" }
+    "eat": {
+      "label": "{icon} Donar menjar",
+      "verb": "menja"
+    },
+    "devour": {
+      "label": "{icon} Donar",
+      "verb": "devora"
+    },
+    "taste": {
+      "label": "{icon} Donar",
+      "verb": "tasta"
+    },
+    "drink": {
+      "label": "{icon} Donar de beure",
+      "verb": "beu"
+    },
+    "rest": {
+      "label": "{icon} Acotxar",
+      "verb": "es relaxa amb"
+    },
+    "play": {
+      "label": "{icon} Jugar",
+      "verb": "juga amb"
+    },
+    "calm": {
+      "label": "{icon} Calmar",
+      "verb": "pren"
+    },
+    "gift": {
+      "label": "{icon} Regalar",
+      "verb": "rep"
+    },
+    "music": {
+      "label": "{icon} Calmar amb música",
+      "verb": "escolta"
+    }
   },
   "stats": {
     "bond": "Vincle",
@@ -424,7 +456,9 @@
     "cancel": "Cancel·lar",
     "send": "Enviar",
     "formSignIn": "Formulari d’inici de sessió",
-    "formSignUp": "Formulari de registre"
+    "formSignUp": "Formulari de registre",
+    "passwordMin": "La contrasenya ha de tenir mínim 6 caràcters.",
+    "passwordsMismatch": "Les contrasenyes no coincideixen!"
   },
   "help": {
     "trigger": "Com funciona",
@@ -498,7 +532,6 @@
     "error": "Error al repte diari",
     "consequencesHint": "Les conseqüències es revelaran després de triar",
     "rewardHidden": "Recompensa aplicada"
-
   },
   "evolution": {
     "level": "Lv{n}",
@@ -536,15 +569,12 @@
     "noNode": "No s'ha trobat el node inicial",
     "nodeMissing": "Node inicial '{id}' no existeix",
     "choiceFailed": "no s'ha pogut aplicar la decisió",
-    "unknownError": "error desconegut"
+    "unknownError": "error desconegut",
+    "errCreatingPet": "Error creant la mascota"
   },
   "reveal": {
-    "tragicEnd": "Final tràgic...",
-    "foundItem": "Has trobat {name}!",
-    "recipe": "Recepta: {name}",
-    "damage": "-{n} salut",
-    "xp": "+{n} XP",
-    "nothing": "Res aquesta vegada"
+    "curse": "Casella maleïda!",
+    "bonus": "Casella premi!"
   },
   "game": {
     "loading": "Carregant partida...",
@@ -894,7 +924,17 @@
         "name": "Robar llanterna",
         "desc": "Roba 1 llanterna al rival (gratis)"
       }
-    }
+    },
+    "screwdriver": "🔧 Tornavís",
+    "cursedCell": "Casella maleïda!",
+    "switchToClassic": "Canviar a vista clàssica",
+    "pixelToList": "🎨 Pixel · canvia a llista",
+    "listToPixel": "📋 Llista · canvia a pixel",
+    "toolDrap": "🧹 Drap",
+    "toolMartell": "🔨 Martell",
+    "toolLlanterna": "🔦 Llanterna",
+    "toolGalleda": "🪣 Galleda",
+    "switchToPixel": "Canviar a vista pixel art"
   },
   "helpPvp": {
     "menuLabel": "❓ Com jugar",
@@ -1172,9 +1212,11 @@
     "notFound": "Sala no trobada",
     "onlyCategories": "Només hi caben",
     "noAllowedFurniture": "No tens mobles compatibles amb aquesta sala",
-    "shopFilterHint": "Filtrat per compatibilitat amb"
+    "shopFilterHint": "Filtrat per compatibilitat amb",
+    "onlyFits": "Només hi caben",
+    "tapToPlace": "Toca on vols col·locar-lo",
+    "tapEmptyOrFurniture": "Toca una casella buida per posar · toca un moble per accions"
   },
-
   "space": {
     "title": "El meu espai",
     "happiness": "Felicitat",
@@ -1205,13 +1247,21 @@
       "bath": "Bany",
       "dining": "Menjador"
     },
-
     "tab": {
       "furniture": "Mobles",
       "collection": "Col·lecció"
     },
     "noRewards": "Encara no tens ítems de col·lecció. Guanya partides!",
-    "allRewardsPlaced": "Tots els ítems de col·lecció ja col·locats"
+    "allRewardsPlaced": "Tots els ítems de col·lecció ja col·locats",
+    "maxRooms": "Màxim 8 sales",
+    "doorLimitReached": "Una sala ha arribat al límit de portes",
+    "connectionExists": "Aquesta connexió ja existeix",
+    "deleteRoomConfirm": "Eliminar aquesta sala i les seves portes? (perds els mobles col·locats)",
+    "buyRoomsHint": "Compra sales (menjador, balcó, cuina…) al teu gust.",
+    "connectDoorsHint": "Connecta-les amb portes (🚪) — cada tipus de sala té un límit propi (1–4).",
+    "tapFreeCell": "Toca una casella lliure per col·locar",
+    "dragOrTap": "Arrossega una sala per moure-la · toca per entrar",
+    "chooseTypeHint": "Escull el tipus. Es col·locarà després tocant una casella lliure del mapa."
   },
   "furniture": {
     "bed_basic": "Llit bàsic",
@@ -1276,7 +1326,9 @@
       "kitchen": "Primer els secs, després els líquids.",
       "ritual": "La sal protegeix abans que la flama il·lumini.",
       "dreams": "L'aigua de lluna obre el camí; la plata el tanca."
-    }
+    },
+    "attemptsExhausted": "Has esgotat els intents. Pots saltar amb penalització.",
+    "placeIngredients": "Col·loca {slots} ingredients en l'ordre correcte"
   },
   "onboarding": {
     "space": {
@@ -1294,8 +1346,35 @@
     },
     "cta": "Entesos!"
   },
-  "reveal": {
-    "curse": "Casella maleïda!",
-    "bonus": "Casella premi!"
+  "pet": {
+    "activityFeed": "🐾 Activitat recent · visites de mascotes",
+    "petIsHere": "La teva mascota és aquí",
+    "newCompanion": "{icon} {name} és el teu company!",
+    "activityOf": "🐾 Activitat de {name}",
+    "thePet": "la mascota"
+  },
+  "claim": {
+    "invalidLink": "Aquest enllaç no és vàlid.",
+    "notYourLink": "Aquest enllaç no és teu o ja no és vàlid.",
+    "expiredLink": "Aquest enllaç ha caducat (els bonus expiren als 30 dies).",
+    "rarityEpic": "èpic 🟣",
+    "rarityCommon": "comú",
+    "alreadyClaimed": "Ja has reclamat aquest bonus!",
+    "claiming": "Reclamant el teu bonus...",
+    "claimed": "Bonus reclamat!",
+    "rarityRare": "rar 🔵",
+    "goPlay": "Anar a jugar 🎮"
+  },
+  "playerProfile": {
+    "wins": "Victòries",
+    "noTrophies": "Aquest jugador encara no té trofeus.",
+    "noReferralsYet": "Encara ningú t'ha usat com a referral.",
+    "findSpecials": "Troba objectes especials per guanyar trofeus!",
+    "noRecentMessages": "Cap missatge recent",
+    "noMessagesYet": "Encara ningú t'ha deixat missatge!",
+    "beFirst": "Sigues el primer a escriure!"
+  },
+  "install": {
+    "selectInstall": "Selecciona"
   }
 }
