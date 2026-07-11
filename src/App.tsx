@@ -1,29 +1,55 @@
 // ============================================================
 // App.tsx — Punt d'entrada de l'aplicació React
 // ============================================================
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ComponentType } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
+// Retry-on-chunk-error: després d'un deploy el navegador pot tenir un index.html
+// antic apuntant a chunks que ja no existeixen. Detectem l'error d'import del
+// mòdul i forcem UN sol reload per obtenir l'index.html actualitzat.
+// Sense això, la Suspense es quedaria penjada per sempre al PageLoader.
+function lazyWithReload<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (err: any) {
+      const msg = String(err?.message || err || "");
+      const isChunkError = /Importing a module script failed|Failed to fetch dynamically imported module|ChunkLoadError|Loading chunk .* failed/i.test(msg);
+      if (isChunkError && typeof window !== "undefined") {
+        const KEY = "__ddl_chunk_reload__";
+        if (!sessionStorage.getItem(KEY)) {
+          sessionStorage.setItem(KEY, "1");
+          window.location.reload();
+          // Return a never-resolving promise so React doesn't render a broken state before reload.
+          return await new Promise<{ default: T }>(() => {});
+        }
+      }
+      throw err;
+    }
+  });
+}
+
 // Lazy-loaded toaster (not needed for FCP)
-const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+const Sonner = lazyWithReload(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
 
 // Lazy-loaded pages for code splitting
-const AuthPage = lazy(() => import("./pages/AuthPage"));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
-const LobbyPage = lazy(() => import("./pages/LobbyPage"));
-const GamePage = lazy(() => import("./pages/GamePage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const PlayerProfilePage = lazy(() => import("./pages/PlayerProfilePage"));
-const StoryModePage = lazy(() => import("./pages/StoryModePage"));
-const SpacePage = lazy(() => import("./pages/SpacePage"));
-const RoomPage = lazy(() => import("./pages/RoomPage"));
-const ClaimReminderPage = lazy(() => import("./pages/ClaimReminderPage"));
-const DemoPage = lazy(() => import("./pages/DemoPage"));
-const JoinGamePage = lazy(() => import("./pages/JoinGamePage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const AuthPage = lazyWithReload(() => import("./pages/AuthPage"));
+const ResetPasswordPage = lazyWithReload(() => import("./pages/ResetPasswordPage"));
+const LobbyPage = lazyWithReload(() => import("./pages/LobbyPage"));
+const GamePage = lazyWithReload(() => import("./pages/GamePage"));
+const ProfilePage = lazyWithReload(() => import("./pages/ProfilePage"));
+const PlayerProfilePage = lazyWithReload(() => import("./pages/PlayerProfilePage"));
+const StoryModePage = lazyWithReload(() => import("./pages/StoryModePage"));
+const SpacePage = lazyWithReload(() => import("./pages/SpacePage"));
+const RoomPage = lazyWithReload(() => import("./pages/RoomPage"));
+const ClaimReminderPage = lazyWithReload(() => import("./pages/ClaimReminderPage"));
+const DemoPage = lazyWithReload(() => import("./pages/DemoPage"));
+const JoinGamePage = lazyWithReload(() => import("./pages/JoinGamePage"));
+const NotFound = lazyWithReload(() => import("./pages/NotFound"));
+
 
 function PageLoader() {
   // Llegim lang directament de localStorage per evitar dependència del context
