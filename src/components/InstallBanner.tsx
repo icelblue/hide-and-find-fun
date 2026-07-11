@@ -8,6 +8,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useT } from "@/i18n/LanguageProvider";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -61,6 +62,7 @@ function getAndroidBrowser(): "chrome" | "firefox" | "samsung" | "other" {
 }
 
 export function InstallBanner() {
+  const t = useT();
   const [visible, setVisible] = useState(false);
   const [platform, setPlatform] = useState<Platform>("desktop");
   const [showGuide, setShowGuide] = useState(false);
@@ -141,7 +143,7 @@ export function InstallBanner() {
       className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-300"
       style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))", paddingLeft: "0.75rem", paddingRight: "0.75rem", paddingTop: "0.75rem" }}
       role="banner"
-      aria-label="Instal·lar aplicació"
+      aria-label={t("common.installApp")}
     >
       <div className="mx-auto max-w-md rounded-xl bg-card border border-border/60 shadow-lg shadow-primary/10 p-4">
         <div className="flex items-start gap-3">
@@ -255,7 +257,7 @@ export function InstallBanner() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-foreground">
                       <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex-shrink-0">2</span>
-                      <span>Selecciona <strong>"Instal·lar"</strong> 📥</span>
+                      <span>{t("install.selectInstall")} <strong>"{t("common.install")}"</strong> 📥</span>
                     </div>
                   </>
                 ) : androidBrowser === "samsung" ? (

@@ -20,10 +20,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useT } from "@/i18n/LanguageProvider";
 import { useNavigate } from "react-router-dom";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
+  const t = useT();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,11 +49,11 @@ export default function ResetPasswordPage() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error("Les contrasenyes no coincideixen!");
+      toast.error(t("auth.passwordsMismatch"));
       return;
     }
     if (password.length < 6) {
-      toast.error("La contrasenya ha de tenir mínim 6 caràcters.");
+      toast.error(t("auth.passwordMin"));
       return;
     }
     setLoading(true);

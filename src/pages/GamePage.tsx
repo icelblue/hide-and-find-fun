@@ -96,9 +96,9 @@ export default function GamePage() {
   const posLabel = (p: string) => t(`game.pos.${p}`, p);
   const toolKey = (tool: string) => `🔧 ${t(`game.toolNames.${tool}`, tool)}`;
   const getToolName = (tool: string) =>
-    tool === "drap" ? "🧹 Drap" :
-    tool === "martell" ? "🔨 Martell" :
-    tool === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
+    tool === "drap" ? t("game.toolDrap") :
+    tool === "martell" ? t("game.toolMartell") :
+    tool === "llanterna" ? t("game.toolLlanterna") : t("game.screwdriver");
 
   // Core game state
   const [game, setGame] = useState<any>(null);
@@ -429,7 +429,7 @@ export default function GamePage() {
     try {
       const [actionType] = actionKey.split(":");
       const item = currentScenarioItems.find(i => i.id === itemId);
-      const getToolName = (t: string) => t === "drap" ? "🧹 Drap" : t === "martell" ? "🔨 Martell" : t === "llanterna" ? "🔦 Llanterna" : t === "galleda" ? "🪣 Galleda" : "🔧 Tornavís";
+      const getToolName = (k: string) => k === "drap" ? t("game.toolDrap") : k === "martell" ? t("game.toolMartell") : k === "llanterna" ? t("game.toolLlanterna") : k === "galleda" ? t("game.toolGalleda") : t("game.screwdriver");
 
       // Wave C: new RPC paths
       if (actionType === "fill_water") {
@@ -499,7 +499,7 @@ export default function GamePage() {
         }
       }
       if (result.toolFound) {
-        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
+        const toolName = result.toolFound === "drap" ? t("game.toolDrap") : result.toolFound === "martell" ? t("game.toolMartell") : result.toolFound === "llanterna" ? t("game.toolLlanterna") : t("game.screwdriver");
         toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
       }
       clearBanana();
@@ -616,7 +616,7 @@ export default function GamePage() {
       } else if (result.cursed) {
         toast.error(`${t("game.items.cursed")} ${result.bonusTokens}🪙`, { duration: 5000 });
       } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
-        const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
+        const toolName = result.bonusValue === "tool:drap" ? t("game.toolDrap") : result.bonusValue === "tool:martell" ? t("game.toolMartell") : t("game.screwdriver");
         toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
       } else if (result.foundBonus === "extra_token") toast.success(t("game.toasts.extraToken", { val: result.bonusValue }));
       else if (result.foundBonus) toast.info(t("game.toasts.magic", { val: result.bonusValue }));
@@ -1424,9 +1424,9 @@ export default function GamePage() {
                   try { localStorage.setItem("pvp:pixelView", String(next)); } catch { /* ignore */ }
                 }}
                 className="text-[10px] px-2 py-1 rounded-md border border-border/40 bg-muted/30 hover:bg-muted/50 transition"
-                aria-label={pixelView ? "Canviar a vista clàssica" : "Canviar a vista pixel art"}
+                aria-label={pixelView ? t("game.switchToClassic") : t("game.switchToPixel")}
               >
-                {pixelView ? "🎨 Pixel · canvia a llista" : "📋 Llista · canvia a pixel"}
+                {pixelView ? t("game.pixelToList") : t("game.listToPixel")}
               </button>
             </div>
 

@@ -6,6 +6,7 @@
 // ============================================================
 
 import { useEffect, useState } from "react";
+import { useT } from "@/i18n/LanguageProvider";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import { claimReminderBonus } from "@/lib/referral-helpers";
 export default function ClaimReminderPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const t = useT();
   const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"idle" | "claiming" | "success" | "error">("idle");
   const [result, setResult] = useState<{ tokens?: number; reward_rarity?: string; error?: string } | null>(null);
@@ -54,10 +56,10 @@ export default function ClaimReminderPage() {
   }, [user, authLoading, token, navigate]);
 
   const errorMessages: Record<string, string> = {
-    no_token: "Aquest enllaç no és vàlid.",
-    invalid_token: "Aquest enllaç no és teu o ja no és vàlid.",
-    already_claimed: "Ja has reclamat aquest bonus!",
-    expired: "Aquest enllaç ha caducat (els bonus expiren als 30 dies).",
+    no_token: t("claim.invalidLink"),
+    invalid_token: t("claim.notYourLink"),
+    already_claimed: t("claim.alreadyClaimed"),
+    expired: t("claim.expiredLink"),
   };
 
   return (
@@ -67,21 +69,21 @@ export default function ClaimReminderPage() {
           {status === "claiming" && (
             <>
               <div className="text-5xl animate-pulse">🎁</div>
-              <p className="text-muted-foreground">Reclamant el teu bonus...</p>
+              <p className="text-muted-foreground">{t("claim.claiming")}</p>
             </>
           )}
           {status === "success" && (
             <>
               <div className="text-6xl">🎉</div>
-              <h1 className="text-xl font-bold">Bonus reclamat!</h1>
+              <h1 className="text-xl font-bold">{t("claim.claimed")}</h1>
               <div className="space-y-2 text-sm">
                 {result?.tokens ? <p>+{result.tokens} tokens 🪙</p> : null}
                 {result?.reward_rarity ? (
-                  <p>+1 ítem {result.reward_rarity === "epic" ? "èpic 🟣" : result.reward_rarity === "rare" ? "rar 🔵" : "comú"}</p>
+                  <p>+1 ítem {result.reward_rarity === "epic" ? t("claim.rarityEpic") : result.reward_rarity === "rare" ? t("claim.rarityRare") : t("claim.rarityCommon")}</p>
                 ) : null}
               </div>
               <Button className="w-full" onClick={() => navigate("/")}>
-                Anar a jugar 🎮
+                {t("claim.goPlay")}
               </Button>
             </>
           )}

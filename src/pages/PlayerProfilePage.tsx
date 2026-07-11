@@ -90,7 +90,7 @@ export default function PlayerProfilePage() {
         .from("profiles").select("user_id, display_name").in("user_id", authorIds);
       const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
       for (const m of wallMsgs) {
-        m._author_name = authorMap.get(m.author_user_id) ?? "Anònim";
+        m._author_name = authorMap.get(m.author_user_id) ?? t("common.anonymous");
       }
     }
     setMessages(wallMsgs);
@@ -238,7 +238,7 @@ export default function PlayerProfilePage() {
       <div className="grid grid-cols-4 gap-2 mb-5">
         {[
           { val: profile.games_played, label: "Partides" },
-          { val: profile.games_won, label: "Victòries" },
+          { val: profile.games_won, label: t("playerProfile.wins") },
           { val: `${winRate}%`, label: "Win rate" },
           { val: profile.elo, label: "Elo" },
         ].map((s, i) => (
@@ -401,7 +401,7 @@ export default function PlayerProfilePage() {
               <div className="text-3xl mb-1.5 opacity-50">🏆</div>
               <p className="text-sm text-muted-foreground">Cap trofeu encara</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                {isOwnProfile ? "Troba objectes especials per guanyar trofeus!" : "Aquest jugador encara no té trofeus."}
+                {isOwnProfile ? t("playerProfile.findSpecials") : t("playerProfile.noTrophies")}
               </p>
             </CardContent>
           </Card>
@@ -470,9 +470,9 @@ export default function PlayerProfilePage() {
           <Card className="glass">
             <CardContent className="py-8 text-center">
               <div className="text-4xl mb-2 opacity-50">🤫</div>
-              <p className="text-sm text-muted-foreground">Cap missatge recent</p>
+              <p className="text-sm text-muted-foreground">{t("playerProfile.noRecentMessages")}</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                {isOwnProfile ? "Encara ningú t'ha deixat missatge!" : "Sigues el primer a escriure!"}
+                {isOwnProfile ? t("playerProfile.noMessagesYet") : t("playerProfile.beFirst")}
               </p>
             </CardContent>
           </Card>
@@ -484,7 +484,7 @@ export default function PlayerProfilePage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-primary">
-                        {m._author_name ?? "Anònim"}
+                        {m._author_name ?? t("common.anonymous")}
                       </span>
                       <p className="text-sm mt-0.5 break-words">{m.message}</p>
                     </div>

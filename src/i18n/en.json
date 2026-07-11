@@ -13,7 +13,10 @@
     "lobby": "Lobby",
     "backToLobby": "← Back to Lobby",
     "lobbyShort": "← Lobby",
-    "storyModeShort": "← Story Mode"
+    "storyModeShort": "← Story Mode",
+    "anonymous": "Anonymous",
+    "install": "Install",
+    "installApp": "Install app"
   },
   "petTier": {
     "baby": "Baby",
@@ -35,7 +38,8 @@
     "healthy": "Healthy ✅"
   },
   "notFound": {
-    "message": "This page does not exist"
+    "message": "This page does not exist",
+    "pageNotExists": "This page doesn't exist"
   },
   "lobby": {
     "myGames": "My games",
@@ -101,7 +105,8 @@
       "goDecorate": "Decorate my space",
       "challenge": "Challenge"
     },
-    "languageToggle": "Language"
+    "languageToggle": "Language",
+    "opponentNeedsRooms": "Your opponent doesn't have 2 connected rooms."
   },
   "lang": {
     "ca": "Català",
@@ -356,15 +361,42 @@
     }
   },
   "storyEffect": {
-    "eat": { "label": "{icon} Feed", "verb": "is eating" },
-    "devour": { "label": "{icon} Give", "verb": "devours" },
-    "taste": { "label": "{icon} Give", "verb": "tastes" },
-    "drink": { "label": "{icon} Give a drink", "verb": "drinks" },
-    "rest": { "label": "{icon} Tuck in", "verb": "rests with" },
-    "play": { "label": "{icon} Play", "verb": "plays with" },
-    "calm": { "label": "{icon} Soothe", "verb": "takes" },
-    "gift": { "label": "{icon} Gift", "verb": "receives" },
-    "music": { "label": "{icon} Calm with music", "verb": "listens to" }
+    "eat": {
+      "label": "{icon} Feed",
+      "verb": "is eating"
+    },
+    "devour": {
+      "label": "{icon} Give",
+      "verb": "devours"
+    },
+    "taste": {
+      "label": "{icon} Give",
+      "verb": "tastes"
+    },
+    "drink": {
+      "label": "{icon} Give a drink",
+      "verb": "drinks"
+    },
+    "rest": {
+      "label": "{icon} Tuck in",
+      "verb": "rests with"
+    },
+    "play": {
+      "label": "{icon} Play",
+      "verb": "plays with"
+    },
+    "calm": {
+      "label": "{icon} Soothe",
+      "verb": "takes"
+    },
+    "gift": {
+      "label": "{icon} Gift",
+      "verb": "receives"
+    },
+    "music": {
+      "label": "{icon} Calm with music",
+      "verb": "listens to"
+    }
   },
   "stats": {
     "bond": "Bond",
@@ -424,7 +456,9 @@
     "cancel": "Cancel",
     "send": "Send",
     "formSignIn": "Sign in form",
-    "formSignUp": "Sign up form"
+    "formSignUp": "Sign up form",
+    "passwordMin": "The password must be at least 6 characters.",
+    "passwordsMismatch": "Passwords don't match!"
   },
   "help": {
     "trigger": "How it works",
@@ -498,7 +532,6 @@
     "error": "Daily challenge error",
     "consequencesHint": "Consequences will be revealed after you choose",
     "rewardHidden": "Reward applied"
-
   },
   "evolution": {
     "level": "Lv{n}",
@@ -536,15 +569,12 @@
     "noNode": "Starting node not found",
     "nodeMissing": "Starting node '{id}' does not exist",
     "choiceFailed": "couldn't apply choice",
-    "unknownError": "unknown error"
+    "unknownError": "unknown error",
+    "errCreatingPet": "Error creating the pet"
   },
   "reveal": {
-    "tragicEnd": "Tragic end...",
-    "foundItem": "You found {name}!",
-    "recipe": "Recipe: {name}",
-    "damage": "-{n} health",
-    "xp": "+{n} XP",
-    "nothing": "Nothing this time"
+    "curse": "Cursed cell!",
+    "bonus": "Bonus cell!"
   },
   "game": {
     "loading": "Loading match...",
@@ -894,7 +924,17 @@
         "name": "Steal flashlight",
         "desc": "Steals 1 flashlight from the rival (free)"
       }
-    }
+    },
+    "screwdriver": "🔧 Screwdriver",
+    "cursedCell": "Cursed cell!",
+    "switchToClassic": "Switch to classic view",
+    "pixelToList": "🎨 Pixel · switch to list",
+    "listToPixel": "📋 List · switch to pixel",
+    "toolDrap": "🧹 Cloth",
+    "toolMartell": "🔨 Hammer",
+    "toolLlanterna": "🔦 Flashlight",
+    "toolGalleda": "🪣 Bucket",
+    "switchToPixel": "Switch to pixel art view"
   },
   "helpPvp": {
     "menuLabel": "❓ How to play",
@@ -1172,9 +1212,11 @@
     "notFound": "Room not found",
     "onlyCategories": "Only allows",
     "noAllowedFurniture": "No furniture compatible with this room",
-    "shopFilterHint": "Filtered by compatibility with"
+    "shopFilterHint": "Filtered by compatibility with",
+    "onlyFits": "Only fits",
+    "tapToPlace": "Tap where you want to place it",
+    "tapEmptyOrFurniture": "Tap an empty cell to place · tap furniture for actions"
   },
-
   "space": {
     "title": "My Space",
     "happiness": "Happiness",
@@ -1205,13 +1247,21 @@
       "bath": "Bath",
       "dining": "Dining"
     },
-
     "tab": {
       "furniture": "Furniture",
       "collection": "Collection"
     },
     "noRewards": "No collection items yet. Win games!",
-    "allRewardsPlaced": "All collection items placed"
+    "allRewardsPlaced": "All collection items placed",
+    "maxRooms": "Maximum 8 rooms",
+    "doorLimitReached": "A room has reached its door limit",
+    "connectionExists": "This connection already exists",
+    "deleteRoomConfirm": "Delete this room and its doors? (you lose placed furniture)",
+    "buyRoomsHint": "Buy rooms (dining room, balcony, kitchen…) as you like.",
+    "connectDoorsHint": "Connect them with doors (🚪) — each room type has its own limit (1–4).",
+    "tapFreeCell": "Tap a free cell to place",
+    "dragOrTap": "Drag a room to move it · tap to enter",
+    "chooseTypeHint": "Choose the type. It will be placed by tapping a free cell on the map."
   },
   "furniture": {
     "bed_basic": "Basic bed",
@@ -1276,7 +1326,9 @@
       "kitchen": "Dry ingredients first, then liquids.",
       "ritual": "Salt protects before flame illuminates.",
       "dreams": "Moonwater opens the path; silver closes it."
-    }
+    },
+    "attemptsExhausted": "You've run out of attempts. You can skip with a penalty.",
+    "placeIngredients": "Place {slots} ingredients in the correct order"
   },
   "onboarding": {
     "space": {
@@ -1294,8 +1346,35 @@
     },
     "cta": "Got it!"
   },
-  "reveal": {
-    "curse": "Cursed cell!",
-    "bonus": "Bonus cell!"
+  "pet": {
+    "activityFeed": "🐾 Recent activity · pet visits",
+    "petIsHere": "Your pet is here",
+    "newCompanion": "{icon} {name} is your companion!",
+    "activityOf": "🐾 {name}'s activity",
+    "thePet": "the pet"
+  },
+  "claim": {
+    "invalidLink": "This link is not valid.",
+    "notYourLink": "This link isn't yours or is no longer valid.",
+    "expiredLink": "This link has expired (bonuses expire after 30 days).",
+    "rarityEpic": "epic 🟣",
+    "rarityCommon": "common",
+    "alreadyClaimed": "You've already claimed this bonus!",
+    "claiming": "Claiming your bonus...",
+    "claimed": "Bonus claimed!",
+    "rarityRare": "rare 🔵",
+    "goPlay": "Go play 🎮"
+  },
+  "playerProfile": {
+    "wins": "Wins",
+    "noTrophies": "This player has no trophies yet.",
+    "noReferralsYet": "No one has used you as a referral yet.",
+    "findSpecials": "Find special objects to earn trophies!",
+    "noRecentMessages": "No recent messages",
+    "noMessagesYet": "No one has left you a message yet!",
+    "beFirst": "Be the first to write!"
+  },
+  "install": {
+    "selectInstall": "Select"
   }
 }
