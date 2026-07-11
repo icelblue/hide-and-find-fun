@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n/LanguageProvider";
+import ObjectIcon from "@/components/game/ObjectIcon";
 
 interface SpecialFoundPopupProps {
   show: any;
@@ -40,7 +41,7 @@ export function SpecialFoundPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label={t("game.popups.specialFoundTitle")}>
       <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
         <CardContent className="py-6 text-center">
-          <div className="text-5xl mb-3">{(rival?.special_data as any)?.custom_icon ?? objects.find((o: any) => o.id === rival?.hidden_object_id)?.icon ?? "⭐"}</div>
+          <div className="flex justify-center mb-3">{(() => { const o = objects.find((x: any) => x.id === rival?.hidden_object_id); const sd = rival?.special_data as any; return <ObjectIcon name={o?.name} emoji={sd?.custom_icon ?? o?.icon} size={72} />; })()}</div>
           <p className="font-bold text-lg mb-1">{t("game.popups.specialFoundTitle")}</p>
           {(() => {
             const sd = rival?.special_data as any;

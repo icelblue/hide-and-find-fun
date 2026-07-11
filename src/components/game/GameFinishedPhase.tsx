@@ -10,6 +10,7 @@ import { RARITY_CONFIG } from "@/lib/reward-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import { useT } from "@/i18n/LanguageProvider";
 import { translateRows } from "@/i18n/translate-data";
+import ObjectIcon from "@/components/game/ObjectIcon";
 
 
 
@@ -258,7 +259,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                     : t("game.results.rivalsObject", { name: rivalInfo.rivalName })}
                 </p>
                 {rivalInfo.obj && (
-                  <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
+                  <div className="flex justify-center mb-2"><ObjectIcon name={rivalInfo.obj.name} emoji={rivalInfo.obj.icon} size={56} /></div>
                 )}
                 <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
                 {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
