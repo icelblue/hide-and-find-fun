@@ -153,7 +153,7 @@ export default function RoomPage() {
     return m;
   }, [rewards]);
 
-  const layout = room?.layout ?? [];
+  const layout = useMemo(() => room?.layout ?? [], [room?.layout]);
   const placedIds = useMemo(() => new Set(layout.map((s) => s.furniture_id)), [layout]);
 
   // Mobles col·locats en altres sales + càlcul de si la mascota viu aquí
@@ -214,7 +214,7 @@ export default function RoomPage() {
   const gridW = template?.grid_w ?? 4;
   const gridH = template?.grid_h ?? 4;
   const gridSize = gridW * gridH;
-  const allowedCats = template?.allowed_categories ?? [];
+  const allowedCats = useMemo(() => template?.allowed_categories ?? [], [template?.allowed_categories]);
   const multiplier = Number(template?.happiness_multiplier ?? 1);
 
   // Bonus terreny: si la sala està sobre el seu terreny preferit al mapa 5×5, +10%
