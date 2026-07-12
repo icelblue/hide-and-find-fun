@@ -1426,6 +1426,25 @@ export default function GamePage() {
           </div>
 
           {/* Dark warning */}
+          {/* Sala a les fosques: es veu grisa i SENSE mobles (vista pixel) */}
+          {scenarioIsDark && pixelView && (() => {
+            const scenName = currentScenario?.name ?? "";
+            const themeHint = (currentScenario as any)?.themeHint as string | undefined;
+            const theme = themeForScenarioName(scenName, themeHint);
+            const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => ({ slot: idx }));
+            return (
+              <div className="mt-2 mb-2">
+                <PixelRoomGrid
+                  theme={theme}
+                  gridW={PVP_GRID_W}
+                  gridH={PVP_GRID_H}
+                  cells={cells}
+                  seed={`pvp:${player?.current_scenario_id ?? ""}`}
+                  dark
+                />
+              </div>
+            );
+          })()}
           {scenarioIsDark && (
             <Card className="glass border-yellow-500/30">
               <CardContent className="py-3 text-center">

@@ -1283,7 +1283,8 @@
     "connectDoorsHint": "Connect them with doors (🚪) — each room type has its own limit (1–4).",
     "tapFreeCell": "Tap a free cell to place",
     "dragOrTap": "Drag a room to move it · tap to enter",
-    "chooseTypeHint": "Choose the type. It will be placed by tapping a free cell on the map."
+    "chooseTypeHint": "Choose the type. It will be placed by tapping a free cell on the map.",
+    "dbUpdateNeeded": "Pending database migrations must be applied to buy rooms"
   },
   "furniture": {
     "bed_basic": "Basic bed",

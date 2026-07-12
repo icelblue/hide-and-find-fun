@@ -1283,7 +1283,8 @@
     "connectDoorsHint": "Connecta-les amb portes (🚪) — cada tipus de sala té un límit propi (1–4).",
     "tapFreeCell": "Toca una casella lliure per col·locar",
     "dragOrTap": "Arrossega una sala per moure-la · toca per entrar",
-    "chooseTypeHint": "Escull el tipus. Es col·locarà després tocant una casella lliure del mapa."
+    "chooseTypeHint": "Escull el tipus. Es col·locarà després tocant una casella lliure del mapa.",
+    "dbUpdateNeeded": "Cal aplicar les migracions de BD pendents per comprar sales"
   },
   "furniture": {
     "bed_basic": "Llit bàsic",
