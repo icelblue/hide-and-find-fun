@@ -37,7 +37,7 @@ export async function resolveAndFetchPendingVisits(userId: string): Promise<Reso
 
   // Visites resoltes i no vistes per a aquest usuari
   const { data: visits, error } = await supabase
-    .from("pet_visits" as any)
+    .from("pet_visits")
     .select("*")
     .not("resolved_at", "is", null)
     .or(
@@ -76,10 +76,10 @@ export async function resolveAndFetchPendingVisits(userId: string): Promise<Reso
   const hostIds = (visits as any[]).filter((v) => v.host_user_id === userId).map((v) => v.id);
   const visitorIds = (visits as any[]).filter((v) => v.visitor_user_id === userId).map((v) => v.id);
   if (hostIds.length > 0) {
-    await supabase.from("pet_visits" as any).update({ seen_by_host: true }).in("id", hostIds);
+    await supabase.from("pet_visits").update({ seen_by_host: true }).in("id", hostIds);
   }
   if (visitorIds.length > 0) {
-    await supabase.from("pet_visits" as any).update({ seen_by_visitor: true }).in("id", visitorIds);
+    await supabase.from("pet_visits").update({ seen_by_visitor: true }).in("id", visitorIds);
   }
   return result;
 }
@@ -89,7 +89,7 @@ export async function resolveAndFetchPendingVisits(userId: string): Promise<Reso
  */
 export async function getRecentVisits(userId: string, limit = 8): Promise<RecentVisit[]> {
   const { data: visits } = await supabase
-    .from("pet_visits" as any)
+    .from("pet_visits")
     .select("*")
     .not("resolved_at", "is", null)
     .or(`host_user_id.eq.${userId},visitor_user_id.eq.${userId}`)
@@ -146,7 +146,7 @@ export interface PetNotification {
 /** Fetch unseen pet notifications + mark them as seen. Returns the unseen rows enriched with the sender display name. */
 export async function fetchAndMarkUnseenNotifications(userId: string): Promise<PetNotification[]> {
   const { data, error } = await supabase
-    .from("pet_notifications" as any)
+    .from("pet_notifications")
     .select("*")
     .eq("user_id", userId)
     .eq("seen", false)
@@ -162,7 +162,7 @@ export async function fetchAndMarkUnseenNotifications(userId: string): Promise<P
     nameMap = new Map((profs ?? []).map((p) => [p.user_id, p.display_name ?? "Algú"]));
   }
   const ids = (data as any[]).map((n) => n.id);
-  await supabase.from("pet_notifications" as any).update({ seen: true }).in("id", ids);
+  await supabase.from("pet_notifications").update({ seen: true }).in("id", ids);
 
   return (data as any[]).map((n) => ({
     ...n,

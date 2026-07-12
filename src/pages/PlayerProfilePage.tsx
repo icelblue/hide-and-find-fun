@@ -16,6 +16,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
+import { asError } from "@/lib/errors";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,7 +86,7 @@ export default function PlayerProfilePage() {
     // Fetch author names
     const wallMsgs: any[] = msgs ?? [];
     if (wallMsgs.length > 0) {
-      const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
+      const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
         .from("profiles").select("user_id, display_name").in("user_id", authorIds);
       const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
@@ -121,7 +122,7 @@ export default function PlayerProfilePage() {
       const result = data as any;
       toast.success(`Has curat ${result.pet_name}! -${result.healed} XP 💊`);
       await loadData();
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       toast.error(err.message);
     } finally {
       setGiftingConsumable(false);
@@ -137,7 +138,7 @@ export default function PlayerProfilePage() {
       toast.success(`🐾 La teva mascota ha anat a jugar amb ${pet?.pet_name ?? "ell"}!`, {
         description: "Torna en una estona per veure com ha anat.",
       });
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       toast.error(err.message || "No s'ha pogut enviar la visita");
     } finally {
       setSendingVisit(false);
@@ -155,7 +156,7 @@ export default function PlayerProfilePage() {
       if (error) throw error;
       toast.success(`🎁 Has regalat ${item.item_icon} ${item.item_name}!`);
       await loadData();
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       toast.error(err.message || "No s'ha pogut regalar");
     } finally {
       setGiftingItem(null);
@@ -175,7 +176,7 @@ export default function PlayerProfilePage() {
       setNewMsg("");
       toast.success("Missatge enviat! 💬");
       await loadData();
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       toast.error(err.message);
     } finally {
       setSending(false);
@@ -290,7 +291,7 @@ export default function PlayerProfilePage() {
               </div>
               {petAccessories.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  {petAccessories.map((a: any) => (
+                  {petAccessories.map((a) => (
                     <span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>
                   ))}
                 </div>
@@ -365,7 +366,7 @@ export default function PlayerProfilePage() {
                   🎁 Regalar un objecte de la teva motxilla
                 </p>
                 <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto">
-                  {myStoryInventory.map((it: any) => (
+                  {myStoryInventory.map((it) => (
                     <Button
                       key={it.id}
                       size="sm"
@@ -407,7 +408,7 @@ export default function PlayerProfilePage() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {trophies.map((t: any) => {
+            {trophies.map((t) => {
               const sd = t.special_data as any;
               return (
                 <Card key={t.id} className="glass border-accent/30">
@@ -478,7 +479,7 @@ export default function PlayerProfilePage() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {messages.map((m: any) => (
+            {messages.map((m) => (
               <Card key={m.id} className="glass">
                 <CardContent className="py-2.5 px-3">
                   <div className="flex items-start justify-between gap-2">
@@ -518,7 +519,7 @@ function PlayerVitrina({ userId }: { userId: string }) {
           .eq("status", "owned"),
       ]);
       setCatalog(items);
-      setOwnedIds(new Set((owned ?? []).map((r: any) => r.reward_item_id)));
+      setOwnedIds(new Set((owned ?? []).map((r) => r.reward_item_id)));
       setLoading(false);
     })();
   }, [userId]);
@@ -541,7 +542,7 @@ function PlayerVitrina({ userId }: { userId: string }) {
         🏆 Vitrina ({ownedCount}/{catalog.length})
       </h2>
       <div className="flex flex-wrap gap-2">
-        {catalog.map((item: any) => {
+        {catalog.map((item) => {
           const has = ownedIds.has(item.id);
           const rarity = RARITY_CONFIG[item.rarity];
           const border = RARITY_BORDER_MAP[item.rarity] ?? "";

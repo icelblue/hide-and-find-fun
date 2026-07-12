@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { asError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
@@ -96,7 +97,7 @@ export function PuzzleNodeView({ userId, runId, nodeId, puzzle, inventory, onSol
         toast.error(t("puzzle.wrong", { left: String(MAX_PUZZLE_ATTEMPTS - res.attempts) }, "Ordre incorrecte"));
       }
       reset();
-    } catch (e: any) {
+    } catch (_raw_e) { const e = asError(_raw_e);
       toast.error(e?.message ?? "Error");
     } finally {
       setBusy(false);

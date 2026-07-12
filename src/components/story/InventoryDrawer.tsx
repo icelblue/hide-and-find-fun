@@ -1,5 +1,6 @@
 // 🔒 Component v5.1 — Motxilla amb pestanyes (Objectes/Receptes/Ajuda).
 import { useEffect, useState } from "react";
+import { asError } from "@/lib/errors";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -88,7 +89,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
       toast.success(t("inventory.toastUsed", { icon: item.item_icon, pet: petName, verb, item: itemNameT(item.item_id, item.item_name) }));
       await load();
       onChange?.();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (_raw_e) { const e = asError(_raw_e); toast.error(e.message); }
     finally { setBusy(false); }
   };
 
@@ -100,7 +101,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
       toast.success(t("inventory.toastCombined", { icon: result.item_icon, name: itemNameT(result.item_id, result.item_name) }));
       await load();
       onChange?.();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (_raw_e) { const e = asError(_raw_e); toast.error(e.message); }
     finally { setBusy(false); }
   };
 
@@ -269,7 +270,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {accessories.map((a: any) => (
+                  {accessories.map((a) => (
                     <div key={a.id} className="glass rounded-lg p-3 border border-accent/30 flex items-center gap-2">
                       <span className="text-2xl">{a.accessory_icon}</span>
                       <div className="min-w-0">

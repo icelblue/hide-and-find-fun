@@ -68,7 +68,7 @@ export async function sendSocialItem(
 
   // Use safe RPC to read opponent data (SELECT restricted to own rows)
   const { data: safePlayers } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
-  const toPlayer = ((safePlayers as any[]) ?? []).find((p: any) => p.user_id === toPlayerId) ?? null;
+  const toPlayer = ((safePlayers as any[]) ?? []).find((p) => p.user_id === toPlayerId) ?? null;
 
   const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis" || itemType === "barricada"));
 
@@ -138,7 +138,7 @@ export async function sendSocialItem(
           .from("scenarios")
           .select("id, name, icon")
           .in("id", trailIds);
-        const byId = new Map((scenarios ?? []).map((s: any) => [s.id, `${s.icon} ${s.name}`]));
+        const byId = new Map((scenarios ?? []).map((s) => [s.id, `${s.icon} ${s.name}`]));
         const labels = trailIds.map(id => byId.get(id) ?? "📍").filter(Boolean);
         // [actual, anterior, anterior-1] separats per fletxa cap enrere
         espiaResult = labels.join(" ← ");

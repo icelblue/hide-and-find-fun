@@ -19,7 +19,7 @@ export function PetHealthBadge({ activeEvents, petName, compact = false }: PetHe
   if (compact) {
     return (
       <div className="flex items-center gap-1 mt-1">
-        {activeEvents.map((ev: any) => (
+        {activeEvents.map((ev) => (
           <span key={ev.id} className="text-sm animate-pulse" title={`${ev.event_name}: +${ev.xp_change} XP — Cura: ${EVENT_CURE_MAP[ev.event_type]?.icon ?? "?"} ${EVENT_CURE_MAP[ev.event_type]?.name ?? "?"}`}>
             {ev.event_icon}
           </span>
@@ -35,7 +35,7 @@ export function PetHealthBadge({ activeEvents, petName, compact = false }: PetHe
         <p className="text-sm font-bold text-destructive mb-2">
           ⚠️ {petName ?? "La mascota"} està malalt!
         </p>
-        {activeEvents.map((ev: any) => {
+        {activeEvents.map((ev) => {
           const cure = EVENT_CURE_MAP[ev.event_type];
           return (
             <div key={ev.id} className="flex items-center gap-2 text-sm mb-1.5">

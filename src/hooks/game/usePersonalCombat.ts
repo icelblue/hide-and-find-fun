@@ -6,6 +6,7 @@
 // `personalDataRef` per accés síncron des dels handlers (ex. handleSelectScenario).
 // ============================================================
 import { useEffect, useRef, type MutableRefObject, type Dispatch, type SetStateAction } from "react";
+import { asError } from "@/lib/errors";
 import { logError } from "@/components/ErrorBoundary";
 import {
   loadPersonalCombatData,
@@ -45,7 +46,7 @@ export function usePersonalCombat({ game, setScenarios, setObjects }: UsePersona
         personalDataRef.current = personal;
         setScenarios(personal.scenarios);
         setObjects(personal.objects);
-      } catch (err: any) {
+      } catch (_raw_err) { const err = asError(_raw_err);
         logError(err.message, err.stack, "usePersonalCombat");
       }
     })();

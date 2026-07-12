@@ -44,8 +44,8 @@ function hashString(str: string): number {
  * Given all items with 'dirty' tag and a gameId, returns a Set of item IDs
  * that are dirty THIS game (~60% of eligible items, randomized per game).
  */
-export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<string> {
-  const eligible = allItems.filter((i: any) => (i.tags ?? []).includes("dirty"));
+export function getDirtyItemsForGame(allItems: Array<{ id: string; tags?: string[] | null }>, gameId: string): Set<string> {
+  const eligible = allItems.filter((i) => (i.tags ?? []).includes("dirty"));
   const dirtySet = new Set<string>();
   const seed = hashString(gameId);
   for (let i = 0; i < eligible.length; i++) {
@@ -62,8 +62,8 @@ export function getDirtyItemsForGame(allItems: any[], gameId: string): Set<strin
  * Same idea per als trencables: ~60% subset determinístic per gameId.
  * Així cada partida varia quins mobles són realment trencables.
  */
-export function getBreakableItemsForGame(allItems: any[], gameId: string): Set<string> {
-  const eligible = allItems.filter((i: any) => (i.tags ?? []).includes("breakable"));
+export function getBreakableItemsForGame(allItems: Array<{ id: string; tags?: string[] | null }>, gameId: string): Set<string> {
+  const eligible = allItems.filter((i) => (i.tags ?? []).includes("breakable"));
   const breakSet = new Set<string>();
   const seed = hashString(gameId + ":break");
   for (let i = 0; i < eligible.length; i++) {
@@ -323,7 +323,7 @@ export async function getObjects() {
     .select("*, object_specials(id)")
     .order("display_order");
   if (error) throw error;
-  const normalized = (data ?? []).map((o: any) => {
+  const normalized = (data ?? []).map((o) => {
     const os = o.object_specials;
     const isSpecial = Array.isArray(os) ? os.length > 0 : os != null;
     return { ...o, is_special: isSpecial };
