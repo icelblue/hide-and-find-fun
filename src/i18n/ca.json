@@ -16,7 +16,9 @@
     "storyModeShort": "← Mode Història",
     "anonymous": "Anònim",
     "install": "Instal·lar",
-    "installApp": "Instal·lar aplicació"
+    "installApp": "Instal·lar aplicació",
+    "delete": "Eliminar",
+    "item": "Element"
   },
   "petTier": {
     "baby": "Bebè",
@@ -103,10 +105,12 @@
       "personalDesc": "Jugueu als vostres espais decorats",
       "needMore": "Necessites almenys 4 mobles al teu espai.",
       "goDecorate": "Decorar el meu espai",
-      "challenge": "Repte"
+      "challenge": "Repte",
+      "needMoreV2": "Necessites almenys 2 sales connectades amb portes i 4 mobles en total al teu apartament."
     },
     "languageToggle": "Idioma",
-    "opponentNeedsRooms": "L'oponent no té 2 sales connectades."
+    "opponentNeedsRooms": "L'oponent no té 2 sales connectades.",
+    "spaceMenu": "El meu espai"
   },
   "lang": {
     "ca": "Català",
@@ -587,7 +591,8 @@
       "share": "Comparteix la partida",
       "shareTitle": "Vine a jugar a Deduction Duel!",
       "shareText": "T'he reptat a una partida (codi {code}). Entra aquí:",
-      "shareCopied": "Enllaç copiat al porta-retalls! 📋"
+      "shareCopied": "Enllaç copiat al porta-retalls! 📋",
+      "personalBadgeTip": "Mode Personal PvP"
     },
     "waiting": {
       "shareCode": "Comparteix el codi:",
@@ -934,7 +939,11 @@
     "toolMartell": "🔨 Martell",
     "toolLlanterna": "🔦 Llanterna",
     "toolGalleda": "🪣 Galleda",
-    "switchToPixel": "Canviar a vista pixel art"
+    "switchToPixel": "Canviar a vista pixel art",
+    "historyTitle": "📜 Historial ({count})",
+    "pixel": {
+      "tapItem": "Toca un moble per veure les accions"
+    }
   },
   "helpPvp": {
     "menuLabel": "❓ Com jugar",
@@ -1215,7 +1224,12 @@
     "shopFilterHint": "Filtrat per compatibilitat amb",
     "onlyFits": "Només hi caben",
     "tapToPlace": "Toca on vols col·locar-lo",
-    "tapEmptyOrFurniture": "Toca una casella buida per posar · toca un moble per accions"
+    "tapEmptyOrFurniture": "Toca una casella buida per posar · toca un moble per accions",
+    "move": "Moure",
+    "pickTarget": "Toca on vols col·locar-lo",
+    "rotate": "Girar",
+    "remove": "Treure",
+    "tapHint": "Toca una casella buida per posar · toca un moble per accions"
   },
   "space": {
     "title": "El meu espai",
@@ -1306,7 +1320,9 @@
     "errOpponentNoSpace": "L'oponent encara no té espai.",
     "errHostMinFurniture": "Necessites almenys 4 mobles al teu espai.",
     "errOpponentMinFurniture": "L'oponent no té prou mobles (mín. 4).",
-    "errCannotChallengeSelf": "No pots reptar-te a tu mateix."
+    "errCannotChallengeSelf": "No pots reptar-te a tu mateix.",
+    "errHostMinRooms": "Necessites almenys 2 sales connectades al teu apartament.",
+    "errOpponentMinRooms": "L'oponent no té 2 sales connectades."
   },
   "puzzle": {
     "title": "Puzzle d'ingredients",

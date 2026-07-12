@@ -1,3 +1,12 @@
+## [No publicat] — 12/07/2026
+### Arreglat
+- **Multijugador en temps real**: els moviments del rival ara es veuen a l'instant. `game_players` era fora de la publicació realtime (correcte per seguretat) però res no notificava els moviments — nou trigger `pulse` sobre `games.updated_at` + neteja de la subscripció morta al client.
+### Canviat
+- **Reequilibri del jardí**: collites reduïdes a la meitat (🥕0,5 / 🍅1 / 🍓2) perquè cultivar no domini jugar (abans: 16🪙/dia passius vs 2,2🪙/partida).
+### Documentació
+- Nou `docs/ECONOMIA.md`: taula completa de costos/ingressos i anàlisi d'equilibri.
+- `docs/TECHNICAL.md`: secció de rendiment i arquitectura realtime.
+
 # 📋 CHANGELOG — Deduction Duel
 
 Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**

@@ -16,7 +16,9 @@
     "storyModeShort": "← Story Mode",
     "anonymous": "Anonymous",
     "install": "Install",
-    "installApp": "Install app"
+    "installApp": "Install app",
+    "delete": "Delete",
+    "item": "Item"
   },
   "petTier": {
     "baby": "Baby",
@@ -103,10 +105,12 @@
       "personalDesc": "Play on your decorated spaces",
       "needMore": "You need at least 4 pieces of furniture in your space.",
       "goDecorate": "Decorate my space",
-      "challenge": "Challenge"
+      "challenge": "Challenge",
+      "needMoreV2": "You need at least 2 rooms connected with doors and 4 pieces of furniture in your apartment."
     },
     "languageToggle": "Language",
-    "opponentNeedsRooms": "Your opponent doesn't have 2 connected rooms."
+    "opponentNeedsRooms": "Your opponent doesn't have 2 connected rooms.",
+    "spaceMenu": "My space"
   },
   "lang": {
     "ca": "Català",
@@ -587,7 +591,8 @@
       "share": "Share the game",
       "shareTitle": "Come play Deduction Duel!",
       "shareText": "I've challenged you to a game (code {code}). Join here:",
-      "shareCopied": "Link copied to clipboard! 📋"
+      "shareCopied": "Link copied to clipboard! 📋",
+      "personalBadgeTip": "Personal PvP mode"
     },
     "waiting": {
       "shareCode": "Share the code:",
@@ -934,7 +939,11 @@
     "toolMartell": "🔨 Hammer",
     "toolLlanterna": "🔦 Flashlight",
     "toolGalleda": "🪣 Bucket",
-    "switchToPixel": "Switch to pixel art view"
+    "switchToPixel": "Switch to pixel art view",
+    "historyTitle": "📜 History ({count})",
+    "pixel": {
+      "tapItem": "Tap a furniture piece to see actions"
+    }
   },
   "helpPvp": {
     "menuLabel": "❓ How to play",
@@ -1215,7 +1224,12 @@
     "shopFilterHint": "Filtered by compatibility with",
     "onlyFits": "Only fits",
     "tapToPlace": "Tap where you want to place it",
-    "tapEmptyOrFurniture": "Tap an empty cell to place · tap furniture for actions"
+    "tapEmptyOrFurniture": "Tap an empty cell to place · tap furniture for actions",
+    "move": "Move",
+    "pickTarget": "Tap where you want to place it",
+    "rotate": "Rotate",
+    "remove": "Remove",
+    "tapHint": "Tap an empty cell to place · tap furniture for actions"
   },
   "space": {
     "title": "My Space",
@@ -1306,7 +1320,9 @@
     "errOpponentNoSpace": "Opponent has no space yet.",
     "errHostMinFurniture": "You need at least 4 furniture items in your space.",
     "errOpponentMinFurniture": "Opponent doesn't have enough furniture (min. 4).",
-    "errCannotChallengeSelf": "You can't challenge yourself."
+    "errCannotChallengeSelf": "You can't challenge yourself.",
+    "errHostMinRooms": "You need at least 2 connected rooms in your apartment.",
+    "errOpponentMinRooms": "Your opponent doesn't have 2 connected rooms."
   },
   "puzzle": {
     "title": "Ingredient puzzle",
