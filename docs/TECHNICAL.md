@@ -1958,3 +1958,21 @@ LIMIT 10;
 <div align="center">
 <sub>📘 Última actualització: 2026-04-07 · v1.9.1 · Generat amb 💜 per <a href="https://lovable.dev">Lovable</a></sub>
 </div>
+
+
+## ⚡ Rendiment i fluïdesa multijugador (auditoria 12/07/2026)
+
+### Arquitectura realtime
+- **Publicació**: només `games` i `game_social_items` (decisió de seguretat: `game_players` i `game_moves` filtrarien dades ocultes del rival).
+- **Pulse de moviments**: el trigger `trg_pulse_game_on_move` toca `games.updated_at` a cada moviment → el rival rep l'event per `games` i recarrega l'estat (debounce 300ms a `scheduleLoadGame`). Sense això, l'estat del rival només es refrescava quan el jugador mateix actuava.
+- **Càrrega de partida**: `useGameLoader` paral·lelitza totes les queries amb `Promise.all` (3 crides base + batch condicional segons fase).
+
+### Estat verificat
+- 39 índexs a BD cobrint les queries calentes (`game_players(game_id)`, `game_moves(game_id, player_id)`, `game_social_items(game_id, to_player_id)`...).
+- Bundles per pàgina (code-splitting): index 226KB, GamePage 92KB, StoryModePage 97KB. Assets pixel art: 252KB totals.
+- Millores visuals (paret, catifa, ombres, il·luminació) són CSS/gradients purs: cap cost mesurable.
+
+### Si mai cal escalar més
+1. `select("*")` → seleccionar columnes concretes a les queries del loader (estalvia amplada de banda).
+2. Virtualitzar la llista d'historial de moviments si supera ~100 entrades.
+3. StoryModePage (97KB) admet subdivisió de chunks si creix més.
