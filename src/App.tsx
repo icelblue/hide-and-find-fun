@@ -12,7 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 // antic apuntant a chunks que ja no existeixen. Detectem l'error d'import del
 // mòdul i forcem UN sol reload per obtenir l'index.html actualitzat.
 // Sense això, la Suspense es quedaria penjada per sempre al PageLoader.
-function lazyWithReload<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+function lazyWithReload<T extends ComponentType<unknown>>(factory: () => Promise<{ default: T }>) {
   return lazy(async () => {
     try {
       return await factory();

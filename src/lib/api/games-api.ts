@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function createGame(userId: string, invitedUserId?: string) {
   const code = generateGameCode();
-  const insertData: any = { code, created_by: userId };
+  const insertData: Record<string, unknown> = { code, created_by: userId };
   if (invitedUserId) insertData.invited_user_id = invitedUserId;
 
   const { data: game, error: gameError } = await supabase.from("games").insert(insertData).select().single();
@@ -193,7 +193,7 @@ export async function getMyGames(userId: string) {
     ...new Set(
       all
         .filter(
-          (gp: any) => gp.games.status === "waiting" && gp.games.invited_user_id && gp.games.invited_user_id !== userId,
+          (gp) => gp.games.status === "waiting" && gp.games.invited_user_id && gp.games.invited_user_id !== userId,
         )
         .map((gp) => gp.games.invited_user_id),
     ),
@@ -222,7 +222,7 @@ export async function getMyGames(userId: string) {
   const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
   return all
     .filter((gp) => gp.games.status !== "finished" || gp.games.created_at > cutoff)
-    .sort((a: any, b: any) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
+    .sort((a, b) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
 }
 
 export async function deleteGame(gameId: string) {
@@ -241,7 +241,7 @@ export async function hideObject(
   objectId: string,
   itemId: string,
   position: Position,
-  specialData?: any,
+  specialData?: Record<string, unknown> | null,
 ) {
   const [{ data: obj }, { data: itm }] = await Promise.all([
     supabase.from("objects").select("size, material").eq("id", objectId).single(),
@@ -267,7 +267,7 @@ export async function hideObject(
     throw new Error(blockReason);
   }
 
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     hidden_object_id: objectId,
     hidden_item_id: itemId,
     hidden_position: position,

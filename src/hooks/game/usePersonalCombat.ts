@@ -15,9 +15,9 @@ import {
 } from "@/lib/personal-pvp-adapter";
 
 export interface UsePersonalCombatOpts {
-  game: any;
-  setScenarios: Dispatch<SetStateAction<any[]>>;
-  setObjects: Dispatch<SetStateAction<any[]>>;
+  game: Record<string, unknown> | null;
+  setScenarios: Dispatch<SetStateAction<Record<string, unknown>[]>>;
+  setObjects: Dispatch<SetStateAction<Record<string, unknown>[]>>;
 }
 
 export interface UsePersonalCombatResult {

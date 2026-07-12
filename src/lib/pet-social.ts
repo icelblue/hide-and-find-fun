@@ -30,7 +30,7 @@ export interface RecentVisit extends ResolvedVisit {
  */
 export async function resolveAndFetchPendingVisits(userId: string): Promise<ResolvedVisit[]> {
   try {
-    await supabase.rpc("resolve_my_pet_visits" as any);
+    await supabase.rpc("resolve_my_pet_visits");
   } catch {
     // si la RPC no existeix encara o falla, no propaguem
   }
@@ -138,7 +138,7 @@ export interface PetNotification {
   from_user_id: string | null;
   from_display_name: string;
   notif_type: "gift_consumable" | "gift_item" | string;
-  payload: any;
+  payload: unknown;
   seen: boolean;
   created_at: string;
 }

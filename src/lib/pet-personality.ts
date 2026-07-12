@@ -90,7 +90,7 @@ export async function getPetPersonality(userId: string): Promise<Personality> {
     supabase.from("pet_state").select("hunger,sleep,fear,bond").eq("user_id", userId).maybeSingle(),
   ]);
   const petType: string = petRes.data?.pet_type ?? "cat";
-  const state: PetState = (stateRes.data as any) ?? { hunger: 30, sleep: 30, fear: 20, bond: 40 };
+  const state: PetState = (stateRes.data as PetState | null) ?? { hunger: 30, sleep: 30, fear: 20, bond: 40 };
 
   const base = await getSpeciesTraits(petType);
   const mods = getStateModifiers(state);

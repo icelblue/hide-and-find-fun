@@ -64,7 +64,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
     setJournal(jour);
 
     // Carrega traduccions per a tot el contingut dinàmic
-    const entries: Array<{ entity_type: any; entity_id: string }> = [];
+    const entries: Array<{ entity_type: string; entity_id: string }> = [];
     const seenItems = new Set<string>();
     for (const it of inv) if (!seenItems.has(it.item_id)) { seenItems.add(it.item_id); entries.push({ entity_type: "story_item_name", entity_id: it.item_id }); }
     for (const r of recs) {

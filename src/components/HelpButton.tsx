@@ -51,7 +51,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   }, [open]);
 
   // Group rewards by rarity
-  const groupedRewards: Record<string, any[]> = {};
+  const groupedRewards: Record<string, Record<string, unknown>[]> = {};
   for (const r of RARITY_ORDER) groupedRewards[r] = [];
   for (const item of rewardCatalog) {
     if (groupedRewards[item.rarity]) groupedRewards[item.rarity].push(item);

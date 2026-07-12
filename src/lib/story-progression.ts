@@ -127,7 +127,7 @@ export async function getWorldStatuses(userId: string, ctx: {
     if (r.bond && ctx.bond < r.bond) { unlocked = false; reason = `Vincle ≥ ${r.bond} (tens ${ctx.bond})`; }
     else if (r.recipes && ctx.recipesDiscovered < r.recipes) { unlocked = false; reason = `${r.recipes} receptes (tens ${ctx.recipesDiscovered})`; }
     else if (r.level && ctx.level < r.level) { unlocked = false; reason = `Nivell ≥ ${r.level} (tens ${ctx.level})`; }
-    const p: any = progressMap.get(w.id);
+    const p = progressMap.get(w.id);
     return {
       ...w,
       unlocked,

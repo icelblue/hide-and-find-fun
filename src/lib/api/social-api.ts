@@ -103,7 +103,7 @@ export async function sendSocialItem(
           tag: `social-${gameId}`,
         },
       }).catch(() => {});
-      return { blocked: false, espiaResult: null, smokeBombResult: bombResult as any };
+      return { blocked: false, espiaResult: null, smokeBombResult: bombResult as Record<string, unknown> };
     } else if (itemType === "swap") {
       const { error: swapErr } = await supabase.rpc("execute_swap", { _game_id: gameId });
       if (swapErr) throw new Error(swapErr.message);
@@ -168,7 +168,7 @@ export async function sendSocialItem(
           url: `/game/${gameId}`, tag: `social-${gameId}`,
         },
       }).catch(() => {});
-      return { blocked: false, espiaResult: null, barricadaResult: barResult as any };
+      return { blocked: false, espiaResult: null, barricadaResult: barResult as Record<string, unknown> };
     } else if (itemType === "trampa") {
       if (!extraData?.itemId) throw new Error("Has de seleccionar un moble!");
       const { data: trapResult, error: trapErr } = await supabase.rpc("execute_trampa", {
@@ -183,7 +183,7 @@ export async function sendSocialItem(
           url: `/game/${gameId}`, tag: `social-${gameId}`,
         },
       }).catch(() => {});
-      return { blocked: false, espiaResult: null, trampaResult: trapResult as any };
+      return { blocked: false, espiaResult: null, trampaResult: trapResult as Record<string, unknown> };
     }
   }
 
@@ -196,7 +196,7 @@ export async function sendSocialItem(
     game_id: gameId,
     from_player_id: fromPlayerId,
     to_player_id: actualToPlayer,
-    item_type: itemType as any,
+    item_type: itemType,
     message_text: messageText,
     blocked_by_shield: blocked,
   });
