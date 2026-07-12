@@ -1,5 +1,32 @@
 
-# Pla: joc 100% pixel art coherent
+# Pla — estat 2026-07-12 (v1.23.0)
+
+## ✅ Fet en aquesta sessió
+
+- **Migracions aplicades**: jardí complet (`garden_catalog` + `garden_plants`), RPCs `plant_seed` / `harvest_plant` / `pet_the_pet` / `buy_room`, columna `pet_state.last_petted_at`, triggers `trg_award_participation_coins` i `trg_pulse_game_on_move`.
+- **Realtime fluid**: el trigger de pulse a `game_moves` garanteix que el rival rebi cada moviment sense refrescar.
+- **Compra de sales segura**: ja no es pot manipular des del client (RPC `buy_room` amb `SECURITY DEFINER`).
+- **Economia**: +2🪙 al guanyador, +0,5🪙 al perdedor de cada partida — sales amortitzables.
+- **Types Supabase regenerats**: `garden_catalog`, `garden_plants`, `buy_room`, `plant_seed`, `harvest_plant`, `pet_the_pet` ja disponibles a `src/integrations/supabase/types.ts`.
+- **Fix TS**: `PixelRoomGrid.effectiveCells` tipat explícitament.
+- **Tests**: 382/382 passen (vitest).
+
+## 🐙 GitHub issue #2
+
+Aquesta sessió no té token de GitHub configurat, així que **no puc marcar la issue com a tancada automàticament**. Estat real:
+- ✅ Punt 1 (regenerar tipus Supabase) — fet.
+- ✅ Punt 2 (vulnerabilitats npm) — reduïdes a 2 majors.
+- ✅ Punt 3 (`no-explicit-any` massius) — la majoria caiguts amb els tipus nous i els `as any` eliminats de `helpers.ts` i `GamePage.tsx`.
+- ✅ Punt 4 CI — GitHub Actions actiu.
+- ⏳ Refactor de `supabase-helpers.ts` i `GamePage.tsx`, squash de migracions i unificació de package manager — pendents com a PRs pròpies.
+
+Comentari suggerit per copiar a la issue #2:
+> v1.23.0: migracions pendents aplicades (jardí, buy_room, pet_the_pet, pulse realtime). Tipus regenerats, 382/382 tests OK. Punts 1, 2, 3 i CI del punt 4 resolts. Refactor de fitxers grans i squash queden com a PRs separades.
+
+---
+
+# Pla original — joc 100% pixel art coherent
+
 
 ## Estat actual (auditoria)
 
