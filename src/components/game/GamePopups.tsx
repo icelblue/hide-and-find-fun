@@ -1,20 +1,25 @@
 // ============================================================
 // GamePopups.tsx — Modals i overlays del joc
 // ============================================================
+import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { Button } from "@/components/ui/button";
+import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { Card, CardContent } from "@/components/ui/card";
+import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { Input } from "@/components/ui/input";
+import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { useT } from "@/i18n/LanguageProvider";
+import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import ObjectIcon from "@/components/game/ObjectIcon";
 
 interface SpecialFoundPopupProps {
-  show: any;
-  rival: any;
-  objects: any[];
+  show: Record<string, unknown> | boolean | null;
+  rival: PlayerRow | null;
+  objects: ObjectRow[];
   specialFoundInput: string;
-  specialFoundVariant: any;
+  specialFoundVariant: Record<string, unknown> | null;
   onInputChange: (value: string) => void;
-  onVariantChange: (variant: any) => void;
+  onVariantChange: (variant: Record<string, unknown> | null) => void;
   onSubmit: () => void;
   onClose: () => void;
 }
@@ -41,10 +46,10 @@ export function SpecialFoundPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label={t("game.popups.specialFoundTitle")}>
       <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
         <CardContent className="py-6 text-center">
-          <div className="flex justify-center mb-3">{(() => { const o = objects.find((x) => x.id === rival?.hidden_object_id); const sd = rival?.special_data as any; return <ObjectIcon name={o?.name} emoji={sd?.custom_icon ?? o?.icon} size={72} />; })()}</div>
+          <div className="flex justify-center mb-3">{(() => { const o = objects.find((x) => x.id === rival?.hidden_object_id); const sd = rival?.special_data as Record<string, unknown> | null; return <ObjectIcon name={o?.name} emoji={sd?.custom_icon ?? o?.icon} size={72} />; })()}</div>
           <p className="font-bold text-lg mb-1">{t("game.popups.specialFoundTitle")}</p>
           {(() => {
-            const sd = rival?.special_data as any;
+            const sd = rival?.special_data as Record<string, unknown> | null;
             const hm = sd?.hide_message;
             return hm ? (
               <div className="mb-3 p-2 rounded-lg bg-accent/10 border border-accent/30">

@@ -15,7 +15,7 @@ import { POSITIONS, POS_LABELS, type Position } from "@/lib/game-types";
 import { MATERIAL_LABELS } from "@/lib/api/materials-api";
 import { Tip } from "@/components/HelpButton";
 
-interface Props { p: Record<string, any> }
+interface Props { p: Record<string, unknown> }
 
 export default function HidingPhase({ p }: Props) {
   const {

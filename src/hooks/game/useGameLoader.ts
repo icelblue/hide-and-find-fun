@@ -8,6 +8,7 @@ import { useCallback, type MutableRefObject, type Dispatch, type SetStateAction 
 import { asError } from "@/lib/errors";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { GameRow, PlayerRow, ScenarioRow, ItemRow, MoveRow, RewardRow } from "@/lib/runtime-types";
 import { logError } from "@/components/ErrorBoundary";
 import {
   getItemsByScenario, getConnectedScenarios, ensureTokensReset, autoFixMissingScenario,
@@ -25,25 +26,25 @@ import type { SpecialRevealData } from "@/components/game/SpecialReveal";
 type Setter<T> = Dispatch<SetStateAction<T>>;
 
 export interface UseGameLoaderSetters {
-  setGame: Setter<any>;
-  setPlayer: Setter<any>;
-  setRival: Setter<any>;
+  setGame: Setter<GameRow | null>;
+  setPlayer: Setter<PlayerRow | null>;
+  setRival: Setter<PlayerRow | null>;
   setPhase: Setter<Phase>;
   setPlayerTools: Setter<PlayerTools>;
   setHideStep: Setter<number>;
   setBonusAvailable: Setter<number>;
   setRivalNearby: Setter<boolean>;
   setRivalTraits: Setter<{ trait1: string | null; trait2: string | null }>;
-  setConnectedScenarios: Setter<any[]>;
+  setConnectedScenarios: Setter<ScenarioRow[]>;
   setDirtyItems: Setter<Set<string>>;
   setBreakableItems: Setter<Set<string>>;
-  setItemInteractions: Setter<any[]>;
-  setMoveHistory: Setter<any[]>;
+  setItemInteractions: Setter<Record<string, unknown>[]>;
+  setMoveHistory: Setter<MoveRow[]>;
   setGameBreaks: Setter<Set<string>>;
   setIlluminatedScenarios: Setter<Set<string>>;
   setScenarioIsDarkState: Setter<boolean>;
-  setCurrentScenarioItems: Setter<any[]>;
-  setReward: Setter<any>;
+  setCurrentScenarioItems: Setter<ItemRow[]>;
+  setReward: Setter<RewardRow | null>;
   setRivalSmokeBombAt: Setter<string | null>;
   setBananaBlockedSpot: Setter<string | null>;
   setBananaEffect: Setter<boolean>;
@@ -54,7 +55,7 @@ export interface UseGameLoaderSetters {
 export interface UseGameLoaderOpts {
   gameId: string | undefined;
   user: { id: string } | null;
-  t: (key: string, opts?: any) => string;
+  t: (key: string, opts?: Record<string, unknown> | string) => string;
   personalDataRef: MutableRefObject<PersonalCombatData | null>;
   isLoadingGameRef: MutableRefObject<boolean>;
   pendingReloadRef: MutableRefObject<boolean>;
@@ -120,7 +121,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       // ── BATCH 2: ALL secondary queries in ONE Promise.all ──
       type QKey = "profile" | "hiddenItem" | "items" | "connected" | "moves" | "tagMoves" | "curScen" | "reward" | "smokeBombs" | "blockedSocial" | "unprocessedSocial" | "traits" | "interactions";
-      const batch: Partial<Record<QKey, PromiseLike<any>>> = {};
+      const batch: Partial<Record<QKey, PromiseLike<unknown>>> = {};
 
       if (isPlaying) {
         batch.profile = supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
@@ -163,7 +164,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       const keys = Object.keys(batch) as QKey[];
       const results = await Promise.all(keys.map(k => batch[k]!));
-      const R: Partial<Record<QKey, any>> = {};
+      const R: Partial<Record<QKey, { data?: unknown; error?: unknown } | Record<string, unknown>>> = {};
       keys.forEach((k, i) => { R[k] = results[i]; });
 
       if (R.profile) S.setBonusAvailable(R.profile.data?.bonus_tokens ?? 0);
@@ -175,7 +176,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
       }
 
       if (R.traits) {
-        const traitsData = R.traits.data as any;
+        const traitsData = (R.traits as { data?: unknown })?.data as Record<string, unknown> | null;
         if (traitsData) {
           S.setRivalTraits({ trait1: traitsData.trait1 ?? null, trait2: traitsData.trait2 ?? null });
         } else {
@@ -185,8 +186,8 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         S.setRivalTraits({ trait1: null, trait2: null });
       }
 
-      let loadedItems: any[] = [];
-      let loadedInteractions: any[] = [];
+      let loadedItems: Record<string, unknown>[] = [];
+      let loadedInteractions: Record<string, unknown>[] = [];
 
       if (isPlaying && isPersonalGame) {
         try {
@@ -225,7 +226,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         if (hasDirtyHere && playerData) {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
-            supabase.rpc("execute_grant_drap_if_available" as any, { _game_id: gameId }).then(({ data }) => {
+            supabase.rpc("execute_grant_drap_if_available", { _game_id: gameId }).then(({ data }) => {
               if (data?.granted) {
                 tools.drap = 1;
                 playerData.tools = tools;
@@ -304,7 +305,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       if (isPlaying && !isStoryGame) {
         const blockedItems = R.blockedSocial?.data ?? [];
-        const markPromises: Promise<any>[] = [];
+        const markPromises: Promise<unknown>[] = [];
         for (const blocked of blockedItems) {
           const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
           const itemName = info ? `${info.icon} ${t(info.nameKey)}` : "";

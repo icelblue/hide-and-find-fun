@@ -20,7 +20,7 @@ export function getCurrentLang(): Lang {
  * the EN translation when lang='en' and a translation exists. CA is no-op.
  * Use for arbitrary BD-fetched lists (scenarios, items, objects…).
  */
-export async function translateRows<T extends Record<string, any>>(
+export async function translateRows<T extends Record<string, unknown>>(
   rows: T[],
   entity_type: ContentEntityType,
   idKey: keyof T,

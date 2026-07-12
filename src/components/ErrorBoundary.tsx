@@ -110,7 +110,7 @@ export async function logError(
   message: string,
   stack?: string,
   component?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ) {
   try {
     if (!shouldReport(message)) return;

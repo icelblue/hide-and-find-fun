@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { GameRow, PlayerRow, ObjectRow, ScenarioRow, ItemRow, RewardRow } from "@/lib/runtime-types";
 import { MATERIAL_LABELS } from "@/lib/supabase-helpers";
 import { getHideMessage } from "@/lib/object-specials";
 import { RARITY_CONFIG } from "@/lib/reward-helpers";
@@ -15,13 +16,13 @@ import ObjectIcon from "@/components/game/ObjectIcon";
 
 
 interface FinishedPhaseProps {
-  game: any;
-  user: any;
-  rival: any;
-  reward: any;
+  game: GameRow;
+  user: { id: string } | null;
+  rival: PlayerRow | null;
+  reward: RewardRow | null;
   navigate: (path: string) => void;
-  objects: any[];
-  scenarios: any[];
+  objects: ObjectRow[];
+  scenarios: ScenarioRow[];
   gameId: string;
 }
 
@@ -38,7 +39,7 @@ interface ActionLogEntry {
 export default function GameFinishedPhase({ game, user, rival, reward, navigate, objects, scenarios, gameId }: FinishedPhaseProps) {
   const t = useT();
   const [rivalInfo, setRivalInfo] = useState<{
-    obj: any; item: any; scenario: any; position: string;
+    obj: ObjectRow | null; item: ItemRow | null; scenario: ScenarioRow | null; position: string;
     hideMessage: string | null; rivalName: string;
     specialType: string | null; traits: string[];
   } | null>(null);
@@ -149,7 +150,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
     // Rival's hidden object — shown to BOTH (winner: trofeu, perdedor: descoberta)
     if (!rival) return;
     (async () => {
-      const rivalSD: any = rival.special_data;
+      const rivalSD = rival.special_data as Record<string, unknown> | null;
       const isCustom = rivalSD?.is_custom === true;
 
       const [{ data: objRaw }, { data: itmRaw }, { data: rivalProf }] = await Promise.all([
@@ -162,11 +163,11 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
       ]);
       const [objArr, itmArr] = await Promise.all([
-        objRaw ? translateRows([objRaw as any], "pvp_object_name", "id", "name") : Promise.resolve([null]),
-        itmRaw ? translateRows([itmRaw as any], "pvp_item_name", "id", "name") : Promise.resolve([null]),
+        objRaw ? translateRows([objRaw as Record<string, unknown>], "pvp_object_name", "id", "name") : Promise.resolve([null]),
+        itmRaw ? translateRows([itmRaw as Record<string, unknown>], "pvp_item_name", "id", "name") : Promise.resolve([null]),
       ]);
-      const obj = objArr[0] as any;
-      const itm = itmArr[0] as any;
+      const obj = objArr[0] as ObjectRow | null;
+      const itm = itmArr[0] as ItemRow | null;
       let scn = null;
       if (itm?.scenario_id) {
         scn = scenarios.find((s) => s.id === itm.scenario_id) ?? null;
@@ -175,7 +176,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
 
       let traits: string[] = [];
       let specialType: string | null = null;
-      let displayObj: any = obj;
+      let displayObj: ObjectRow | Record<string, unknown> | null = obj;
       if (isCustom) {
         displayObj = {
           name: rivalSD.custom_name,
