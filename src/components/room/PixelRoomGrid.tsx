@@ -65,7 +65,9 @@ export default function PixelRoomGrid({
 }: Props) {
   // Llum apagada: es veu l'habitació (parets, terra) en gris fosc,
   // però CAP moble ni decoració — com demana el mode PvP.
-  const effectiveCells = dark ? cells.map((c) => ({ slot: c?.slot ?? 0 })) : cells;
+  const effectiveCells: PixelCell[] = dark
+    ? cells.map((c) => ({ slot: c?.slot ?? 0 }) as PixelCell)
+    : cells;
   const size = gridW * gridH;
 
   const textureUrl = useTexture ? textureForTheme(theme.key) : null;

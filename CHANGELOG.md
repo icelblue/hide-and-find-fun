@@ -5,6 +5,24 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 - **MINOR**: funcionalitats noves (compatibles)
 - **PATCH**: correccions de bugs
 
+## [1.23.0] — 2026-07-12 — Jardí + acaronar mascota + compra segura + pulse realtime (MINOR)
+
+### Afegit
+- **Jardí**: taules `garden_catalog` (pastanaga 🥕 4h/1🪙, tomàquet 🍅 8h/2🪙, maduixa 🍓 24h/4🪙) i `garden_plants` (màx. 4 parcel·les per sala).
+- **RPC `plant_seed` / `harvest_plant`**: plantar i collir amb validació de temps al servidor.
+- **RPC `pet_the_pet`**: acaronar la mascota amb cooldown de 4h (+2 bond), columna `pet_state.last_petted_at`.
+- **RPC `buy_room`**: compra de sales validada al servidor (abans es podia manipular des del client).
+- **Trigger `trg_award_participation_coins`** a `games`: +2🪙 al guanyador, +0,5🪙 al perdedor de cada partida.
+- **Trigger `trg_pulse_game_on_move`** a `game_moves`: força un `updated_at` a `games` per garantir que el realtime arribi sempre al rival — soluciona el bug del rival que "no veia" el moviment fins que refrescava.
+
+### Canviat
+- `PixelRoomGrid`: `effectiveCells` tipat explícitament com `PixelCell[]` per no perdre les propietats al mode fosc (fix TS).
+- `APP_VERSION` → `1.23.0`.
+
+### Resultat
+Bucle econòmic sostenible (jardí + participació), partides realment fluides amb realtime fiable, i la compra de sales ja no es pot burlar. Els tests 382/382 passen.
+
+
 ## [1.22.0] — 2026-05-29 — i18n: RewardReveal + seed EN contingut narratiu (MINOR)
 
 ### Afegit
