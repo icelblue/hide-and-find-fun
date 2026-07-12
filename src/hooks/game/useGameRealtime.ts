@@ -67,7 +67,7 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
 
       setBananaEffect(true);
       toast.warning(t("game.toasts.bananaHit"), { duration: 5000 });
-      setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
+      setTrollEffect({ message: t("game.social.bananaTroll"), emoji: "🍌", animation: "shake" });
       setTimeout(() => setTrollEffect(null), 4000);
       await markSocialItemProcessed(item.id);
       return;

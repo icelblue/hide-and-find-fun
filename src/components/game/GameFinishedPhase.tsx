@@ -233,7 +233,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
             <p className="font-bold text-lg">{reward.reward_items.name}</p>
             <p className="text-xs text-muted-foreground mt-1">
               {RARITY_CONFIG[reward.reward_items.rarity]?.emoji}{" "}
-              {RARITY_CONFIG[reward.reward_items.rarity]?.label}
+              {t(RARITY_CONFIG[reward.reward_items.rarity]?.labelKey ?? "", RARITY_CONFIG[reward.reward_items.rarity]?.label ?? "")}
             </p>
             <p className="text-[10px] text-muted-foreground/60 mt-2">
               {t("game.results.rewardHint")}

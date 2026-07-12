@@ -721,7 +721,8 @@
       "barricadeBtn": "Block path",
       "placeTrapBtn": "Set trap",
       "messagePlaceholder": "Hint or bluff for your rival...",
-      "sendBtn": "Send"
+      "sendBtn": "Send",
+      "bananaTroll": "🍌 ROTTEN BANANA!\nOne position has been blocked!"
     },
     "popups": {
       "specialFoundTitle": "⭐ Special object found!",
@@ -943,6 +944,13 @@
     "historyTitle": "📜 History ({count})",
     "pixel": {
       "tapItem": "Tap a furniture piece to see actions"
+    },
+    "rarity": {
+      "common": "Common",
+      "uncommon": "Uncommon",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
     }
   },
   "helpPvp": {
@@ -1275,7 +1283,8 @@
     "connectDoorsHint": "Connect them with doors (🚪) — each room type has its own limit (1–4).",
     "tapFreeCell": "Tap a free cell to place",
     "dragOrTap": "Drag a room to move it · tap to enter",
-    "chooseTypeHint": "Choose the type. It will be placed by tapping a free cell on the map."
+    "chooseTypeHint": "Choose the type. It will be placed by tapping a free cell on the map.",
+    "dbUpdateNeeded": "Pending database migrations must be applied to buy rooms"
   },
   "furniture": {
     "bed_basic": "Basic bed",

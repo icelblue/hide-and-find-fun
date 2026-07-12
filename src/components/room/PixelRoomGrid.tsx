@@ -54,29 +54,55 @@ interface Props {
   useTexture?: boolean;
   /** Capa decorativa (mobiliari base) sota els mobles interactius */
   backdrops?: GridBackdrop[];
+  /** Llum apagada: sala en gris i mobles invisibles fins que s'encén */
+  dark?: boolean;
 }
 
 export default function PixelRoomGrid({
   theme, gridW, gridH, cells, seed = "default", onCellClick,
   ariaLabelPrefix = "slot", className = "", seamless = true, useTexture = true,
-  backdrops,
+  backdrops, dark = false,
 }: Props) {
+  // Llum apagada: es veu l'habitació (parets, terra) en gris fosc,
+  // però CAP moble ni decoració — com demana el mode PvP.
+  const effectiveCells: PixelCell[] = dark
+    ? cells.map((c) => ({ slot: c?.slot ?? 0 }) as PixelCell)
+    : cells;
   const size = gridW * gridH;
 
   const textureUrl = useTexture ? textureForTheme(theme.key) : null;
-  const showEmojiDecor = !textureUrl;
 
   const emptyDecor = useMemo(() => {
-    if (!showEmojiDecor) return new Array<string | null>(size).fill(null);
     const rnd = deterministicPRNG(`${seed}:${theme.key}:${gridW}x${gridH}`);
     const out = new Array<string | null>(size).fill(null);
+    // Amb textura de fons la decoració es manté però més subtil (60% de la densitat)
+    const prob = textureUrl ? theme.emptyDecorProb * 0.6 : theme.emptyDecorProb;
     for (let i = 0; i < size; i++) {
-      if (rnd() < theme.emptyDecorProb && theme.emptyDecor.length > 0) {
+      if (rnd() < prob && theme.emptyDecor.length > 0) {
         out[i] = theme.emptyDecor[Math.floor(rnd() * theme.emptyDecor.length)];
       }
     }
     return out;
-  }, [seed, theme, gridW, gridH, size, showEmojiDecor]);
+  }, [seed, theme, gridW, gridH, size, textureUrl]);
+
+  // Decoració de PARET (finestra, quadre...) determinista per sala:
+  // dona sensació d'habitació de joc 2D, no de "terra flotant".
+  const wallDecor = useMemo(() => {
+    const rnd = deterministicPRNG(`${seed}:wall:${theme.key}`);
+    const isOutdoor = theme.key === "garden" || theme.key === "balcony";
+    const pool = isOutdoor ? ["🌤️", "🕊️", "🌙"] : ["🪟", "🖼️", "🕰️", "🪞"];
+    const count = 1 + Math.floor(rnd() * 2); // 1-2 elements
+    const picks: Array<{ icon: string; left: number }> = [];
+    const positions = [18, 50, 80];
+    for (let i = 0; i < count; i++) {
+      picks.push({
+        icon: pool[Math.floor(rnd() * pool.length)],
+        left: positions[Math.floor(rnd() * positions.length)] + Math.floor(rnd() * 8) - 4,
+      });
+    }
+    // dedupe per posició aproximada
+    return picks.filter((p, i) => picks.findIndex((q) => Math.abs(q.left - p.left) < 12) === i);
+  }, [seed, theme.key]);
 
   const backgroundStyle: React.CSSProperties = textureUrl
     ? {
@@ -106,6 +132,8 @@ export default function PixelRoomGrid({
     <div
       className={`w-full max-w-[380px] mx-auto rounded-2xl overflow-hidden ${className}`}
       style={{
+        filter: dark ? "grayscale(0.92) brightness(0.55) contrast(0.9)" : undefined,
+        transition: "filter 300ms ease",
         border: `3px solid ${theme.gridBorder}`,
         boxShadow: `inset 0 0 24px hsl(0 0% 0% / 0.18), 0 6px 20px hsl(0 0% 0% / 0.2)`,
       }}
@@ -120,10 +148,36 @@ export default function PixelRoomGrid({
           borderBottom: `2px solid hsl(0 0% 0% / 0.35)`,
         }}
       >
+        {/* Decoració de paret: finestres, quadres... (determinista per sala) */}
+        {wallDecor.map((d, i) => (
+          <span
+            key={i}
+            aria-hidden
+            className="absolute top-1/2 -translate-y-1/2 select-none"
+            style={{ left: `${d.left}%`, fontSize: "clamp(11px, 4.5cqw, 16px)", filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))" }}
+          >
+            {d.icon}
+          </span>
+        ))}
         {/* Sòcol clar just sobre el terra */}
         <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: "hsl(0 0% 100% / 0.18)" }} />
       </div>
       <div className="relative" style={backgroundStyle}>
+      {/* Catifa central (interiors): ancoratge visual de l'habitació */}
+      {theme.key !== "garden" && theme.key !== "balcony" && (
+        <div
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            left: "18%", right: "18%", top: "30%", bottom: "22%",
+            background: theme.filledBg,
+            opacity: 0.35,
+            borderRadius: 6,
+            border: `2px solid ${theme.filledBorder}`,
+            boxShadow: "inset 0 0 0 4px hsl(0 0% 100% / 0.15)",
+          }}
+        />
+      )}
       {/* Il·luminació ambient: llum suau des de dalt + vinyeta */}
       <div
         aria-hidden
@@ -168,7 +222,7 @@ export default function PixelRoomGrid({
           </div>
         )}
         {Array.from({ length: size }).map((_, idx) => {
-          const cell = cells[idx];
+          const cell = effectiveCells[idx];
           const filled = !!cell?.filled;
           const decor = !filled ? emptyDecor[idx] : null;
           const rotation = cell?.rotation ?? 0;
@@ -236,11 +290,12 @@ export default function PixelRoomGrid({
                       alt=""
                       aria-hidden
                       loading="lazy"
-                      className="w-[88%] h-[88%] object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)] transition-transform duration-200"
+                      className="w-[88%] h-[88%] object-contain transition-transform duration-200"
                       style={{
                         transform: `rotate(${stateRotation}deg)`,
                         imageRendering: "pixelated",
-                        filter: stateFilter,
+                        // Contorn negre pixel-art (4 ombres d'1px) + ombra suau — estil tauler
+                        filter: `${stateFilter ? stateFilter + " " : ""}drop-shadow(1px 0 0 #17121c) drop-shadow(-1px 0 0 #17121c) drop-shadow(0 1px 0 #17121c) drop-shadow(0 -1px 0 #17121c) drop-shadow(0 2px 2px rgba(0,0,0,0.35))`,
                       }}
                     />
                     </>
@@ -329,7 +384,7 @@ export default function PixelRoomGrid({
                     </span>
                   )}
                 </>
-              ) : decor ? (
+              ) : decor && !dark ? (
                 <span aria-hidden className="opacity-60 text-sm select-none">{decor}</span>
               ) : null}
             </button>

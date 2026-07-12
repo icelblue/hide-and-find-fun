@@ -20,12 +20,12 @@ import { supabase } from "@/integrations/supabase/client";
  * Configuració visual i econòmica per a cada nivell de raresa.
  * Usat a ProfilePage per mostrar badges i valors de venda.
  */
-export const RARITY_CONFIG: Record<string, { label: string; emoji: string; sell: number }> = {
-  common: { label: "Comú", emoji: "⚪", sell: 1 },
-  uncommon: { label: "Poc comú", emoji: "🟢", sell: 2 },
-  rare: { label: "Rar", emoji: "🔵", sell: 3 },
-  epic: { label: "Èpic", emoji: "🟣", sell: 5 },
-  legendary: { label: "Llegendari", emoji: "🟡", sell: 8 },
+export const RARITY_CONFIG: Record<string, { label: string; labelKey?: string; emoji: string; sell: number }> = {
+  common: { label: "Comú", labelKey: "game.rarity.common", emoji: "⚪", sell: 1 },
+  uncommon: { label: "Poc comú", labelKey: "game.rarity.uncommon", emoji: "🟢", sell: 2 },
+  rare: { label: "Rar", labelKey: "game.rarity.rare", emoji: "🔵", sell: 3 },
+  epic: { label: "Èpic", labelKey: "game.rarity.epic", emoji: "🟣", sell: 5 },
+  legendary: { label: "Llegendari", labelKey: "game.rarity.legendary", emoji: "🟡", sell: 8 },
 };
 
 /** Obté totes les recompenses 'owned' d'un jugador (no venudes ni col·locades) */

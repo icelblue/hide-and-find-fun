@@ -321,7 +321,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
               S.setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
               S.setBananaEffect(true);
               toast.warning(t("game.toasts.bananaHit"), { duration: 5000 });
-              S.setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
+              S.setTrollEffect({ message: t("game.social.bananaTroll"), emoji: "🍌", animation: "shake" });
               setTimeout(() => S.setTrollEffect(null), 4000);
             }
           } else if (item.item_type === "smoke_bomb") {
