@@ -1,5 +1,6 @@
 // 🔒 CRITICAL: Component del Mode Història. NO toca PvP.
 import { useEffect, useState } from "react";
+import { asError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -69,7 +70,7 @@ export function DailyChallengeCard({ userId, petName, onRewardApplied, variant =
       onRewardApplied?.();
       const fresh = await getTodayChallenge(userId);
       setState(fresh);
-    } catch (e: any) {
+    } catch (_raw_e) { const e = asError(_raw_e);
       toast.error(e.message ?? t("daily.error"));
     } finally {
       setBusy(false);

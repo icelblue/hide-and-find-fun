@@ -41,7 +41,7 @@ export function xpToNextLevel(xp: number): { current: number; next: number; rema
 
 export async function getMySkills(userId: string): Promise<Set<string>> {
   const { data } = await supabase.from("pet_skills").select("skill_id").eq("user_id", userId);
-  return new Set((data ?? []).map((r: any) => r.skill_id));
+  return new Set((data ?? []).map((r) => r.skill_id));
 }
 
 /** Sync pet level + unlock any new skills based on current XP. Returns newly unlocked. */
@@ -119,7 +119,7 @@ export async function getWorldStatuses(userId: string, ctx: {
     getAllWorlds(),
     supabase.from("story_world_progress").select("*").eq("user_id", userId),
   ]);
-  const progressMap = new Map((progressRes.data ?? []).map((p: any) => [p.world_id, p]));
+  const progressMap = new Map((progressRes.data ?? []).map((p) => [p.world_id, p]));
   return worlds.map((w) => {
     const r = w.unlock_rule;
     let unlocked = true;
@@ -176,7 +176,7 @@ export async function recordEndingCompleted(userId: string, worldId: string, end
 
 export async function getNodeVisitMap(userId: string): Promise<Map<string, number>> {
   const { data } = await supabase.from("story_node_visits").select("node_id, count").eq("user_id", userId);
-  return new Map((data ?? []).map((r: any) => [r.node_id, r.count]));
+  return new Map((data ?? []).map((r) => [r.node_id, r.count]));
 }
 
 export async function incrementNodeVisit(userId: string, nodeId: string) {
@@ -213,13 +213,13 @@ export async function getJournal(userId: string): Promise<JournalSummary> {
     supabase.from("story_runs").select("ending_type,current_node_id").eq("user_id", userId).eq("status", "completed"),
     supabase.from("story_nodes").select("id,title,ending_type").eq("is_ending", true),
   ]);
-  const recMap = new Map((allRecRes.data ?? []).map((r: any) => [r.id, r]));
+  const recMap = new Map((allRecRes.data ?? []).map((r) => [r.id, r]));
   const recipesDiscovered = (recDiscRes.data ?? [])
-    .map((r: any) => recMap.get(r.recipe_id))
+    .map((r) => recMap.get(r.recipe_id))
     .filter(Boolean)
-    .map((r: any) => ({ id: r.id, name: r.name, icon: r.icon }));
+    .map((r) => ({ id: r.id, name: r.name, icon: r.icon }));
   const allEndings = (allEndingsRes.data ?? []) as any[];
-  const seenIds = new Set((endingsSeenRes.data ?? []).map((r: any) => r.current_node_id).filter(Boolean));
+  const seenIds = new Set((endingsSeenRes.data ?? []).map((r) => r.current_node_id).filter(Boolean));
   const endingsSeen = allEndings.filter((e) => seenIds.has(e.id)).map((e) => ({ id: e.id, title: e.title }));
   const itemsFound = ((invRes.data ?? []) as any[]).map((i) => ({
     id: i.item_id, name: i.item_name, icon: i.item_icon, obtained_at: i.obtained_at,

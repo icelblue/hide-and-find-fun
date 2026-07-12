@@ -9,7 +9,7 @@ import type { Position } from "@/lib/game-types";
 
 export const TOKEN_COSTS = { move: 0.5, look: 0.3 } as const;
 
-export async function ensureTokensReset(player: any) {
+export async function ensureTokensReset(player: { id: string; tokens_remaining: number; tokens_last_reset: string | null }) {
   const today = new Date().toISOString().split("T")[0];
   if (player.tokens_last_reset === today) return player.tokens_remaining;
 

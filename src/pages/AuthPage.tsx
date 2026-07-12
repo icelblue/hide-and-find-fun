@@ -2,6 +2,7 @@
 // AuthPage.tsx — Landing pública (login/registre) amb i18n CA/EN
 // ============================================================
 import { useState, useEffect } from "react";
+import { asError } from "@/lib/errors";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -243,7 +244,7 @@ export default function AuthPage() {
                     toast.error((result.error as Error).message || t("auth.googleError"));
                   }
                   if (result.redirected) return;
-                } catch (err: any) {
+                } catch (_raw_err) { const err = asError(_raw_err);
                   toast.error(err.message || t("auth.googleError"));
                 } finally {
                   setLoading(false);

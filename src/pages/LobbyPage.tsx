@@ -15,6 +15,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { asError } from "@/lib/errors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,7 +113,7 @@ function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDele
                     setTimeout(async () => {
                       if (canSwipeDelete) {
                         try { await onDelete(game.id); toast.success(t("lobby.gameDeleted")); }
-                        catch (err: any) { toast.error(err.message); }
+                        catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
                       } else { onDismiss(game.id); }
                     }, 300);
                   },
@@ -261,7 +262,7 @@ export default function LobbyPage() {
       toast.success(`${t("lobby.createGame")}: ${game.code}`);
       setCreateOpen(false);
       navigate(`/game/${game.id}`);
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -303,7 +304,7 @@ export default function LobbyPage() {
       const results = await searchPlayers(personalSearch, user.id);
       setPersonalResults(results);
       if (results.length === 0) toast.info(t("lobby.noPlayerFound"));
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setPersonalSearching(false); }
   };
 
@@ -319,7 +320,7 @@ export default function LobbyPage() {
         toast.success(t("lobby.challengeSentRandom"));
       }
       navigate(`/game/${result.gameId}`);
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -335,7 +336,7 @@ export default function LobbyPage() {
       await joinGame(game.id, user.id);
       toast.success(t("lobby.joinedGame"));
       navigate(`/game/${game.id}`);
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -346,7 +347,7 @@ export default function LobbyPage() {
       await joinGame(gameId, user.id);
       toast.success(t("lobby.joinedGame"));
       navigate(`/game/${gameId}`);
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -357,7 +358,7 @@ export default function LobbyPage() {
       await deleteGame(gameId);
       toast.success(t("lobby.challengeDeclined"));
       invalidateLobby();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -368,7 +369,7 @@ export default function LobbyPage() {
       const results = await searchPlayers(searchQuery, user.id);
       setSearchResults(results);
       if (results.length === 0) toast.info(t("lobby.noPlayerFound"));
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setSearching(false); }
   };
 
@@ -379,7 +380,7 @@ export default function LobbyPage() {
       const game = await challengePlayer(user.id, rivalUserId);
       toast.success(t("lobby.challengeSent").replace("{name}", rivalName).replace("{code}", game.code));
       navigate(`/game/${game.id}`);
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -404,7 +405,7 @@ export default function LobbyPage() {
       toast.success(t("lobby_extra.personalSent").replace("{name}", rivalName));
       setCreateOpen(false);
       navigate(`/game/${row.game_id}`);
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -514,7 +515,7 @@ export default function LobbyPage() {
           </div>
           {searchResults.length > 0 && (
             <div className="space-y-1.5 max-h-48 overflow-y-auto mt-2">
-              {searchResults.map((p: any) => (
+              {searchResults.map((p) => (
                 <div key={p.user_id} className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2 border border-border/20">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-sm">{leagueBadge[p.league] ?? "🥉"}</span>
@@ -577,7 +578,7 @@ export default function LobbyPage() {
           </h2>
 
           <div className="space-y-2">
-            {myGames.filter((gp: any) => !dismissedGames.has(gp.game_id)).map((gp: any) => (
+            {myGames.filter((gp) => !dismissedGames.has(gp.game_id)).map((gp) => (
               <MyGameCard
                 key={gp.game_id}
                 gp={gp}
@@ -610,7 +611,7 @@ export default function LobbyPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {games.map((game: any) => (
+            {games.map((game) => (
               <Card key={game.id} className="glass hover:border-secondary/40 transition-all">
                 <CardContent className="py-3 flex items-center justify-between">
                   <div>
@@ -732,7 +733,7 @@ export default function LobbyPage() {
                   </div>
                   {personalResults.length > 0 && (
                     <div className="space-y-1.5 max-h-56 overflow-y-auto">
-                      {personalResults.map((p: any) => (
+                      {personalResults.map((p) => (
                         <div key={p.user_id} className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2 border border-border/20">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-sm">{leagueBadge[p.league] ?? "🥉"}</span>

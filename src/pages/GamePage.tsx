@@ -9,6 +9,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { asError } from "@/lib/errors";
 import { useParams, useNavigate } from "react-router-dom";
 import { logError } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
 import { useT } from "@/i18n/LanguageProvider";
+import type { Tables } from "@/integrations/supabase/types";
 
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
@@ -71,6 +73,7 @@ import FurnitureActionSheet from "@/components/game/FurnitureActionSheet";
 import { themeForScenarioName, autoLayoutForItems, backdropsForScenario, PVP_GRID_W, PVP_GRID_H } from "@/lib/pvp-scenario-themes";
 import { SpecialReveal, type SpecialRevealData } from "@/components/game/SpecialReveal";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
+import HidingPhase from "@/components/game/HidingPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
 import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup, WinFoundPopup } from "@/components/game/GamePopups";
 import WaitingScreen from "@/components/game/WaitingScreen";
@@ -101,15 +104,15 @@ export default function GamePage() {
     tool === "llanterna" ? t("game.toolLlanterna") : t("game.screwdriver");
 
   // Core game state
-  const [game, setGame] = useState<any>(null);
-  const [player, setPlayer] = useState<any>(null);
-  const [rival, setRival] = useState<any>(null);
+  const [game, setGame] = useState<GameRow | null>(null);
+  const [player, setPlayer] = useState<PlayerRow | null>(null);
+  const [rival, setRival] = useState<PlayerRow | null>(null);
   const [phase, setPhase] = useState<Phase>("waiting");
 
   // Data lists
-  const [scenarios, setScenarios] = useState<any[]>([]);
-  const [objects, setObjects] = useState<any[]>([]);
-  const [items, setItems] = useState<any[]>([]);
+  const [scenarios, setScenarios] = useState<ScenarioRow[]>([]);
+  const [objects, setObjects] = useState<ObjectRow[]>([]);
+  const [items, setItems] = useState<ItemRow[]>([]);
 
   // Hiding state (agrupat en hook)
   const hiding = useHidingFlowState();
@@ -139,7 +142,7 @@ export default function GamePage() {
   const [myHideoutData, setMyHideoutData] = useState<{ item: string; itemIcon: string; scenario: string; scenarioIcon: string } | null>(null);
 
   // Playing state
-  const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
+  const [currentScenarioItems, setCurrentScenarioItems] = useState<ItemRow[]>([]);
   const [pixelView, setPixelView] = useState<boolean>(() => {
     try { return localStorage.getItem("pvp:pixelView") !== "false"; } catch { return true; }
   });
@@ -275,7 +278,7 @@ export default function GamePage() {
       setSelectedVariant(null);
       setHideMessage("");
       setHideStep(1);
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       toast.error(t("game.errors.loadSpecial"));
       logError(err.message, err.stack, "GamePage:handleSelectObject");
     } finally {
@@ -313,8 +316,8 @@ export default function GamePage() {
     const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
     const obj = isCustom
       ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
-      : objects.find((o: any) => o.id === selectedObject);
-    const itm = items.find((i: any) => i.id === selectedItem);
+      : objects.find((o) => o.id === selectedObject);
+    const itm = items.find((i) => i.id === selectedItem);
     if (pos === "dins") {
       const objSize = (obj as any)?.size ?? 2;
       const capacity = (itm as any)?.inner_capacity ?? 2;
@@ -397,14 +400,14 @@ export default function GamePage() {
       if (await checkBothPlayersHidden(gameId)) {
         try {
           await startGame(gameId);
-        } catch (startErr: any) {
+        } catch (_raw_startErr) { const startErr = asError(_raw_startErr);
           const message = String(startErr?.message ?? "");
           if (!message.includes("Game not in hiding phase")) throw startErr;
         }
         scheduleLoadGame(120);
         toast.success(t("game.toasts.searchStarted"));
       }
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -430,13 +433,13 @@ export default function GamePage() {
       toast.success(isStory ? t("game.toasts.moveTo", { icon: s?.icon ?? "", name: s?.name ?? "" }) : t("game.toasts.moveToWithCost", { icon: s?.icon ?? "", name: s?.name ?? "", cost: result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move }));
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
   const handleInteraction = async (interaction: any) => {
     if (!gameId || !user || !player) return;
-    const alreadyUsed = moveHistory.some((m: any) =>
+    const alreadyUsed = moveHistory.some((m) =>
       m.action === "look" && m.target_item_id === interaction.item_id &&
       (m as any).bonus_value === `interact:${interaction.action_name}`
     );
@@ -452,7 +455,7 @@ export default function GamePage() {
       else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || t("game.toasts.posUnlocked")}`, { duration: 4000 });
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -503,7 +506,7 @@ export default function GamePage() {
 
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -537,7 +540,7 @@ export default function GamePage() {
       }
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -595,12 +598,12 @@ export default function GamePage() {
         } else {
           // PvP win: fetch revealed rival data FIRST (RLS hides hidden_object_id until game finishes)
           const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
-          const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p: any) => p.user_id !== user.id) ?? rival;
+          const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p) => p.user_id !== user.id) ?? rival;
           setRival(resolvedRival);
 
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", resolvedRival?.user_id ?? "").maybeSingle();
           const foundObjectId = resolvedRival?.hidden_object_id;
-          let foundObj: any = objects.find((o: any) => o.id === foundObjectId);
+          let foundObj: any = objects.find((o) => o.id === foundObjectId);
           if (!foundObj && foundObjectId) {
             const { data: objRow } = await supabase.from("objects").select("name, icon").eq("id", foundObjectId).maybeSingle();
             foundObj = objRow;
@@ -664,7 +667,7 @@ export default function GamePage() {
       }
       clearBanana();
       await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -673,7 +676,7 @@ export default function GamePage() {
     setSavingTrophy(true);
     try {
       const { special, rivalPlayer, objectId } = showSpecialFoundPopup;
-      const rivalObj = objects.find((o: any) => o.id === objectId);
+      const rivalObj = objects.find((o) => o.id === objectId);
       const hideMsg = getHideMessage(rivalPlayer?.special_data);
       const specialData = buildTrophySpecialData({
         special,
@@ -706,7 +709,7 @@ export default function GamePage() {
       setShowSpecialFoundPopup(null);
       setSpecialFoundInput("");
       setSpecialFoundVariant(null);
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       toast.error(t("game.toasts.trophyError", { msg: err.message ?? t("game.toasts.errorUnknown") }));
       logError(err.message ?? String(err), err.stack, "GamePage.handleSpecialFoundSubmit");
     } finally {
@@ -737,7 +740,7 @@ export default function GamePage() {
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
-    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -750,7 +753,7 @@ export default function GamePage() {
       setShowBonusPicker(false);
       setBonusAmount(1);
       await loadGame();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setActionLoading(false); }
   };
 
@@ -790,7 +793,7 @@ export default function GamePage() {
     if (!user || !moveHistory?.length) return;
     // Seed on first render so pre-existing reveals don't replay
     if (seenRevealMoveIdsRef.current.size === 0) {
-      moveHistory.forEach((m: any) => m?.id && seenRevealMoveIdsRef.current.add(m.id));
+      moveHistory.forEach((m) => m?.id && seenRevealMoveIdsRef.current.add(m.id));
       return;
     }
     for (const m of moveHistory as any[]) {
@@ -819,7 +822,15 @@ export default function GamePage() {
     </div>;
   }
 
-  const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.steps.item"), t("game.steps.position")];
+  
+// Files de BD + camps que el codi afegeix o llegeix en runtime
+type GameRow = Tables<"games"> & Record<string, unknown>;
+type PlayerRow = Tables<"game_players"> & Record<string, unknown>;
+type ScenarioRow = Tables<"scenarios"> & { themeHint?: string | null };
+type ObjectRow = Tables<"objects"> & Record<string, unknown>;
+type ItemRow = Tables<"items"> & Record<string, unknown>;
+
+const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.steps.item"), t("game.steps.position")];
 
   // ============================================
   // RENDER
@@ -944,226 +955,17 @@ export default function GamePage() {
 
       {/* HIDING PHASE */}
       {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep < 4 && (
-        <div>
-          <div className="flex items-center gap-1 mb-5">
-            {hideSteps.map((step, i) => (
-              <div key={i} className={`flex-1 text-center text-[10px] py-1.5 rounded-full font-medium transition-all ${
-                i === hideStep ? "gradient-primary text-primary-foreground shadow-md" :
-                i < hideStep ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
-              }`}>{step}</div>
-            ))}
-          </div>
-
-          {hideStep === 0 && (() => {
-            // Filter out the sentinel "__custom__" row from the regular lists
-            const realObjects = objects.filter((o: any) => o.id !== CUSTOM_OBJECT_SENTINEL_ID);
-            const specials = realObjects.filter((o: any) => o.is_special);
-            const basics = realObjects.filter((o: any) => !o.is_special);
-            const renderCard = (o: any) => (
-              <Card key={o.id} className={`glass transition-all active:scale-[0.97] relative ${actionLoading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-secondary/40"}`} onClick={() => !actionLoading && handleSelectObject(o.id)}>
-                <CardContent className="py-3 text-center">
-                  <div className="flex justify-center mb-1"><ObjectIcon name={o.name} emoji={o.icon} size={40} /></div>
-                  <div className="text-[11px] font-medium">{o.name}</div>
-                </CardContent>
-              </Card>
-            );
-            const customIconValid = customObjectIcon === "" || isSingleEmoji(customObjectIcon);
-            const customNameValid = customObjectName.trim().length > 0 && customObjectName.trim().length <= 20;
-            const t1 = customObjectTrait1.trim();
-            const t2 = customObjectTrait2.trim();
-            const customTrait1Valid = t1.length > 0 && t1.length <= 60;
-            const customTrait2Valid = t2.length > 0 && t2.length <= 60;
-            const customReady = isSingleEmoji(customObjectIcon) && customNameValid && customTrait1Valid && customTrait2Valid;
-            return (
-              <div>
-                <h2 className="text-lg font-bold mb-1">{t("game.hide.whatTitle")}</h2>
-                <Tip>{t("game.hide.whatTip")}</Tip>
-                <div className="h-3" />
-                <Tabs defaultValue="specials" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-3">
-                    <TabsTrigger value="specials">{t("game.hide.tabSpecials")}</TabsTrigger>
-                    <TabsTrigger value="basics">{t("game.hide.tabBasics")}</TabsTrigger>
-                    <TabsTrigger value="custom">{t("game.hide.tabCustom")}</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="specials">
-                    {specials.length > 0 ? (
-                      <div className="grid grid-cols-3 gap-2">{specials.map(renderCard)}</div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground text-center py-4">{t("game.hide.noSpecials")}</p>
-                    )}
-                  </TabsContent>
-                  <TabsContent value="basics">
-                    {basics.length > 0 ? (
-                      <div className="grid grid-cols-3 gap-2">{basics.map(renderCard)}</div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground text-center py-4">{t("game.hide.noBasics")}</p>
-                    )}
-                  </TabsContent>
-                  <TabsContent value="custom">
-                    <Card className="glass">
-                      <CardContent className="py-4 space-y-3">
-                        <p className="text-[11px] text-muted-foreground"><span dangerouslySetInnerHTML={{__html: t("game.hide.customDesc")}} /></p>
-                        <div>
-                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.iconLabel")}</label>
-                          <Input
-                            value={customObjectIcon}
-                            onChange={e => setCustomObjectIcon(e.target.value)}
-                            placeholder="🦄"
-                            maxLength={8}
-                            className={customIconValid ? "" : "border-destructive"}
-                          />
-                          {!customIconValid && <p className="text-[10px] text-destructive mt-1">{t("game.hide.iconError")}</p>}
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.nameLabel")}</label>
-                          <Input
-                            value={customObjectName}
-                            onChange={e => setCustomObjectName(e.target.value.slice(0, 20))}
-                            placeholder={t("game.hide.namePlaceholder")}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.sizeLabel")}</label>
-                            <select
-                              value={customObjectSize}
-                              onChange={e => setCustomObjectSize(Number(e.target.value) as CustomObjectSize)}
-                              className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
-                            >
-                              {CUSTOM_OBJECT_SIZES.map(s => (
-                                <option key={s} value={s}>{s === 1 ? t("game.hide.sizeSmall") : s === 2 ? t("game.hide.sizeMed") : t("game.hide.sizeLarge")}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.materialLabel")}</label>
-                            <select
-                              value={customObjectMaterial}
-                              onChange={e => setCustomObjectMaterial(e.target.value as CustomObjectMaterial)}
-                              className="w-full h-10 rounded-xl border border-border/50 bg-muted/30 px-2 text-sm"
-                            >
-                              {CUSTOM_OBJECT_MATERIALS.map(m => (
-                                <option key={m} value={m}>{t(MATERIAL_LABELS[m] ?? m, m)}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.trait1Label")}</label>
-                          <Input
-                            value={customObjectTrait1}
-                            onChange={e => setCustomObjectTrait1(e.target.value.slice(0, 60))}
-                            placeholder={t("game.hide.trait1Placeholder")}
-                            maxLength={60}
-                          />
-                          <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait1.trim().length}/60</p>
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-semibold mb-1 block">{t("game.hide.trait2Label")}</label>
-                          <Input
-                            value={customObjectTrait2}
-                            onChange={e => setCustomObjectTrait2(e.target.value.slice(0, 60))}
-                            placeholder={t("game.hide.trait2Placeholder")}
-                            maxLength={60}
-                          />
-                          <p className="text-[10px] text-muted-foreground mt-1">{customObjectTrait2.trim().length}/60</p>
-                        </div>
-                        {customReady && (
-                          <div className="flex items-center justify-center gap-2 py-2 bg-muted/30 rounded-lg">
-                            <span className="text-2xl">{customObjectIcon}</span>
-                            <span className="text-sm font-medium">{customObjectName}</span>
-                          </div>
-                        )}
-                        <Button
-                          className="w-full"
-                          disabled={!customReady || actionLoading}
-                          onClick={handleSelectCustomObject}
-                        >
-                          {t("game.hide.submitCustom")}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            );
-          })()}
-
-          {hideStep === 1 && (
-            <ScenarioPicker
-              scenarios={scenarios}
-              onSelect={handleSelectScenario}
-              onBack={() => setHideStep(0)}
-            />
-          )}
-
-
-          {hideStep === 2 && (
-            <div>
-              <h2 className="text-lg font-bold mb-1">{t("game.hide.whichItemTitle")}</h2>
-              <Tip>{t("game.hide.whichItemTip")}</Tip>
-              <div className="h-3" />
-              <div className="grid grid-cols-2 gap-2.5">
-                {items.map(item => {
-                  const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
-                  const mat = isCustom
-                    ? customObjectData!.custom_material
-                    : ((objects.find((o: any) => o.id === selectedObject) as any)?.material ?? "generic");
-                  const env = (item as any)?.environment ?? "generic";
-                  const blockReason = getMaterialBlockReason(mat, env);
-                  return (
-                    <Card key={item.id}
-                      className={`glass transition-all active:scale-[0.97] ${blockReason ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-accent/40"}`}
-                      onClick={() => !blockReason && (() => { setSelectedItem(item.id); setHideStep(3); })()}>
-                      <CardContent className="py-4 text-center">
-                        <div className="text-3xl mb-1">{item.icon}</div>
-                        <div className="text-sm font-medium">{item.name}</div>
-                        {blockReason && <div className="text-[9px] text-destructive mt-1">🚫 {blockReason}</div>}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(1)}>{t("game.hide.backToScenario")}</Button>
-            </div>
-          )}
-
-          {hideStep === 3 && (
-            <div>
-              <h2 className="text-lg font-bold mb-1">{t("game.hide.whichPosTitle")}</h2>
-              <Tip>{t("game.hide.whichPosTip")}</Tip>
-              <div className="h-3" />
-
-
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {POSITIONS.map(pos => {
-                  const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
-                  const objSize = isCustom
-                    ? customObjectData!.custom_size
-                    : ((objects.find((o: any) => o.id === selectedObject) as any)?.size ?? 2);
-                  const itm = items.find((i: any) => i.id === selectedItem);
-                  const blockedDins = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
-                  const blockedDarrere = pos.value === "darrere" && (itm as any)?.can_behind === false;
-                  const blocked = blockedDins || blockedDarrere;
-                  const selected = selectedPosition === pos.value;
-                  const blockReason = blockedDins ? t("game.hide.noFit") : blockedDarrere ? t("game.hide.cannot") : "";
-                  return (
-                    <Card key={pos.value}
-                      className={`glass transition-all active:scale-[0.97] ${selected ? "border-primary glow-primary" : ""} ${blocked || actionLoading ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
-                      onClick={() => !blocked && !actionLoading && handleSelectPosition(pos.value)}>
-                      <CardContent className="py-6 text-center">
-                        <div className="text-4xl mb-2">{pos.icon}</div>
-                        <div className="text-sm font-semibold">{posLabel(pos.value)}</div>
-                        {blocked && <div className="text-[9px] text-destructive mt-1">{blockReason}</div>}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>{t("game.hide.backToItem")}</Button>
-            </div>
-          )}
-        </div>
+        <HidingPhase p={{
+          hideSteps, hideStep, setHideStep, t,
+          scenarios, items, objects, connectedScenarios,
+          selectedScenario, selectedObject, selectedItem,
+          handleSelectScenario, handleSelectObject, handleSelectCustomObject, handleSelectPosition,
+          actionLoading,
+          customObjectIcon, setCustomObjectIcon, customObjectName, setCustomObjectName,
+          customObjectSize, setCustomObjectSize, customObjectMaterial, setCustomObjectMaterial,
+          customObjectTrait1, setCustomObjectTrait1, customObjectTrait2, setCustomObjectTrait2,
+          isPersonalGame, posLabel,
+        }} />
       )}
 
       {/* SPECIAL HIDE STEP */}
@@ -1171,7 +973,7 @@ export default function GamePage() {
         <div className="py-4">
           <Card className="glass glow-accent">
             <CardContent className="py-6 text-center">
-              <div className="flex justify-center mb-3">{(() => { const o = objects.find((x: any) => x.id === selectedObject); return <ObjectIcon name={o?.name} emoji={o?.icon} size={64} />; })()}</div>
+              <div className="flex justify-center mb-3">{(() => { const o = objects.find((x) => x.id === selectedObject); return <ObjectIcon name={o?.name} emoji={o?.icon} size={64} />; })()}</div>
               <p className="font-bold mb-1">{t("game.hide.specialTitle")}</p>
               <p className="text-sm text-muted-foreground mb-4">{objectSpecial.prompt_text}</p>
 
@@ -1200,7 +1002,7 @@ export default function GamePage() {
               {objectSpecial.special_type === "choose_variant" && objectSpecial.variants && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2">
-                    {(objectSpecial.variants as any[]).map((v: any) => (
+                    {(objectSpecial.variants as any[]).map((v) => (
                       <Card key={v.value}
                         className={`cursor-pointer glass transition-all active:scale-[0.97] ${selectedVariant?.value === v.value ? "border-primary glow-primary" : "hover:border-primary/40"}`}
                         onClick={() => setSelectedVariant(v)}>
@@ -1492,7 +1294,7 @@ export default function GamePage() {
                 const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => {
                   const s = slots.find((x) => x.cellIndex === idx);
                   if (!s) return { slot: idx };
-                  const item = currentScenarioItems.find((i: any) => i.id === s.itemId);
+                  const item = currentScenarioItems.find((i) => i.id === s.itemId);
                   const allLooked = POSITIONS.every((p) => lookedSpots.has(`${s.itemId}:${p.value}`));
                   const sprite = spriteForFurniture(item?.category, item?.name_key, item?.name);
                   const isBroken = gameBreaks.has(s.itemId);
@@ -1539,7 +1341,7 @@ export default function GamePage() {
                     onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
                     lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
                     revealedSpecials={revealedSpecials}
-                    interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
+                    interactions={itemInteractions.filter((ia) => ia.item_id === item.id)}
                     onInteraction={handleInteraction} moveHistory={moveHistory}
                     playerTools={playerTools} gameBreaks={gameBreaks}
                     onTagAction={handleTagAction} dirtyItems={dirtyItems} breakableItems={breakableItems} />
@@ -1551,7 +1353,7 @@ export default function GamePage() {
             <FurnitureActionSheet
               open={!!sheetItemId}
               onClose={() => setSheetItemId(null)}
-              item={sheetItemId ? currentScenarioItems.find((i: any) => i.id === sheetItemId) ?? null : null}
+              item={sheetItemId ? currentScenarioItems.find((i) => i.id === sheetItemId) ?? null : null}
               positions={POSITIONS}
               onLook={handleLook}
               disabled={actionLoading}
@@ -1559,7 +1361,7 @@ export default function GamePage() {
               lookedSpots={lookedSpots}
               bananaBlockedSpot={bananaBlockedSpot}
               revealedSpecials={revealedSpecials}
-              interactions={sheetItemId ? itemInteractions.filter((ia: any) => ia.item_id === sheetItemId) : []}
+              interactions={sheetItemId ? itemInteractions.filter((ia) => ia.item_id === sheetItemId) : []}
               onInteraction={handleInteraction}
               moveHistory={moveHistory}
               playerTools={playerTools}

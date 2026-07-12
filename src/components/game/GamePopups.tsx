@@ -41,7 +41,7 @@ export function SpecialFoundPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label={t("game.popups.specialFoundTitle")}>
       <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
         <CardContent className="py-6 text-center">
-          <div className="flex justify-center mb-3">{(() => { const o = objects.find((x: any) => x.id === rival?.hidden_object_id); const sd = rival?.special_data as any; return <ObjectIcon name={o?.name} emoji={sd?.custom_icon ?? o?.icon} size={72} />; })()}</div>
+          <div className="flex justify-center mb-3">{(() => { const o = objects.find((x) => x.id === rival?.hidden_object_id); const sd = rival?.special_data as any; return <ObjectIcon name={o?.name} emoji={sd?.custom_icon ?? o?.icon} size={72} />; })()}</div>
           <p className="font-bold text-lg mb-1">{t("game.popups.specialFoundTitle")}</p>
           {(() => {
             const sd = rival?.special_data as any;
@@ -57,7 +57,7 @@ export function SpecialFoundPopup({
 
           {isChooseVariant ? (
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {variants.map((variant: any) => {
+              {variants.map((variant) => {
                 const active = specialFoundVariant?.value === variant.value;
                 return (
                   <button

@@ -15,6 +15,7 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
+import { asError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +63,7 @@ export default function ResetPasswordPage() {
       if (error) throw error;
       toast.success("Contrasenya actualitzada! 🎉");
       navigate("/");
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       toast.error(err.message);
     } finally {
       setLoading(false);

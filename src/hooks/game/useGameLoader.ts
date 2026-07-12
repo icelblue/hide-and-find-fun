@@ -5,6 +5,7 @@
 // cap comportament: rep tots els setters d'estat i refs compartits com a args.
 // ============================================================
 import { useCallback, type MutableRefObject, type Dispatch, type SetStateAction } from "react";
+import { asError } from "@/lib/errors";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logError } from "@/components/ErrorBoundary";
@@ -91,7 +92,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         supabase.rpc("get_safe_game_players" as any, { _game_id: gameId }),
       ]);
       const safePlayersList = (safePlayers as any[]) ?? [];
-      const rivalData = safePlayersList.find((p: any) => p.user_id !== user.id) ?? null;
+      const rivalData = safePlayersList.find((p) => p.user_id !== user.id) ?? null;
 
       S.setGame(gameData);
       S.setPhase((gameData?.status as Phase) ?? "waiting");
@@ -206,7 +207,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           S.setConnectedScenarios(neighbors);
           S.setDirtyItems(new Set());
           S.setBreakableItems(new Set());
-        } catch (err: any) {
+        } catch (_raw_err) { const err = asError(_raw_err);
           logError(err.message, err.stack, "useGameLoader:loadPersonalCombatData");
         }
       } else if (isPlaying && currentScenId && R.items) {
@@ -220,7 +221,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         const gameBreakable = getBreakableItemsForGame(loadedItems, gameId);
         S.setBreakableItems(gameBreakable);
 
-        const hasDirtyHere = loadedItems.some((i: any) => gameDirty.has(i.id));
+        const hasDirtyHere = loadedItems.some((i) => gameDirty.has(i.id));
         if (hasDirtyHere && playerData) {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
@@ -234,7 +235,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
             });
           }
         }
-        loadedInteractions = await getItemInteractions(loadedItems.map((i: any) => i.id));
+        loadedInteractions = await getItemInteractions(loadedItems.map((i) => i.id));
         S.setItemInteractions(loadedInteractions);
       }
 
@@ -259,7 +260,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
       const revealed = new Set<string>();
       for (const ia of loadedInteractions) {
         if (ia.effect_type === "reveal_items") {
-          const wasUsed = allMoves.some((m: any) => m.target_item_id === ia.item_id);
+          const wasUsed = allMoves.some((m) => m.target_item_id === ia.item_id);
           if (wasUsed) {
             const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
             ids.forEach((id: string) => revealed.add(id));
@@ -284,7 +285,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         : false;
       S.setScenarioIsDarkState(scenarioIsDark);
 
-      const visibleItems = loadedItems.filter((i: any) => {
+      const visibleItems = loadedItems.filter((i) => {
         if (scenarioIsDark) return !i.hidden;
         if (!i.hidden) return true;
         if (revealed.has(i.id)) return true;

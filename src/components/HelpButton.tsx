@@ -30,7 +30,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
         const result: { name: string; icon: string; connections: string[] }[] = [];
         for (const s of scenarios) {
           const connected = await getConnectedScenarios(s.id);
-          result.push({ name: s.name, icon: s.icon, connections: connected.map((c: any) => `${c.icon} ${c.name}`) });
+          result.push({ name: s.name, icon: s.icon, connections: connected.map((c) => `${c.icon} ${c.name}`) });
         }
         setScenarioMap(result);
       }).catch(() => {});
@@ -199,7 +199,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {items.map((item: any) => (
+                      {items.map((item) => (
                         <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
                           {item.icon} {item.name}
                         </span>

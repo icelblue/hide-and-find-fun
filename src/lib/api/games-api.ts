@@ -170,22 +170,22 @@ export async function getMyGames(userId: string) {
       .eq("invited_user_id", userId),
   ]);
 
-  const joinedIds = new Set((joined ?? []).map((gp: any) => gp.game_id));
+  const joinedIds = new Set((joined ?? []).map((gp) => gp.game_id));
   const pendingFormatted = (pendingInvites ?? [])
-    .filter((g: any) => !joinedIds.has(g.id))
-    .map((g: any) => ({ game_id: g.id, games: g, _pending: true }));
+    .filter((g) => !joinedIds.has(g.id))
+    .map((g) => ({ game_id: g.id, games: g, _pending: true }));
 
-  const all = [...(joined ?? []).map((gp: any) => ({ ...gp, _pending: false })), ...pendingFormatted];
+  const all = [...(joined ?? []).map((gp) => ({ ...gp, _pending: false })), ...pendingFormatted];
 
-  const allGameIds = all.map((gp: any) => gp.game_id);
-  const creatorIds = [...new Set(all.map((gp: any) => gp.games.created_by))];
+  const allGameIds = all.map((gp) => gp.game_id);
+  const creatorIds = [...new Set(all.map((gp) => gp.games.created_by))];
 
   const rivalMap = new Map<string, string>();
   const rivalUserIds: string[] = [];
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: allGameIds });
-    const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== userId);
-    rivalUserIds.push(...new Set(filteredPlayers.map((p: any) => p.user_id as string)));
+    const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p) => p.user_id !== userId);
+    rivalUserIds.push(...new Set(filteredPlayers.map((p) => p.user_id as string)));
     for (const p of filteredPlayers) rivalMap.set(p.game_id, p.user_id);
   }
 
@@ -195,7 +195,7 @@ export async function getMyGames(userId: string) {
         .filter(
           (gp: any) => gp.games.status === "waiting" && gp.games.invited_user_id && gp.games.invited_user_id !== userId,
         )
-        .map((gp: any) => gp.games.invited_user_id),
+        .map((gp) => gp.games.invited_user_id),
     ),
   ];
   const allProfileIds = [...new Set([...creatorIds, ...invitedUserIds, ...rivalUserIds])];
@@ -221,7 +221,7 @@ export async function getMyGames(userId: string) {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
   return all
-    .filter((gp: any) => gp.games.status !== "finished" || gp.games.created_at > cutoff)
+    .filter((gp) => gp.games.status !== "finished" || gp.games.created_at > cutoff)
     .sort((a: any, b: any) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
 }
 

@@ -2,6 +2,7 @@
 // ProfilePage.tsx — Perfil del jugador (amb pestanyes)
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
+import { asError } from "@/lib/errors";
 import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents } from "@/lib/story-helpers";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { useNavigate } from "react-router-dom";
@@ -95,8 +96,8 @@ export default function ProfilePage() {
     const { data: myGames } = await supabase.from("game_players").select("game_id").eq("user_id", user.id);
     if (myGames && myGames.length > 0) {
       const gameIds = myGames.map(g => g.game_id);
-      const { data: allPlayers } = await supabase.rpc("get_game_participants" as any, { _game_ids: gameIds });
-      const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p: any) => p.user_id !== user.id);
+      const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: gameIds });
+      const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p) => p.user_id !== user.id);
       if (filteredPlayers && filteredPlayers.length > 0) {
         const counts: Record<string, number> = {};
         for (const p of filteredPlayers) {
@@ -117,7 +118,7 @@ export default function ProfilePage() {
 
     const wallMsgs: any[] = msgs ?? [];
     if (wallMsgs.length > 0) {
-      const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
+      const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
       const { data: authors } = await supabase.from("profiles").select("user_id, display_name").in("user_id", authorIds);
       const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
       for (const m of wallMsgs) { m._author_name = authorMap.get(m.author_user_id) ?? t("common.anonymous"); }
@@ -138,10 +139,10 @@ export default function ProfilePage() {
         const [{ data: objs }, { data: itms }, rivalParticipants] = await Promise.all([
           objIds.length > 0 ? supabase.from("objects").select("id, name, icon").in("id", objIds) : { data: [] },
           itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
-          supabase.rpc("get_game_participants" as any, { _game_ids: activeGameIds }),
+          supabase.rpc("get_game_participants", { _game_ids: activeGameIds }),
         ]);
-        const rivalPlayers = ((rivalParticipants.data as any[]) ?? []).filter((rp: any) => rp.user_id !== user.id);
-        const rivalUserIds = [...new Set(rivalPlayers.map((rp: any) => rp.user_id as string))];
+        const rivalPlayers = ((rivalParticipants.data as any[]) ?? []).filter((rp) => rp.user_id !== user.id);
+        const rivalUserIds = [...new Set(rivalPlayers.map((rp) => rp.user_id as string))];
         let rivalNameMap = new Map<string, string>();
         if (rivalUserIds.length > 0) {
           const { data: rivalProfs } = await supabase.from("profiles").select("user_id, display_name").in("user_id", rivalUserIds);
@@ -157,9 +158,9 @@ export default function ProfilePage() {
         const tItms = await translateRows((itms ?? []) as any[], "pvp_item_name", "id", "name");
         const tScen = await translateRows(scen as any[], "pvp_scenario_name", "id", "name");
 
-        const objMap = new Map(tObjs.map((o: any) => [o.id, o] as [string, any]));
-        const itmMap = new Map(tItms.map((i: any) => [i.id, i] as [string, any]));
-        const scenMap = new Map(tScen.map((s: any) => [s.id, s] as [string, any]));
+        const objMap = new Map(tObjs.map((o) => [o.id, o] as [string, any]));
+        const itmMap = new Map(tItms.map((i) => [i.id, i] as [string, any]));
+        const scenMap = new Map(tScen.map((s) => [s.id, s] as [string, any]));
 
         const enriched = activeGameData.map(g => {
           const gp = myGamePlayers.find(p => p.game_id === g.id);
@@ -192,7 +193,7 @@ export default function ProfilePage() {
       toast.success(`${placingReward.reward_items.icon} ${placingReward.reward_items.name} ${t("profile.placeReward.placedToast")}`);
       setPlacingReward(null);
       await loadData();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -204,7 +205,7 @@ export default function ProfilePage() {
       toast.success(`+${tokens} ${t("profile.sellReward.soldToast")}`);
       setSellingReward(null);
       await loadData();
-    } catch (err: any) { toast.error(err.message); }
+    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
     finally { setLoading(false); }
   };
 
@@ -248,7 +249,7 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground mt-1">{t("profile.placeReward.where")}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {scenarios.map((s: any) => (
+                {scenarios.map((s) => (
                   <button key={s.id} onClick={() => handlePlace(s.id)} disabled={loading}
                     className="bg-muted/50 rounded-xl p-3 text-center hover:bg-primary/10 transition-all disabled:opacity-30 active:scale-[0.97] border border-border/30">
                     <div className="text-2xl">{s.icon}</div>
@@ -391,7 +392,7 @@ export default function ProfilePage() {
                   </div>
                   {petAccessories.length > 0 && (
                     <div className="flex flex-col gap-1">
-                      {petAccessories.map((a: any) => (<span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>))}
+                      {petAccessories.map((a) => (<span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>))}
                     </div>
                   )}
                 </div>
@@ -448,7 +449,7 @@ export default function ProfilePage() {
                 {t("profile.activeGames.title")} ({activeGames.length})
               </h2>
               <div className="space-y-2">
-                {activeGames.map((g: any) => (
+                {activeGames.map((g) => (
                   <Card key={g.id} className="glass cursor-pointer hover:border-primary/40 transition-all" onClick={() => navigate(`/game/${g.id}`)}>
                     <CardContent className="py-3 px-4">
                       <div className="flex items-center justify-between mb-1">
@@ -485,7 +486,7 @@ export default function ProfilePage() {
                 {t("profile.trophies.title")} ({trophies.length})
               </h2>
               <div className="space-y-2">
-                {trophies.map((tr: any) => {
+                {trophies.map((tr) => {
                   const sd = tr.special_data as any;
                   return (
                     <Card key={tr.id} className="glass border-accent/30">
@@ -541,7 +542,7 @@ export default function ProfilePage() {
               </Card>
             ) : (
               <div className="space-y-2">
-                {rewards.map((r: any) => {
+                {rewards.map((r) => {
                   const item = r.reward_items;
                   const rarity = RARITY_CONFIG[item.rarity] ?? RARITY_CONFIG.common;
                   const borderClass = RARITY_BORDER[item.rarity] ?? RARITY_BORDER.common;
@@ -579,7 +580,7 @@ export default function ProfilePage() {
               </CardContent></Card>
             ) : (
               <div className="space-y-1.5">
-                {wallMessages.map((m: any) => {
+                {wallMessages.map((m) => {
                   const mins = Math.floor((Date.now() - new Date(m.created_at).getTime()) / 60000);
                   const timeStr = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h`;
                   return (
@@ -710,7 +711,7 @@ function WonObjectsSection({ userId }: { userId: string }) {
         supabase.from("player_rewards").select("reward_item_id").eq("user_id", userId).eq("status", "owned"),
       ]);
       setCatalog(items);
-      setOwnedIds(new Set((owned ?? []).map((r: any) => r.reward_item_id)));
+      setOwnedIds(new Set((owned ?? []).map((r) => r.reward_item_id)));
       setLoading(false);
     })();
   }, [userId, lang]);
@@ -729,7 +730,7 @@ function WonObjectsSection({ userId }: { userId: string }) {
       <Tip>{t("profile.vitrina.tip")}</Tip>
       <div className="h-2" />
       <div className="flex flex-wrap gap-2">
-        {catalog.map((item: any) => {
+        {catalog.map((item) => {
           const has = ownedIds.has(item.id);
           const rarity = RARITY_CONFIG[item.rarity];
           const border = RARITY_BORDER_MAP[item.rarity] ?? "";
@@ -769,7 +770,7 @@ function DangerZone({ displayName, onDeleted }: { displayName: string; onDeleted
       toast.success(t("profile.danger.deletedToast"));
       setOpen(false);
       onDeleted();
-    } catch (e: any) {
+    } catch (_raw_e) { const e = asError(_raw_e);
       toast.error(`${t("profile.danger.deleteError")} ${e.message ?? e}`);
       setDeleting(false);
     }

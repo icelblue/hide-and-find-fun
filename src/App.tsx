@@ -2,6 +2,7 @@
 // App.tsx — Punt d'entrada de l'aplicació React
 // ============================================================
 import { lazy, Suspense, type ComponentType } from "react";
+import { asError } from "@/lib/errors";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/i18n/LanguageProvider";
@@ -15,7 +16,7 @@ function lazyWithReload<T extends ComponentType<any>>(factory: () => Promise<{ d
   return lazy(async () => {
     try {
       return await factory();
-    } catch (err: any) {
+    } catch (_raw_err) { const err = asError(_raw_err);
       const msg = String(err?.message || err || "");
       const isChunkError = /Importing a module script failed|Failed to fetch dynamically imported module|ChunkLoadError|Loading chunk .* failed/i.test(msg);
       if (isChunkError && typeof window !== "undefined") {

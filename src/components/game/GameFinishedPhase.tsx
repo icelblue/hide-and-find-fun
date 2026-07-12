@@ -169,7 +169,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const itm = itmArr[0] as any;
       let scn = null;
       if (itm?.scenario_id) {
-        scn = scenarios.find((s: any) => s.id === itm.scenario_id) ?? null;
+        scn = scenarios.find((s) => s.id === itm.scenario_id) ?? null;
       }
       const hideMsg = getHideMessage(rival.special_data);
 
@@ -191,7 +191,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
           supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
         ]);
         const translatedTraits = await translateRows((traitData ?? []) as any[], "pvp_object_trait", "id", "trait_text");
-        traits = translatedTraits.map((t: any) => t.trait_text);
+        traits = translatedTraits.map((t) => t.trait_text);
         specialType = specialData?.special_type ?? null;
       }
 
