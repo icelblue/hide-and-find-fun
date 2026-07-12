@@ -23,7 +23,7 @@ Segueix [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**
 Bucle econòmic sostenible (jardí + participació), partides realment fluides amb realtime fiable, i la compra de sales ja no es pot burlar. Els tests 382/382 passen.
 
 
-
+## [1.22.0] — 2026-05-29 — i18n: RewardReveal + seed EN contingut narratiu (MINOR)
 
 ### Afegit
 - Claus `reveal.*` (tragicEnd, foundItem, recipe, damage, xp, nothing) a `ca.json`/`en.json`.
