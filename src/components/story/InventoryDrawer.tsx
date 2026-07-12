@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getInventory, getAllRecipes, getDiscoveredRecipeIds, hasItems, combineRecipe,
-  getItemEffect, getItemEffectAsync, useItemOnPet,
+  getItemEffect, getItemEffectAsync, applyItemOnPet,
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
 import { getMyAccessories } from "@/lib/story-helpers";
@@ -28,7 +28,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [knownIds, setKnownIds] = useState<Set<string>>(new Set());
-  const [accessories, setAccessories] = useState<any[]>([]);
+  const [accessories, setAccessories] = useState<Record<string, unknown>[]>([]);
   const [journal, setJournal] = useState<JournalSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [tx, setTx] = useState<Map<string, string>>(new Map());
@@ -64,7 +64,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
     setJournal(jour);
 
     // Carrega traduccions per a tot el contingut dinàmic
-    const entries: Array<{ entity_type: any; entity_id: string }> = [];
+    const entries: Array<{ entity_type: string; entity_id: string }> = [];
     const seenItems = new Set<string>();
     for (const it of inv) if (!seenItems.has(it.item_id)) { seenItems.add(it.item_id); entries.push({ entity_type: "story_item_name", entity_id: it.item_id }); }
     for (const r of recs) {
@@ -83,7 +83,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const handleUseItem = async (item: InventoryItem) => {
     setBusy(true);
     try {
-      const result = await useItemOnPet(userId, item);
+      const result = await applyItemOnPet(userId, item);
       if (!result) { toast.error(t("inventory.toastNotUsable")); return; }
       const verb = t(`storyEffect.${result.effect.kind}.verb`, result.effect.verb);
       toast.success(t("inventory.toastUsed", { icon: item.item_icon, pet: petName, verb, item: itemNameT(item.item_id, item.item_name) }));

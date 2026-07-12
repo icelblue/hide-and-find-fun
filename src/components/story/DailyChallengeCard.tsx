@@ -30,7 +30,7 @@ function timeUntilMidnight(): string {
   return `${h}h ${m}m`;
 }
 
-function rewardLabel(reward_type: string | null, reward_value: any): string {
+function rewardLabel(reward_type: string | null, reward_value: unknown): string {
   if (!reward_type) return "—";
   if (reward_type === "xp") return `⭐ +${reward_value?.xp ?? 0} XP`;
   if (reward_type === "accessory") return `${reward_value?.icon ?? "🎁"} ${reward_value?.accessory ?? ""}`;

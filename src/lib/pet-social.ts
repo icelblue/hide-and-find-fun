@@ -30,7 +30,7 @@ export interface RecentVisit extends ResolvedVisit {
  */
 export async function resolveAndFetchPendingVisits(userId: string): Promise<ResolvedVisit[]> {
   try {
-    await supabase.rpc("resolve_my_pet_visits" as any);
+    await supabase.rpc("resolve_my_pet_visits");
   } catch {
     // si la RPC no existeix encara o falla, no propaguem
   }
@@ -49,7 +49,7 @@ export async function resolveAndFetchPendingVisits(userId: string): Promise<Reso
   if (error || !visits || visits.length === 0) return [];
 
   const otherIds = Array.from(new Set(
-    (visits as any[]).map((v) => v.host_user_id === userId ? v.visitor_user_id : v.host_user_id)
+    (visits as Record<string, unknown>[]).map((v) => v.host_user_id === userId ? v.visitor_user_id : v.host_user_id)
   ));
   const { data: pets } = await supabase
     .from("player_pets")
@@ -57,7 +57,7 @@ export async function resolveAndFetchPendingVisits(userId: string): Promise<Reso
     .in("user_id", otherIds);
   const petMap = new Map((pets ?? []).map((p) => [p.user_id, p]));
 
-  const result: ResolvedVisit[] = (visits as any[]).map((v) => {
+  const result: ResolvedVisit[] = (visits as Record<string, unknown>[]).map((v) => {
     const isHost = v.host_user_id === userId;
     const otherId = isHost ? v.visitor_user_id : v.host_user_id;
     const otherPet = petMap.get(otherId);
@@ -73,8 +73,8 @@ export async function resolveAndFetchPendingVisits(userId: string): Promise<Reso
   });
 
   // Marca com vistes (sense bloquejar)
-  const hostIds = (visits as any[]).filter((v) => v.host_user_id === userId).map((v) => v.id);
-  const visitorIds = (visits as any[]).filter((v) => v.visitor_user_id === userId).map((v) => v.id);
+  const hostIds = (visits as Record<string, unknown>[]).filter((v) => v.host_user_id === userId).map((v) => v.id);
+  const visitorIds = (visits as Record<string, unknown>[]).filter((v) => v.visitor_user_id === userId).map((v) => v.id);
   if (hostIds.length > 0) {
     await supabase.from("pet_visits").update({ seen_by_host: true }).in("id", hostIds);
   }
@@ -98,7 +98,7 @@ export async function getRecentVisits(userId: string, limit = 8): Promise<Recent
   if (!visits || visits.length === 0) return [];
 
   const otherIds = Array.from(new Set(
-    (visits as any[]).map((v) => v.host_user_id === userId ? v.visitor_user_id : v.host_user_id)
+    (visits as Record<string, unknown>[]).map((v) => v.host_user_id === userId ? v.visitor_user_id : v.host_user_id)
   ));
   const { data: pets } = await supabase
     .from("player_pets")
@@ -106,7 +106,7 @@ export async function getRecentVisits(userId: string, limit = 8): Promise<Recent
     .in("user_id", otherIds);
   const petMap = new Map((pets ?? []).map((p) => [p.user_id, p]));
 
-  return (visits as any[]).map((v) => {
+  return (visits as Record<string, unknown>[]).map((v) => {
     const isHost = v.host_user_id === userId;
     const otherId = isHost ? v.visitor_user_id : v.host_user_id;
     const otherPet = petMap.get(otherId);
@@ -138,7 +138,7 @@ export interface PetNotification {
   from_user_id: string | null;
   from_display_name: string;
   notif_type: "gift_consumable" | "gift_item" | string;
-  payload: any;
+  payload: unknown;
   seen: boolean;
   created_at: string;
 }
@@ -154,17 +154,17 @@ export async function fetchAndMarkUnseenNotifications(userId: string): Promise<P
     .limit(20);
   if (error || !data || data.length === 0) return [];
 
-  const fromIds = Array.from(new Set((data as any[]).map((n) => n.from_user_id).filter(Boolean)));
+  const fromIds = Array.from(new Set((data as Record<string, unknown>[]).map((n) => n.from_user_id).filter(Boolean)));
   let nameMap = new Map<string, string>();
   if (fromIds.length > 0) {
     const { data: profs } = await supabase
       .from("profiles").select("user_id, display_name").in("user_id", fromIds);
     nameMap = new Map((profs ?? []).map((p) => [p.user_id, p.display_name ?? "Algú"]));
   }
-  const ids = (data as any[]).map((n) => n.id);
+  const ids = (data as Record<string, unknown>[]).map((n) => n.id);
   await supabase.from("pet_notifications").update({ seen: true }).in("id", ids);
 
-  return (data as any[]).map((n) => ({
+  return (data as Record<string, unknown>[]).map((n) => ({
     ...n,
     from_display_name: n.from_user_id ? (nameMap.get(n.from_user_id) ?? "Algú") : "Algú",
   })) as PetNotification[];

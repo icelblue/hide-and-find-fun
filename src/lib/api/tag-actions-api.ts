@@ -78,7 +78,7 @@ export function getBreakableItemsForGame(allItems: Array<{ id: string; tags?: st
 
 /** Get tag-based actions available for an item given player's tools and game state */
 export function getTagActions(
-  item: any,
+  item: Record<string, unknown>,
   playerTools: Record<string, number>,
   gameBreaks: Set<string>,
   dirtyItems?: Set<string>,
@@ -162,19 +162,19 @@ export function getTagActions(
 export async function executeFillWater(gameId: string, itemId: string) {
   const { data, error } = await supabase.rpc("execute_fill_water", { _game_id: gameId, _item_id: itemId });
   if (error) throw new Error(error.message);
-  return data as any;
+  return data as Record<string, unknown>;
 }
 
 export async function executePolish(gameId: string, itemId: string) {
   const { data, error } = await supabase.rpc("execute_polish", { _game_id: gameId, _item_id: itemId });
   if (error) throw new Error(error.message);
-  return data as any;
+  return data as Record<string, unknown>;
 }
 
 export async function rollGalledaDrop(gameId: string) {
   const { data, error } = await supabase.rpc("roll_galleda_drop", { _game_id: gameId });
   if (error) return { dropped: false };
-  return data as any;
+  return data as Record<string, unknown>;
 }
 export const TOOLS_PER_GAME: Record<ToolType, number> = {
   martell: 5,
@@ -190,7 +190,7 @@ async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, num
   const { data: players } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
 
   const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0, galleda: 0, drap_mullat: 0 };
-  for (const p of (players as any[]) ?? []) {
+  for (const p of (players as Record<string, unknown>[]) ?? []) {
     const t = parseTools(p.tools);
     totals.martell += t.martell;
     totals.drap += t.drap;
@@ -287,7 +287,7 @@ export async function toggleLight(
     _scenario_name: scenarioName ?? null,
   });
   if (error) throw new Error(error.message);
-  const result = data as any;
+  const result = data as Record<string, unknown>;
   return { toolFound: result?.tool_found ?? null };
 }
 
@@ -308,7 +308,7 @@ export async function performTagAction(
     _player_tools: playerTools,
   });
   if (error) throw new Error(error.message);
-  const result = data as any;
+  const result = data as Record<string, unknown>;
   return {
     bonusResult: result?.bonus_result ?? null,
     tornavisSpawned: result?.tornavis_spawned ?? false,

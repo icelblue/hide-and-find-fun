@@ -38,18 +38,18 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const t = useT();
   const { lang } = useLanguage();
-  const [profile, setProfile] = useState<any>(null);
-  const [rewards, setRewards] = useState<any[]>([]);
-  const [scenarios, setScenarios] = useState<any[]>([]);
-  const [placingReward, setPlacingReward] = useState<any>(null);
-  const [sellingReward, setSellingReward] = useState<any>(null);
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  const [rewards, setRewards] = useState<Record<string, unknown>[]>([]);
+  const [scenarios, setScenarios] = useState<Record<string, unknown>[]>([]);
+  const [placingReward, setPlacingReward] = useState<Record<string, unknown> | null>(null);
+  const [sellingReward, setSellingReward] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
-  const [wallMessages, setWallMessages] = useState<any[]>([]);
-  const [activeGames, setActiveGames] = useState<any[]>([]);
-  const [trophies, setTrophies] = useState<any[]>([]);
-  const [pet, setPet] = useState<any>(null);
-  const [petAccessories, setPetAccessories] = useState<any[]>([]);
-  const [petEvents, setPetEvents] = useState<any[]>([]);
+  const [wallMessages, setWallMessages] = useState<Record<string, unknown>[]>([]);
+  const [activeGames, setActiveGames] = useState<Record<string, unknown>[]>([]);
+  const [trophies, setTrophies] = useState<Record<string, unknown>[]>([]);
+  const [pet, setPet] = useState<Record<string, unknown> | null>(null);
+  const [petAccessories, setPetAccessories] = useState<Record<string, unknown>[]>([]);
+  const [petEvents, setPetEvents] = useState<Record<string, unknown>[]>([]);
   const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
   const [editingName, setEditingName] = useState(false);
@@ -66,7 +66,7 @@ export default function ProfilePage() {
     const { error } = await supabase.from("profiles").update({ display_name: trimmed }).eq("user_id", user.id);
     setSavingName(false);
     if (error) { toast.error(t("profile.editName.saveError") + error.message); return; }
-    setProfile((p: any) => ({ ...p, display_name: trimmed }));
+    setProfile((p) => ({ ...(p as object), display_name: trimmed }));
     setEditingName(false);
     toast.success(t("profile.editName.savedToast"));
   };
@@ -97,7 +97,7 @@ export default function ProfilePage() {
     if (myGames && myGames.length > 0) {
       const gameIds = myGames.map(g => g.game_id);
       const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: gameIds });
-      const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p) => p.user_id !== user.id);
+      const filteredPlayers = ((allPlayers as Record<string, unknown>[]) ?? []).filter((p) => p.user_id !== user.id);
       if (filteredPlayers && filteredPlayers.length > 0) {
         const counts: Record<string, number> = {};
         for (const p of filteredPlayers) {
@@ -116,7 +116,7 @@ export default function ProfilePage() {
       }
     }
 
-    const wallMsgs: any[] = msgs ?? [];
+    const wallMsgs: Record<string, unknown>[] = (msgs ?? []) as Record<string, unknown>[];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
       const { data: authors } = await supabase.from("profiles").select("user_id, display_name").in("user_id", authorIds);
@@ -141,7 +141,7 @@ export default function ProfilePage() {
           itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
           supabase.rpc("get_game_participants", { _game_ids: activeGameIds }),
         ]);
-        const rivalPlayers = ((rivalParticipants.data as any[]) ?? []).filter((rp) => rp.user_id !== user.id);
+        const rivalPlayers = ((rivalParticipants.data as Record<string, unknown>[]) ?? []).filter((rp) => rp.user_id !== user.id);
         const rivalUserIds = [...new Set(rivalPlayers.map((rp) => rp.user_id as string))];
         let rivalNameMap = new Map<string, string>();
         if (rivalUserIds.length > 0) {
@@ -154,19 +154,19 @@ export default function ProfilePage() {
         // Translate object/item/scenario names via supabase-helpers? They go via direct queries here.
         // Apply lightweight translation via translateRows for consistency.
         const { translateRows } = await import("@/i18n/translate-data");
-        const tObjs = await translateRows((objs ?? []) as any[], "pvp_object_name", "id", "name");
-        const tItms = await translateRows((itms ?? []) as any[], "pvp_item_name", "id", "name");
-        const tScen = await translateRows(scen as any[], "pvp_scenario_name", "id", "name");
+        const tObjs = await translateRows((objs ?? []) as Record<string, unknown>[], "pvp_object_name", "id", "name");
+        const tItms = await translateRows((itms ?? []) as Record<string, unknown>[], "pvp_item_name", "id", "name");
+        const tScen = await translateRows(scen as Record<string, unknown>[], "pvp_scenario_name", "id", "name");
 
-        const objMap = new Map(tObjs.map((o) => [o.id, o] as [string, any]));
-        const itmMap = new Map(tItms.map((i) => [i.id, i] as [string, any]));
-        const scenMap = new Map(tScen.map((s) => [s.id, s] as [string, any]));
+        const objMap = new Map(tObjs.map((o) => [o.id, o] as [string, unknown]));
+        const itmMap = new Map(tItms.map((i) => [i.id, i] as [string, unknown]));
+        const scenMap = new Map(tScen.map((s) => [s.id, s] as [string, unknown]));
 
         const enriched = activeGameData.map(g => {
           const gp = myGamePlayers.find(p => p.game_id === g.id);
           const obj = gp?.hidden_object_id ? objMap.get(gp.hidden_object_id) : null;
           const itm = gp?.hidden_item_id ? itmMap.get(gp.hidden_item_id) : null;
-          const scn = itm ? scenMap.get((itm as any).scenario_id) : null;
+          const scn = itm ? scenMap.get(itm.scenario_id) : null;
           return {
             ...g, hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
             hiddenPosition: gp?.hidden_position, hasHidden: gp?.has_hidden,
@@ -487,7 +487,7 @@ export default function ProfilePage() {
               </h2>
               <div className="space-y-2">
                 {trophies.map((tr) => {
-                  const sd = tr.special_data as any;
+                  const sd = tr.special_data as Record<string, unknown> | null;
                   return (
                     <Card key={tr.id} className="glass border-accent/30">
                       <CardContent className="py-2.5 flex items-center gap-3">
@@ -619,7 +619,7 @@ export default function ProfilePage() {
 function ReferralsSection({ userId }: { userId: string }) {
   const t = useT();
   const [link, setLink] = useState<{ code: string; url: string } | null>(null);
-  const [referrals, setReferrals] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -700,7 +700,7 @@ function ReferralsSection({ userId }: { userId: string }) {
 function WonObjectsSection({ userId }: { userId: string }) {
   const t = useT();
   const { lang } = useLanguage();
-  const [catalog, setCatalog] = useState<any[]>([]);
+  const [catalog, setCatalog] = useState<Record<string, unknown>[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -764,8 +764,8 @@ function DangerZone({ displayName, onDeleted }: { displayName: string; onDeleted
     setDeleting(true);
     try {
       const { data, error } = await supabase.functions.invoke("delete-account");
-      if (error || (data && (data as any).error)) {
-        throw new Error((data as any)?.error || error?.message || "Error");
+      if (error || (data && data.error)) {
+        throw new Error(data?.error || error?.message || "Error");
       }
       toast.success(t("profile.danger.deletedToast"));
       setOpen(false);

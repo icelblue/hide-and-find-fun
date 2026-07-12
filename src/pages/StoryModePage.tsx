@@ -53,7 +53,7 @@ export default function StoryModePage() {
 
 
   const [phase, setPhase] = useState<Phase>("loading");
-  const [pet, setPet] = useState<any>(null);
+  const [pet, setPet] = useState<Record<string, unknown> | null>(null);
   const [run, setRun] = useState<StoryRun | null>(null);
   const [node, setNode] = useState<StoryNode | null>(null);
   const [choices, setChoices] = useState<StoryChoice[]>([]);

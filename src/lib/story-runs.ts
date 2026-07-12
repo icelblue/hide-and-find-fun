@@ -22,7 +22,7 @@ export interface StoryNode {
   is_ending: boolean;
   ending_type: string | null;
   puzzle_type?: string | null;
-  puzzle_data?: any;
+  puzzle_data?: unknown;
 }
 
 export interface StoryChoice {
@@ -32,7 +32,7 @@ export interface StoryChoice {
   label: string;
   next_node_id: string | null;
   reward_type: string | null;
-  reward_value: any;
+  reward_value: unknown;
   state_delta?: Partial<PetState> | null;
   requires_items?: string[] | null;
   requires_bond?: number | null;
@@ -173,7 +173,7 @@ const CONSUMABLE_ICONS: Record<string, string> = {
 async function applyReward(
   userId: string,
   rewardType: string | null,
-  rewardValue: any,
+  rewardValue: unknown,
   xpMultiplier: number = 1,
 ): Promise<RewardOutcome> {
   if (!rewardType || !rewardValue) return {};
@@ -272,7 +272,7 @@ export async function makeChoice(
 
   const newPath = [...(run.path ?? []), ...(nextNode ? [nextNode.id] : [])];
 
-  const update: any = { current_node_id: nextNode?.id ?? run.current_node_id, path: newPath };
+  const update: Record<string, unknown> = { current_node_id: nextNode?.id ?? run.current_node_id, path: newPath };
   if (endStatus) {
     update.status = endStatus;
     update.ending_type = endStatus === "dead" ? "death" : nextNode?.ending_type ?? null;
@@ -318,7 +318,7 @@ export interface DailyChallengeState {
   node: StoryNode | null;
   choices: StoryChoice[];
   alreadyDone: boolean;
-  lastReward: { reward_type: string | null; reward_value: any } | null;
+  lastReward: { reward_type: string | null; reward_value: unknown } | null;
   completedAt: string | null;
 }
 
@@ -374,7 +374,7 @@ export async function submitDailyChoice(
     reward_type: choice.reward_type,
     reward_value: choice.reward_value,
   });
-  if (error && (error as any).code === "23505") {
+  if (error && error.code === "23505") {
     return { reward, alreadyDone: true };
   }
   if (error) throw error;

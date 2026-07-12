@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function createGame(userId: string, invitedUserId?: string) {
   const code = generateGameCode();
-  const insertData: any = { code, created_by: userId };
+  const insertData: Record<string, unknown> = { code, created_by: userId };
   if (invitedUserId) insertData.invited_user_id = invitedUserId;
 
   const { data: game, error: gameError } = await supabase.from("games").insert(insertData).select().single();
@@ -184,7 +184,7 @@ export async function getMyGames(userId: string) {
   const rivalUserIds: string[] = [];
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: allGameIds });
-    const filteredPlayers = ((allPlayers as any[]) ?? []).filter((p) => p.user_id !== userId);
+    const filteredPlayers = ((allPlayers as Record<string, unknown>[]) ?? []).filter((p) => p.user_id !== userId);
     rivalUserIds.push(...new Set(filteredPlayers.map((p) => p.user_id as string)));
     for (const p of filteredPlayers) rivalMap.set(p.game_id, p.user_id);
   }
@@ -193,7 +193,7 @@ export async function getMyGames(userId: string) {
     ...new Set(
       all
         .filter(
-          (gp: any) => gp.games.status === "waiting" && gp.games.invited_user_id && gp.games.invited_user_id !== userId,
+          (gp) => gp.games.status === "waiting" && gp.games.invited_user_id && gp.games.invited_user_id !== userId,
         )
         .map((gp) => gp.games.invited_user_id),
     ),
@@ -206,23 +206,23 @@ export async function getMyGames(userId: string) {
   const profileMap = new Map((allProfiles ?? []).map((p) => [p.user_id, p.display_name]));
 
   for (const gp of all) {
-    const game = (gp as any).games;
-    (gp as any)._creator_name = profileMap.get(game.created_by) ?? "Anònim";
-    const rivalId = rivalMap.get((gp as any).game_id) ?? null;
+    const game = gp.games;
+    gp._creator_name = profileMap.get(game.created_by) ?? "Anònim";
+    const rivalId = rivalMap.get(gp.game_id) ?? null;
     let rivalName = rivalId ? profileMap.get(rivalId) ?? "Anònim" : null;
     if (!rivalName && game.status === "waiting" && game.invited_user_id) {
       if (game.created_by === userId && game.invited_user_id !== userId) {
         rivalName = profileMap.get(game.invited_user_id) ?? "Anònim";
       }
     }
-    (gp as any)._rival_name = rivalName;
+    gp._rival_name = rivalName;
   }
 
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const statusOrder: Record<string, number> = { playing: 0, hiding: 1, waiting: 2, finished: 3 };
   return all
     .filter((gp) => gp.games.status !== "finished" || gp.games.created_at > cutoff)
-    .sort((a: any, b: any) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
+    .sort((a, b) => (statusOrder[a.games.status] ?? 9) - (statusOrder[b.games.status] ?? 9));
 }
 
 export async function deleteGame(gameId: string) {
@@ -241,7 +241,7 @@ export async function hideObject(
   objectId: string,
   itemId: string,
   position: Position,
-  specialData?: any,
+  specialData?: Record<string, unknown> | null,
 ) {
   const [{ data: obj }, { data: itm }] = await Promise.all([
     supabase.from("objects").select("size, material").eq("id", objectId).single(),
@@ -249,25 +249,25 @@ export async function hideObject(
   ]);
 
   if (position === "dins") {
-    const objSize = (obj as any)?.size ?? 2;
-    const capacity = (itm as any)?.inner_capacity ?? 2;
+    const objSize = obj?.size ?? 2;
+    const capacity = itm?.inner_capacity ?? 2;
     if (objSize > capacity) {
       throw new Error(tt("game.errors.objectTooBigInside"));
     }
   }
 
-  if (position === "darrere" && (itm as any)?.can_behind === false) {
+  if (position === "darrere" && itm?.can_behind === false) {
     throw new Error(tt("game.errors.cannotHideBehindThis"));
   }
 
-  const material = (obj as any)?.material ?? "generic";
-  const environment = (itm as any)?.environment ?? "generic";
+  const material = obj?.material ?? "generic";
+  const environment = itm?.environment ?? "generic";
   const blockReason = getMaterialBlockReason(material, environment);
   if (blockReason) {
     throw new Error(blockReason);
   }
 
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     hidden_object_id: objectId,
     hidden_item_id: itemId,
     hidden_position: position,

@@ -16,7 +16,7 @@ const REFERRAL_STORAGE_KEY = "dd_pending_referral_code";
 export function savePendingReferralCode(code: string) {
   try {
     localStorage.setItem(REFERRAL_STORAGE_KEY, code.toUpperCase().trim());
-  } catch {}
+  } catch { /* opcional: el referral no ha de bloquejar mai el flux */ }
 }
 
 /** Llegeix el codi pendent (si n'hi ha) */
@@ -32,7 +32,7 @@ export function getPendingReferralCode(): string | null {
 export function clearPendingReferralCode() {
   try {
     localStorage.removeItem(REFERRAL_STORAGE_KEY);
-  } catch {}
+  } catch { /* opcional: el referral no ha de bloquejar mai el flux */ }
 }
 
 /**

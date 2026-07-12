@@ -91,7 +91,7 @@ export function getPetEvolution(xp: number, maxXp?: number) {
   return { ...tier, nextTier, isDead, xp, maxXp: effectiveMax };
 }
 
-export function hasAllAccessories(accessories: any[]): boolean {
+export function hasAllAccessories(accessories: Array<{ slot?: string | null }>): boolean {
   const owned = new Set(accessories.map((a) => a.accessory_name));
   return PET_ACCESSORIES.every((a) => owned.has(a.name));
 }
@@ -260,7 +260,7 @@ export async function useConsumable(userId: string, consumableName: string) {
 // CPU LOGIC (random decisions)
 // ============================================
 
-export function cpuChooseHidingSpot(items: any[], objects: any[]) {
+export function cpuChooseHidingSpot(items: Array<Record<string, unknown>>, objects: Array<Record<string, unknown>>) {
   if (items.length === 0 || objects.length === 0) return null;
   const item = items[Math.floor(Math.random() * items.length)];
   const obj = objects[Math.floor(Math.random() * objects.length)];

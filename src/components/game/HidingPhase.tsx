@@ -15,7 +15,7 @@ import { POSITIONS, POS_LABELS, type Position } from "@/lib/game-types";
 import { MATERIAL_LABELS } from "@/lib/api/materials-api";
 import { Tip } from "@/components/HelpButton";
 
-interface Props { p: Record<string, any> }
+interface Props { p: Record<string, unknown> }
 
 export default function HidingPhase({ p }: Props) {
   const {
@@ -196,7 +196,7 @@ export default function HidingPhase({ p }: Props) {
                   const mat = isCustom
                     ? customObjectData!.custom_material
                     : ((objects.find((o) => o.id === selectedObject) as any)?.material ?? "generic");
-                  const env = (item as any)?.environment ?? "generic";
+                  const env = item?.environment ?? "generic";
                   const blockReason = getMaterialBlockReason(mat, env);
                   return (
                     <Card key={item.id}
@@ -229,8 +229,8 @@ export default function HidingPhase({ p }: Props) {
                     ? customObjectData!.custom_size
                     : ((objects.find((o) => o.id === selectedObject) as any)?.size ?? 2);
                   const itm = items.find((i) => i.id === selectedItem);
-                  const blockedDins = pos.value === "dins" && objSize > ((itm as any)?.inner_capacity ?? 2);
-                  const blockedDarrere = pos.value === "darrere" && (itm as any)?.can_behind === false;
+                  const blockedDins = pos.value === "dins" && objSize > (itm?.inner_capacity ?? 2);
+                  const blockedDarrere = pos.value === "darrere" && itm?.can_behind === false;
                   const blocked = blockedDins || blockedDarrere;
                   const selected = selectedPosition === pos.value;
                   const blockReason = blockedDins ? t("game.hide.noFit") : blockedDarrere ? t("game.hide.cannot") : "";

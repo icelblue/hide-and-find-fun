@@ -8,6 +8,7 @@ import { useCallback, type MutableRefObject, type Dispatch, type SetStateAction 
 import { asError } from "@/lib/errors";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { GameRow, PlayerRow, ScenarioRow, ItemRow, MoveRow, RewardRow } from "@/lib/runtime-types";
 import { logError } from "@/components/ErrorBoundary";
 import {
   getItemsByScenario, getConnectedScenarios, ensureTokensReset, autoFixMissingScenario,
@@ -25,25 +26,25 @@ import type { SpecialRevealData } from "@/components/game/SpecialReveal";
 type Setter<T> = Dispatch<SetStateAction<T>>;
 
 export interface UseGameLoaderSetters {
-  setGame: Setter<any>;
-  setPlayer: Setter<any>;
-  setRival: Setter<any>;
+  setGame: Setter<GameRow | null>;
+  setPlayer: Setter<PlayerRow | null>;
+  setRival: Setter<PlayerRow | null>;
   setPhase: Setter<Phase>;
   setPlayerTools: Setter<PlayerTools>;
   setHideStep: Setter<number>;
   setBonusAvailable: Setter<number>;
   setRivalNearby: Setter<boolean>;
   setRivalTraits: Setter<{ trait1: string | null; trait2: string | null }>;
-  setConnectedScenarios: Setter<any[]>;
+  setConnectedScenarios: Setter<ScenarioRow[]>;
   setDirtyItems: Setter<Set<string>>;
   setBreakableItems: Setter<Set<string>>;
-  setItemInteractions: Setter<any[]>;
-  setMoveHistory: Setter<any[]>;
+  setItemInteractions: Setter<Record<string, unknown>[]>;
+  setMoveHistory: Setter<MoveRow[]>;
   setGameBreaks: Setter<Set<string>>;
   setIlluminatedScenarios: Setter<Set<string>>;
   setScenarioIsDarkState: Setter<boolean>;
-  setCurrentScenarioItems: Setter<any[]>;
-  setReward: Setter<any>;
+  setCurrentScenarioItems: Setter<ItemRow[]>;
+  setReward: Setter<RewardRow | null>;
   setRivalSmokeBombAt: Setter<string | null>;
   setBananaBlockedSpot: Setter<string | null>;
   setBananaEffect: Setter<boolean>;
@@ -54,7 +55,7 @@ export interface UseGameLoaderSetters {
 export interface UseGameLoaderOpts {
   gameId: string | undefined;
   user: { id: string } | null;
-  t: (key: string, opts?: any) => string;
+  t: (key: string, opts?: Record<string, unknown> | string) => string;
   personalDataRef: MutableRefObject<PersonalCombatData | null>;
   isLoadingGameRef: MutableRefObject<boolean>;
   pendingReloadRef: MutableRefObject<boolean>;
@@ -89,9 +90,9 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
       const [{ data: gameData }, { data: playerData }, { data: safePlayers }] = await Promise.all([
         supabase.from("games").select("*").eq("id", gameId).single(),
         supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
-        supabase.rpc("get_safe_game_players" as any, { _game_id: gameId }),
+        supabase.rpc("get_safe_game_players", { _game_id: gameId }),
       ]);
-      const safePlayersList = (safePlayers as any[]) ?? [];
+      const safePlayersList = (safePlayers as Record<string, unknown>[]) ?? [];
       const rivalData = safePlayersList.find((p) => p.user_id !== user.id) ?? null;
 
       S.setGame(gameData);
@@ -113,14 +114,14 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       if (playerData?.has_hidden) S.setHideStep(4);
 
-      const isStoryGame = !!(gameData as any)?.is_story;
+      const isStoryGame = !!gameData?.is_story;
       const isPlaying = gameData?.status === "playing";
       const isFinished = gameData?.status === "finished";
       const currentScenId = playerData?.current_scenario_id ?? "";
 
       // ── BATCH 2: ALL secondary queries in ONE Promise.all ──
       type QKey = "profile" | "hiddenItem" | "items" | "connected" | "moves" | "tagMoves" | "curScen" | "reward" | "smokeBombs" | "blockedSocial" | "unprocessedSocial" | "traits" | "interactions";
-      const batch: Partial<Record<QKey, PromiseLike<any>>> = {};
+      const batch: Partial<Record<QKey, PromiseLike<unknown>>> = {};
 
       if (isPlaying) {
         batch.profile = supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
@@ -129,9 +130,9 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         batch.hiddenItem = supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
       }
       if (!isStoryGame && isPlaying) {
-        batch.traits = supabase.rpc("get_rival_traits" as any, { _game_id: gameId });
+        batch.traits = supabase.rpc("get_rival_traits", { _game_id: gameId });
       }
-      const isPersonalGame = (gameData as any)?.game_mode === "personal_pvp";
+      const isPersonalGame = gameData?.game_mode === "personal_pvp";
       if (isPlaying && currentScenId && !isPersonalGame) {
         batch.items = getItemsByScenario(currentScenId);
         batch.connected = getConnectedScenarios(currentScenId);
@@ -163,7 +164,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       const keys = Object.keys(batch) as QKey[];
       const results = await Promise.all(keys.map(k => batch[k]!));
-      const R: Partial<Record<QKey, any>> = {};
+      const R: Partial<Record<QKey, { data?: unknown; error?: unknown } | Record<string, unknown>>> = {};
       keys.forEach((k, i) => { R[k] = results[i]; });
 
       if (R.profile) S.setBonusAvailable(R.profile.data?.bonus_tokens ?? 0);
@@ -175,7 +176,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
       }
 
       if (R.traits) {
-        const traitsData = R.traits.data as any;
+        const traitsData = (R.traits as { data?: unknown })?.data as Record<string, unknown> | null;
         if (traitsData) {
           S.setRivalTraits({ trait1: traitsData.trait1 ?? null, trait2: traitsData.trait2 ?? null });
         } else {
@@ -185,18 +186,18 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         S.setRivalTraits({ trait1: null, trait2: null });
       }
 
-      let loadedItems: any[] = [];
-      let loadedInteractions: any[] = [];
+      let loadedItems: Record<string, unknown>[] = [];
+      let loadedInteractions: Record<string, unknown>[] = [];
 
       if (isPlaying && isPersonalGame) {
         try {
-          const hostId = (gameData as any)?.created_by;
-          const guestId = (gameData as any)?.invited_user_id;
+          const hostId = gameData?.created_by;
+          const guestId = gameData?.invited_user_id;
           const personal = hostId && guestId
             ? await loadPersonalCombatDataFromRooms(hostId, guestId)
             : await loadPersonalCombatData(
-                (gameData as any)?.host_space_snapshot,
-                (gameData as any)?.guest_space_snapshot
+                gameData?.host_space_snapshot,
+                gameData?.guest_space_snapshot
               );
           personalDataRef.current = personal;
           loadedItems = currentScenId
@@ -225,8 +226,8 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         if (hasDirtyHere && playerData) {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
-            supabase.rpc("execute_grant_drap_if_available" as any, { _game_id: gameId }).then(({ data }) => {
-              if ((data as any)?.granted) {
+            supabase.rpc("execute_grant_drap_if_available", { _game_id: gameId }).then(({ data }) => {
+              if (data?.granted) {
                 tools.drap = 1;
                 playerData.tools = tools;
                 S.setPlayerTools({ ...tools });
@@ -262,7 +263,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         if (ia.effect_type === "reveal_items") {
           const wasUsed = allMoves.some((m) => m.target_item_id === ia.item_id);
           if (wasUsed) {
-            const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
+            const ids = ia.effect_data?.reveal_item_ids ?? [];
             ids.forEach((id: string) => revealed.add(id));
           }
         }
@@ -304,7 +305,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       if (isPlaying && !isStoryGame) {
         const blockedItems = R.blockedSocial?.data ?? [];
-        const markPromises: Promise<any>[] = [];
+        const markPromises: Promise<unknown>[] = [];
         for (const blocked of blockedItems) {
           const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
           const itemName = info ? `${info.icon} ${t(info.nameKey)}` : "";

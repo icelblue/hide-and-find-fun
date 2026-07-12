@@ -19,9 +19,9 @@ export function useHidingFlowState() {
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedPosition, setSelectedPosition] = useState<Position | "">("");
   const [hideStep, setHideStep] = useState(0);
-  const [objectSpecial, setObjectSpecial] = useState<any>(null);
+  const [objectSpecial, setObjectSpecial] = useState<Record<string, unknown> | null>(null);
   const [specialInput, setSpecialInput] = useState("");
-  const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [selectedVariant, setSelectedVariant] = useState<Record<string, unknown> | null>(null);
   const [hideMessage, setHideMessage] = useState("");
   const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
 

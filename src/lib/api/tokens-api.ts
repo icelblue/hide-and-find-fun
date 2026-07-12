@@ -53,7 +53,7 @@ export async function performMove(
     _is_story: isStory ?? false,
   });
   if (error) throw new Error(error.message);
-  const result = data as any;
+  const result = data as Record<string, unknown>;
   return {
     move: { id: result.move_id },
     foundObject: result.found_object ?? false,

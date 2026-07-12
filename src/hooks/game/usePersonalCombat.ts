@@ -15,9 +15,9 @@ import {
 } from "@/lib/personal-pvp-adapter";
 
 export interface UsePersonalCombatOpts {
-  game: any;
-  setScenarios: Dispatch<SetStateAction<any[]>>;
-  setObjects: Dispatch<SetStateAction<any[]>>;
+  game: Record<string, unknown> | null;
+  setScenarios: Dispatch<SetStateAction<Record<string, unknown>[]>>;
+  setObjects: Dispatch<SetStateAction<Record<string, unknown>[]>>;
 }
 
 export interface UsePersonalCombatResult {
@@ -27,20 +27,20 @@ export interface UsePersonalCombatResult {
 
 export function usePersonalCombat({ game, setScenarios, setObjects }: UsePersonalCombatOpts): UsePersonalCombatResult {
   const personalDataRef = useRef<PersonalCombatData | null>(null);
-  const isPersonalGame = (game as any)?.game_mode === "personal_pvp";
+  const isPersonalGame = game?.game_mode === "personal_pvp";
 
   useEffect(() => {
     if (!isPersonalGame || !game) return;
     let cancelled = false;
     (async () => {
       try {
-        const hostId = (game as any).created_by;
-        const guestId = (game as any).invited_user_id;
+        const hostId = game.created_by;
+        const guestId = game.invited_user_id;
         const personal = hostId && guestId
           ? await loadPersonalCombatDataFromRooms(hostId, guestId)
           : await loadPersonalCombatData(
-              (game as any).host_space_snapshot,
-              (game as any).guest_space_snapshot
+              game.host_space_snapshot,
+              game.guest_space_snapshot
             );
         if (cancelled) return;
         personalDataRef.current = personal;

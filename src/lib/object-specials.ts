@@ -14,20 +14,20 @@ export interface TrophySpecialData {
   effect: string | null;
 }
 
-export function getHideMessage(specialData: any): string | null {
+export function getHideMessage(specialData: Record<string, unknown> | null | undefined): string | null {
   if (!specialData) return null;
   return specialData.hide_message || (specialData.type === "custom_message" ? specialData.message : null);
 }
 
 export function buildTrophySpecialData(args: {
-  special: any;
-  objectRecord: any;
+  special: Record<string, unknown> | null;
+  objectRecord: Record<string, unknown> | null;
   inputName?: string;
-  variant?: any;
+  variant?: Record<string, unknown> | null;
   hideMessage?: string | null;
 }): TrophySpecialData {
   const { special, objectRecord, inputName, variant, hideMessage } = args;
-  const effect = (special?.variants as any)?.effect ?? variant?.effect ?? null;
+  const effect = (special?.variants as Record<string, unknown> | null)?.effect ?? variant?.effect ?? null;
 
   return {
     object_name: objectRecord?.name ?? null,
@@ -42,7 +42,7 @@ export function buildTrophySpecialData(args: {
   };
 }
 
-export function getTrophyDisplayName(specialData: any): string {
+export function getTrophyDisplayName(specialData: Record<string, unknown> | null | undefined): string {
   // Player-defined custom object takes priority over everything else
   if (specialData?.is_custom && specialData?.custom_name) return `${specialData.custom_name}`;
   if (specialData?.custom_name) return `"${specialData.custom_name}"`;
@@ -50,13 +50,13 @@ export function getTrophyDisplayName(specialData: any): string {
   return specialData?.object_name ?? "Trofeu";
 }
 
-export function getTrophyDisplayIcon(specialData: any): string {
+export function getTrophyDisplayIcon(specialData: Record<string, unknown> | null | undefined): string {
   if (specialData?.is_custom && specialData?.custom_icon) return specialData.custom_icon;
   return specialData?.variant_icon ?? specialData?.object_icon ?? "⭐";
 }
 
-export function getSpecialEffectDescriptor(special: any) {
-  const variants = special?.variants as any;
+export function getSpecialEffectDescriptor(special: Record<string, unknown> | null) {
+  const variants = special?.variants as Record<string, unknown> | null;
   return {
     emoji: variants?.emoji ?? "😈",
     animation: variants?.animation ?? "shake",

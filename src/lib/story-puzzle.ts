@@ -33,7 +33,7 @@ export interface PuzzleAttemptRow {
   skipped_at: string | null;
 }
 
-export function parsePuzzle(raw: any): StoryPuzzle | null {
+export function parsePuzzle(raw: unknown): StoryPuzzle | null {
   if (!raw || typeof raw !== "object") return null;
   if (raw.type !== "ingredient_order") return null;
   if (!Array.isArray(raw.valid_items) || !Array.isArray(raw.correct_order)) return null;

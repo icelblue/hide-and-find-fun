@@ -100,7 +100,7 @@ export async function getAllWorlds(): Promise<World[]> {
   const lang = getCurrentLang();
   if (_worldsCache && _worldsLang === lang) return _worldsCache;
   const { data } = await supabase.from("story_worlds").select("*").order("display_order");
-  const raw = ((data ?? []) as any[]).map((w) => ({
+  const raw = ((data ?? []) as Record<string, unknown>[]).map((w) => ({
     ...w,
     chapters: w.chapters ?? [],
     unlock_rule: w.unlock_rule ?? {},
@@ -127,7 +127,7 @@ export async function getWorldStatuses(userId: string, ctx: {
     if (r.bond && ctx.bond < r.bond) { unlocked = false; reason = `Vincle ≥ ${r.bond} (tens ${ctx.bond})`; }
     else if (r.recipes && ctx.recipesDiscovered < r.recipes) { unlocked = false; reason = `${r.recipes} receptes (tens ${ctx.recipesDiscovered})`; }
     else if (r.level && ctx.level < r.level) { unlocked = false; reason = `Nivell ≥ ${r.level} (tens ${ctx.level})`; }
-    const p: any = progressMap.get(w.id);
+    const p = progressMap.get(w.id);
     return {
       ...w,
       unlocked,
@@ -162,7 +162,7 @@ export async function recordEndingCompleted(userId: string, worldId: string, end
     .eq("user_id", userId)
     .eq("world_id", worldId)
     .maybeSingle();
-  const list: string[] = Array.isArray(existing?.completed_endings) ? (existing!.completed_endings as any) : [];
+  const list: string[] = Array.isArray(existing?.completed_endings) ? (existing!.completed_endings as string[]) : [];
   if (list.includes(endingId)) return;
   list.push(endingId);
   if (existing) {
@@ -218,10 +218,10 @@ export async function getJournal(userId: string): Promise<JournalSummary> {
     .map((r) => recMap.get(r.recipe_id))
     .filter(Boolean)
     .map((r) => ({ id: r.id, name: r.name, icon: r.icon }));
-  const allEndings = (allEndingsRes.data ?? []) as any[];
+  const allEndings = (allEndingsRes.data ?? []) as Record<string, unknown>[];
   const seenIds = new Set((endingsSeenRes.data ?? []).map((r) => r.current_node_id).filter(Boolean));
   const endingsSeen = allEndings.filter((e) => seenIds.has(e.id)).map((e) => ({ id: e.id, title: e.title }));
-  const itemsFound = ((invRes.data ?? []) as any[]).map((i) => ({
+  const itemsFound = ((invRes.data ?? []) as Record<string, unknown>[]).map((i) => ({
     id: i.item_id, name: i.item_name, icon: i.item_icon, obtained_at: i.obtained_at,
   }));
   return {

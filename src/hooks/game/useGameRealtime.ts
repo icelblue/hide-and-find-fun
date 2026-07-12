@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { PlayerRow, ScenarioRow, ObjectRow, ItemRow } from "@/lib/runtime-types";
 import {
   getScenarios, getObjects, getItemsByScenario, markSocialItemProcessed,
 } from "@/lib/supabase-helpers";
@@ -16,13 +17,13 @@ export interface UseGameRealtimeOpts {
   gameId: string | undefined;
   user: { id: string } | null;
   isStory: boolean;
-  t: (key: string, opts?: any) => string;
+  t: (key: string, opts?: Record<string, unknown> | string) => string;
   loadGame: () => Promise<void>;
   scheduleLoadGame: (delay?: number) => void;
-  currentScenarioItems: any[];
-  player: any;
-  setScenarios: Dispatch<SetStateAction<any[]>>;
-  setObjects: Dispatch<SetStateAction<any[]>>;
+  currentScenarioItems: ItemRow[];
+  player: PlayerRow | null;
+  setScenarios: Dispatch<SetStateAction<ScenarioRow[]>>;
+  setObjects: Dispatch<SetStateAction<ObjectRow[]>>;
   setBananaBlockedSpot: Dispatch<SetStateAction<string | null>>;
   setBananaEffect: Dispatch<SetStateAction<boolean>>;
   setTrollEffect: Dispatch<SetStateAction<{ message: string; emoji: string; animation: string } | null>>;
@@ -45,7 +46,7 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
     playerRef.current = player;
   }, [currentScenarioItems, player]);
 
-  const handleRealtimeSocialItem = useCallback(async (item: any) => {
+  const handleRealtimeSocialItem = useCallback(async (item: Record<string, unknown>) => {
     if (!user || item?.to_player_id !== user.id || item?.processed) return;
     if (item.blocked_by_shield) return;
 
@@ -100,8 +101,8 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
       // El "pulse" servidor (trg_pulse_game_on_move) toca games.updated_at
       // a cada moviment, així que escoltar `games` cobreix tota l'activitat.
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => scheduleLoadGame())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload: any) => {
-        void handleRealtimeSocialItem(payload.new);
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload) => {
+        void handleRealtimeSocialItem(payload.new as Record<string, unknown>);
       })
       .subscribe();
     return () => {

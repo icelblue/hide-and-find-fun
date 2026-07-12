@@ -44,7 +44,7 @@ export default function JoinGamePage() {
     let cancelled = false;
     (async () => {
       setBusy(true);
-      const { data, error: rpcErr } = await supabase.rpc("join_game_by_link" as any, { _game_id: gameId });
+      const { data, error: rpcErr } = await supabase.rpc("join_game_by_link", { _game_id: gameId });
       if (cancelled) return;
       if (rpcErr) {
         const code = (rpcErr.message || "").trim();
