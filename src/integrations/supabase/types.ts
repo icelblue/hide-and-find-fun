@@ -420,6 +420,78 @@ export type Database = {
           },
         ]
       }
+      garden_catalog: {
+        Row: {
+          created_at: string
+          growth_minutes: number
+          icon: string
+          id: string
+          name_key: string
+          seed_icon: string
+          yield_coins: number
+        }
+        Insert: {
+          created_at?: string
+          growth_minutes: number
+          icon: string
+          id: string
+          name_key: string
+          seed_icon?: string
+          yield_coins: number
+        }
+        Update: {
+          created_at?: string
+          growth_minutes?: number
+          icon?: string
+          id?: string
+          name_key?: string
+          seed_icon?: string
+          yield_coins?: number
+        }
+        Relationships: []
+      }
+      garden_plants: {
+        Row: {
+          id: string
+          plant_type: string
+          planted_at: string
+          room_id: string
+          slot: number
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          plant_type: string
+          planted_at?: string
+          room_id: string
+          slot: number
+          user_id: string
+        }
+        Update: {
+          id?: string
+          plant_type?: string
+          planted_at?: string
+          room_id?: string
+          slot?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garden_plants_plant_type_fkey"
+            columns: ["plant_type"]
+            isOneToOne: false
+            referencedRelation: "garden_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garden_plants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "player_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_interactions: {
         Row: {
           action_icon: string
@@ -821,6 +893,7 @@ export type Database = {
           fear: number
           hunger: number
           id: string
+          last_petted_at: string | null
           sleep: number
           updated_at: string
           user_id: string
@@ -830,6 +903,7 @@ export type Database = {
           fear?: number
           hunger?: number
           id?: string
+          last_petted_at?: string | null
           sleep?: number
           updated_at?: string
           user_id: string
@@ -839,6 +913,7 @@ export type Database = {
           fear?: number
           hunger?: number
           id?: string
+          last_petted_at?: string | null
           sleep?: number
           updated_at?: string
           user_id?: string
@@ -1913,6 +1988,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      buy_room: {
+        Args: {
+          _custom_name: string
+          _pos_x: number
+          _pos_y: number
+          _template_id: string
+        }
+        Returns: Json
+      }
       check_both_hidden: { Args: { _game_id: string }; Returns: boolean }
       check_collection_master: { Args: { _user_id: string }; Returns: boolean }
       check_referral_milestones: {
@@ -2058,6 +2142,7 @@ export type Database = {
         Args: { _item_id: string; _to_user_id: string }
         Returns: Json
       }
+      harvest_plant: { Args: { _plant_id: string }; Returns: Json }
       insert_cpu_move: {
         Args: {
           _action: Database["public"]["Enums"]["action_type"]
@@ -2081,9 +2166,14 @@ export type Database = {
         Args: { _new_x: number; _new_y: number; _room_id: string }
         Returns: undefined
       }
+      pet_the_pet: { Args: never; Returns: Json }
       place_reward_item: {
         Args: { _player_reward_id: string; _scenario_id: string }
         Returns: undefined
+      }
+      plant_seed: {
+        Args: { _plant_type: string; _room_id: string; _slot: number }
+        Returns: Json
       }
       redeem_bonus_tokens: {
         Args: { _amount: number; _game_id: string }
