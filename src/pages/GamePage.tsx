@@ -195,7 +195,7 @@ export default function GamePage() {
   // Story mode
   const isStory = false; // 🔒 Story mode v4 viu a /story (StoryModePage). PvP no usa is_story.
   const storyChapter: number | undefined = undefined;
-  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: any; consumable?: any } | null>(null);
+  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: Record<string, unknown> | null; consumable?: Record<string, unknown> | null } | null>(null);
 
   // ── Personal PvP: override scenaris/objectes amb el snapshot (via hook) ──
   const { isPersonalGame, personalDataRef } = usePersonalCombat({ game, setScenarios, setObjects });
@@ -307,7 +307,7 @@ export default function GamePage() {
     setSelectedVariant(null);
     setHideMessage("");
     setObjectSpecialLoaded(true);
-    setCustomObjectData(buildCustomObjectSpecialData(input as any));
+    setCustomObjectData(buildCustomObjectSpecialData(input));
     setHideStep(1);
   };
 
@@ -370,7 +370,7 @@ export default function GamePage() {
     }
   };
 
-  const doHide = async (pos?: Position, extraSpecialData?: any) => {
+  const doHide = async (pos?: Position, extraSpecialData?: Record<string, unknown>) => {
     const finalPos = pos || selectedPosition as Position;
     if (!gameId || !user || !finalPos || (actionLoading && !hidingSubmitRef.current)) return;
     setActionLoading(true);
@@ -387,7 +387,7 @@ export default function GamePage() {
       // Optimistic local state: don't wait for realtime to reflect the successful hide.
       // Without this, `hideStep=4` + stale `player.has_hidden=false` can render an empty
       // waiting screen until the backend event arrives, which feels like the click did nothing.
-      setPlayer((prev: any) => prev ? {
+      setPlayer((prev) => prev ? {
         ...prev,
         hidden_object_id: selectedObject,
         hidden_item_id: selectedItem,
@@ -437,7 +437,7 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const handleInteraction = async (interaction: any) => {
+  const handleInteraction = async (interaction: Record<string, unknown>) => {
     if (!gameId || !user || !player) return;
     const alreadyUsed = moveHistory.some((m) =>
       m.action === "look" && m.target_item_id === interaction.item_id &&
@@ -448,7 +448,7 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
-      const data = interaction.effect_data as any;
+      const data = interaction.effect_data as Record<string, unknown> | null;
       if (interaction.effect_type === "reveal_items") toast.success(t("game.toasts.revealItems", { icon: interaction.action_icon, msg: data.message || t("game.toasts.revealItemsDefault") }), { duration: 6000 });
       else if (interaction.effect_type === "reveal_content") toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
       else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || t("game.toasts.hintReceived")}`, { duration: 5000 });
@@ -557,8 +557,8 @@ export default function GamePage() {
         if (isStory && storyChapter) {
           const movesCount = (moveHistory?.length ?? 0) + 1;
           const storyRes = await completeChapter(user.id, storyChapter, movesCount);
-          let wonAccessory: any = null;
-          let wonConsumable: any = null;
+          let wonAccessory: Record<string, unknown> | null = null;
+          let wonConsumable: Record<string, unknown> | null = null;
           if (storyChapter >= 3) {
             const accIdx = storyChapter - 3;
             if (accIdx < PET_ACCESSORIES.length) {
@@ -603,12 +603,12 @@ export default function GamePage() {
 
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", resolvedRival?.user_id ?? "").maybeSingle();
           const foundObjectId = resolvedRival?.hidden_object_id;
-          let foundObj: any = objects.find((o) => o.id === foundObjectId);
+          let foundObj = objects.find((o) => o.id === foundObjectId);
           if (!foundObj && foundObjectId) {
             const { data: objRow } = await supabase.from("objects").select("name, icon").eq("id", foundObjectId).maybeSingle();
             foundObj = objRow;
           }
-          const rivalSD: any = resolvedRival?.special_data;
+          const rivalSD = resolvedRival?.special_data as Record<string, unknown> | null;
           const isCustomFound = rivalSD?.is_custom === true;
 
           // Determine if a special popup will appear (custom objects no tenen special)

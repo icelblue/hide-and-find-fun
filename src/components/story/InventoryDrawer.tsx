@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getInventory, getAllRecipes, getDiscoveredRecipeIds, hasItems, combineRecipe,
-  getItemEffect, getItemEffectAsync, useItemOnPet,
+  getItemEffect, getItemEffectAsync, applyItemOnPet,
   type InventoryItem, type Recipe,
 } from "@/lib/story-state";
 import { getMyAccessories } from "@/lib/story-helpers";
@@ -83,7 +83,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const handleUseItem = async (item: InventoryItem) => {
     setBusy(true);
     try {
-      const result = await useItemOnPet(userId, item);
+      const result = await applyItemOnPet(userId, item);
       if (!result) { toast.error(t("inventory.toastNotUsable")); return; }
       const verb = t(`storyEffect.${result.effect.kind}.verb`, result.effect.verb);
       toast.success(t("inventory.toastUsed", { icon: item.item_icon, pet: petName, verb, item: itemNameT(item.item_id, item.item_name) }));

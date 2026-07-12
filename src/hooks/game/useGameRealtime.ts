@@ -101,8 +101,8 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
       // El "pulse" servidor (trg_pulse_game_on_move) toca games.updated_at
       // a cada moviment, així que escoltar `games` cobreix tota l'activitat.
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => scheduleLoadGame())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload: any) => {
-        void handleRealtimeSocialItem(payload.new);
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload) => {
+        void handleRealtimeSocialItem(payload.new as Record<string, unknown>);
       })
       .subscribe();
     return () => {

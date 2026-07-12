@@ -71,6 +71,7 @@ export function isSingleEmoji(s: string): boolean {
   // possiblement seguit de ZWJ + (pictogràfic + opcionals) repetit.
   // Acceptem també emojis regionals (banderes) com a 2 indicadors.
   const singleEmojiRegex = new RegExp(
+    // eslint-disable-next-line no-misleading-character-class -- classe intencionada: skin tones + VS16 + keycap són modificadors legítims d'emoji
     "^(?:" +
       // banderes: 2 regional indicators
       "[\\u{1F1E6}-\\u{1F1FF}]{2}" +

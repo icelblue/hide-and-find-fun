@@ -91,13 +91,13 @@ Deno.serve(async (req) => {
       try {
         await webpush.sendNotification(pushSubscription, payload);
         sent++;
-      } catch (err: any) {
+      } catch (err) {
         failed++;
         // 404 or 410 means subscription expired — clean up
         if (err.statusCode === 404 || err.statusCode === 410) {
           expiredEndpoints.push(sub.endpoint);
         }
-        console.error(`Push failed for ${sub.endpoint}:`, err.message);
+        console.error(`Push failed for ${sub.endpoint}:`, (err instanceof Error ? err.message : String(err)));
       }
     }
 
@@ -113,10 +113,10 @@ Deno.serve(async (req) => {
       JSON.stringify({ sent, failed, cleaned: expiredEndpoints.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("send-push error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

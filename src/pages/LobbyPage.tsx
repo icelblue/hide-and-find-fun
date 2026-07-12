@@ -44,7 +44,7 @@ const leagueBadge: Record<string, string> = {
 
 /** Extracted component so we can use useState legally (not inside .map) */
 function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDelete, onDismiss }: {
-  gp: any; userId?: string; loading: boolean;
+  gp: Record<string, unknown>; userId?: string; loading: boolean;
   onNavigate: (id: string) => void; onJoin: (id: string) => Promise<void>;
   onDecline: (id: string) => Promise<void>; onDelete: (id: string) => Promise<void>;
   onDismiss: (id: string) => void;
@@ -388,7 +388,7 @@ export default function LobbyPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("create_personal_game" as any, { _opponent_id: rivalUserId });
+      const { data, error } = await supabase.rpc("create_personal_game", { _opponent_id: rivalUserId });
       if (error) {
         const msg = (error.message || "").toLowerCase();
         if (msg.includes("host_no_space")) throw new Error(t("lobby_extra.errHostNoSpace"));

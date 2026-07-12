@@ -84,7 +84,7 @@ export default function PlayerProfilePage() {
     setPetEvents(events);
 
     // Fetch author names
-    const wallMsgs: any[] = msgs ?? [];
+    const wallMsgs: Record<string, unknown>[] = (msgs ?? []) as Record<string, unknown>[];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
@@ -119,7 +119,7 @@ export default function PlayerProfilePage() {
         _consumable_name: consumableName,
       });
       if (error) throw error;
-      const result = data as any;
+      const result = data as Record<string, unknown>;
       toast.success(`Has curat ${result.pet_name}! -${result.healed} XP 💊`);
       await loadData();
     } catch (_raw_err) { const err = asError(_raw_err);
@@ -145,7 +145,7 @@ export default function PlayerProfilePage() {
     }
   };
 
-  const handleGiftItem = async (item: any) => {
+  const handleGiftItem = async (item: Record<string, unknown>) => {
     if (!user || !userId) return;
     setGiftingItem(item.id);
     try {
@@ -409,7 +409,7 @@ export default function PlayerProfilePage() {
         ) : (
           <div className="space-y-2">
             {trophies.map((t) => {
-              const sd = t.special_data as any;
+              const sd = t.special_data as Record<string, unknown> | null;
               return (
                 <Card key={t.id} className="glass border-accent/30">
                   <CardContent className="py-2.5 flex items-center gap-3">

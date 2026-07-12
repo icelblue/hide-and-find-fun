@@ -205,7 +205,7 @@ export async function getItemEffectAsync(item: InventoryItem): Promise<ItemEffec
 
 
 /** Use one item: consume + apply delta. Returns new state and effect used (null if not usable). */
-export async function useItemOnPet(userId: string, item: InventoryItem):
+export async function applyItemOnPet(userId: string, item: InventoryItem):
   Promise<{ state: PetState; effect: ItemEffect } | null>
 {
   const effect = await getItemEffectAsync(item);

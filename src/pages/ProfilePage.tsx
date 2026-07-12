@@ -66,7 +66,7 @@ export default function ProfilePage() {
     const { error } = await supabase.from("profiles").update({ display_name: trimmed }).eq("user_id", user.id);
     setSavingName(false);
     if (error) { toast.error(t("profile.editName.saveError") + error.message); return; }
-    setProfile((p: any) => ({ ...p, display_name: trimmed }));
+    setProfile((p) => ({ ...(p as object), display_name: trimmed }));
     setEditingName(false);
     toast.success(t("profile.editName.savedToast"));
   };
@@ -116,7 +116,7 @@ export default function ProfilePage() {
       }
     }
 
-    const wallMsgs: any[] = msgs ?? [];
+    const wallMsgs: Record<string, unknown>[] = (msgs ?? []) as Record<string, unknown>[];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
       const { data: authors } = await supabase.from("profiles").select("user_id, display_name").in("user_id", authorIds);
@@ -158,9 +158,9 @@ export default function ProfilePage() {
         const tItms = await translateRows((itms ?? []) as Record<string, unknown>[], "pvp_item_name", "id", "name");
         const tScen = await translateRows(scen as Record<string, unknown>[], "pvp_scenario_name", "id", "name");
 
-        const objMap = new Map(tObjs.map((o) => [o.id, o] as [string, any]));
-        const itmMap = new Map(tItms.map((i) => [i.id, i] as [string, any]));
-        const scenMap = new Map(tScen.map((s) => [s.id, s] as [string, any]));
+        const objMap = new Map(tObjs.map((o) => [o.id, o] as [string, unknown]));
+        const itmMap = new Map(tItms.map((i) => [i.id, i] as [string, unknown]));
+        const scenMap = new Map(tScen.map((s) => [s.id, s] as [string, unknown]));
 
         const enriched = activeGameData.map(g => {
           const gp = myGamePlayers.find(p => p.game_id === g.id);
@@ -487,7 +487,7 @@ export default function ProfilePage() {
               </h2>
               <div className="space-y-2">
                 {trophies.map((tr) => {
-                  const sd = tr.special_data as any;
+                  const sd = tr.special_data as Record<string, unknown> | null;
                   return (
                     <Card key={tr.id} className="glass border-accent/30">
                       <CardContent className="py-2.5 flex items-center gap-3">

@@ -22,10 +22,8 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
-      - name: Lint (només errors nous no permesos als fitxers nets)
-        run: npx eslint . --max-warnings 9999 || true
-        # TODO: quan la issue #2 (no-explicit-any) estigui resolta,
-        # treure el "|| true" perquè el lint bloquegi les PR.
+      - name: Lint (bloqueja errors; sostre de warnings per no créixer)
+        run: npx eslint . --max-warnings 20
 
       - name: Tests unitaris
         run: npm test

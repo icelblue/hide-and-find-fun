@@ -162,7 +162,7 @@ export async function recordEndingCompleted(userId: string, worldId: string, end
     .eq("user_id", userId)
     .eq("world_id", worldId)
     .maybeSingle();
-  const list: string[] = Array.isArray(existing?.completed_endings) ? (existing!.completed_endings as any) : [];
+  const list: string[] = Array.isArray(existing?.completed_endings) ? (existing!.completed_endings as string[]) : [];
   if (list.includes(endingId)) return;
   list.push(endingId);
   if (existing) {
