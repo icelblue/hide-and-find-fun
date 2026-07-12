@@ -67,7 +67,7 @@ export function formatRemaining(minutes: number): string {
 
 export async function getGardenCatalog(): Promise<GardenCatalogItem[]> {
   const { data, error } = await supabase
-    .from("garden_catalog" as never)
+    .from("garden_catalog")
     .select("*")
     .order("growth_minutes", { ascending: true });
   if (error) throw new Error(error.message);
@@ -76,7 +76,7 @@ export async function getGardenCatalog(): Promise<GardenCatalogItem[]> {
 
 export async function getPlantsForRoom(roomId: string): Promise<GardenPlant[]> {
   const { data, error } = await supabase
-    .from("garden_plants" as never)
+    .from("garden_plants")
     .select("*")
     .eq("room_id", roomId);
   if (error) throw new Error(error.message);
@@ -84,25 +84,25 @@ export async function getPlantsForRoom(roomId: string): Promise<GardenPlant[]> {
 }
 
 export async function plantSeed(roomId: string, slot: number, plantType: string) {
-  const { data, error } = await supabase.rpc("plant_seed" as never, {
+  const { data, error } = await supabase.rpc("plant_seed", {
     _room_id: roomId,
     _slot: slot,
     _plant_type: plantType,
-  } as never);
+  });
   if (error) throw new Error(error.message);
   return data as { plant_id: string };
 }
 
 export async function harvestPlant(plantId: string) {
-  const { data, error } = await supabase.rpc("harvest_plant" as never, {
+  const { data, error } = await supabase.rpc("harvest_plant", {
     _plant_id: plantId,
-  } as never);
+  });
   if (error) throw new Error(error.message);
   return data as { yield: number; icon: string };
 }
 
 export async function petThePet() {
-  const { data, error } = await supabase.rpc("pet_the_pet" as never);
+  const { data, error } = await supabase.rpc("pet_the_pet");
   if (error) throw new Error(error.message);
   return data as { bond: number; petted: boolean; next_at?: string };
 }

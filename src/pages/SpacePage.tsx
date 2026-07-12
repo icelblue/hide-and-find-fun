@@ -149,12 +149,12 @@ export default function SpacePage() {
 
     // Compra atòmica i validada al servidor (RPC buy_room):
     // el saldo, el preu i el límit de sales es comproven a la BD.
-    const { data, error: e2 } = await supabase.rpc("buy_room" as never, {
+    const { data, error: e2 } = await supabase.rpc("buy_room", {
       _template_id: tpl.id,
       _custom_name: name,
       _pos_x: x,
       _pos_y: y,
-    } as never);
+    });
     if (e2) {
       const m = e2.message ?? "";
       // La funció buy_room encara no és a la BD (migració pendent d'aplicar):
@@ -163,7 +163,7 @@ export default function SpacePage() {
       if (rpcMissing && tpl.price_coins === 0) {
         const { error: e3 } = await supabase.from("player_rooms").insert({
           user_id: user.id, room_template_id: tpl.id, custom_name: name,
-          layout: [] as never, position_x: x, position_y: y,
+          layout: [], position_x: x, position_y: y,
         });
         if (e3) {
           toast.error(e3.message?.includes("max_rooms_reached") ? t("apartment.maxRooms", "Màxim 8 sales") : t("space.buyError"));
