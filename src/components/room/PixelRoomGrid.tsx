@@ -54,13 +54,18 @@ interface Props {
   useTexture?: boolean;
   /** Capa decorativa (mobiliari base) sota els mobles interactius */
   backdrops?: GridBackdrop[];
+  /** Llum apagada: sala en gris i mobles invisibles fins que s'encén */
+  dark?: boolean;
 }
 
 export default function PixelRoomGrid({
   theme, gridW, gridH, cells, seed = "default", onCellClick,
   ariaLabelPrefix = "slot", className = "", seamless = true, useTexture = true,
-  backdrops,
+  backdrops, dark = false,
 }: Props) {
+  // Llum apagada: es veu l'habitació (parets, terra) en gris fosc,
+  // però CAP moble ni decoració — com demana el mode PvP.
+  const effectiveCells = dark ? cells.map((c) => ({ slot: c?.slot ?? 0 })) : cells;
   const size = gridW * gridH;
 
   const textureUrl = useTexture ? textureForTheme(theme.key) : null;
@@ -125,6 +130,8 @@ export default function PixelRoomGrid({
     <div
       className={`w-full max-w-[380px] mx-auto rounded-2xl overflow-hidden ${className}`}
       style={{
+        filter: dark ? "grayscale(0.92) brightness(0.55) contrast(0.9)" : undefined,
+        transition: "filter 300ms ease",
         border: `3px solid ${theme.gridBorder}`,
         boxShadow: `inset 0 0 24px hsl(0 0% 0% / 0.18), 0 6px 20px hsl(0 0% 0% / 0.2)`,
       }}
@@ -213,7 +220,7 @@ export default function PixelRoomGrid({
           </div>
         )}
         {Array.from({ length: size }).map((_, idx) => {
-          const cell = cells[idx];
+          const cell = effectiveCells[idx];
           const filled = !!cell?.filled;
           const decor = !filled ? emptyDecor[idx] : null;
           const rotation = cell?.rotation ?? 0;
@@ -281,11 +288,12 @@ export default function PixelRoomGrid({
                       alt=""
                       aria-hidden
                       loading="lazy"
-                      className="w-[88%] h-[88%] object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)] transition-transform duration-200"
+                      className="w-[88%] h-[88%] object-contain transition-transform duration-200"
                       style={{
                         transform: `rotate(${stateRotation}deg)`,
                         imageRendering: "pixelated",
-                        filter: stateFilter,
+                        // Contorn negre pixel-art (4 ombres d'1px) + ombra suau — estil tauler
+                        filter: `${stateFilter ? stateFilter + " " : ""}drop-shadow(1px 0 0 #17121c) drop-shadow(-1px 0 0 #17121c) drop-shadow(0 1px 0 #17121c) drop-shadow(0 -1px 0 #17121c) drop-shadow(0 2px 2px rgba(0,0,0,0.35))`,
                       }}
                     />
                     </>
@@ -374,7 +382,7 @@ export default function PixelRoomGrid({
                     </span>
                   )}
                 </>
-              ) : decor ? (
+              ) : decor && !dark ? (
                 <span aria-hidden className="opacity-60 text-sm select-none">{decor}</span>
               ) : null}
             </button>

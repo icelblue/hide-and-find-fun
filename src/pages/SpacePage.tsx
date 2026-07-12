@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { toast } from "sonner";
+import { themeForCategory } from "@/lib/room-themes";
 import { TerrainTile } from "@/components/space/TerrainTile";
 import { generateTerrain, preferredTerrainForCategory, MAP_SIZE, TERRAIN_BONUS } from "@/lib/terrain";
 
@@ -156,7 +157,26 @@ export default function SpacePage() {
     } as never);
     if (e2) {
       const m = e2.message ?? "";
-      const msg = m.includes("max_rooms_reached") ? t("apartment.maxRooms", "Màxim 8 sales")
+      // La funció buy_room encara no és a la BD (migració pendent d'aplicar):
+      // per a sales GRATUÏTES fem el camí antic (inserció directa, no toca monedes).
+      const rpcMissing = m.includes("buy_room") || (e2 as { code?: string }).code === "PGRST202";
+      if (rpcMissing && tpl.price_coins === 0) {
+        const { error: e3 } = await supabase.from("player_rooms").insert({
+          user_id: user.id, room_template_id: tpl.id, custom_name: name,
+          layout: [] as never, position_x: x, position_y: y,
+        });
+        if (e3) {
+          toast.error(e3.message?.includes("max_rooms_reached") ? t("apartment.maxRooms", "Màxim 8 sales") : t("space.buyError"));
+          setPlacingTemplate(null);
+          return;
+        }
+        setPlacingTemplate(null);
+        toast.success(`${tpl.icon} ${name}`);
+        refresh();
+        return;
+      }
+      const msg = rpcMissing ? t("space.dbUpdateNeeded", "Cal aplicar les migracions de BD pendents per comprar sales")
+        : m.includes("max_rooms_reached") ? t("apartment.maxRooms", "Màxim 8 sales")
         : m.includes("not_enough_coins") ? t("space.notEnough")
         : t("space.buyError");
       toast.error(msg);
@@ -310,7 +330,7 @@ export default function SpacePage() {
         )}
 
         {/* Mini-mapa 5×5 amb sales + línies de connexió */}
-        <div className="relative w-full max-w-[360px] mx-auto aspect-square bg-muted/30 rounded-2xl border border-border p-1.5">
+        <div className="relative w-full max-w-[360px] mx-auto aspect-square rounded-2xl p-1.5" style={{ background: "#191420", border: "3px solid #0f0c14" }}>
           {/* SVG connections layer */}
           <svg className="absolute inset-1.5 w-[calc(100%-12px)] h-[calc(100%-12px)] pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
             {conns.map((c) => {
@@ -322,6 +342,8 @@ export default function SpacePage() {
               const ay = (a.position_y + 0.5) * cell;
               const bx = (b.position_x + 0.5) * cell;
               const by = (b.position_y + 0.5) * cell;
+              const adjacent = Math.abs(a.position_x - b.position_x) + Math.abs(a.position_y - b.position_y) === 1;
+              if (adjacent) return null; // les adjacents es dibuixen com a PORTA a l'aresta
               return (
                 <g key={c.id}>
                   <line x1={ax} y1={ay} x2={bx} y2={by} stroke="hsl(var(--accent))" strokeWidth="0.8" strokeDasharray="2 1" opacity="0.7" />
@@ -330,7 +352,7 @@ export default function SpacePage() {
             })}
           </svg>
 
-          <div ref={gridRef} className="relative grid grid-cols-5 gap-1 h-full touch-none select-none">
+          <div ref={gridRef} className="relative grid grid-cols-5 gap-0 h-full touch-none select-none">
             {Array.from({ length: MAP_SIZE * MAP_SIZE }).map((_, idx) => {
               const x = idx % MAP_SIZE;
               const y = Math.floor(idx / MAP_SIZE);
@@ -355,17 +377,16 @@ export default function SpacePage() {
                   onPointerCancel={() => { setDragRoomId(null); setDragPos(null); setDragHoverCell(null); setDragMoved(false); }}
                   role="button"
                   tabIndex={0}
-                  className={`relative rounded-lg border transition-all text-center flex flex-col items-center justify-center overflow-hidden cursor-pointer ${
+                  className={`relative transition-all text-center flex flex-col items-center justify-center overflow-hidden cursor-pointer ${
                     isDragging
-                      ? "opacity-30 border-accent"
-                      : room
-                      ? "border-accent/40 shadow-sm hover:border-accent"
-                      : isHoverDrop
-                      ? "border-accent border-dashed"
-                      : isPlacingHere
-                      ? "border-accent/60 border-dashed animate-pulse"
-                      : "border-border/40"
+                      ? "opacity-30"
+                      : isHoverDrop && !room
+                      ? "border-2 border-dashed border-accent rounded-md"
+                      : isPlacingHere && !room
+                      ? "border-2 border-dashed border-accent/60 rounded-md animate-pulse"
+                      : ""
                   }`}
+                  style={room ? { border: "3px solid #17121c", borderRadius: 4, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" } : undefined}
                   aria-label={room ? room.custom_name : `cell-${x}-${y}`}
                 >
                   {/* Terreny sempre de fons */}
@@ -379,10 +400,22 @@ export default function SpacePage() {
                   {isHoverDrop && !room && <div className="absolute inset-0 bg-accent/30 pointer-events-none" />}
                   {isPlacingHere && !room && <div className="absolute inset-0 bg-accent/20 pointer-events-none" />}
                   {room && tpl && (
-                    <div className="relative z-10 flex flex-col items-center justify-center w-full h-full bg-card/85 backdrop-blur-[1px]">
-                      <span className="text-xl leading-none">{tpl.icon}</span>
-                      <span className="text-[8px] font-medium truncate w-full px-0.5 text-foreground/80">{room.custom_name}</span>
-                      <span className="text-[7px] text-muted-foreground">{room.layout.length}📦</span>
+                    <div
+                      className="relative z-10 flex flex-col items-center justify-center w-full h-full"
+                      style={(() => {
+                        const th = themeForCategory(tpl.category);
+                        return { background: th.terrainPattern ? `${th.terrainPattern}, ${th.terrainBg}` : th.terrainBg };
+                      })()}
+                    >
+                      <span className="text-xl leading-none" style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.4))" }}>{tpl.icon}</span>
+                      {/* Píndola de nom estil tauler (com "COCINA" a la referència) */}
+                      <span
+                        className="absolute bottom-0.5 left-1/2 -translate-x-1/2 max-w-[92%] truncate text-[7px] font-bold uppercase tracking-wide px-1.5 py-[1px] rounded-full"
+                        style={{ background: "rgba(255,252,245,0.95)", color: "#1c1917", border: "1.5px solid #1c1917" }}
+                      >
+                        {room.custom_name}
+                      </span>
+                      <span className="text-[7px] text-muted-foreground/90 bg-background/50 rounded px-0.5 mt-0.5">{room.layout.length}📦</span>
                       {hasTerrainBonus && (
                         <span
                           className="absolute top-0.5 left-0.5 text-[8px] leading-none px-1 py-[1px] rounded bg-emerald-500/90 text-white font-bold"
@@ -407,6 +440,42 @@ export default function SpacePage() {
             })}
           </div>
 
+
+          {/* PORTES a les arestes entre sales connectades adjacents (estil tauler) */}
+          <div className="absolute inset-1.5 pointer-events-none" aria-hidden>
+            {conns.map((c) => {
+              const a = roomById.get(c.room_a_id);
+              const b = roomById.get(c.room_b_id);
+              if (!a || !b) return null;
+              const dx = b.position_x - a.position_x;
+              const dy = b.position_y - a.position_y;
+              if (Math.abs(dx) + Math.abs(dy) !== 1) return null;
+              const cell = 100 / MAP_SIZE;
+              const vertical = dx !== 0; // porta en aresta vertical (pas horitzontal)
+              const edgeX = (Math.max(a.position_x, b.position_x)) * cell;
+              const edgeY = (Math.max(a.position_y, b.position_y)) * cell;
+              const midX = (Math.min(a.position_x, b.position_x) + 0.5) * cell + (vertical ? cell / 2 : 0);
+              const midY = (Math.min(a.position_y, b.position_y) + 0.5) * cell + (vertical ? 0 : cell / 2);
+              return (
+                <span
+                  key={c.id}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-[2px]"
+                  style={{
+                    left: `${vertical ? edgeX : midX}%`,
+                    top: `${vertical ? midY : edgeY}%`,
+                    width: vertical ? "7px" : "26%",
+                    height: vertical ? "26%" : "7px",
+                    maxWidth: vertical ? undefined : "34px",
+                    maxHeight: vertical ? "34px" : undefined,
+                    background: "hsl(42 65% 82%)",
+                    border: "1.5px solid #17121c",
+                    boxShadow: "inset 0 0 0 1px hsl(42 45% 65%)",
+                  }}
+                  title="🚪"
+                />
+              );
+            })}
+          </div>
 
           {/* Ghost element seguint el punter mentre s'arrossega */}
           {dragRoomId && dragPos && (() => {
