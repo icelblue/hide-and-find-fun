@@ -374,7 +374,7 @@ export async function submitDailyChoice(
     reward_type: choice.reward_type,
     reward_value: choice.reward_value,
   });
-  if (error && (error as any).code === "23505") {
+  if (error && error.code === "23505") {
     return { reward, alreadyDone: true };
   }
   if (error) throw error;

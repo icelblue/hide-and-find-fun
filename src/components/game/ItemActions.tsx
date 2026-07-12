@@ -118,7 +118,7 @@ export function ItemActionsBody({
               {interactions!.map((ia) => {
                 const alreadyUsed = ia.one_time && moveHistory?.some((m) =>
                   m.target_item_id === ia.item_id && m.action === "look" &&
-                  (m as any).bonus_value === `interact:${ia.action_name}`
+                  m.bonus_value === `interact:${ia.action_name}`
                 );
                 return (
                   <button key={ia.id}

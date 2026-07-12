@@ -16,7 +16,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"basics" | "rules" | "rewards">("basics");
-  const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
+  const [rewardCatalog, setRewardCatalog] = useState<Record<string, unknown>[]>([]);
   const [scenarioMap, setScenarioMap] = useState<{ name: string; icon: string; connections: string[] }[]>([]);
 
   useEffect(() => {

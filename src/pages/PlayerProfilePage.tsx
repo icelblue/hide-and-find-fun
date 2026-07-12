@@ -43,15 +43,15 @@ export default function PlayerProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const t = useT();
-  const [profile, setProfile] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [trophies, setTrophies] = useState<any[]>([]);
-  const [pet, setPet] = useState<any>(null);
-  const [petAccessories, setPetAccessories] = useState<any[]>([]);
-  const [petEvents, setPetEvents] = useState<any[]>([]);
-  const [myConsumables, setMyConsumables] = useState<any[]>([]);
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  const [messages, setMessages] = useState<Record<string, unknown>[]>([]);
+  const [trophies, setTrophies] = useState<Record<string, unknown>[]>([]);
+  const [pet, setPet] = useState<Record<string, unknown> | null>(null);
+  const [petAccessories, setPetAccessories] = useState<Record<string, unknown>[]>([]);
+  const [petEvents, setPetEvents] = useState<Record<string, unknown>[]>([]);
+  const [myConsumables, setMyConsumables] = useState<Record<string, unknown>[]>([]);
   const [giftingConsumable, setGiftingConsumable] = useState(false);
-  const [myStoryInventory, setMyStoryInventory] = useState<any[]>([]);
+  const [myStoryInventory, setMyStoryInventory] = useState<Record<string, unknown>[]>([]);
   const [sendingVisit, setSendingVisit] = useState(false);
   const [giftingItem, setGiftingItem] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
@@ -133,7 +133,7 @@ export default function PlayerProfilePage() {
     if (!user || !userId) return;
     setSendingVisit(true);
     try {
-      const { error } = await supabase.rpc("send_pet_visit" as any, { _host_user_id: userId });
+      const { error } = await supabase.rpc("send_pet_visit", { _host_user_id: userId });
       if (error) throw error;
       toast.success(`🐾 La teva mascota ha anat a jugar amb ${pet?.pet_name ?? "ell"}!`, {
         description: "Torna en una estona per veure com ha anat.",
@@ -149,7 +149,7 @@ export default function PlayerProfilePage() {
     if (!user || !userId) return;
     setGiftingItem(item.id);
     try {
-      const { error } = await supabase.rpc("gift_inventory_item" as any, {
+      const { error } = await supabase.rpc("gift_inventory_item", {
         _to_user_id: userId,
         _item_id: item.id,
       });
@@ -505,7 +505,7 @@ export default function PlayerProfilePage() {
 
 /** Vitrina — shows which reward items this player has collected */
 function PlayerVitrina({ userId }: { userId: string }) {
-  const [catalog, setCatalog] = useState<any[]>([]);
+  const [catalog, setCatalog] = useState<Record<string, unknown>[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 

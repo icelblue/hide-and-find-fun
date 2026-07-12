@@ -117,7 +117,7 @@ export async function logError(
     const { data: { user } } = await supabase.auth.getUser();
     // Only log if user is authenticated (anon insert policy removed for security)
     if (!user) return;
-    await (supabase as any).from("error_logs").insert({
+    await supabase.from("error_logs").insert({
       user_id: user.id,
       error_message: message.slice(0, 1000),
       error_stack: stack?.slice(0, 2000) ?? null,

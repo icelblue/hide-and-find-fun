@@ -28,7 +28,7 @@ export function InventoryDrawer({ userId, petName, onChange, triggerCount }: Pro
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [knownIds, setKnownIds] = useState<Set<string>>(new Set());
-  const [accessories, setAccessories] = useState<any[]>([]);
+  const [accessories, setAccessories] = useState<Record<string, unknown>[]>([]);
   const [journal, setJournal] = useState<JournalSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [tx, setTx] = useState<Map<string, string>>(new Map());

@@ -24,7 +24,7 @@ interface BeforeInstallPromptEvent extends Event {
 function getPlatform(): Platform {
   const ua = navigator.userAgent || "";
   // iOS: iPhone, iPad, iPod — iPadOS 13+ reports as Mac but has touch
-  if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) return "ios";
+  if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "ios";
   if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return "ios"; // iPadOS 13+
   if (/Android/i.test(ua)) return "android";
   return "desktop";
@@ -32,7 +32,7 @@ function getPlatform(): Platform {
 
 function isStandalone(): boolean {
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
-  if ((navigator as any).standalone === true) return true; // iOS Safari
+  if (navigator.standalone === true) return true; // iOS Safari
   return false;
 }
 

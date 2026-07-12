@@ -89,9 +89,9 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
       const [{ data: gameData }, { data: playerData }, { data: safePlayers }] = await Promise.all([
         supabase.from("games").select("*").eq("id", gameId).single(),
         supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
-        supabase.rpc("get_safe_game_players" as any, { _game_id: gameId }),
+        supabase.rpc("get_safe_game_players", { _game_id: gameId }),
       ]);
-      const safePlayersList = (safePlayers as any[]) ?? [];
+      const safePlayersList = (safePlayers as Record<string, unknown>[]) ?? [];
       const rivalData = safePlayersList.find((p) => p.user_id !== user.id) ?? null;
 
       S.setGame(gameData);
@@ -113,7 +113,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       if (playerData?.has_hidden) S.setHideStep(4);
 
-      const isStoryGame = !!(gameData as any)?.is_story;
+      const isStoryGame = !!gameData?.is_story;
       const isPlaying = gameData?.status === "playing";
       const isFinished = gameData?.status === "finished";
       const currentScenId = playerData?.current_scenario_id ?? "";
@@ -129,9 +129,9 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         batch.hiddenItem = supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
       }
       if (!isStoryGame && isPlaying) {
-        batch.traits = supabase.rpc("get_rival_traits" as any, { _game_id: gameId });
+        batch.traits = supabase.rpc("get_rival_traits", { _game_id: gameId });
       }
-      const isPersonalGame = (gameData as any)?.game_mode === "personal_pvp";
+      const isPersonalGame = gameData?.game_mode === "personal_pvp";
       if (isPlaying && currentScenId && !isPersonalGame) {
         batch.items = getItemsByScenario(currentScenId);
         batch.connected = getConnectedScenarios(currentScenId);
@@ -190,13 +190,13 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       if (isPlaying && isPersonalGame) {
         try {
-          const hostId = (gameData as any)?.created_by;
-          const guestId = (gameData as any)?.invited_user_id;
+          const hostId = gameData?.created_by;
+          const guestId = gameData?.invited_user_id;
           const personal = hostId && guestId
             ? await loadPersonalCombatDataFromRooms(hostId, guestId)
             : await loadPersonalCombatData(
-                (gameData as any)?.host_space_snapshot,
-                (gameData as any)?.guest_space_snapshot
+                gameData?.host_space_snapshot,
+                gameData?.guest_space_snapshot
               );
           personalDataRef.current = personal;
           loadedItems = currentScenId
@@ -226,7 +226,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
             supabase.rpc("execute_grant_drap_if_available" as any, { _game_id: gameId }).then(({ data }) => {
-              if ((data as any)?.granted) {
+              if (data?.granted) {
                 tools.drap = 1;
                 playerData.tools = tools;
                 S.setPlayerTools({ ...tools });
@@ -262,7 +262,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         if (ia.effect_type === "reveal_items") {
           const wasUsed = allMoves.some((m) => m.target_item_id === ia.item_id);
           if (wasUsed) {
-            const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
+            const ids = ia.effect_data?.reveal_item_ids ?? [];
             ids.forEach((id: string) => revealed.add(id));
           }
         }

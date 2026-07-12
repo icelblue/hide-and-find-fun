@@ -8,10 +8,10 @@ import { parseTools, type PlayerTools } from "@/lib/game-types";
 
 export function useSearchFlowState() {
   const [sheetItemId, setSheetItemId] = useState<string | null>(null);
-  const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
-  const [moveHistory, setMoveHistory] = useState<any[]>([]);
+  const [connectedScenarios, setConnectedScenarios] = useState<Record<string, unknown>[]>([]);
+  const [moveHistory, setMoveHistory] = useState<Record<string, unknown>[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
-  const [itemInteractions, setItemInteractions] = useState<any[]>([]);
+  const [itemInteractions, setItemInteractions] = useState<Record<string, unknown>[]>([]);
   const [playerTools, setPlayerTools] = useState<PlayerTools>(parseTools(null));
   const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
   const [breakableItems, setBreakableItems] = useState<Set<string>>(new Set());

@@ -190,7 +190,7 @@ async function getToolsFoundInGame(gameId: string): Promise<Record<ToolType, num
   const { data: players } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
 
   const totals: Record<ToolType, number> = { martell: 0, drap: 0, llanterna: 0, tornavis: 0, galleda: 0, drap_mullat: 0 };
-  for (const p of (players as any[]) ?? []) {
+  for (const p of (players as Record<string, unknown>[]) ?? []) {
     const t = parseTools(p.tools);
     totals.martell += t.martell;
     totals.drap += t.drap;

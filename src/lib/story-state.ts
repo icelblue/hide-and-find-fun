@@ -149,7 +149,7 @@ async function loadEffectsCache(): Promise<void> {
       .from("story_item_effects")
       .select("item_id,kind,d_hunger,d_sleep,d_fear,d_bond");
     const map: Record<string, ItemEffect> = {};
-    for (const row of (data ?? []) as any[]) {
+    for (const row of (data ?? []) as Record<string, unknown>[]) {
       const delta: Partial<PetState> = {};
       if (row.d_hunger) delta.hunger = row.d_hunger;
       if (row.d_sleep)  delta.sleep  = row.d_sleep;
@@ -237,7 +237,7 @@ export async function getInventory(userId: string): Promise<InventoryItem[]> {
 
 export async function addInventoryItem(userId: string, item: InventoryItem): Promise<boolean> {
   const { error } = await supabase.from("story_inventory").insert({ user_id: userId, ...item });
-  if (error && (error as any).code === "23505") return false; // duplicate
+  if (error && error.code === "23505") return false; // duplicate
   if (error) throw error;
   return true;
 }
@@ -261,7 +261,7 @@ let _recipesCache: Recipe[] | null = null;
 export async function getAllRecipes(): Promise<Recipe[]> {
   if (_recipesCache) return _recipesCache;
   const { data } = await supabase.from("story_recipes").select("*").order("name");
-  _recipesCache = ((data ?? []) as any[]).map((r) => ({
+  _recipesCache = ((data ?? []) as Record<string, unknown>[]).map((r) => ({
     ...r,
     requires_items: Array.isArray(r.requires_items) ? r.requires_items : [],
   })) as Recipe[];
@@ -275,7 +275,7 @@ export async function getDiscoveredRecipeIds(userId: string): Promise<Set<string
 
 export async function discoverRecipe(userId: string, recipeId: string): Promise<boolean> {
   const { error } = await supabase.from("story_recipe_book").insert({ user_id: userId, recipe_id: recipeId });
-  if (error && (error as any).code === "23505") return false;
+  if (error && error.code === "23505") return false;
   if (error) throw error;
   return true;
 }

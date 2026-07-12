@@ -177,15 +177,15 @@ export default function GamePage() {
   const [bananaEffect, setBananaEffect] = useState(false);
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [reward, setReward] = useState<any>(null);
+  const [reward, setReward] = useState<Record<string, unknown> | null>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
   const [rivalSmokeBombAt, setRivalSmokeBombAt] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
-  const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
+  const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<Record<string, unknown> | null>(null);
   const [winFoundPopup, setWinFoundPopup] = useState<{ objectIcon?: string; objectName?: string; itemIcon?: string; itemName?: string; positionLabel?: string; rivalName?: string } | null>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
-  const [specialFoundVariant, setSpecialFoundVariant] = useState<any>(null);
+  const [specialFoundVariant, setSpecialFoundVariant] = useState<Record<string, unknown> | null>(null);
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
   const [bonusAvailable, setBonusAvailable] = useState(0);
   const [bonusAmount, setBonusAmount] = useState(1);
@@ -252,8 +252,8 @@ export default function GamePage() {
       } else if (game) {
         const catalog = await loadFurnitureCatalog();
         const merged = mergeSnapshots(
-          parseSnapshot((game as any).host_space_snapshot),
-          parseSnapshot((game as any).guest_space_snapshot)
+          parseSnapshot(game.host_space_snapshot),
+          parseSnapshot(game.guest_space_snapshot)
         );
         setItems(synthItems(merged, catalog));
       }
@@ -319,19 +319,19 @@ export default function GamePage() {
       : objects.find((o) => o.id === selectedObject);
     const itm = items.find((i) => i.id === selectedItem);
     if (pos === "dins") {
-      const objSize = (obj as any)?.size ?? 2;
-      const capacity = (itm as any)?.inner_capacity ?? 2;
+      const objSize = obj?.size ?? 2;
+      const capacity = itm?.inner_capacity ?? 2;
       if (objSize > capacity) {
         toast.error(t("game.errors.objectTooBig", { obj: `${obj?.icon} ${obj?.name}`, itm: `${itm?.icon} ${itm?.name}` }));
         return;
       }
     }
-    if (pos === "darrere" && (itm as any)?.can_behind === false) {
+    if (pos === "darrere" && itm?.can_behind === false) {
       toast.error(t("game.errors.cannotHideBehind", { itm: `${itm?.icon} ${itm?.name}` }));
       return;
     }
-    const material = (obj as any)?.material ?? "generic";
-    const environment = (itm as any)?.environment ?? "generic";
+    const material = obj?.material ?? "generic";
+    const environment = itm?.environment ?? "generic";
     const blockReason = getMaterialBlockReason(material, environment);
     if (blockReason) {
       toast.error(t("game.errors.materialBlocked", { obj: `${obj?.icon} ${obj?.name}`, reason: blockReason }));
@@ -353,7 +353,7 @@ export default function GamePage() {
       }
 
       // Show hide message popup if object supports it
-      if (special && (special as any).has_hide_message) {
+      if (special && special.has_hide_message) {
         setShowHideMessagePopup(true);
         return;
       }
@@ -441,7 +441,7 @@ export default function GamePage() {
     if (!gameId || !user || !player) return;
     const alreadyUsed = moveHistory.some((m) =>
       m.action === "look" && m.target_item_id === interaction.item_id &&
-      (m as any).bonus_value === `interact:${interaction.action_name}`
+      m.bonus_value === `interact:${interaction.action_name}`
     );
     if (interaction.one_time && alreadyUsed) { toast.error(t("game.errors.actionAlreadyDone")); return; }
     if (player.tokens_remaining < interaction.cost) { toast.error(t("game.errors.notEnoughTokens")); return; }
@@ -598,7 +598,7 @@ export default function GamePage() {
         } else {
           // PvP win: fetch revealed rival data FIRST (RLS hides hidden_object_id until game finishes)
           const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
-          const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p) => p.user_id !== user.id) ?? rival;
+          const resolvedRival = ((safePlayersAfterWin as Record<string, unknown>[]) ?? []).find((p) => p.user_id !== user.id) ?? rival;
           setRival(resolvedRival);
 
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", resolvedRival?.user_id ?? "").maybeSingle();
@@ -658,7 +658,7 @@ export default function GamePage() {
       else if (result.foundBonus) toast.info(t("game.toasts.magic", { val: result.bonusValue }));
       else {
         const level = result.hintLevel ?? 0;
-        const noisy = (result as any).hintNoisy ? " ⚠️" : "";
+        const noisy = result.hintNoisy ? " ⚠️" : "";
         if (level === 0) toast.info(t("game.toasts.hintFrozen", { noisy, cost: TOKEN_COSTS.look }));
         else if (level === 1) toast.info(t("game.toasts.hintCold", { noisy, cost: TOKEN_COSTS.look }));
         else if (level === 2) toast.info(t("game.toasts.hintCool", { noisy, cost: TOKEN_COSTS.look }));
@@ -726,14 +726,14 @@ export default function GamePage() {
       const info = SOCIAL_ITEMS.find(i => i.type === type);
       if (result.blocked) toast.error(t("game.toasts.blockedShield"));
       else if (result.espiaResult) toast.success(t("game.toasts.espiaResult", { name: result.espiaResult }), { duration: 8000 });
-      else if (type === "smoke_bomb" && (result as any).smokeBombResult) {
-        const sb = (result as any).smokeBombResult;
+      else if (type === "smoke_bomb" && result.smokeBombResult) {
+        const sb = result.smokeBombResult;
         toast.success(t("game.toasts.smokeBombResult", { scen: sb.new_scenario_name, item: sb.new_item_name, pos: sb.new_position }), { duration: 6000 });
-      } else if (type === "barricada" && (result as any).barricadaResult) {
-        const br = (result as any).barricadaResult;
+      } else if (type === "barricada" && result.barricadaResult) {
+        const br = result.barricadaResult;
         toast.success(t("game.toasts.barricadaResult", { from: br.from_name, to: br.to_name }), { duration: 6000 });
-      } else if (type === "trampa" && (result as any).trampaResult) {
-        const tr = (result as any).trampaResult;
+      } else if (type === "trampa" && result.trampaResult) {
+        const tr = result.trampaResult;
         toast.success(t("game.toasts.trampaResult", { item: tr.item_name }), { duration: 5000 });
       }
       else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info ? t(info.nameKey) : "" }));
@@ -773,7 +773,7 @@ export default function GamePage() {
       if (rivalSmokeBombAt && m.created_at < rivalSmokeBombAt) continue;
       // Skip tag actions (clean/break/fix) — they log as 'look' for audit but are NOT peeks.
       // Cleaning a furniture must only UNLOCK 'dins', never auto-reveal it.
-      const bv = (m as any).bonus_value as string | null;
+      const bv = m.bonus_value as string | null;
       if (bv && bv.startsWith("tag:")) continue;
       const spotKey = `${m.target_item_id}:${m.target_position}`;
       lookedSpots.add(spotKey);
@@ -796,7 +796,7 @@ export default function GamePage() {
       moveHistory.forEach((m) => m?.id && seenRevealMoveIdsRef.current.add(m.id));
       return;
     }
-    for (const m of moveHistory as any[]) {
+    for (const m of moveHistory as Record<string, unknown>[]) {
       if (!m?.id || seenRevealMoveIdsRef.current.has(m.id)) continue;
       seenRevealMoveIdsRef.current.add(m.id);
       if (m.action !== "look" || m.user_id !== user.id) continue;
@@ -1002,7 +1002,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
               {objectSpecial.special_type === "choose_variant" && objectSpecial.variants && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2">
-                    {(objectSpecial.variants as any[]).map((v) => (
+                    {(objectSpecial.variants as Record<string, unknown>[]).map((v) => (
                       <Card key={v.value}
                         className={`cursor-pointer glass transition-all active:scale-[0.97] ${selectedVariant?.value === v.value ? "border-primary glow-primary" : "hover:border-primary/40"}`}
                         onClick={() => setSelectedVariant(v)}>
@@ -1231,7 +1231,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
           {/* Sala a les fosques: es veu grisa i SENSE mobles (vista pixel) */}
           {scenarioIsDark && pixelView && (() => {
             const scenName = currentScenario?.name ?? "";
-            const themeHint = (currentScenario as any)?.themeHint as string | undefined;
+            const themeHint = currentScenario?.themeHint as string | undefined;
             const theme = themeForScenarioName(scenName, themeHint);
             const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => ({ slot: idx }));
             return (
@@ -1288,7 +1288,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
             {pixelView ? (
               (() => {
                 const scenName = currentScenario?.name ?? "";
-                const themeHint = (currentScenario as any)?.themeHint as string | undefined;
+                const themeHint = currentScenario?.themeHint as string | undefined;
                 const theme = themeForScenarioName(scenName, themeHint);
                 const slots = autoLayoutForItems(currentScenarioItems, scenName, themeHint);
                 const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => {
@@ -1395,7 +1395,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
               <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 {moveHistory.map(m => {
                   const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
-                  const hl = (m as any).hint_level;
+                  const hl = m.hint_level;
                   return (
                     <div key={m.id} className={`text-[10px] rounded-md px-2 py-1 flex justify-between items-center border border-border/15 ${
                       hl === 4 ? "bg-orange-500/10 border-orange-500/30" :
@@ -1407,15 +1407,15 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
                     }`}>
                       <span className="truncate mr-1">
                         <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
-                        {m.action === "move" && `🚶→ ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
+                        {m.action === "move" && `🚶→ ${m.scenarios?.icon} ${m.scenarios?.name}`}
                         {m.action === "look" && (() => {
-                          const bv = (m as any).bonus_value as string | null;
+                          const bv = m.bonus_value as string | null;
                           if (bv && bv.startsWith("tag:")) {
                             const t = bv.split(":")[1];
                             const icon = t === "clean" ? "🧹" : t === "break" ? "💥" : t === "fix" ? "🔧" : "⚡";
-                            return <>{icon} {(m.items as any)?.icon} {(m.items as any)?.name}</>;
+                            return <>{icon} {m.items?.icon} {m.items?.name}</>;
                           }
-                          return <>👀 {(m.items as any)?.icon} {m.target_position ? posLabel(m.target_position) : ""}{hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}</>;
+                          return <>👀 {m.items?.icon} {m.target_position ? posLabel(m.target_position) : ""}{hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}</>;
                         })()}
                         {m.found_object && " 🏆"}
                         {m.found_bonus === "extra_token" && " 🎁"}

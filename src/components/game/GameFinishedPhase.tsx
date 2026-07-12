@@ -73,10 +73,10 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const [{ data: scenarioDataRaw }, { data: itemDataRaw }] = await Promise.all([
         scenarioIds.length > 0
           ? supabase.from("scenarios").select("id, name, icon").in("id", scenarioIds)
-          : { data: [] as any[] },
+          : { data: [] as Record<string, unknown>[] },
         itemIds.length > 0
           ? supabase.from("items").select("id, name, icon").in("id", itemIds)
-          : { data: [] as any[] },
+          : { data: [] as Record<string, unknown>[] },
       ]);
       const scenarioData = await translateRows(scenarioDataRaw ?? [], "pvp_scenario_name", "id", "name");
       const itemData = await translateRows(itemDataRaw ?? [], "pvp_item_name", "id", "name");
@@ -190,7 +190,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
           supabase.from("object_traits").select("id, trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
           supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
         ]);
-        const translatedTraits = await translateRows((traitData ?? []) as any[], "pvp_object_trait", "id", "trait_text");
+        const translatedTraits = await translateRows((traitData ?? []) as Record<string, unknown>[], "pvp_object_trait", "id", "trait_text");
         traits = translatedTraits.map((t) => t.trait_text);
         specialType = specialData?.special_type ?? null;
       }

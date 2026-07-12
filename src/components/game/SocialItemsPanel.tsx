@@ -28,7 +28,7 @@ function getMultiUseCount(player: any, type: string): number {
   const special = player?.special_data ?? {};
   const today = new Date().toISOString().split("T")[0];
   if (player?.tokens_last_reset < today) return 0;
-  return (special as any)?.[`${type}_today`] ?? 0;
+  return special?.[`${type}_today`] ?? 0;
 }
 
 export default function SocialItemsPanel({

@@ -188,7 +188,7 @@ export default function LobbyPage() {
 
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Record<string, unknown>[]>([]);
   const [searching, setSearching] = useState(false);
 
   // Create game dialog state
@@ -196,7 +196,7 @@ export default function LobbyPage() {
   const [createMode, setCreateMode] = useState<"pick" | "personal">("pick");
   const [personalPlacedCount, setPersonalPlacedCount] = useState<number | null>(null);
   const [personalSearch, setPersonalSearch] = useState("");
-  const [personalResults, setPersonalResults] = useState<any[]>([]);
+  const [personalResults, setPersonalResults] = useState<Record<string, unknown>[]>([]);
   const [personalSearching, setPersonalSearching] = useState(false);
 
   const { data: games = [] } = useQuery({
