@@ -3,13 +3,9 @@
 // ============================================================
 import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { Button } from "@/components/ui/button";
-import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { Card, CardContent } from "@/components/ui/card";
-import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { Input } from "@/components/ui/input";
-import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import { useT } from "@/i18n/LanguageProvider";
-import type { PlayerRow, ObjectRow } from "@/lib/runtime-types";
 import ObjectIcon from "@/components/game/ObjectIcon";
 
 interface SpecialFoundPopupProps {
