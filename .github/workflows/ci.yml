@@ -19,8 +19,18 @@ jobs:
       - name: Instal·lar dependències
         run: npm ci
 
-      - name: TypeScript
-        run: npx tsc --noEmit
+      - name: TypeScript — detector de bombes de runtime
+        # ATENCIÓ: "npx tsc --noEmit" a soles NO comprova res en aquest
+        # projecte (tsconfig arrel és d'estil solution amb files:[]).
+        # Cal apuntar a tsconfig.app.json. Mentre no es netegin els
+        # errors de tipus heretats (issue oberta), bloquegem només els
+        # errors que peten en runtime: noms inexistents (TS2304/TS2552).
+        run: |
+          npx tsc -p tsconfig.app.json --noEmit > tsc-out.txt 2>&1 || true
+          if grep -E "TS2304|TS2552" tsc-out.txt; then
+            echo "❌ Noms inexistents detectats (peten en runtime)"; exit 1
+          fi
+          echo "✅ Cap bomba de runtime"
 
       - name: Lint (bloqueja errors; sostre de warnings per no créixer)
         run: npx eslint . --max-warnings 20

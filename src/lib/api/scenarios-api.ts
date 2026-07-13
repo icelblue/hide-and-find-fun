@@ -1,6 +1,7 @@
 // ============================================================
 // Escenaris i ítems: lectures de catàleg
 import { supabase } from "@/integrations/supabase/client";
+import { translateRows } from "@/i18n/translate-data";
 // ============================================================
 // DATA FETCHING
 // ============================================

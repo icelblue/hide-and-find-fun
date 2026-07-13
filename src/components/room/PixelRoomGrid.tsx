@@ -13,6 +13,7 @@
 // ============================================================
 import { useMemo } from "react";
 import { deterministicPRNG, type RoomTheme } from "@/lib/room-themes";
+import { WALL_SPRITES, AMBIENT_SPRITES } from "@/lib/decor-sprites";
 import { textureForTheme } from "@/lib/room-sprites";
 
 export interface PixelCell {

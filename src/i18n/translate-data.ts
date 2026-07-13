@@ -98,3 +98,20 @@ export function onLangChange(cb: (lang: Lang) => void): () => void {
   window.addEventListener("lang-changed", handler);
   return () => window.removeEventListener("lang-changed", handler);
 }
+
+/**
+ * tt — traducció fora de React (per a mòduls de lliure ús com l'API).
+ * Resol la clau al bundle de l'idioma actual; si no existeix, retorna
+ * la clau mateixa (visible i cercable, mai en blanc).
+ */
+import caBundle from "./ca.json";
+import enBundle from "./en.json";
+
+export function tt(key: string): string {
+  const bundle: Record<string, unknown> = getCurrentLang() === "en" ? enBundle : caBundle;
+  const val = key.split(".").reduce<unknown>(
+    (acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined),
+    bundle,
+  );
+  return typeof val === "string" ? val : key;
+}
