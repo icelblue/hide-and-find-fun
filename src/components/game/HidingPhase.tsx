@@ -14,6 +14,9 @@ import { CUSTOM_OBJECT_SENTINEL_ID, CUSTOM_OBJECT_MATERIALS, CUSTOM_OBJECT_SIZES
 import { POSITIONS, POS_LABELS, type Position } from "@/lib/game-types";
 import { MATERIAL_LABELS } from "@/lib/api/materials-api";
 import { Tip } from "@/components/HelpButton";
+import ObjectIcon from "@/components/game/ObjectIcon";
+import ScenarioPicker from "@/components/game/ScenarioPicker";
+import { getMaterialBlockReason } from "@/lib/api/materials-api";
 
 interface Props { p: Record<string, unknown> }
 
@@ -28,6 +31,7 @@ export default function HidingPhase({ p }: Props) {
     customObjectSize, setCustomObjectSize, customObjectMaterial, setCustomObjectMaterial,
     customObjectTrait1, setCustomObjectTrait1, customObjectTrait2, setCustomObjectTrait2,
     isPersonalGame, posLabel,
+    customObjectData, setSelectedItem, selectedPosition,
   } = p;
   return (
 

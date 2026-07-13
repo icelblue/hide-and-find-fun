@@ -1,6 +1,10 @@
 // ============================================================
 // Cicle de vida de partides: crear, unir-se, amagar, començar
 import { supabase } from "@/integrations/supabase/client";
+import { generateGameCode, getScenarios } from "@/lib/api/scenarios-api";
+import { getMaterialBlockReason } from "@/lib/api/materials-api";
+import { tt } from "@/i18n/translate-data";
+import type { Position } from "@/lib/game-types";
 // ============================================================
 // GAME LIFECYCLE
 // ============================================

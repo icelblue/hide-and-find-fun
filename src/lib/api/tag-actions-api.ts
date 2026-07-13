@@ -1,6 +1,8 @@
 // ============================================================
 // Accions d'etiqueta (netejar, trencar...), eines i llums
 import { supabase } from "@/integrations/supabase/client";
+import { translateRows } from "@/i18n/translate-data";
+import { parseTools } from "@/lib/game-types";
 import type { ToolType } from "@/lib/game-types";
 // ============================================================
 // TAG-BASED INTERACTIONS (Netejar, Trencar, Arreglar)

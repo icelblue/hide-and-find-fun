@@ -965,6 +965,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
           customObjectSize, setCustomObjectSize, customObjectMaterial, setCustomObjectMaterial,
           customObjectTrait1, setCustomObjectTrait1, customObjectTrait2, setCustomObjectTrait2,
           isPersonalGame, posLabel,
+          customObjectData, setSelectedItem, selectedPosition,
         }} />
       )}
 

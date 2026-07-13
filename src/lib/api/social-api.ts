@@ -1,6 +1,7 @@
 // ============================================================
 // Ítems socials i inventari personal
 import { supabase } from "@/integrations/supabase/client";
+import { tt } from "@/i18n/translate-data";
 // ============================================================
 // ============================================
 // SOCIAL ITEMS
