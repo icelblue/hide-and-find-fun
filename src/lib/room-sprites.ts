@@ -6,6 +6,10 @@
 // Fallback: emoji original si res coincideix.
 // ============================================================
 
+// -------- Sprites nous (ítems PvP que faltaven) --------
+import { url as sprShoebox } from "@/assets/room/spr-shoebox.png.asset.json";
+import { url as sprDarkcorner } from "@/assets/room/spr-darkcorner.png.asset.json";
+
 // -------- Textures de terreny --------
 import { url as texWoodLight } from "@/assets/room/tex-wood-light.png.asset.json";
 import { url as texWoodDark } from "@/assets/room/tex-wood-dark.png.asset.json";
@@ -161,6 +165,9 @@ export interface SpriteRule {
 }
 
 export const SPRITE_RULES: SpriteRule[] = [
+  // Ítems PvP que queien al fallback emoji (auditoria 13/07)
+  { id: "shoebox", pattern: /(capsa de sabates|shoebox)/i, sprite: sprShoebox },
+  { id: "darkcorner", pattern: /(rac[óo] fosc|dark corner)/i, sprite: sprDarkcorner },
   // dormitori
   { id: "bed", pattern: /\b(llit|cama|bed|hamaca)\b/i, sprite: sprBed },
   { id: "sofa", pattern: /(sof[àa]|couch|sofa)/i, sprite: sprSofa },
