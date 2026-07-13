@@ -68,7 +68,7 @@ export default function AuthPage() {
       toast.success(t("auth.resetSent"), { duration: 6000 });
       setShowForgot(false);
     } catch (err) {
-      toast.error(translateAuthError(err), { duration: 6000 });
+      toast.error(t(translateAuthError(err)), { duration: 6000 });
     } finally {
       setLoading(false);
     }
@@ -91,7 +91,7 @@ export default function AuthPage() {
         toast.success(t("auth.accountCreated"), { duration: 7000 });
       }
     } catch (err) {
-      toast.error(translateAuthError(err), { duration: 6000 });
+      toast.error(t(translateAuthError(err)), { duration: 6000 });
     } finally {
       setLoading(false);
     }

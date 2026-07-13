@@ -6,60 +6,60 @@
 // ============================================================
 
 /**
- * Tradueix un error de Supabase Auth a un missatge en català
- * comprensible per l'usuari final.
+ * Converteix un error de Supabase Auth en una CLAU i18n
+ * (authErrors.*) que el component tradueix amb t().
  */
 export function translateAuthError(err: unknown): string {
   const raw = (err instanceof Error ? err.message : String(err ?? "")).toLowerCase();
 
   // Email / password incorrectes
   if (raw.includes("invalid login credentials") || raw.includes("invalid_credentials")) {
-    return "Email o contrasenya incorrectes. Si encara no tens compte, registra't a sota.";
+    return "authErrors.email_o_contrasenya_incorrec";
   }
 
   // Email no confirmat
   if (raw.includes("email not confirmed")) {
-    return "Has de confirmar el teu email abans d'entrar. Revisa la safata d'entrada (i el correu brossa).";
+    return "authErrors.has_de_confirmar_el_teu_emai";
   }
 
   // Usuari ja existent
   if (raw.includes("user already registered") || raw.includes("already been registered") || raw.includes("user_already_exists")) {
-    return "Aquest email ja està registrat. Prova de fer login o recupera la contrasenya.";
+    return "authErrors.aquest_email_ja_esta_registr";
   }
 
   // Password febla
   if (raw.includes("password should be at least") || raw.includes("password is too short") || raw.includes("weak_password")) {
-    return "La contrasenya ha de tenir com a mínim 6 caràcters.";
+    return "authErrors.la_contrasenya_ha_de_tenir_c";
   }
 
   // Password compromesa (HIBP)
   if (raw.includes("pwned") || raw.includes("compromised")) {
-    return "Aquesta contrasenya ha aparegut en filtracions conegudes. Tria'n una altra més segura.";
+    return "authErrors.aquesta_contrasenya_ha_apare";
   }
 
   // Email invàlid
   if (raw.includes("invalid email") || raw.includes("invalid format") || raw.includes("email_address_invalid")) {
-    return "L'email no té un format vàlid. Revisa'l.";
+    return "authErrors.l_email_no_te_un_format_vali";
   }
 
   // Rate limit
   if (raw.includes("rate limit") || raw.includes("too many requests") || raw.includes("over_email_send_rate_limit")) {
-    return "Massa intents en poc temps. Espera uns minuts i torna-ho a provar.";
+    return "authErrors.massa_intents_en_poc_temps_e";
   }
 
   // Captcha
   if (raw.includes("captcha")) {
-    return "Verificació anti-bot fallida. Recarrega la pàgina i torna-ho a provar.";
+    return "authErrors.verificacio_anti_bot_fallida";
   }
 
   // Signup desactivat
   if (raw.includes("signup") && raw.includes("disabled")) {
-    return "El registre està temporalment desactivat. Torna més tard.";
+    return "authErrors.el_registre_esta_temporalmen";
   }
 
   // Network
   if (raw.includes("failed to fetch") || raw.includes("networkerror") || raw.includes("network request failed")) {
-    return "Error de connexió. Revisa la connexió a internet i torna-ho a provar.";
+    return "authErrors.error_de_connexio_revisa_la";
   }
 
   // Genèric: si el missatge original és curt i en anglès, el deixem amb prefix
@@ -67,7 +67,7 @@ export function translateAuthError(err: unknown): string {
   if (originalMsg && originalMsg.length < 120) {
     return `Error: ${originalMsg}`;
   }
-  return "Hi ha hagut un error inesperat. Torna-ho a provar.";
+  return "authErrors.hi_ha_hagut_un_error_inesper";
 }
 
 /**
@@ -83,19 +83,19 @@ export function validateAuthForm(opts: {
   const email = opts.email.trim();
   const password = opts.password;
 
-  if (!email) return "Introdueix el teu email.";
+  if (!email) return "authErrors.introdueix_el_teu_email";
   // Validació regex simple (Supabase ja valida després)
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return "L'email no té un format vàlid.";
+    return "authErrors.l_email_no_te_un_format_vali_x";
   }
-  if (!password) return "Introdueix la contrasenya.";
-  if (password.length < 6) return "La contrasenya ha de tenir com a mínim 6 caràcters.";
+  if (!password) return "authErrors.introdueix_la_contrasenya";
+  if (password.length < 6) return "authErrors.la_contrasenya_ha_de_tenir_c";
 
   if (opts.isSignup) {
     const name = (opts.displayName ?? "").trim();
-    if (!name) return "Introdueix un nom de jugador.";
-    if (name.length < 2) return "El nom de jugador ha de tenir com a mínim 2 caràcters.";
-    if (name.length > 30) return "El nom de jugador no pot superar els 30 caràcters.";
+    if (!name) return "authErrors.introdueix_un_nom_de_jugador";
+    if (name.length < 2) return "authErrors.el_nom_de_jugador_ha_de_teni";
+    if (name.length > 30) return "authErrors.el_nom_de_jugador_no_pot_sup";
   }
 
   return null;
