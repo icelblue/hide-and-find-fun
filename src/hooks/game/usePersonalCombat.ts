@@ -34,13 +34,14 @@ export function usePersonalCombat({ game, setScenarios, setObjects }: UsePersona
     let cancelled = false;
     (async () => {
       try {
-        const hostId = game.created_by;
-        const guestId = game.invited_user_id;
-        const personal = hostId && guestId
-          ? await loadPersonalCombatDataFromRooms(hostId, guestId)
+        const hostId = game.created_by as string | undefined;
+        // Partida personal: SEMPRE es juga a l'apartament de l'amfitrió (qui reta).
+        // El rival no necessita tenir espai propi decorat.
+        const personal = hostId
+          ? await loadPersonalCombatDataFromRooms(hostId, hostId)
           : await loadPersonalCombatData(
-              game.host_space_snapshot,
-              game.guest_space_snapshot
+              (game as Record<string, unknown>).host_space_snapshot,
+              (game as Record<string, unknown>).guest_space_snapshot
             );
         if (cancelled) return;
         personalDataRef.current = personal;
