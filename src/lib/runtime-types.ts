@@ -6,11 +6,11 @@
 // ============================================================
 import type { Tables } from "@/integrations/supabase/types";
 
-export type GameRow = Tables<"games"> & Record<string, unknown>;
-export type PlayerRow = Tables<"game_players"> & Record<string, unknown>;
+export type GameRow = Tables<"games"> & { [key: string]: unknown };
+export type PlayerRow = Tables<"game_players"> & { [key: string]: unknown };
 export type ScenarioRow = Tables<"scenarios"> & { themeHint?: string | null };
-export type ObjectRow = Tables<"objects"> & Record<string, unknown>;
-export type ItemRow = Tables<"items"> & Record<string, unknown>;
+export type ObjectRow = Tables<"objects"> & { [key: string]: unknown };
+export type ItemRow = Tables<"items"> & { [key: string]: unknown };
 export type MoveRow = Tables<"game_moves"> & {
   scenarios?: { icon?: string | null; name?: string | null } | null;
   items?: { icon?: string | null; name?: string | null } | null;
