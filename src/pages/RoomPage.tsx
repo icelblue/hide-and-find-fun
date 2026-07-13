@@ -22,6 +22,7 @@ import { generateTerrain, preferredTerrainForCategory, TERRAIN_BONUS } from "@/l
 import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
 import { themeForCategory } from "@/lib/room-themes";
 import { spriteForFurniture } from "@/lib/room-sprites";
+import { gardenSpriteFor } from "@/lib/decor-sprites";
 import {
   GARDEN_CATEGORIES, MAX_PLOTS_PER_ROOM, getGardenCatalog, getPlantsForRoom,
   plantSeed, harvestPlant, petThePet, growthStage, minutesUntilReady,
@@ -588,14 +589,16 @@ export default function RoomPage() {
             const sprite = entry ? spriteForFurniture(entry.category, entry.nameKey, entry.name) : null;
             const plantAt = plantBySlot.get(idx);
             const plantCat = plantAt ? gardenCatalogById.get(plantAt.plant_type) : undefined;
-            const plantIcon = plantAt && plantCat
-              ? iconForStage(growthStage(plantAt.planted_at, plantCat.growth_minutes), plantCat)
+            const plantStage = plantAt && plantCat ? growthStage(plantAt.planted_at, plantCat.growth_minutes) : null;
+            const plantIcon = plantAt && plantCat && plantStage
+              ? iconForStage(plantStage, plantCat)
               : undefined;
+            const plantSprite = plantAt && plantStage ? gardenSpriteFor(plantStage, plantAt.plant_type) : undefined;
             void gardenTick; // força re-render periòdic de les fases
             return {
               slot: idx,
               icon: plantIcon ?? entry?.icon,
-              spriteUrl: plantAt ? undefined : (sprite ?? undefined),
+              spriteUrl: plantAt ? plantSprite : (sprite ?? undefined),
               label: plantAt ? t("garden.plantLabel") : (entry?.name ?? `casella ${idx + 1}`),
               filled: !!entry || !!plantAt,
               highlighted: (!!selected && !entry) || (moveFromSlot !== null && !entry),

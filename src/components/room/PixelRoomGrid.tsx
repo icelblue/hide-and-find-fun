@@ -149,16 +149,28 @@ export default function PixelRoomGrid({
         }}
       >
         {/* Decoració de paret: finestres, quadres... (determinista per sala) */}
-        {wallDecor.map((d, i) => (
-          <span
-            key={i}
-            aria-hidden
-            className="absolute top-1/2 -translate-y-1/2 select-none"
-            style={{ left: `${d.left}%`, fontSize: "clamp(11px, 4.5cqw, 16px)", filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))" }}
-          >
-            {d.icon}
-          </span>
-        ))}
+        {wallDecor.map((d, i) => {
+          const sprite = WALL_SPRITES[d.icon];
+          return sprite ? (
+            <img
+              key={i}
+              src={sprite}
+              alt=""
+              aria-hidden
+              className="absolute top-1/2 -translate-y-1/2 select-none pointer-events-none"
+              style={{ left: `${d.left}%`, height: "78%", imageRendering: "pixelated", filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))" }}
+            />
+          ) : (
+            <span
+              key={i}
+              aria-hidden
+              className="absolute top-1/2 -translate-y-1/2 select-none"
+              style={{ left: `${d.left}%`, fontSize: "clamp(11px, 4.5cqw, 16px)", filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))" }}
+            >
+              {d.icon}
+            </span>
+          );
+        })}
         {/* Sòcol clar just sobre el terra */}
         <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: "hsl(0 0% 100% / 0.18)" }} />
       </div>
@@ -385,7 +397,17 @@ export default function PixelRoomGrid({
                   )}
                 </>
               ) : decor && !dark ? (
-                <span aria-hidden className="opacity-60 text-sm select-none">{decor}</span>
+                AMBIENT_SPRITES[decor] ? (
+                  <img
+                    src={AMBIENT_SPRITES[decor]}
+                    alt=""
+                    aria-hidden
+                    className="opacity-70 w-[46%] h-[46%] object-contain select-none pointer-events-none"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                ) : (
+                  <span aria-hidden className="opacity-60 text-sm select-none">{decor}</span>
+                )
               ) : null}
             </button>
           );
