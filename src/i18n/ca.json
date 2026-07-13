@@ -1422,5 +1422,24 @@
   "errors": {
     "somethingFailed": "Alguna cosa ha fallat",
     "autoReported": "L'error s'ha reportat automàticament. Torna-ho a provar."
+  },
+  "authErrors": {
+    "email_o_contrasenya_incorrec": "Email o contrasenya incorrectes. Si encara no tens compte, registra't a sota.",
+    "has_de_confirmar_el_teu_emai": "Has de confirmar el teu email abans d'entrar. Revisa la safata d'entrada (i el correu brossa).",
+    "aquest_email_ja_esta_registr": "Aquest email ja està registrat. Prova de fer login o recupera la contrasenya.",
+    "la_contrasenya_ha_de_tenir_c": "La contrasenya ha de tenir com a mínim 6 caràcters.",
+    "aquesta_contrasenya_ha_apare": "Aquesta contrasenya ha aparegut en filtracions conegudes. Tria'n una altra més segura.",
+    "l_email_no_te_un_format_vali": "L'email no té un format vàlid. Revisa'l.",
+    "massa_intents_en_poc_temps_e": "Massa intents en poc temps. Espera uns minuts i torna-ho a provar.",
+    "verificacio_anti_bot_fallida": "Verificació anti-bot fallida. Recarrega la pàgina i torna-ho a provar.",
+    "el_registre_esta_temporalmen": "El registre està temporalment desactivat. Torna més tard.",
+    "error_de_connexio_revisa_la": "Error de connexió. Revisa la connexió a internet i torna-ho a provar.",
+    "hi_ha_hagut_un_error_inesper": "Hi ha hagut un error inesperat. Torna-ho a provar.",
+    "introdueix_el_teu_email": "Introdueix el teu email.",
+    "l_email_no_te_un_format_vali_x": "L'email no té un format vàlid.",
+    "introdueix_la_contrasenya": "Introdueix la contrasenya.",
+    "introdueix_un_nom_de_jugador": "Introdueix un nom de jugador.",
+    "el_nom_de_jugador_ha_de_teni": "El nom de jugador ha de tenir com a mínim 2 caràcters.",
+    "el_nom_de_jugador_no_pot_sup": "El nom de jugador no pot superar els 30 caràcters."
   }
 }

@@ -1422,5 +1422,24 @@
   "errors": {
     "somethingFailed": "Something went wrong",
     "autoReported": "The error was reported automatically. Please try again."
+  },
+  "authErrors": {
+    "email_o_contrasenya_incorrec": "Wrong email or password. If you don't have an account yet, sign up below.",
+    "has_de_confirmar_el_teu_emai": "Has de confirmar el teu email abans d'entrar. Revisa la safata d'entrada (i el correu brossa).",
+    "aquest_email_ja_esta_registr": "Aquest email ja està registrat. Prova de fer login o recupera la contrasenya.",
+    "la_contrasenya_ha_de_tenir_c": "The password must be at least 6 characters.",
+    "aquesta_contrasenya_ha_apare": "Aquesta contrasenya ha aparegut en filtracions conegudes. Tria'n una altra més segura.",
+    "l_email_no_te_un_format_vali": "The email format is not valid. Please check it.",
+    "massa_intents_en_poc_temps_e": "Too many attempts in a short time. Wait a few minutes and try again.",
+    "verificacio_anti_bot_fallida": "Anti-bot verification failed. Reload the page and try again.",
+    "el_registre_esta_temporalmen": "Sign-ups are temporarily disabled. Come back later.",
+    "error_de_connexio_revisa_la": "Connection error. Check your internet connection and try again.",
+    "hi_ha_hagut_un_error_inesper": "An unexpected error occurred. Please try again.",
+    "introdueix_el_teu_email": "Enter your email.",
+    "l_email_no_te_un_format_vali_x": "The email format is not valid.",
+    "introdueix_la_contrasenya": "Enter your password.",
+    "introdueix_un_nom_de_jugador": "Enter a player name.",
+    "el_nom_de_jugador_ha_de_teni": "The player name must be at least 2 characters.",
+    "el_nom_de_jugador_no_pot_sup": "The player name can't exceed 30 characters."
   }
 }
