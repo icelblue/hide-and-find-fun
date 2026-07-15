@@ -6,11 +6,14 @@
 // ============================================================
 import type { Tables } from "@/integrations/supabase/types";
 
-export type GameRow = Tables<"games"> & { [key: string]: unknown };
-export type PlayerRow = Tables<"game_players"> & { [key: string]: unknown };
+// NOTA: NO afegim `& Record<string, unknown>` ni `& { [k: string]: unknown }` — això
+// contamina tots els accessos a propietats conegudes convertint-los a `unknown`.
+// Els camps extra (joins, snapshots) es cast-egen puntualment on calgui.
+export type GameRow = Tables<"games">;
+export type PlayerRow = Tables<"game_players">;
 export type ScenarioRow = Tables<"scenarios"> & { themeHint?: string | null };
-export type ObjectRow = Tables<"objects"> & { [key: string]: unknown };
-export type ItemRow = Tables<"items"> & { [key: string]: unknown };
+export type ObjectRow = Tables<"objects">;
+export type ItemRow = Tables<"items">;
 export type MoveRow = Tables<"game_moves"> & {
   scenarios?: { icon?: string | null; name?: string | null } | null;
   items?: { icon?: string | null; name?: string | null } | null;
