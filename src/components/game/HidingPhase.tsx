@@ -32,7 +32,7 @@ export default function HidingPhase({ p }: Props) {
     customObjectTrait1, setCustomObjectTrait1, customObjectTrait2, setCustomObjectTrait2,
     isPersonalGame, posLabel,
     customObjectData, setSelectedItem, selectedPosition,
-  } = p;
+  } = p as any;
   return (
 
         <div>
@@ -70,11 +70,11 @@ export default function HidingPhase({ p }: Props) {
                 <h2 className="text-lg font-bold mb-1">{t("game.hide.whatTitle")}</h2>
                 <Tip>{t("game.hide.whatTip")}</Tip>
                 <div className="h-3" />
-                <Tabs defaultValue="specials" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-3">
-                    <TabsTrigger value="specials">{t("game.hide.tabSpecials")}</TabsTrigger>
+                <Tabs defaultValue={isPersonalGame || specials.length === 0 ? "basics" : "specials"} className="w-full">
+                  <TabsList className={`grid w-full ${isPersonalGame ? "grid-cols-1" : "grid-cols-3"} mb-3`}>
+                    {!isPersonalGame && <TabsTrigger value="specials">{t("game.hide.tabSpecials")}</TabsTrigger>}
                     <TabsTrigger value="basics">{t("game.hide.tabBasics")}</TabsTrigger>
-                    <TabsTrigger value="custom">{t("game.hide.tabCustom")}</TabsTrigger>
+                    {!isPersonalGame && <TabsTrigger value="custom">{t("game.hide.tabCustom")}</TabsTrigger>}
                   </TabsList>
                   <TabsContent value="specials">
                     {specials.length > 0 ? (
