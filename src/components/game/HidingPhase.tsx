@@ -32,7 +32,7 @@ export default function HidingPhase({ p }: Props) {
     customObjectTrait1, setCustomObjectTrait1, customObjectTrait2, setCustomObjectTrait2,
     isPersonalGame, posLabel,
     customObjectData, setSelectedItem, selectedPosition,
-  } = p;
+  } = p as any;
   return (
 
         <div>
