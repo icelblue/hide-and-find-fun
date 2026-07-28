@@ -173,7 +173,7 @@ const CONSUMABLE_ICONS: Record<string, string> = {
 async function applyReward(
   userId: string,
   rewardType: string | null,
-  rewardValue: unknown,
+  rewardValue: any,
   xpMultiplier: number = 1,
 ): Promise<RewardOutcome> {
   if (!rewardType || !rewardValue) return {};
@@ -372,7 +372,7 @@ export async function submitDailyChoice(
     node_id: choice.node_id,
     choice_id: choice.id,
     reward_type: choice.reward_type,
-    reward_value: choice.reward_value,
+    reward_value: choice.reward_value as any,
   });
   if (error && error.code === "23505") {
     return { reward, alreadyDone: true };
