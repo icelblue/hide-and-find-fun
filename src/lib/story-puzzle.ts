@@ -33,8 +33,9 @@ export interface PuzzleAttemptRow {
   skipped_at: string | null;
 }
 
-export function parsePuzzle(raw: unknown): StoryPuzzle | null {
-  if (!raw || typeof raw !== "object") return null;
+export function parsePuzzle(rawIn: unknown): StoryPuzzle | null {
+  if (!rawIn || typeof rawIn !== "object") return null;
+  const raw = rawIn as any;
   if (raw.type !== "ingredient_order") return null;
   if (!Array.isArray(raw.valid_items) || !Array.isArray(raw.correct_order)) return null;
   if (raw.correct_order.length === 0) return null;

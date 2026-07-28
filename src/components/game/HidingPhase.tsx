@@ -18,7 +18,7 @@ import ObjectIcon from "@/components/game/ObjectIcon";
 import ScenarioPicker from "@/components/game/ScenarioPicker";
 import { getMaterialBlockReason } from "@/lib/api/materials-api";
 
-interface Props { p: Record<string, unknown> }
+interface Props { p: Record<string, any> }
 
 export default function HidingPhase({ p }: Props) {
   const {

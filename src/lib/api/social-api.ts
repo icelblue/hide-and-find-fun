@@ -69,7 +69,7 @@ export async function sendSocialItem(
 
   // Use safe RPC to read opponent data (SELECT restricted to own rows)
   const { data: safePlayers } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
-  const toPlayer = ((safePlayers as Record<string, unknown>[]) ?? []).find((p) => p.user_id === toPlayerId) ?? null;
+  const toPlayer = ((safePlayers as Record<string, any>[]) ?? []).find((p) => p.user_id === toPlayerId) ?? null;
 
   const blocked = !!(toPlayer?.shield_active && (itemType === "banana" || itemType === "swap" || itemType === "robar_tornavis" || itemType === "barricada"));
 
@@ -104,7 +104,7 @@ export async function sendSocialItem(
           tag: `social-${gameId}`,
         },
       }).catch(() => {});
-      return { blocked: false, espiaResult: null, smokeBombResult: bombResult as Record<string, unknown> };
+      return { blocked: false, espiaResult: null, smokeBombResult: bombResult as Record<string, any> };
     } else if (itemType === "swap") {
       const { error: swapErr } = await supabase.rpc("execute_swap", { _game_id: gameId });
       if (swapErr) throw new Error(swapErr.message);
@@ -158,7 +158,7 @@ export async function sendSocialItem(
         _game_id: gameId, _scenario_from: extraData.scenarioFrom, _scenario_to: extraData.scenarioTo,
       });
       if (barErr) throw new Error(barErr.message);
-      if (barResult?.blocked) {
+      if ((barResult as any)?.blocked) {
         return { blocked: true, espiaResult: null };
       }
       supabase.functions.invoke("send-push", {
@@ -169,7 +169,7 @@ export async function sendSocialItem(
           url: `/game/${gameId}`, tag: `social-${gameId}`,
         },
       }).catch(() => {});
-      return { blocked: false, espiaResult: null, barricadaResult: barResult as Record<string, unknown> };
+      return { blocked: false, espiaResult: null, barricadaResult: barResult as Record<string, any> };
     } else if (itemType === "trampa") {
       if (!extraData?.itemId) throw new Error("Has de seleccionar un moble!");
       const { data: trapResult, error: trapErr } = await supabase.rpc("execute_trampa", {
@@ -184,7 +184,7 @@ export async function sendSocialItem(
           url: `/game/${gameId}`, tag: `social-${gameId}`,
         },
       }).catch(() => {});
-      return { blocked: false, espiaResult: null, trampaResult: trapResult as Record<string, unknown> };
+      return { blocked: false, espiaResult: null, trampaResult: trapResult as Record<string, any> };
     }
   }
 

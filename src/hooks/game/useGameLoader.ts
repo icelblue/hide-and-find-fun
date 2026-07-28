@@ -38,7 +38,7 @@ export interface UseGameLoaderSetters {
   setConnectedScenarios: Setter<ScenarioRow[]>;
   setDirtyItems: Setter<Set<string>>;
   setBreakableItems: Setter<Set<string>>;
-  setItemInteractions: Setter<Record<string, unknown>[]>;
+  setItemInteractions: Setter<Record<string, any>[]>;
   setMoveHistory: Setter<MoveRow[]>;
   setGameBreaks: Setter<Set<string>>;
   setIlluminatedScenarios: Setter<Set<string>>;
@@ -55,7 +55,7 @@ export interface UseGameLoaderSetters {
 export interface UseGameLoaderOpts {
   gameId: string | undefined;
   user: { id: string } | null;
-  t: (key: string, opts?: Record<string, unknown> | string) => string;
+  t: (key: string, opts?: Record<string, any> | string) => string;
   personalDataRef: MutableRefObject<PersonalCombatData | null>;
   isLoadingGameRef: MutableRefObject<boolean>;
   pendingReloadRef: MutableRefObject<boolean>;
@@ -92,12 +92,12 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
         supabase.rpc("get_safe_game_players", { _game_id: gameId }),
       ]);
-      const safePlayersList = (safePlayers as Record<string, unknown>[]) ?? [];
+      const safePlayersList = (safePlayers as Record<string, any>[]) ?? [];
       const rivalData = safePlayersList.find((p) => p.user_id !== user.id) ?? null;
 
       S.setGame(gameData);
       S.setPhase((gameData?.status as Phase) ?? "waiting");
-      S.setRival(rivalData);
+      S.setRival(rivalData as any);
 
       if (playerData && (gameData?.status === "playing" || gameData?.status === "hiding")) {
         const resetTokens = await ensureTokensReset(playerData);
@@ -164,7 +164,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       const keys = Object.keys(batch) as QKey[];
       const results = await Promise.all(keys.map(k => batch[k]!));
-      const R: Partial<Record<QKey, { data?: unknown; error?: unknown } | Record<string, unknown>>> = {};
+      const R: Partial<Record<QKey, { data?: unknown; error?: unknown } | Record<string, any>>> = {};
       keys.forEach((k, i) => { R[k] = results[i]; });
 
       if (R.profile) S.setBonusAvailable(R.profile.data?.bonus_tokens ?? 0);
@@ -176,7 +176,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
       }
 
       if (R.traits) {
-        const traitsData = (R.traits as { data?: unknown })?.data as Record<string, unknown> | null;
+        const traitsData = (R.traits as { data?: unknown })?.data as Record<string, any> | null;
         if (traitsData) {
           S.setRivalTraits({ trait1: traitsData.trait1 ?? null, trait2: traitsData.trait2 ?? null });
         } else {
@@ -186,8 +186,8 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         S.setRivalTraits({ trait1: null, trait2: null });
       }
 
-      let loadedItems: Record<string, unknown>[] = [];
-      let loadedInteractions: Record<string, unknown>[] = [];
+      let loadedItems: Record<string, any>[] = [];
+      let loadedInteractions: Record<string, any>[] = [];
 
       if (isPlaying && isPersonalGame) {
         try {
@@ -205,7 +205,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
             : personal.items;
           const scenariosById = new Map(personal.scenarios.map((s) => [s.id, s]));
           const neighbors = currentScenId ? neighborsOf(currentScenId, personal.connections, scenariosById) : [];
-          S.setConnectedScenarios(neighbors);
+          S.setConnectedScenarios(neighbors as any);
           S.setDirtyItems(new Set());
           S.setBreakableItems(new Set());
         } catch (_raw_err) { const err = asError(_raw_err);
@@ -217,9 +217,9 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           const conn = Array.isArray(R.connected) ? R.connected : (R.connected?.data ?? []);
           S.setConnectedScenarios(conn);
         }
-        const gameDirty = getDirtyItemsForGame(loadedItems, gameId);
+        const gameDirty = getDirtyItemsForGame(loadedItems as any, gameId);
         S.setDirtyItems(gameDirty);
-        const gameBreakable = getBreakableItemsForGame(loadedItems, gameId);
+        const gameBreakable = getBreakableItemsForGame(loadedItems as any, gameId);
         S.setBreakableItems(gameBreakable);
 
         const hasDirtyHere = loadedItems.some((i) => gameDirty.has(i.id));
@@ -227,7 +227,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
             supabase.rpc("execute_grant_drap_if_available", { _game_id: gameId }).then(({ data }) => {
-              if (data?.granted) {
+              if ((data as any)?.granted) {
                 tools.drap = 1;
                 playerData.tools = tools;
                 S.setPlayerTools({ ...tools });
@@ -293,7 +293,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         if (isOutdoor && litScenarios.has(currentScenId)) return true;
         return false;
       });
-      S.setCurrentScenarioItems(visibleItems);
+      S.setCurrentScenarioItems(visibleItems as any);
 
       if (R.reward) S.setReward(R.reward);
 
@@ -313,7 +313,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           markPromises.push(markSocialItemProcessed(blocked.id));
         }
 
-        const unprocessed = R.unprocessedSocial ?? [];
+        const unprocessed = (R.unprocessedSocial ?? []) as any[];
         for (const item of unprocessed) {
           if (item.item_type === "banana") {
             const allPositions = ["sobre", "sota", "dins"] as const;

@@ -16,7 +16,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"basics" | "rules" | "rewards">("basics");
-  const [rewardCatalog, setRewardCatalog] = useState<Record<string, unknown>[]>([]);
+  const [rewardCatalog, setRewardCatalog] = useState<Record<string, any>[]>([]);
   const [scenarioMap, setScenarioMap] = useState<{ name: string; icon: string; connections: string[] }[]>([]);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   }, [open]);
 
   // Group rewards by rarity
-  const groupedRewards: Record<string, Record<string, unknown>[]> = {};
+  const groupedRewards: Record<string, Record<string, any>[]> = {};
   for (const r of RARITY_ORDER) groupedRewards[r] = [];
   for (const item of rewardCatalog) {
     if (groupedRewards[item.rarity]) groupedRewards[item.rarity].push(item);

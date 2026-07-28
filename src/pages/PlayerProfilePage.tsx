@@ -43,15 +43,15 @@ export default function PlayerProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const t = useT();
-  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
-  const [messages, setMessages] = useState<Record<string, unknown>[]>([]);
-  const [trophies, setTrophies] = useState<Record<string, unknown>[]>([]);
-  const [pet, setPet] = useState<Record<string, unknown> | null>(null);
-  const [petAccessories, setPetAccessories] = useState<Record<string, unknown>[]>([]);
-  const [petEvents, setPetEvents] = useState<Record<string, unknown>[]>([]);
-  const [myConsumables, setMyConsumables] = useState<Record<string, unknown>[]>([]);
+  const [profile, setProfile] = useState<Record<string, any> | null>(null);
+  const [messages, setMessages] = useState<Record<string, any>[]>([]);
+  const [trophies, setTrophies] = useState<Record<string, any>[]>([]);
+  const [pet, setPet] = useState<Record<string, any> | null>(null);
+  const [petAccessories, setPetAccessories] = useState<Record<string, any>[]>([]);
+  const [petEvents, setPetEvents] = useState<Record<string, any>[]>([]);
+  const [myConsumables, setMyConsumables] = useState<Record<string, any>[]>([]);
   const [giftingConsumable, setGiftingConsumable] = useState(false);
-  const [myStoryInventory, setMyStoryInventory] = useState<Record<string, unknown>[]>([]);
+  const [myStoryInventory, setMyStoryInventory] = useState<Record<string, any>[]>([]);
   const [sendingVisit, setSendingVisit] = useState(false);
   const [giftingItem, setGiftingItem] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
@@ -84,7 +84,7 @@ export default function PlayerProfilePage() {
     setPetEvents(events);
 
     // Fetch author names
-    const wallMsgs: Record<string, unknown>[] = (msgs ?? []) as Record<string, unknown>[];
+    const wallMsgs: Record<string, any>[] = (msgs ?? []) as Record<string, any>[];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
@@ -119,7 +119,7 @@ export default function PlayerProfilePage() {
         _consumable_name: consumableName,
       });
       if (error) throw error;
-      const result = data as Record<string, unknown>;
+      const result = data as Record<string, any>;
       toast.success(`Has curat ${result.pet_name}! -${result.healed} XP 💊`);
       await loadData();
     } catch (_raw_err) { const err = asError(_raw_err);
@@ -145,7 +145,7 @@ export default function PlayerProfilePage() {
     }
   };
 
-  const handleGiftItem = async (item: Record<string, unknown>) => {
+  const handleGiftItem = async (item: Record<string, any>) => {
     if (!user || !userId) return;
     setGiftingItem(item.id);
     try {
@@ -409,7 +409,7 @@ export default function PlayerProfilePage() {
         ) : (
           <div className="space-y-2">
             {trophies.map((t) => {
-              const sd = t.special_data as Record<string, unknown> | null;
+              const sd = t.special_data as Record<string, any> | null;
               return (
                 <Card key={t.id} className="glass border-accent/30">
                   <CardContent className="py-2.5 flex items-center gap-3">
@@ -505,7 +505,7 @@ export default function PlayerProfilePage() {
 
 /** Vitrina — shows which reward items this player has collected */
 function PlayerVitrina({ userId }: { userId: string }) {
-  const [catalog, setCatalog] = useState<Record<string, unknown>[]>([]);
+  const [catalog, setCatalog] = useState<Record<string, any>[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 

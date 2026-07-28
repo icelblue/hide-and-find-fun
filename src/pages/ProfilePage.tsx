@@ -38,18 +38,18 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const t = useT();
   const { lang } = useLanguage();
-  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
-  const [rewards, setRewards] = useState<Record<string, unknown>[]>([]);
-  const [scenarios, setScenarios] = useState<Record<string, unknown>[]>([]);
-  const [placingReward, setPlacingReward] = useState<Record<string, unknown> | null>(null);
-  const [sellingReward, setSellingReward] = useState<Record<string, unknown> | null>(null);
+  const [profile, setProfile] = useState<Record<string, any> | null>(null);
+  const [rewards, setRewards] = useState<Record<string, any>[]>([]);
+  const [scenarios, setScenarios] = useState<Record<string, any>[]>([]);
+  const [placingReward, setPlacingReward] = useState<Record<string, any> | null>(null);
+  const [sellingReward, setSellingReward] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(false);
-  const [wallMessages, setWallMessages] = useState<Record<string, unknown>[]>([]);
-  const [activeGames, setActiveGames] = useState<Record<string, unknown>[]>([]);
-  const [trophies, setTrophies] = useState<Record<string, unknown>[]>([]);
-  const [pet, setPet] = useState<Record<string, unknown> | null>(null);
-  const [petAccessories, setPetAccessories] = useState<Record<string, unknown>[]>([]);
-  const [petEvents, setPetEvents] = useState<Record<string, unknown>[]>([]);
+  const [wallMessages, setWallMessages] = useState<Record<string, any>[]>([]);
+  const [activeGames, setActiveGames] = useState<Record<string, any>[]>([]);
+  const [trophies, setTrophies] = useState<Record<string, any>[]>([]);
+  const [pet, setPet] = useState<Record<string, any> | null>(null);
+  const [petAccessories, setPetAccessories] = useState<Record<string, any>[]>([]);
+  const [petEvents, setPetEvents] = useState<Record<string, any>[]>([]);
   const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
   const [topRival, setTopRival] = useState<{ name: string; count: number; userId: string } | null>(null);
   const [editingName, setEditingName] = useState(false);
@@ -97,7 +97,7 @@ export default function ProfilePage() {
     if (myGames && myGames.length > 0) {
       const gameIds = myGames.map(g => g.game_id);
       const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: gameIds });
-      const filteredPlayers = ((allPlayers as Record<string, unknown>[]) ?? []).filter((p) => p.user_id !== user.id);
+      const filteredPlayers = ((allPlayers as Record<string, any>[]) ?? []).filter((p) => p.user_id !== user.id);
       if (filteredPlayers && filteredPlayers.length > 0) {
         const counts: Record<string, number> = {};
         for (const p of filteredPlayers) {
@@ -116,7 +116,7 @@ export default function ProfilePage() {
       }
     }
 
-    const wallMsgs: Record<string, unknown>[] = (msgs ?? []) as Record<string, unknown>[];
+    const wallMsgs: Record<string, any>[] = (msgs ?? []) as Record<string, any>[];
     if (wallMsgs.length > 0) {
       const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
       const { data: authors } = await supabase.from("profiles").select("user_id, display_name").in("user_id", authorIds);
@@ -141,7 +141,7 @@ export default function ProfilePage() {
           itmIds.length > 0 ? supabase.from("items").select("id, name, icon, scenario_id").in("id", itmIds) : { data: [] },
           supabase.rpc("get_game_participants", { _game_ids: activeGameIds }),
         ]);
-        const rivalPlayers = ((rivalParticipants.data as Record<string, unknown>[]) ?? []).filter((rp) => rp.user_id !== user.id);
+        const rivalPlayers = ((rivalParticipants.data as Record<string, any>[]) ?? []).filter((rp) => rp.user_id !== user.id);
         const rivalUserIds = [...new Set(rivalPlayers.map((rp) => rp.user_id as string))];
         let rivalNameMap = new Map<string, string>();
         if (rivalUserIds.length > 0) {
@@ -154,9 +154,9 @@ export default function ProfilePage() {
         // Translate object/item/scenario names via supabase-helpers? They go via direct queries here.
         // Apply lightweight translation via translateRows for consistency.
         const { translateRows } = await import("@/i18n/translate-data");
-        const tObjs = await translateRows((objs ?? []) as Record<string, unknown>[], "pvp_object_name", "id", "name");
-        const tItms = await translateRows((itms ?? []) as Record<string, unknown>[], "pvp_item_name", "id", "name");
-        const tScen = await translateRows(scen as Record<string, unknown>[], "pvp_scenario_name", "id", "name");
+        const tObjs = await translateRows((objs ?? []) as Record<string, any>[], "pvp_object_name", "id", "name");
+        const tItms = await translateRows((itms ?? []) as Record<string, any>[], "pvp_item_name", "id", "name");
+        const tScen = await translateRows(scen as Record<string, any>[], "pvp_scenario_name", "id", "name");
 
         const objMap = new Map(tObjs.map((o) => [o.id, o] as [string, unknown]));
         const itmMap = new Map(tItms.map((i) => [i.id, i] as [string, unknown]));
@@ -166,7 +166,7 @@ export default function ProfilePage() {
           const gp = myGamePlayers.find(p => p.game_id === g.id);
           const obj = gp?.hidden_object_id ? objMap.get(gp.hidden_object_id) : null;
           const itm = gp?.hidden_item_id ? itmMap.get(gp.hidden_item_id) : null;
-          const scn = itm ? scenMap.get(itm.scenario_id) : null;
+          const scn = itm ? scenMap.get((itm as any).scenario_id) : null;
           return {
             ...g, hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
             hiddenPosition: gp?.hidden_position, hasHidden: gp?.has_hidden,
@@ -487,7 +487,7 @@ export default function ProfilePage() {
               </h2>
               <div className="space-y-2">
                 {trophies.map((tr) => {
-                  const sd = tr.special_data as Record<string, unknown> | null;
+                  const sd = tr.special_data as Record<string, any> | null;
                   return (
                     <Card key={tr.id} className="glass border-accent/30">
                       <CardContent className="py-2.5 flex items-center gap-3">
@@ -619,7 +619,7 @@ export default function ProfilePage() {
 function ReferralsSection({ userId }: { userId: string }) {
   const t = useT();
   const [link, setLink] = useState<{ code: string; url: string } | null>(null);
-  const [referrals, setReferrals] = useState<Record<string, unknown>[]>([]);
+  const [referrals, setReferrals] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -700,7 +700,7 @@ function ReferralsSection({ userId }: { userId: string }) {
 function WonObjectsSection({ userId }: { userId: string }) {
   const t = useT();
   const { lang } = useLanguage();
-  const [catalog, setCatalog] = useState<Record<string, unknown>[]>([]);
+  const [catalog, setCatalog] = useState<Record<string, any>[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 

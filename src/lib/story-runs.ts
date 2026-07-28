@@ -173,7 +173,7 @@ const CONSUMABLE_ICONS: Record<string, string> = {
 async function applyReward(
   userId: string,
   rewardType: string | null,
-  rewardValue: unknown,
+  rewardValue: any,
   xpMultiplier: number = 1,
 ): Promise<RewardOutcome> {
   if (!rewardType || !rewardValue) return {};
@@ -272,7 +272,7 @@ export async function makeChoice(
 
   const newPath = [...(run.path ?? []), ...(nextNode ? [nextNode.id] : [])];
 
-  const update: Record<string, unknown> = { current_node_id: nextNode?.id ?? run.current_node_id, path: newPath };
+  const update: Record<string, any> = { current_node_id: nextNode?.id ?? run.current_node_id, path: newPath };
   if (endStatus) {
     update.status = endStatus;
     update.ending_type = endStatus === "dead" ? "death" : nextNode?.ending_type ?? null;
@@ -372,7 +372,7 @@ export async function submitDailyChoice(
     node_id: choice.node_id,
     choice_id: choice.id,
     reward_type: choice.reward_type,
-    reward_value: choice.reward_value,
+    reward_value: choice.reward_value as any,
   });
   if (error && error.code === "23505") {
     return { reward, alreadyDone: true };

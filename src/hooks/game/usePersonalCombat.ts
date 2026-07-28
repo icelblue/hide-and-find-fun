@@ -15,9 +15,9 @@ import {
 } from "@/lib/personal-pvp-adapter";
 
 export interface UsePersonalCombatOpts {
-  game: Record<string, unknown> | null;
-  setScenarios: Dispatch<SetStateAction<Record<string, unknown>[]>>;
-  setObjects: Dispatch<SetStateAction<Record<string, unknown>[]>>;
+  game: Record<string, any> | null;
+  setScenarios: Dispatch<SetStateAction<Record<string, any>[]>>;
+  setObjects: Dispatch<SetStateAction<Record<string, any>[]>>;
 }
 
 export interface UsePersonalCombatResult {
@@ -40,8 +40,8 @@ export function usePersonalCombat({ game, setScenarios, setObjects }: UsePersona
         const personal = hostId
           ? await loadPersonalCombatDataFromRooms(hostId, hostId)
           : await loadPersonalCombatData(
-              (game as Record<string, unknown>).host_space_snapshot,
-              (game as Record<string, unknown>).guest_space_snapshot
+              (game as Record<string, any>).host_space_snapshot,
+              (game as Record<string, any>).guest_space_snapshot
             );
         if (cancelled) return;
         personalDataRef.current = personal;

@@ -85,8 +85,8 @@ import enBundle from "@/i18n/en.json";
 
 describe("authErrors: claus existents als bundles", () => {
   it("cada clau authErrors.* té traducció ca i en", () => {
-    const caKeys = Object.keys((caBundle as Record<string, Record<string, string>>).authErrors ?? {});
-    const enKeys = Object.keys((enBundle as Record<string, Record<string, string>>).authErrors ?? {});
+    const caKeys = Object.keys((caBundle as unknown as Record<string, Record<string, string>>).authErrors ?? {});
+    const enKeys = Object.keys((enBundle as unknown as Record<string, Record<string, string>>).authErrors ?? {});
     expect(caKeys.length).toBeGreaterThan(10);
     expect(new Set(enKeys)).toEqual(new Set(caKeys));
   });

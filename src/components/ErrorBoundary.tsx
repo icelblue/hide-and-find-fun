@@ -26,9 +26,9 @@ import enStrings from "@/i18n/en.json";
  *  component de classe i no pot usar el hook useT). */
 function tBoundary(key: string): string {
   const lang = typeof window !== "undefined" && localStorage.getItem("lang") === "en" ? "en" : "ca";
-  const bundle: Record<string, unknown> = lang === "en" ? enStrings : caStrings;
+  const bundle: Record<string, any> = lang === "en" ? enStrings : caStrings;
   const val = key.split(".").reduce<unknown>((acc, k) =>
-    acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined, bundle);
+    acc && typeof acc === "object" ? (acc as Record<string, any>)[k] : undefined, bundle);
   return typeof val === "string" ? val : key;
 }
 
@@ -110,7 +110,7 @@ export async function logError(
   message: string,
   stack?: string,
   component?: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, any>
 ) {
   try {
     if (!shouldReport(message)) return;

@@ -44,7 +44,7 @@ const leagueBadge: Record<string, string> = {
 
 /** Extracted component so we can use useState legally (not inside .map) */
 function MyGameCard({ gp, userId, loading, onNavigate, onJoin, onDecline, onDelete, onDismiss }: {
-  gp: Record<string, unknown>; userId?: string; loading: boolean;
+  gp: Record<string, any>; userId?: string; loading: boolean;
   onNavigate: (id: string) => void; onJoin: (id: string) => Promise<void>;
   onDecline: (id: string) => Promise<void>; onDelete: (id: string) => Promise<void>;
   onDismiss: (id: string) => void;
@@ -188,7 +188,7 @@ export default function LobbyPage() {
 
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Record<string, unknown>[]>([]);
+  const [searchResults, setSearchResults] = useState<Record<string, any>[]>([]);
   const [searching, setSearching] = useState(false);
 
   // Create game dialog state
@@ -196,7 +196,7 @@ export default function LobbyPage() {
   const [createMode, setCreateMode] = useState<"pick" | "personal">("pick");
   const [personalPlacedCount, setPersonalPlacedCount] = useState<number | null>(null);
   const [personalSearch, setPersonalSearch] = useState("");
-  const [personalResults, setPersonalResults] = useState<Record<string, unknown>[]>([]);
+  const [personalResults, setPersonalResults] = useState<Record<string, any>[]>([]);
   const [personalSearching, setPersonalSearching] = useState(false);
 
   const { data: games = [] } = useQuery({
