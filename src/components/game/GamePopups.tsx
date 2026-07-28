@@ -9,13 +9,13 @@ import { useT } from "@/i18n/LanguageProvider";
 import ObjectIcon from "@/components/game/ObjectIcon";
 
 interface SpecialFoundPopupProps {
-  show: Record<string, unknown> | boolean | null;
+  show: Record<string, any> | boolean | null;
   rival: PlayerRow | null;
   objects: ObjectRow[];
   specialFoundInput: string;
-  specialFoundVariant: Record<string, unknown> | null;
+  specialFoundVariant: Record<string, any> | null;
   onInputChange: (value: string) => void;
-  onVariantChange: (variant: Record<string, unknown> | null) => void;
+  onVariantChange: (variant: Record<string, any> | null) => void;
   onSubmit: () => void;
   onClose: () => void;
 }
@@ -42,10 +42,10 @@ export function SpecialFoundPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md" role="dialog" aria-modal="true" aria-label={t("game.popups.specialFoundTitle")}>
       <Card className="mx-4 max-w-sm glass glow-accent" onClick={e => e.stopPropagation()}>
         <CardContent className="py-6 text-center">
-          <div className="flex justify-center mb-3">{(() => { const o = objects.find((x) => x.id === rival?.hidden_object_id); const sd = rival?.special_data as Record<string, unknown> | null; return <ObjectIcon name={o?.name} emoji={sd?.custom_icon ?? o?.icon} size={72} />; })()}</div>
+          <div className="flex justify-center mb-3">{(() => { const o = objects.find((x) => x.id === rival?.hidden_object_id); const sd = rival?.special_data as Record<string, any> | null; return <ObjectIcon name={o?.name} emoji={sd?.custom_icon ?? o?.icon} size={72} />; })()}</div>
           <p className="font-bold text-lg mb-1">{t("game.popups.specialFoundTitle")}</p>
           {(() => {
-            const sd = rival?.special_data as Record<string, unknown> | null;
+            const sd = rival?.special_data as Record<string, any> | null;
             const hm = sd?.hide_message;
             return hm ? (
               <div className="mb-3 p-2 rounded-lg bg-accent/10 border border-accent/30">

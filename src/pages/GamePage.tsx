@@ -177,15 +177,15 @@ export default function GamePage() {
   const [bananaEffect, setBananaEffect] = useState(false);
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [reward, setReward] = useState<Record<string, unknown> | null>(null);
+  const [reward, setReward] = useState<Record<string, any> | null>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
   const [rivalSmokeBombAt, setRivalSmokeBombAt] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
-  const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<Record<string, unknown> | null>(null);
+  const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<Record<string, any> | null>(null);
   const [winFoundPopup, setWinFoundPopup] = useState<{ objectIcon?: string; objectName?: string; itemIcon?: string; itemName?: string; positionLabel?: string; rivalName?: string } | null>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
-  const [specialFoundVariant, setSpecialFoundVariant] = useState<Record<string, unknown> | null>(null);
+  const [specialFoundVariant, setSpecialFoundVariant] = useState<Record<string, any> | null>(null);
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
   const [bonusAvailable, setBonusAvailable] = useState(0);
   const [bonusAmount, setBonusAmount] = useState(1);
@@ -195,7 +195,7 @@ export default function GamePage() {
   // Story mode
   const isStory = false; // 🔒 Story mode v4 viu a /story (StoryModePage). PvP no usa is_story.
   const storyChapter: number | undefined = undefined;
-  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: Record<string, unknown> | null; consumable?: Record<string, unknown> | null } | null>(null);
+  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: Record<string, any> | null; consumable?: Record<string, any> | null } | null>(null);
 
   // ── Personal PvP: override scenaris/objectes amb el snapshot (via hook) ──
   const { isPersonalGame, personalDataRef } = usePersonalCombat({ game, setScenarios, setObjects });
@@ -370,7 +370,7 @@ export default function GamePage() {
     }
   };
 
-  const doHide = async (pos?: Position, extraSpecialData?: Record<string, unknown>) => {
+  const doHide = async (pos?: Position, extraSpecialData?: Record<string, any>) => {
     const finalPos = pos || selectedPosition as Position;
     if (!gameId || !user || !finalPos || (actionLoading && !hidingSubmitRef.current)) return;
     setActionLoading(true);
@@ -437,7 +437,7 @@ export default function GamePage() {
     finally { setActionLoading(false); }
   };
 
-  const handleInteraction = async (interaction: Record<string, unknown>) => {
+  const handleInteraction = async (interaction: Record<string, any>) => {
     if (!gameId || !user || !player) return;
     const alreadyUsed = moveHistory.some((m) =>
       m.action === "look" && m.target_item_id === interaction.item_id &&
@@ -448,7 +448,7 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
-      const data = interaction.effect_data as Record<string, unknown> | null;
+      const data = interaction.effect_data as Record<string, any> | null;
       if (interaction.effect_type === "reveal_items") toast.success(t("game.toasts.revealItems", { icon: interaction.action_icon, msg: data.message || t("game.toasts.revealItemsDefault") }), { duration: 6000 });
       else if (interaction.effect_type === "reveal_content") toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
       else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || t("game.toasts.hintReceived")}`, { duration: 5000 });
@@ -557,8 +557,8 @@ export default function GamePage() {
         if (isStory && storyChapter) {
           const movesCount = (moveHistory?.length ?? 0) + 1;
           const storyRes = await completeChapter(user.id, storyChapter, movesCount);
-          let wonAccessory: Record<string, unknown> | null = null;
-          let wonConsumable: Record<string, unknown> | null = null;
+          let wonAccessory: Record<string, any> | null = null;
+          let wonConsumable: Record<string, any> | null = null;
           if (storyChapter >= 3) {
             const accIdx = storyChapter - 3;
             if (accIdx < PET_ACCESSORIES.length) {
@@ -598,7 +598,7 @@ export default function GamePage() {
         } else {
           // PvP win: fetch revealed rival data FIRST (RLS hides hidden_object_id until game finishes)
           const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
-          const resolvedRival = ((safePlayersAfterWin as Record<string, unknown>[]) ?? []).find((p) => p.user_id !== user.id) ?? rival;
+          const resolvedRival = ((safePlayersAfterWin as Record<string, any>[]) ?? []).find((p) => p.user_id !== user.id) ?? rival;
           setRival(resolvedRival);
 
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", resolvedRival?.user_id ?? "").maybeSingle();
@@ -608,7 +608,7 @@ export default function GamePage() {
             const { data: objRow } = await supabase.from("objects").select("name, icon").eq("id", foundObjectId).maybeSingle();
             foundObj = objRow;
           }
-          const rivalSD = resolvedRival?.special_data as Record<string, unknown> | null;
+          const rivalSD = resolvedRival?.special_data as Record<string, any> | null;
           const isCustomFound = rivalSD?.is_custom === true;
 
           // Determine if a special popup will appear (custom objects no tenen special)
@@ -796,7 +796,7 @@ export default function GamePage() {
       moveHistory.forEach((m) => m?.id && seenRevealMoveIdsRef.current.add(m.id));
       return;
     }
-    for (const m of moveHistory as Record<string, unknown>[]) {
+    for (const m of moveHistory as Record<string, any>[]) {
       if (!m?.id || seenRevealMoveIdsRef.current.has(m.id)) continue;
       seenRevealMoveIdsRef.current.add(m.id);
       if (m.action !== "look" || m.user_id !== user.id) continue;
@@ -824,11 +824,11 @@ export default function GamePage() {
 
   
 // Files de BD + camps que el codi afegeix o llegeix en runtime
-type GameRow = Tables<"games"> & Record<string, unknown>;
-type PlayerRow = Tables<"game_players"> & Record<string, unknown>;
+type GameRow = Tables<"games"> & Record<string, any>;
+type PlayerRow = Tables<"game_players"> & Record<string, any>;
 type ScenarioRow = Tables<"scenarios"> & { themeHint?: string | null };
-type ObjectRow = Tables<"objects"> & Record<string, unknown>;
-type ItemRow = Tables<"items"> & Record<string, unknown>;
+type ObjectRow = Tables<"objects"> & Record<string, any>;
+type ItemRow = Tables<"items"> & Record<string, any>;
 
 const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.steps.item"), t("game.steps.position")];
 
@@ -1003,7 +1003,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
               {objectSpecial.special_type === "choose_variant" && objectSpecial.variants && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2">
-                    {(objectSpecial.variants as Record<string, unknown>[]).map((v) => (
+                    {(objectSpecial.variants as Record<string, any>[]).map((v) => (
                       <Card key={v.value}
                         className={`cursor-pointer glass transition-all active:scale-[0.97] ${selectedVariant?.value === v.value ? "border-primary glow-primary" : "hover:border-primary/40"}`}
                         onClick={() => setSelectedVariant(v)}>

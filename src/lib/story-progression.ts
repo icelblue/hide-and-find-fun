@@ -100,7 +100,7 @@ export async function getAllWorlds(): Promise<World[]> {
   const lang = getCurrentLang();
   if (_worldsCache && _worldsLang === lang) return _worldsCache;
   const { data } = await supabase.from("story_worlds").select("*").order("display_order");
-  const raw = ((data ?? []) as Record<string, unknown>[]).map((w) => ({
+  const raw = ((data ?? []) as Record<string, any>[]).map((w) => ({
     ...w,
     chapters: w.chapters ?? [],
     unlock_rule: w.unlock_rule ?? {},
@@ -218,10 +218,10 @@ export async function getJournal(userId: string): Promise<JournalSummary> {
     .map((r) => recMap.get(r.recipe_id))
     .filter(Boolean)
     .map((r) => ({ id: r.id, name: r.name, icon: r.icon }));
-  const allEndings = (allEndingsRes.data ?? []) as Record<string, unknown>[];
+  const allEndings = (allEndingsRes.data ?? []) as Record<string, any>[];
   const seenIds = new Set((endingsSeenRes.data ?? []).map((r) => r.current_node_id).filter(Boolean));
   const endingsSeen = allEndings.filter((e) => seenIds.has(e.id)).map((e) => ({ id: e.id, title: e.title }));
-  const itemsFound = ((invRes.data ?? []) as Record<string, unknown>[]).map((i) => ({
+  const itemsFound = ((invRes.data ?? []) as Record<string, any>[]).map((i) => ({
     id: i.item_id, name: i.item_name, icon: i.item_icon, obtained_at: i.obtained_at,
   }));
   return {

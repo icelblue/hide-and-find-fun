@@ -8,7 +8,7 @@ import { useT } from "@/i18n/LanguageProvider";
 
 
 interface ItemActionsProps {
-  item: Record<string, unknown>;
+  item: Record<string, any>;
   positions: readonly { value: Position; label: string; icon: string }[];
   onLook: (id: string, pos: Position) => void;
   disabled: boolean;
@@ -16,9 +16,9 @@ interface ItemActionsProps {
   lookedSpots: Set<string>;
   bananaBlockedSpot: string | null;
   revealedSpecials?: Map<string, { type: "curse" | "bonus"; value: number }>;
-  interactions?: Record<string, unknown>[];
-  onInteraction?: (interaction: Record<string, unknown>) => void;
-  moveHistory?: Record<string, unknown>[];
+  interactions?: Record<string, any>[];
+  onInteraction?: (interaction: Record<string, any>) => void;
+  moveHistory?: Record<string, any>[];
   playerTools?: PlayerTools;
   gameBreaks?: Set<string>;
   onTagAction?: (itemId: string, actionKey: string) => void;

@@ -7,15 +7,15 @@
 import caStrings from "@/i18n/ca.json";
 import enStrings from "@/i18n/en.json";
 
-const BUNDLES: Record<string, Record<string, unknown>> = {
-  ca: caStrings as Record<string, unknown>,
-  en: enStrings as Record<string, unknown>,
+const BUNDLES: Record<string, Record<string, any>> = {
+  ca: caStrings as Record<string, any>,
+  en: enStrings as Record<string, any>,
 };
 
-function deepGet(obj: Record<string, unknown>, path: string): string | undefined {
+function deepGet(obj: Record<string, any>, path: string): string | undefined {
   return path.split(".").reduce<unknown>((acc, k) => {
-    if (acc && typeof acc === "object" && k in (acc as Record<string, unknown>)) {
-      return (acc as Record<string, unknown>)[k];
+    if (acc && typeof acc === "object" && k in (acc as Record<string, any>)) {
+      return (acc as Record<string, any>)[k];
     }
     return undefined;
   }, obj) as string | undefined;

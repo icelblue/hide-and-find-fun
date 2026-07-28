@@ -17,7 +17,7 @@ export interface UseGameRealtimeOpts {
   gameId: string | undefined;
   user: { id: string } | null;
   isStory: boolean;
-  t: (key: string, opts?: Record<string, unknown> | string) => string;
+  t: (key: string, opts?: Record<string, any> | string) => string;
   loadGame: () => Promise<void>;
   scheduleLoadGame: (delay?: number) => void;
   currentScenarioItems: ItemRow[];
@@ -46,7 +46,7 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
     playerRef.current = player;
   }, [currentScenarioItems, player]);
 
-  const handleRealtimeSocialItem = useCallback(async (item: Record<string, unknown>) => {
+  const handleRealtimeSocialItem = useCallback(async (item: Record<string, any>) => {
     if (!user || item?.to_player_id !== user.id || item?.processed) return;
     if (item.blocked_by_shield) return;
 
@@ -102,7 +102,7 @@ export function useGameRealtime(opts: UseGameRealtimeOpts): void {
       // a cada moviment, així que escoltar `games` cobreix tota l'activitat.
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => scheduleLoadGame())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload) => {
-        void handleRealtimeSocialItem(payload.new as Record<string, unknown>);
+        void handleRealtimeSocialItem(payload.new as Record<string, any>);
       })
       .subscribe();
     return () => {

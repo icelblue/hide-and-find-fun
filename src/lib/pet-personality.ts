@@ -34,7 +34,7 @@ async function loadSpeciesCache(): Promise<Map<string, Personality>> {
   if (_speciesCache) return _speciesCache;
   const { data } = await supabase.from("pet_species_traits").select("*");
   const map = new Map<string, Personality>();
-  for (const row of (data ?? []) as Record<string, unknown>[]) {
+  for (const row of (data ?? []) as Record<string, any>[]) {
     map.set(row.pet_type, {
       curious: row.curious, loyal: row.loyal, brave: row.brave,
       gluttonous: row.gluttonous, calm: row.calm,

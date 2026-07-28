@@ -8,7 +8,7 @@ for (const c of PET_CONSUMABLES) {
 }
 
 interface PetHealthBadgeProps {
-  activeEvents: Record<string, unknown>[];
+  activeEvents: Record<string, any>[];
   petName?: string;
   compact?: boolean;
 }

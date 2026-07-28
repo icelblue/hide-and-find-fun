@@ -11,20 +11,20 @@ import { useT } from "@/i18n/LanguageProvider";
 interface SocialItemsPanelProps {
   showPanel: boolean;
   setShowPanel: (show: boolean) => void;
-  player: Record<string, unknown> | null;
+  player: Record<string, any> | null;
   onSendSocial: (type: SocialItemType, extraData?: { scenarioFrom?: string; scenarioTo?: string; itemId?: string }) => void;
   messageInput: string;
   setMessageInput: (msg: string) => void;
   actionLoading?: boolean;
-  connectedScenarios?: Record<string, unknown>[];
+  connectedScenarios?: Record<string, any>[];
   currentScenarioId?: string;
-  currentScenarioItems?: Record<string, unknown>[];
+  currentScenarioItems?: Record<string, any>[];
 }
 
 /** Items with 2 daily uses tracked via special_data */
 const MULTI_USE_ITEMS = new Set<string>(["barricada", "trampa"]);
 
-function getMultiUseCount(player: Record<string, unknown> | null, type: string): number {
+function getMultiUseCount(player: Record<string, any> | null, type: string): number {
   const special = player?.special_data ?? {};
   const today = new Date().toISOString().split("T")[0];
   if (player?.tokens_last_reset < today) return 0;

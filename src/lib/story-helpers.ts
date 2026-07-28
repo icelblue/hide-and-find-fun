@@ -260,7 +260,7 @@ export async function useConsumable(userId: string, consumableName: string) {
 // CPU LOGIC (random decisions)
 // ============================================
 
-export function cpuChooseHidingSpot(items: Array<Record<string, unknown>>, objects: Array<Record<string, unknown>>) {
+export function cpuChooseHidingSpot(items: Array<Record<string, any>>, objects: Array<Record<string, any>>) {
   if (items.length === 0 || objects.length === 0) return null;
   const item = items[Math.floor(Math.random() * items.length)];
   const obj = objects[Math.floor(Math.random() * objects.length)];

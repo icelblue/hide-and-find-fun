@@ -272,7 +272,7 @@ export async function makeChoice(
 
   const newPath = [...(run.path ?? []), ...(nextNode ? [nextNode.id] : [])];
 
-  const update: Record<string, unknown> = { current_node_id: nextNode?.id ?? run.current_node_id, path: newPath };
+  const update: Record<string, any> = { current_node_id: nextNode?.id ?? run.current_node_id, path: newPath };
   if (endStatus) {
     update.status = endStatus;
     update.ending_type = endStatus === "dead" ? "death" : nextNode?.ending_type ?? null;

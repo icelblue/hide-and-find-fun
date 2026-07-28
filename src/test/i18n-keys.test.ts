@@ -12,11 +12,11 @@ import { join } from "node:path";
 import ca from "@/i18n/ca.json";
 import en from "@/i18n/en.json";
 
-function flatKeys(obj: Record<string, unknown>, prefix = ""): Set<string> {
+function flatKeys(obj: Record<string, any>, prefix = ""): Set<string> {
   const out = new Set<string>();
   for (const [k, v] of Object.entries(obj)) {
     if (v && typeof v === "object") {
-      for (const kk of flatKeys(v as Record<string, unknown>, prefix + k + ".")) out.add(kk);
+      for (const kk of flatKeys(v as Record<string, any>, prefix + k + ".")) out.add(kk);
     } else {
       out.add(prefix + k);
     }
@@ -36,8 +36,8 @@ function* walkSources(dir: string): Generator<string> {
   }
 }
 
-const caKeys = flatKeys(ca as Record<string, unknown>);
-const enKeys = flatKeys(en as Record<string, unknown>);
+const caKeys = flatKeys(ca as Record<string, any>);
+const enKeys = flatKeys(en as Record<string, any>);
 
 describe("i18n: coherència de claus", () => {
   it("ca.json i en.json tenen exactament les mateixes claus", () => {

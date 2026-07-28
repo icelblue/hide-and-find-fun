@@ -74,10 +74,10 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const [{ data: scenarioDataRaw }, { data: itemDataRaw }] = await Promise.all([
         scenarioIds.length > 0
           ? supabase.from("scenarios").select("id, name, icon").in("id", scenarioIds)
-          : { data: [] as Record<string, unknown>[] },
+          : { data: [] as Record<string, any>[] },
         itemIds.length > 0
           ? supabase.from("items").select("id, name, icon").in("id", itemIds)
-          : { data: [] as Record<string, unknown>[] },
+          : { data: [] as Record<string, any>[] },
       ]);
       const scenarioData = await translateRows(scenarioDataRaw ?? [], "pvp_scenario_name", "id", "name");
       const itemData = await translateRows(itemDataRaw ?? [], "pvp_item_name", "id", "name");
@@ -150,7 +150,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
     // Rival's hidden object — shown to BOTH (winner: trofeu, perdedor: descoberta)
     if (!rival) return;
     (async () => {
-      const rivalSD = rival.special_data as Record<string, unknown> | null;
+      const rivalSD = rival.special_data as Record<string, any> | null;
       const isCustom = rivalSD?.is_custom === true;
 
       const [{ data: objRaw }, { data: itmRaw }, { data: rivalProf }] = await Promise.all([
@@ -163,8 +163,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
       ]);
       const [objArr, itmArr] = await Promise.all([
-        objRaw ? translateRows([objRaw as Record<string, unknown>], "pvp_object_name", "id", "name") : Promise.resolve([null]),
-        itmRaw ? translateRows([itmRaw as Record<string, unknown>], "pvp_item_name", "id", "name") : Promise.resolve([null]),
+        objRaw ? translateRows([objRaw as Record<string, any>], "pvp_object_name", "id", "name") : Promise.resolve([null]),
+        itmRaw ? translateRows([itmRaw as Record<string, any>], "pvp_item_name", "id", "name") : Promise.resolve([null]),
       ]);
       const obj = objArr[0] as ObjectRow | null;
       const itm = itmArr[0] as ItemRow | null;
@@ -176,7 +176,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
 
       let traits: string[] = [];
       let specialType: string | null = null;
-      let displayObj: ObjectRow | Record<string, unknown> | null = obj;
+      let displayObj: ObjectRow | Record<string, any> | null = obj;
       if (isCustom) {
         displayObj = {
           name: rivalSD.custom_name,
@@ -191,7 +191,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
           supabase.from("object_traits").select("id, trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
           supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
         ]);
-        const translatedTraits = await translateRows((traitData ?? []) as Record<string, unknown>[], "pvp_object_trait", "id", "trait_text");
+        const translatedTraits = await translateRows((traitData ?? []) as Record<string, any>[], "pvp_object_trait", "id", "trait_text");
         traits = translatedTraits.map((t) => t.trait_text);
         specialType = specialData?.special_type ?? null;
       }

@@ -11,7 +11,7 @@ import type { Position } from "@/lib/game-types";
 
 export async function createGame(userId: string, invitedUserId?: string) {
   const code = generateGameCode();
-  const insertData: Record<string, unknown> = { code, created_by: userId };
+  const insertData: Record<string, any> = { code, created_by: userId };
   if (invitedUserId) insertData.invited_user_id = invitedUserId;
 
   const { data: game, error: gameError } = await supabase.from("games").insert(insertData).select().single();
@@ -188,7 +188,7 @@ export async function getMyGames(userId: string) {
   const rivalUserIds: string[] = [];
   if (allGameIds.length > 0) {
     const { data: allPlayers } = await supabase.rpc("get_game_participants", { _game_ids: allGameIds });
-    const filteredPlayers = ((allPlayers as Record<string, unknown>[]) ?? []).filter((p) => p.user_id !== userId);
+    const filteredPlayers = ((allPlayers as Record<string, any>[]) ?? []).filter((p) => p.user_id !== userId);
     rivalUserIds.push(...new Set(filteredPlayers.map((p) => p.user_id as string)));
     for (const p of filteredPlayers) rivalMap.set(p.game_id, p.user_id);
   }
@@ -245,7 +245,7 @@ export async function hideObject(
   objectId: string,
   itemId: string,
   position: Position,
-  specialData?: Record<string, unknown> | null,
+  specialData?: Record<string, any> | null,
 ) {
   const [{ data: obj }, { data: itm }] = await Promise.all([
     supabase.from("objects").select("size, material").eq("id", objectId).single(),
@@ -271,7 +271,7 @@ export async function hideObject(
     throw new Error(blockReason);
   }
 
-  const updateData: Record<string, unknown> = {
+  const updateData: Record<string, any> = {
     hidden_object_id: objectId,
     hidden_item_id: itemId,
     hidden_position: position,

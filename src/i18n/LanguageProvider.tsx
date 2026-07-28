@@ -14,7 +14,7 @@ import enStrings from "./en.json";
 
 export type Lang = "ca" | "en";
 
-const BUNDLES: Record<Lang, Record<string, unknown>> = {
+const BUNDLES: Record<Lang, Record<string, any>> = {
   ca: caStrings,
   en: enStrings,
 };
@@ -27,10 +27,10 @@ type Ctx = {
 
 const LanguageContext = createContext<Ctx | null>(null);
 
-function deepGet(obj: Record<string, unknown>, path: string): string | undefined {
+function deepGet(obj: Record<string, any>, path: string): string | undefined {
   return path.split(".").reduce<unknown>((acc, k) => {
-    if (acc && typeof acc === "object" && k in (acc as Record<string, unknown>)) {
-      return (acc as Record<string, unknown>)[k];
+    if (acc && typeof acc === "object" && k in (acc as Record<string, any>)) {
+      return (acc as Record<string, any>)[k];
     }
     return undefined;
   }, obj) as string | undefined;

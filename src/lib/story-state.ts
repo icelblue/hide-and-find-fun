@@ -149,7 +149,7 @@ async function loadEffectsCache(): Promise<void> {
       .from("story_item_effects")
       .select("item_id,kind,d_hunger,d_sleep,d_fear,d_bond");
     const map: Record<string, ItemEffect> = {};
-    for (const row of (data ?? []) as Record<string, unknown>[]) {
+    for (const row of (data ?? []) as Record<string, any>[]) {
       const delta: Partial<PetState> = {};
       if (row.d_hunger) delta.hunger = row.d_hunger;
       if (row.d_sleep)  delta.sleep  = row.d_sleep;
@@ -261,7 +261,7 @@ let _recipesCache: Recipe[] | null = null;
 export async function getAllRecipes(): Promise<Recipe[]> {
   if (_recipesCache) return _recipesCache;
   const { data } = await supabase.from("story_recipes").select("*").order("name");
-  _recipesCache = ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+  _recipesCache = ((data ?? []) as Record<string, any>[]).map((r) => ({
     ...r,
     requires_items: Array.isArray(r.requires_items) ? r.requires_items : [],
   })) as Recipe[];

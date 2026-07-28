@@ -20,7 +20,7 @@ export function getCurrentLang(): Lang {
  * the EN translation when lang='en' and a translation exists. CA is no-op.
  * Use for arbitrary BD-fetched lists (scenarios, items, objects…).
  */
-export async function translateRows<T extends Record<string, unknown>>(
+export async function translateRows<T extends Record<string, any>>(
   rows: T[],
   entity_type: ContentEntityType,
   idKey: keyof T,
@@ -108,9 +108,9 @@ import caBundle from "./ca.json";
 import enBundle from "./en.json";
 
 export function tt(key: string): string {
-  const bundle: Record<string, unknown> = getCurrentLang() === "en" ? enBundle : caBundle;
+  const bundle: Record<string, any> = getCurrentLang() === "en" ? enBundle : caBundle;
   const val = key.split(".").reduce<unknown>(
-    (acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined),
+    (acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, any>)[k] : undefined),
     bundle,
   );
   return typeof val === "string" ? val : key;
