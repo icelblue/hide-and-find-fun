@@ -172,7 +172,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       if (itm?.scenario_id) {
         scn = scenarios.find((s) => s.id === itm.scenario_id) ?? null;
       }
-      const hideMsg = getHideMessage(rival.special_data);
+      const hideMsg = getHideMessage(rival.special_data as any);
 
       let traits: string[] = [];
       let specialType: string | null = null;
@@ -197,7 +197,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       }
 
       setRivalInfo({
-        obj: displayObj, item: itm, scenario: scn,
+        obj: displayObj as ObjectRow, item: itm, scenario: scn,
         position: rival.hidden_position ?? "?",
         hideMessage: hideMsg,
         rivalName: rivalProf?.display_name ?? t("game.results.rivalDefault"),

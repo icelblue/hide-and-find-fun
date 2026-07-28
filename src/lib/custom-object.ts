@@ -143,6 +143,7 @@ export function buildCustomObjectSpecialData(input: CustomObjectInput): CustomOb
 }
 
 /** True si el `special_data` correspon a un objecte personalitzat. */
-export function isCustomObjectSpecialData(specialData: unknown): boolean {
+export function isCustomObjectSpecialData(specialDataIn: unknown): boolean {
+  const specialData = specialDataIn as any;
   return Boolean(specialData && specialData.is_custom === true && typeof specialData.custom_icon === "string");
 }

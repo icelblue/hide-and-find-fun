@@ -36,7 +36,7 @@ export function WhileAwayDialog({ open, onClose, visits, notifications, petName 
               </p>
               <div className="space-y-1.5">
                 {notifications.map((n) => {
-                  const p = n.payload ?? {};
+                  const p = (n.payload ?? {}) as any;
                   if (n.notif_type === "gift_consumable") {
                     return (
                       <div key={n.id} className="glass rounded-lg px-3 py-2 text-sm flex items-center gap-2">

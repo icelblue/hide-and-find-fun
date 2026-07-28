@@ -34,8 +34,8 @@ export function SpecialFoundPopup({
   const t = useT();
   if (!show) return null;
 
-  const isChooseVariant = show.special.special_type === "choose_variant";
-  const variants = Array.isArray(show.special.variants) ? show.special.variants : [];
+  const isChooseVariant = (show as any).special.special_type === "choose_variant";
+  const variants = Array.isArray((show as any).special.variants) ? (show as any).special.variants : [];
   const canSubmit = isChooseVariant ? !!specialFoundVariant : !!specialFoundInput.trim();
 
   return (
@@ -54,7 +54,7 @@ export function SpecialFoundPopup({
               </div>
             ) : null;
           })()}
-          <p className="text-sm text-muted-foreground mb-4">{show.special.prompt_text}</p>
+          <p className="text-sm text-muted-foreground mb-4">{(show as any).special.prompt_text}</p>
 
           {isChooseVariant ? (
             <div className="grid grid-cols-2 gap-2 mb-3">

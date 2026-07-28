@@ -91,7 +91,7 @@ export function getPetEvolution(xp: number, maxXp?: number) {
   return { ...tier, nextTier, isDead, xp, maxXp: effectiveMax };
 }
 
-export function hasAllAccessories(accessories: Array<{ slot?: string | null }>): boolean {
+export function hasAllAccessories(accessories: Array<{ slot?: string | null; accessory_name?: string }>): boolean {
   const owned = new Set(accessories.map((a) => a.accessory_name));
   return PET_ACCESSORIES.every((a) => owned.has(a.name));
 }

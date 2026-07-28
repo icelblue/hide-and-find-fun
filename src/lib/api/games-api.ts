@@ -14,7 +14,7 @@ export async function createGame(userId: string, invitedUserId?: string) {
   const insertData: Record<string, any> = { code, created_by: userId };
   if (invitedUserId) insertData.invited_user_id = invitedUserId;
 
-  const { data: game, error: gameError } = await supabase.from("games").insert(insertData).select().single();
+  const { data: game, error: gameError } = await supabase.from("games").insert(insertData as any).select().single();
   if (gameError) throw gameError;
 
   const { error: playerError } = await supabase.from("game_players").insert({ game_id: game.id, user_id: userId });
@@ -209,7 +209,7 @@ export async function getMyGames(userId: string) {
       : { data: [] };
   const profileMap = new Map((allProfiles ?? []).map((p) => [p.user_id, p.display_name]));
 
-  for (const gp of all) {
+  for (const gp of all as any[]) {
     const game = gp.games;
     gp._creator_name = profileMap.get(game.created_by) ?? "Anònim";
     const rivalId = rivalMap.get(gp.game_id) ?? null;

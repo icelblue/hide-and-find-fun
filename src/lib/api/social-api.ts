@@ -158,7 +158,7 @@ export async function sendSocialItem(
         _game_id: gameId, _scenario_from: extraData.scenarioFrom, _scenario_to: extraData.scenarioTo,
       });
       if (barErr) throw new Error(barErr.message);
-      if (barResult?.blocked) {
+      if ((barResult as any)?.blocked) {
         return { blocked: true, espiaResult: null };
       }
       supabase.functions.invoke("send-push", {
