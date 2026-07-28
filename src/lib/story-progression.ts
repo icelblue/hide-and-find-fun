@@ -133,7 +133,7 @@ export async function getWorldStatuses(userId: string, ctx: {
       unlocked,
       reason,
       visits: p?.visits ?? 0,
-      endingsCompleted: Array.isArray(p?.completed_endings) ? p.completed_endings : [],
+      endingsCompleted: Array.isArray(p?.completed_endings) ? (p.completed_endings as string[]) : [],
     };
   });
 }
