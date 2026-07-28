@@ -248,14 +248,14 @@ export default function GamePage() {
     if (isPersonalGame) {
       const personal = personalDataRef.current;
       if (personal) {
-        setItems(personal.itemsByScenario.get(id) ?? []);
+        setItems((personal.itemsByScenario.get(id) ?? []) as any);
       } else if (game) {
         const catalog = await loadFurnitureCatalog();
         const merged = mergeSnapshots(
           parseSnapshot(game.host_space_snapshot),
           parseSnapshot(game.guest_space_snapshot)
         );
-        setItems(synthItems(merged, catalog));
+        setItems(synthItems(merged, catalog) as any);
       }
     } else {
       setItems(await getItemsByScenario(id));
@@ -599,14 +599,14 @@ export default function GamePage() {
           // PvP win: fetch revealed rival data FIRST (RLS hides hidden_object_id until game finishes)
           const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
           const resolvedRival = ((safePlayersAfterWin as Record<string, any>[]) ?? []).find((p) => p.user_id !== user.id) ?? rival;
-          setRival(resolvedRival);
+          setRival(resolvedRival as any);
 
           const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", resolvedRival?.user_id ?? "").maybeSingle();
           const foundObjectId = resolvedRival?.hidden_object_id;
           let foundObj = objects.find((o) => o.id === foundObjectId);
           if (!foundObj && foundObjectId) {
             const { data: objRow } = await supabase.from("objects").select("name, icon").eq("id", foundObjectId).maybeSingle();
-            foundObj = objRow;
+            foundObj = objRow as any;
           }
           const rivalSD = resolvedRival?.special_data as Record<string, any> | null;
           const isCustomFound = rivalSD?.is_custom === true;
@@ -658,7 +658,7 @@ export default function GamePage() {
       else if (result.foundBonus) toast.info(t("game.toasts.magic", { val: result.bonusValue }));
       else {
         const level = result.hintLevel ?? 0;
-        const noisy = result.hintNoisy ? " ⚠️" : "";
+        const noisy = (result as any).hintNoisy ? " ⚠️" : "";
         if (level === 0) toast.info(t("game.toasts.hintFrozen", { noisy, cost: TOKEN_COSTS.look }));
         else if (level === 1) toast.info(t("game.toasts.hintCold", { noisy, cost: TOKEN_COSTS.look }));
         else if (level === 2) toast.info(t("game.toasts.hintCool", { noisy, cost: TOKEN_COSTS.look }));

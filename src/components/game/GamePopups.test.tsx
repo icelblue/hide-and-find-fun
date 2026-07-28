@@ -24,7 +24,7 @@ import { buildTrophySpecialData, getHideMessage, getTrophyDisplayIcon, getTrophy
 
 describe("SpecialFoundPopup", () => {
   const baseProps = {
-    rival: { special_data: { hide_message: "Secret" } },
+    rival: { special_data: { hide_message: "Secret" } } as any,
     objects: [{ id: "obj-1", icon: "💍" }],
     onInputChange: vi.fn(),
     onVariantChange: vi.fn(),

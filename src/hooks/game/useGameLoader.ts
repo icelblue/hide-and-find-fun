@@ -97,7 +97,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
 
       S.setGame(gameData);
       S.setPhase((gameData?.status as Phase) ?? "waiting");
-      S.setRival(rivalData);
+      S.setRival(rivalData as any);
 
       if (playerData && (gameData?.status === "playing" || gameData?.status === "hiding")) {
         const resetTokens = await ensureTokensReset(playerData);
@@ -205,7 +205,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
             : personal.items;
           const scenariosById = new Map(personal.scenarios.map((s) => [s.id, s]));
           const neighbors = currentScenId ? neighborsOf(currentScenId, personal.connections, scenariosById) : [];
-          S.setConnectedScenarios(neighbors);
+          S.setConnectedScenarios(neighbors as any);
           S.setDirtyItems(new Set());
           S.setBreakableItems(new Set());
         } catch (_raw_err) { const err = asError(_raw_err);
@@ -217,9 +217,9 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           const conn = Array.isArray(R.connected) ? R.connected : (R.connected?.data ?? []);
           S.setConnectedScenarios(conn);
         }
-        const gameDirty = getDirtyItemsForGame(loadedItems, gameId);
+        const gameDirty = getDirtyItemsForGame(loadedItems as any, gameId);
         S.setDirtyItems(gameDirty);
-        const gameBreakable = getBreakableItemsForGame(loadedItems, gameId);
+        const gameBreakable = getBreakableItemsForGame(loadedItems as any, gameId);
         S.setBreakableItems(gameBreakable);
 
         const hasDirtyHere = loadedItems.some((i) => gameDirty.has(i.id));
@@ -227,7 +227,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           const tools = parseTools(playerData.tools);
           if (tools.drap === 0) {
             supabase.rpc("execute_grant_drap_if_available", { _game_id: gameId }).then(({ data }) => {
-              if (data?.granted) {
+              if ((data as any)?.granted) {
                 tools.drap = 1;
                 playerData.tools = tools;
                 S.setPlayerTools({ ...tools });
@@ -293,7 +293,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         if (isOutdoor && litScenarios.has(currentScenId)) return true;
         return false;
       });
-      S.setCurrentScenarioItems(visibleItems);
+      S.setCurrentScenarioItems(visibleItems as any);
 
       if (R.reward) S.setReward(R.reward);
 
@@ -313,7 +313,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
           markPromises.push(markSocialItemProcessed(blocked.id));
         }
 
-        const unprocessed = R.unprocessedSocial ?? [];
+        const unprocessed = (R.unprocessedSocial ?? []) as any[];
         for (const item of unprocessed) {
           if (item.item_type === "banana") {
             const allPositions = ["sobre", "sota", "dins"] as const;

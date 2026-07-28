@@ -166,7 +166,7 @@ export default function ProfilePage() {
           const gp = myGamePlayers.find(p => p.game_id === g.id);
           const obj = gp?.hidden_object_id ? objMap.get(gp.hidden_object_id) : null;
           const itm = gp?.hidden_item_id ? itmMap.get(gp.hidden_item_id) : null;
-          const scn = itm ? scenMap.get(itm.scenario_id) : null;
+          const scn = itm ? scenMap.get((itm as any).scenario_id) : null;
           return {
             ...g, hiddenObj: obj, hiddenItem: itm, hiddenScenario: scn,
             hiddenPosition: gp?.hidden_position, hasHidden: gp?.has_hidden,

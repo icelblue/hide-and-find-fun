@@ -120,7 +120,7 @@ export async function getWorldStatuses(userId: string, ctx: {
     supabase.from("story_world_progress").select("*").eq("user_id", userId),
   ]);
   const progressMap = new Map((progressRes.data ?? []).map((p) => [p.world_id, p]));
-  return worlds.map((w) => {
+  return worlds.map((w): WorldStatus => {
     const r = w.unlock_rule;
     let unlocked = true;
     let reason: string | undefined;
