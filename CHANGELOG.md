@@ -1,3 +1,11 @@
+## [No publicat] — 29/07/2026
+### Auditoria completa (escaneig + proves E2E)
+- Tests: 450/450 OK · TypeScript: 0 errors · RLS: totes les taules amb polítiques i grants correctes · `error_logs`: 0 errors de runtime.
+- E2E navegador (390px): `/`, `/auth`, `/lobby`, `/profile`, `/story`, `/space`, 404, manifest/sw/robots → tots OK; login invàlid mostra el missatge correcte; cap error de pàgina ni recurs trencat.
+- Integritat BD: 0 partides encallades, 0 jugadors orfes, 0 tokens negatius. 4 partides antigues (abril, ja finalitzades) sense fila d'amfitrió — residus històrics, sense impacte.
+### Arreglat
+- **Demo**: es podien registrar intents extra durant els 800 ms d'animació després de trobar l'objecte (comptador inflat). Ara es bloquegen els clics un cop trobat.
+
 ## [No publicat] — 12/07/2026
 ### Arreglat
 - **Multijugador en temps real**: els moviments del rival ara es veuen a l'instant. `game_players` era fora de la publicació realtime (correcte per seguretat) però res no notificava els moviments — nou trigger `pulse` sobre `games.updated_at` + neteja de la subscripció morta al client.
