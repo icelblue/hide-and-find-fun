@@ -91,6 +91,9 @@ export default function DemoPage() {
 
   const tryPosition = (id: string) => {
     if (attempts.includes(id)) return;
+    // 🔒 Un cop trobat l'objecte, bloqueja més intents (evita inflar el comptador
+    // durant els 800 ms d'animació abans de passar al pas final).
+    if (attempts.includes(HIDDEN_AT)) return;
     const newAttempts = [...attempts, id];
     setAttempts(newAttempts);
     if (id === HIDDEN_AT) {
