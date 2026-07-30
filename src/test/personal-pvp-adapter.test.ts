@@ -78,6 +78,18 @@ describe("personal-pvp-adapter", () => {
     });
   });
 
+  describe("synthUuid", () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+    it("genera un uuid vàlid (columnes uuid a la BD)", () => {
+      expect(synthUuid("item:room-1:bed_basic")).toMatch(UUID_RE);
+      expect(synthUuid("object:plant_small")).toMatch(UUID_RE);
+    });
+    it("és determinista i distingeix seeds", () => {
+      expect(synthUuid("a")).toBe(synthUuid("a"));
+      expect(synthUuid("a")).not.toBe(synthUuid("b"));
+    });
+  });
+
   describe("mergeSnapshots", () => {
     it("uneix host + guest i deduplica", () => {
       const host = [{ slot: 0, furniture_id: "bed_basic" }];
