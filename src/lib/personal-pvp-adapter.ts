@@ -34,6 +34,9 @@ export type SynthScenario = {
 export type SynthObject = {
   id: string;
   name: string;
+  /** Clau i18n original del catàleg (`furniture.bed_basic`) per sprites/traduccions. */
+  name_key?: string;
+  category?: string;
   icon: string;
   display_order: number;
   is_special: false;
@@ -43,6 +46,8 @@ export type SynthItem = {
   id: string;
   scenario_id: string;
   name: string;
+  name_key?: string;
+  category?: string;
   icon: string;
   hidden: false;
   display_order: number;
