@@ -212,20 +212,6 @@ export type Database = {
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "game_moves_target_item_id_fkey"
-            columns: ["target_item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "game_moves_target_scenario_id_fkey"
-            columns: ["target_scenario_id"]
-            isOneToOne: false
-            referencedRelation: "scenarios"
-            referencedColumns: ["id"]
-          },
         ]
       }
       game_players: {
@@ -288,31 +274,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "game_players_current_scenario_id_fkey"
-            columns: ["current_scenario_id"]
-            isOneToOne: false
-            referencedRelation: "scenarios"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "game_players_game_id_fkey"
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "game_players_hidden_item_id_fkey"
-            columns: ["hidden_item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "game_players_hidden_object_id_fkey"
-            columns: ["hidden_object_id"]
-            isOneToOne: false
-            referencedRelation: "objects"
             referencedColumns: ["id"]
           },
         ]

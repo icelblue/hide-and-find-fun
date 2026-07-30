@@ -7,6 +7,7 @@ import {
   synthConnections,
   mergeSnapshots,
   PERSONAL_SCENARIO_ID,
+  synthUuid,
   type FurnitureCatalogItem,
 } from "@/lib/personal-pvp-adapter";
 
@@ -75,6 +76,18 @@ describe("personal-pvp-adapter", () => {
         { slot: 7, furniture_id: "bed_basic" },
       ];
       expect(synthObjects(snap, catalog)).toHaveLength(1);
+    });
+  });
+
+  describe("synthUuid", () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+    it("genera un uuid vàlid (columnes uuid a la BD)", () => {
+      expect(synthUuid("item:room-1:bed_basic")).toMatch(UUID_RE);
+      expect(synthUuid("object:plant_small")).toMatch(UUID_RE);
+    });
+    it("és determinista i distingeix seeds", () => {
+      expect(synthUuid("a")).toBe(synthUuid("a"));
+      expect(synthUuid("a")).not.toBe(synthUuid("b"));
     });
   });
 
