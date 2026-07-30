@@ -8,6 +8,7 @@
 import { useEffect, useRef, type MutableRefObject, type Dispatch, type SetStateAction } from "react";
 import { asError } from "@/lib/errors";
 import { logError } from "@/components/ErrorBoundary";
+import { useLanguage } from "@/i18n/LanguageProvider";
 import {
   loadPersonalCombatData,
   loadPersonalCombatDataFromRooms,
