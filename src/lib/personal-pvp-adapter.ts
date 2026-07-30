@@ -50,6 +50,31 @@ export type SynthItem = {
 
 export const PERSONAL_SCENARIO_ID = "personal-room";
 
+/**
+ * UUID determinista a partir d'un seed textual.
+ * Les columnes `hidden_item_id`, `hidden_object_id`, `target_item_id`… són `uuid`
+ * a la BD, així que els identificadors sintètics del mode personal han de tenir
+ * forma d'UUID (abans eren `pf:<room>:<furniture>` → error 22P02).
+ * Determinista = els dos jugadors calculen el mateix id per al mateix moble.
+ */
+export function synthUuid(seed: string): string {
+  // FNV-1a de 4 blocs amb sals diferents → 128 bits estables.
+  const block = (salt: string): string => {
+    let h = 0x811c9dc5;
+    const s = salt + seed;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(16).padStart(8, "0");
+  };
+  const hex = block("a") + block("b") + block("c") + block("d");
+  // Versió 5-like i variant RFC-4122 per ser un uuid vàlid.
+  const v = "5" + hex.slice(13, 16);
+  const varOct = ((parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16).padStart(2, "0");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${v}-${varOct}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
+}
+
 /** Normalitza el camp `layout` de `games.{host,guest}_space_snapshot` a LayoutSlot[]. */
 export function parseSnapshot(raw: unknown): LayoutSlot[] {
   if (!raw) return [];
