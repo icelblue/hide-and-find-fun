@@ -289,7 +289,8 @@ export async function loadPersonalCombatDataFromRooms(
 
   rooms.forEach((room, idx) => {
     const tpl = templates.get(room.room_template_id);
-    const scenarioId = `room:${room.id}`;
+    // L'escenari sintètic reutilitza l'uuid de la sala (les columnes són uuid).
+    const scenarioId = room.id;
     scenarios.push({
       id: scenarioId,
       name: room.custom_name,
@@ -304,12 +305,14 @@ export async function loadPersonalCombatDataFromRooms(
     layout.forEach((slot) => {
       const cat = furnitureCatalog.get(slot.furniture_id);
       if (!cat) return;
-      // Item propi de l'escenari — id únic per (sala, moble)
-      const itemId = `pf:${room.id}:${slot.furniture_id}`;
+      // Item propi de l'escenari — uuid determinista per (sala, moble)
+      const itemId = synthUuid(`item:${room.id}:${slot.furniture_id}`);
       const item: SynthItem = {
         id: itemId,
         scenario_id: scenarioId,
         name: cat.name_key,
+        name_key: cat.name_key,
+        category: cat.category,
         icon: cat.icon,
         hidden: false,
         display_order: slot.slot,
@@ -321,8 +324,10 @@ export async function loadPersonalCombatDataFromRooms(
       if (!seenFurniture.has(slot.furniture_id)) {
         seenFurniture.add(slot.furniture_id);
         objects.push({
-          id: `pf:${slot.furniture_id}`,
+          id: synthUuid(`object:${slot.furniture_id}`),
           name: cat.name_key,
+          name_key: cat.name_key,
+          category: cat.category,
           icon: cat.icon,
           display_order: objects.length,
           is_special: false,
@@ -333,8 +338,8 @@ export async function loadPersonalCombatDataFromRooms(
   });
 
   const connections: SynthConnection[] = conns.map((c) => ({
-    scenario_a: `room:${c.room_a_id}`,
-    scenario_b: `room:${c.room_b_id}`,
+    scenario_a: c.room_a_id,
+    scenario_b: c.room_b_id,
   }));
 
   return { scenarios, objects, items: allItems, connections, itemsByScenario };
