@@ -7,6 +7,7 @@ import {
   synthConnections,
   mergeSnapshots,
   PERSONAL_SCENARIO_ID,
+  synthUuid,
   type FurnitureCatalogItem,
 } from "@/lib/personal-pvp-adapter";
 
