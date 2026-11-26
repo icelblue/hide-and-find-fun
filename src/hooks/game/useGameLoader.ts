@@ -8,6 +8,7 @@ import { useCallback, type MutableRefObject, type Dispatch, type SetStateAction 
 import { asError } from "@/lib/errors";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getMoveHistory } from "@/lib/api/move-history-api";
 import type { GameRow, PlayerRow, ScenarioRow, ItemRow, MoveRow, RewardRow } from "@/lib/runtime-types";
 import { logError } from "@/components/ErrorBoundary";
 import {
@@ -139,10 +140,7 @@ export function useGameLoader(opts: UseGameLoaderOpts): UseGameLoaderResult {
         batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
       }
       if (isPlaying || isFinished) {
-        batch.moves = supabase.from("game_moves")
-          .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
-          .eq("game_id", gameId).eq("player_id", user.id)
-          .order("turn_number", { ascending: false });
+        batch.moves = getMoveHistory(gameId, user.id);
         batch.tagMoves = supabase.from("game_moves").select("bonus_value, player_id")
           .eq("game_id", gameId).like("bonus_value", "tag:%")
           .order("created_at", { ascending: true });

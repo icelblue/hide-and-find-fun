@@ -31,6 +31,7 @@ import {
   rollHealthEvent,
 } from "@/lib/story-helpers";
 import { createActionGate } from "@/lib/action-gate";
+import { getMoveHistory } from "@/lib/api/move-history-api";
 import { parseTools, POSITIONS, type PlayerTools, type Phase, type Position } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import { supabase } from "@/integrations/supabase/client";
@@ -191,10 +192,7 @@ export default function GamePage() {
         batch.connected = getConnectedScenarios(currentScenId);
         batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
       }
-      batch.moves = supabase.from("game_moves")
-        .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
-        .eq("game_id", gameId).eq("player_id", user.id)
-        .order("turn_number", { ascending: false });
+      batch.moves = getMoveHistory(gameId, user.id);
       batch.tagMoves = supabase.from("game_moves").select("bonus_value, player_id")
         .eq("game_id", gameId).like("bonus_value", "tag:%")
         .order("created_at", { ascending: true });

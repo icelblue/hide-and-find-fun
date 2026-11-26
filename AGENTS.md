@@ -7,3 +7,4 @@
 - Token-consuming game handlers share a synchronous action gate, and realtime subscriptions use a handler ref; prevent duplicate requests and subscription-driven reload loops.
 - PvP validation triggers distinguish authenticated client writes from trusted security-definer operations; protect tokens, tools, confirmed hiding metadata and game results without denying legitimate server actions.
 - Use standard Playwright configuration and two opt-in temporary sessions for authenticated PvP regression tests; never store credentials in source.
+- Load move history without catalog relationship embeds and enrich names separately; retired foreign keys must not hide moves or allow repeat observations in the UI.
