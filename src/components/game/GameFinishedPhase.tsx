@@ -136,8 +136,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       setActionLog(log);
     })();
 
-    // Rival info (loser only)
-    if (game.winner_id === user?.id || !rival) return;
+    // Rival info: the winner sees what they found, the loser where it was.
+    if (!rival) return;
     (async () => {
       const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
         rival.hidden_object_id
@@ -205,6 +205,26 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
             <p className="text-[10px] text-muted-foreground/60 mt-2">
               Ves al perfil per col·locar-lo o vendre'l
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Winner: name the rival's object that was found */}
+      {isWinner && rivalInfo && (
+        <Card className="mb-6 mx-auto max-w-xs glass border-primary/30" aria-label="Objecte trobat">
+          <CardContent className="py-5 text-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🔍 Has trobat l'objecte de {rivalInfo.rivalName}</p>
+            {rivalInfo.obj && <div className="text-5xl mb-2">{rivalInfo.obj.icon}</div>}
+            <p className="font-bold text-lg">{rivalInfo.obj?.name ?? "Objecte desconegut"}</p>
+            {rivalInfo.item && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {rivalInfo.scenario && <>{rivalInfo.scenario.icon} {rivalInfo.scenario.name} · </>}
+                {rivalInfo.item.icon} {rivalInfo.item.name} · {POS_LABELS[rivalInfo.position] ?? rivalInfo.position}
+              </p>
+            )}
+            {rivalInfo.hideMessage && (
+              <p className="text-sm italic text-foreground/80 mt-3">💌 "{rivalInfo.hideMessage}"</p>
+            )}
           </CardContent>
         </Card>
       )}
