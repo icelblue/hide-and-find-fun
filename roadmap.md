@@ -17,3 +17,12 @@ Límits documentats a docs/APRIL-RECOVERY-AUDIT.md: CPU antic incompatible, cadu
 - [x] Resumir proves i límits sense alterar la partida privada AF8CZZ.
 
 Resultats a docs/USER-GAMES-AUDIT.md. AF8CZZ reservada a un altre rival; no s’ha saltat la restricció. Les dues partides obertes s’han deixat en curs, sense forçar-ne el resultat.
+
+## Pistes incorrectes a HQ345X
+
+- [x] Identificar si falla la victòria o la interpretació de les pistes.
+- [x] Interpretar els cinc nivells i l’avís de pista imprecisa sense falses confirmacions.
+- [x] Provar la correcció amb el compte afectat i executar regressions.
+- [x] Desar els resultats sense modificar tokens gastats, posicions amagades ni partides finalitzades.
+
+Auditoria transversal a docs/HQ345X-HINT-AUDIT.md: 471 proves unitàries i partida E2E completa correcta; cap canvi a les dades de HQ345X.

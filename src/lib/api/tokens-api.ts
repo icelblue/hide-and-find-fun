@@ -67,6 +67,7 @@ export async function performMove(
     cursed: result.cursed ?? false,
     tokensRemaining: result.tokens_remaining ?? 0,
     hintLevel: result.hint_level ?? null,
+    hintNoisy: result.hint_noisy ?? false,
     toolFound: result.tool_found ?? null,
     trapHit: result.trap_hit ?? false,
     trapPenalty: result.trap_penalty ?? 0,

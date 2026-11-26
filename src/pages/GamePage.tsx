@@ -32,6 +32,7 @@ import {
 } from "@/lib/story-helpers";
 import { createActionGate } from "@/lib/action-gate";
 import { getMoveHistory } from "@/lib/api/move-history-api";
+import { SEARCH_HINT_ICONS, searchHintMessage } from "@/lib/search-hints";
 import { parseTools, POSITIONS, type PlayerTools, type Phase, type Position } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import { supabase } from "@/integrations/supabase/client";
@@ -752,10 +753,8 @@ export default function GamePage() {
       } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
       else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
       else {
-        const level = result.hintLevel ?? 0;
-        if (level === 0) toast.info(`❄️ Fred! L'objecte NO és a ${currentScenario?.icon} ${currentScenario?.name}. (-${TOKEN_COSTS.look}🪙)`);
-        else if (level === 1) toast.warning(`🌡️ Calent! L'objecte ÉS en aquesta habitació, però no a ${item?.icon} ${item?.name}. (-${TOKEN_COSTS.look}🪙)`);
-        else toast.success(`🔥 MOLT CALENT! ${item?.icon} ${item?.name} és el moble correcte! Prova altra posició. (-${TOKEN_COSTS.look}🪙)`);
+        const message = searchHintMessage(result.hintLevel, result.hintNoisy, `${item?.icon ?? ""} ${item?.name ?? ""}`);
+        toast.info(`${message} (-${TOKEN_COSTS.look}🪙)`, { duration: 6000 });
       }
       clearBanana();
       await loadGame();
@@ -1351,7 +1350,6 @@ export default function GamePage() {
               </summary>
               <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 {moveHistory.map(m => {
-                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
                   const hl = (m as any).hint_level;
                   return (
                     <div key={m.id} className={`text-[10px] rounded-md px-2 py-1 flex justify-between items-center border border-border/15 ${
@@ -1366,7 +1364,7 @@ export default function GamePage() {
                         {m.action === "look" && (
                           <>
                             👀 {(m.items as any)?.icon} {m.target_position}
-                            {hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}
+                            {hl != null && <span className="ml-0.5 font-bold" title="Pista de proximitat; pot ser imprecisa. Només trobar l’objecte confirma la victòria.">{SEARCH_HINT_ICONS[hl]}</span>}
                           </>
                         )}
                         {m.found_object && " 🏆"}

@@ -8,6 +8,7 @@ import { MATERIAL_LABELS } from "@/lib/supabase-helpers";
 import { getHideMessage } from "@/lib/object-specials";
 import { RARITY_CONFIG } from "@/lib/reward-helpers";
 import { POS_LABELS } from "@/lib/game-types";
+import { SEARCH_HINT_ICONS } from "@/lib/search-hints";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FinishedPhaseProps {
@@ -108,8 +109,7 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         } else if (m.action === "look" && m.target_item_id) {
           const itm = itemMap.get(m.target_item_id);
           const posLabel = m.target_position ? POS_LABELS[m.target_position] ?? m.target_position : "";
-          const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥", 3: "🏆" };
-          const hint = m.hint_level != null ? ` ${hintIcons[m.hint_level] ?? ""}` : "";
+          const hint = m.hint_level != null ? ` ${SEARCH_HINT_ICONS[m.hint_level] ?? ""}` : "";
           if (m.found_object) {
             description = `🏆 TROBA l'objecte a ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}!`;
           } else {

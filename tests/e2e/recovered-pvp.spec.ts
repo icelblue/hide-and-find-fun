@@ -83,6 +83,14 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
       await door.click();
       await expect(door).toHaveCount(0);
     }
+    // A similar furniture hint is not a win, and the observation must persist.
+    await host.getByRole("button", { name: /Cadira.*accions/i }).click();
+    await host.getByRole("button", { name: "Sobre Cadira", exact: true }).click();
+    await expect(host.getByRole("button", { name: "Sobre Cadira", exact: true })).toBeDisabled();
+    await expect(host.getByText("Victòria!", { exact: true })).toHaveCount(0);
+    await host.reload();
+    await host.getByRole("button", { name: /Cadira.*accions/i }).click();
+    await expect(host.getByRole("button", { name: "Sobre Cadira", exact: true })).toBeDisabled();
     await host.getByRole("button", { name: /Taula.*accions/i }).click();
     await host.getByRole("button", { name: "Sota Taula", exact: true }).click();
     await expect(host.getByText("Victòria!", { exact: true })).toBeVisible();
