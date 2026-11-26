@@ -38,4 +38,4 @@ Auditoria transversal a docs/HQ345X-HINT-AUDIT.md: 471 proves unitàries i parti
 
 ## Objecte trobat en guanyar
 
-- [ ] Mostrar a la victòria quin objecte havia amagat el rival (cas ZXRSNQ), també després de recarregar.
+- [x] Mostrar a la victòria quin objecte havia amagat el rival (cas ZXRSNQ), també després de recarregar.

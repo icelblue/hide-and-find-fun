@@ -105,6 +105,8 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
     await expect(guest.getByText("Derrota...", { exact: true })).toBeVisible();
     await host.goto(gameUrl);
     await expect(host.getByText("Victòria!", { exact: true })).toBeVisible();
+    // The winner is told which rival object was found (guest hid Moneda), also after reload.
+    await expect(host.getByLabel("Objecte trobat").getByText("Moneda", { exact: true })).toBeVisible();
 
     const histories = await host.evaluate(`(async () => {
       const {supabase} = await import('/src/integrations/supabase/client.ts');

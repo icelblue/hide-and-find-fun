@@ -715,13 +715,15 @@ export default function GamePage() {
               toast.warning(`${healthEvent.icon} La mascota ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
             }, 2000);
           }
-        } else {
-          toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
         }
         if (!isStory) {
           const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
           const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p: any) => p.user_id !== user.id) ?? rival;
           setRival(resolvedRival);
+          const { data: foundObject } = resolvedRival?.hidden_object_id
+            ? await supabase.from("objects").select("name, icon").eq("id", resolvedRival.hidden_object_id).maybeSingle()
+            : { data: null };
+          toast.success(foundObject ? `🏆 HAS GUANYAT! Has trobat ${foundObject.icon} ${foundObject.name}!` : "🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
 
           const foundObjectId = resolvedRival?.hidden_object_id;
           const rivalSpecial = foundObjectId ? await getObjectSpecial(foundObjectId) : null;
