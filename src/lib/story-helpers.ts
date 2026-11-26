@@ -119,7 +119,12 @@ export async function createPet(userId: string, petType: string, petName: string
     .insert({ user_id: userId, pet_type: petType, pet_name: petName, pet_icon: petIcon })
     .select()
     .single();
-  if (error) throw error;
+  // A repeated tap can arrive after the pet was already created: reuse it instead of failing.
+  if (error?.code === "23505") {
+    const existing = await getMyPet(userId);
+    if (existing) return existing;
+  }
+  if (error) throw new Error(error.message);
   return data;
 }
 

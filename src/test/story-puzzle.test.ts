@@ -67,3 +67,12 @@ describe("story-puzzle pure logic", () => {
     expect(SKIP_PENALTY.bond).toBeLessThan(0);
   });
 });
+
+import { buildPuzzlePalette } from "@/lib/story-puzzle";
+describe("puzzle palette", () => {
+  it("makes every kitchen ingredient selectable with a readable name", () => {
+    const p = buildPuzzlePalette(["flour", "egg", "milk", "butter", "sugar"]);
+    expect(p.every((x) => x.owned)).toBe(true);
+    expect(p.map((x) => x.item_name)).toEqual(["Farina", "Ou", "Llet", "Mantega", "Sucre"]);
+  });
+});

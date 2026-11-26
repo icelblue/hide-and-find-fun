@@ -22,6 +22,26 @@ export interface IngredientOrderPuzzle {
 export type StoryPuzzle = IngredientOrderPuzzle;
 
 export const MAX_PUZZLE_ATTEMPTS = 3;
+
+/** Ingredients are provided by the puzzle scene itself (no story choice grants them). */
+export const PUZZLE_INGREDIENTS: Record<string, { name: string; icon: string }> = {
+  flour: { name: "Farina", icon: "🌾" }, egg: { name: "Ou", icon: "🥚" }, milk: { name: "Llet", icon: "🥛" },
+  butter: { name: "Mantega", icon: "🧈" }, sugar: { name: "Sucre", icon: "🍬" },
+  candle: { name: "Espelma", icon: "🕯️" }, salt: { name: "Sal", icon: "🧂" }, feather: { name: "Ploma", icon: "🪶" },
+  bone: { name: "Os", icon: "🦴" }, herb: { name: "Herba", icon: "🌿" },
+  moonwater: { name: "Aigua de lluna", icon: "💧" }, stardust: { name: "Pols d'estrella", icon: "✨" },
+  dreamleaf: { name: "Fulla de somni", icon: "🍃" }, silver: { name: "Plata", icon: "🥈" }, iron: { name: "Ferro", icon: "⚙️" },
+};
+
+/** Palette shown to the player: every valid ingredient is selectable, with a readable name. */
+export function buildPuzzlePalette(validItems: string[]) {
+  return validItems.map((id) => ({
+    item_id: id,
+    item_name: PUZZLE_INGREDIENTS[id]?.name ?? id,
+    item_icon: PUZZLE_INGREDIENTS[id]?.icon ?? "❔",
+    owned: true,
+  }));
+}
 /** Penalty when skipping: fear +20, bond -10 (≈ "perdre una vida"). */
 export const SKIP_PENALTY = { fear: 20, bond: -10 };
 

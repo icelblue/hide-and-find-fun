@@ -6,7 +6,7 @@ import { OnboardingDialog } from "@/components/OnboardingDialog";
 import type { InventoryItem } from "@/lib/story-state";
 import {
   type IngredientOrderPuzzle, MAX_PUZZLE_ATTEMPTS,
-  getAttempt, submitPuzzleOrder, skipPuzzle, type SubmitResult,
+  getAttempt, submitPuzzleOrder, buildPuzzlePalette, skipPuzzle, type SubmitResult,
 } from "@/lib/story-puzzle";
 import { useT } from "@/i18n/LanguageProvider";
 import { toast } from "sonner";
@@ -40,18 +40,7 @@ export function PuzzleNodeView({ userId, runId, nodeId, puzzle, inventory, onSol
   }, [runId, nodeId]);
 
   // Items available in inventory that are valid puzzle ingredients
-  const palette = useMemo(() => {
-    const owned = new Set(inventory.map((i) => i.item_id));
-    return puzzle.valid_items.map((id) => {
-      const inv = inventory.find((i) => i.item_id === id);
-      return {
-        item_id: id,
-        item_name: inv?.item_name ?? id,
-        item_icon: inv?.item_icon ?? "❔",
-        owned: owned.has(id),
-      };
-    });
-  }, [puzzle.valid_items, inventory]);
+  const palette = useMemo(() => buildPuzzlePalette(puzzle.valid_items), [puzzle.valid_items]);
 
   const firstEmpty = slots.findIndex((s) => s === null);
   const allFilled = firstEmpty === -1;
