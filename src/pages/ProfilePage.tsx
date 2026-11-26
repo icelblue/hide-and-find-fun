@@ -21,6 +21,8 @@ import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileMatchHistory } from "@/components/game/ProfileMatchHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
@@ -221,7 +223,7 @@ export default function ProfilePage() {
     finally { setLoading(false); }
   };
 
-  if (!profile) return (
+  if (!profile || !user) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="text-5xl mb-3 animate-pulse">👤</div>
@@ -325,52 +327,14 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Pet companion with evolution */}
-      {pet && (() => {
-        const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
-        return (
-          <Card className={`mb-4 glass ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
-            <CardContent className="py-3 flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${petEvents.length > 0 ? "ring-destructive/50" : evo.ring} flex items-center justify-center relative`}>
-                <span className="text-2xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
-                {petEvents.length > 0 && (
-                  <span className="absolute -top-1 -right-1 text-sm animate-pulse">🤒</span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">
-                  {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
-                  {evo.isDead
-                    ? <span className="text-xs text-destructive font-semibold ml-1">· Mort 🪦</span>
-                    : petEvents.length > 0
-                      ? <span className="text-xs text-destructive font-semibold ml-1">· Malalt! 🤒</span>
-                      : <span className="text-xs text-green-500 font-semibold ml-1">· Saludable ✅</span>
-                  }
-                </p>
-                <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                  <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
-                </div>
-                <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
-              </div>
-              {petAccessories.length > 0 && (
-                <div className="flex gap-1 flex-wrap max-w-[80px]">
-                  {petAccessories.map((a: any) => (
-                    <span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })()}
-
-      {/* Pet health events */}
-      {petEvents.length > 0 && (
-        <div className="mb-4">
-          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
-        </div>
-      )}
-
+      <Tabs defaultValue="matches" className="relative z-10">
+        <TabsList className="w-full grid grid-cols-4 mb-5" aria-label="Seccions del perfil">
+          <TabsTrigger value="matches" className="px-1 text-xs">Partides</TabsTrigger>
+          <TabsTrigger value="collection" className="px-1 text-xs">Col·lecció</TabsTrigger>
+          <TabsTrigger value="social" className="px-1 text-xs">Social</TabsTrigger>
+          <TabsTrigger value="account" className="px-1 text-xs">Compte</TabsTrigger>
+        </TabsList>
+        <TabsContent value="matches">
       {/* Top rival */}
       {topRival && (
         <Card className="mb-4 glass border-secondary/30">
@@ -418,6 +382,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+          <ProfileMatchHistory userId={user.id} canOpenGames />
       {/* Active Games */}
       {activeGames.length > 0 && (
         <div className="mb-6">
@@ -460,6 +425,8 @@ export default function ProfilePage() {
         </div>
       )}
 
+        </TabsContent>
+        <TabsContent value="collection">
       {/* Trophies */}
       {trophies.length > 0 && (
         <div className="mb-6">
@@ -503,7 +470,7 @@ export default function ProfilePage() {
       )}
 
       {/* Won objects (reward collection progress) */}
-      <WonObjectsSection userId={user!.id} />
+      <WonObjectsSection userId={user.id} />
 
       {/* Inventory */}
       <div className="mb-6">
@@ -550,6 +517,54 @@ export default function ProfilePage() {
         )}
       </div>
 
+        </TabsContent>
+        <TabsContent value="social">
+      {/* Pet companion with evolution */}
+      {pet && (() => {
+        const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
+        return (
+          <Card className={`mb-4 glass ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
+            <CardContent className="py-3 flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${petEvents.length > 0 ? "ring-destructive/50" : evo.ring} flex items-center justify-center relative`}>
+                <span className="text-2xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
+                {petEvents.length > 0 && (
+                  <span className="absolute -top-1 -right-1 text-sm animate-pulse">🤒</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">
+                  {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
+                  {evo.isDead
+                    ? <span className="text-xs text-destructive font-semibold ml-1">· Mort 🪦</span>
+                    : petEvents.length > 0
+                      ? <span className="text-xs text-destructive font-semibold ml-1">· Malalt! 🤒</span>
+                      : <span className="text-xs text-green-500 font-semibold ml-1">· Saludable ✅</span>
+                  }
+                </p>
+                <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+                  <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
+                </div>
+                <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
+              </div>
+              {petAccessories.length > 0 && (
+                <div className="flex gap-1 flex-wrap max-w-[80px]">
+                  {petAccessories.map((a: any) => (
+                    <span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Pet health events */}
+      {petEvents.length > 0 && (
+        <div className="mb-4">
+          <PetHealthBadge activeEvents={petEvents} petName={pet?.pet_name} />
+        </div>
+      )}
+
       {/* Wall messages */}
       <div className="mb-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -590,8 +605,10 @@ export default function ProfilePage() {
       </div>
 
       {/* Referrals — convida amics */}
-      <ReferralsSection userId={user!.id} />
+      <ReferralsSection userId={user.id} />
 
+        </TabsContent>
+        <TabsContent value="account">
       <Button variant="outline" className="w-full" onClick={signOut}>
         🚪 Tancar sessió
       </Button>
@@ -600,6 +617,8 @@ export default function ProfilePage() {
       <DangerZone displayName={profile?.display_name ?? ""} onDeleted={() => {
         signOut().finally(() => navigate("/auth"));
       }} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

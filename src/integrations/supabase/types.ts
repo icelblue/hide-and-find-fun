@@ -1000,6 +1000,53 @@ export type Database = {
           },
         ]
       }
+      player_match_results: {
+        Row: {
+          elo_after: number
+          elo_before: number
+          elo_change: number | null
+          finished_at: string
+          game_code: string
+          game_id: string
+          id: string
+          opponent_id: string | null
+          result: string
+          user_id: string
+        }
+        Insert: {
+          elo_after: number
+          elo_before: number
+          elo_change?: number | null
+          finished_at?: string
+          game_code: string
+          game_id: string
+          id?: string
+          opponent_id?: string | null
+          result: string
+          user_id: string
+        }
+        Update: {
+          elo_after?: number
+          elo_before?: number
+          elo_change?: number | null
+          finished_at?: string
+          game_code?: string
+          game_id?: string
+          id?: string
+          opponent_id?: string | null
+          result?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_match_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       player_pets: {
         Row: {
           created_at: string
@@ -2057,6 +2104,15 @@ export type Database = {
           reminder_type: string
           user_id: string
         }[]
+      }
+      get_player_match_history: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _since?: string
+          _user_id: string
+        }
+        Returns: Json
       }
       get_revealed_specials: {
         Args: { _game_id: string }

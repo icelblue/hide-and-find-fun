@@ -19,6 +19,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileMatchHistory } from "@/components/game/ProfileMatchHistory";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -152,7 +154,7 @@ export default function PlayerProfilePage() {
     return `${hours}h`;
   };
 
-  if (!profile) return (
+  if (!profile || !userId) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <p className="text-muted-foreground text-sm">Carregant perfil...</p>
     </div>
@@ -198,6 +200,61 @@ export default function PlayerProfilePage() {
         ))}
       </div>
 
+      <Tabs defaultValue="matches" className="relative z-10">
+        <TabsList className="w-full grid grid-cols-3 mb-5" aria-label="Seccions del perfil">
+          <TabsTrigger value="matches" className="px-1 text-xs">Partides</TabsTrigger>
+          <TabsTrigger value="collection" className="px-1 text-xs">Col·lecció</TabsTrigger>
+          <TabsTrigger value="social" className="px-1 text-xs">Social</TabsTrigger>
+        </TabsList>
+        <TabsContent value="matches">
+          <ProfileMatchHistory userId={userId} canOpenGames={isOwnProfile} />
+        </TabsContent>
+        <TabsContent value="collection">
+      {/* Vitrina (reward collection) */}
+      <PlayerVitrina userId={userId} />
+
+      {/* Trophies */}
+      <div className="mb-5 relative z-10">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          🏆 Trofeus ({trophies.length})
+        </h2>
+        {trophies.length === 0 ? (
+          <Card className="glass">
+            <CardContent className="py-6 text-center">
+              <div className="text-3xl mb-1.5 opacity-50">🏆</div>
+              <p className="text-sm text-muted-foreground">Cap trofeu encara</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                {isOwnProfile ? "Troba objectes especials per guanyar trofeus!" : "Aquest jugador encara no té trofeus."}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {trophies.map((t: any) => {
+              const sd = t.special_data as any;
+              return (
+                <Card key={t.id} className="glass border-accent/30">
+                  <CardContent className="py-2.5 flex items-center gap-3">
+                    <span className="text-2xl">{getTrophyDisplayIcon(sd)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm">{getTrophyDisplayName(sd)}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
+                      </div>
+                      {sd?.custom_message && (
+                        <div className="text-[11px] italic text-primary/80 mt-0.5">💌 "{sd.custom_message}"</div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+        </TabsContent>
+        <TabsContent value="social">
       {/* Pet companion with evolution */}
       {pet && (() => {
         const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
@@ -271,49 +328,6 @@ export default function PlayerProfilePage() {
         </div>
       )}
 
-      {/* Vitrina (reward collection) */}
-      <PlayerVitrina userId={userId!} />
-
-      {/* Trophies */}
-      <div className="mb-5 relative z-10">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          🏆 Trofeus ({trophies.length})
-        </h2>
-        {trophies.length === 0 ? (
-          <Card className="glass">
-            <CardContent className="py-6 text-center">
-              <div className="text-3xl mb-1.5 opacity-50">🏆</div>
-              <p className="text-sm text-muted-foreground">Cap trofeu encara</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                {isOwnProfile ? "Troba objectes especials per guanyar trofeus!" : "Aquest jugador encara no té trofeus."}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {trophies.map((t: any) => {
-              const sd = t.special_data as any;
-              return (
-                <Card key={t.id} className="glass border-accent/30">
-                  <CardContent className="py-2.5 flex items-center gap-3">
-                    <span className="text-2xl">{getTrophyDisplayIcon(sd)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm">{getTrophyDisplayName(sd)}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {sd?.object_name} · {new Date(t.collected_at).toLocaleDateString("ca")}
-                      </div>
-                      {sd?.custom_message && (
-                        <div className="text-[11px] italic text-primary/80 mt-0.5">💌 "{sd.custom_message}"</div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       <div className="relative z-10">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
           💬 Mur · <span className="normal-case">missatges desapareixen en {WALL_TTL_HOURS}h</span>
@@ -382,6 +396,8 @@ export default function PlayerProfilePage() {
           </div>
         )}
       </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

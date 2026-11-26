@@ -26,3 +26,16 @@ Resultats a docs/USER-GAMES-AUDIT.md. AF8CZZ reservada a un altre rival; no s’
 - [x] Desar els resultats sense modificar tokens gastats, posicions amagades ni partides finalitzades.
 
 Auditoria transversal a docs/HQ345X-HINT-AUDIT.md: 471 proves unitàries i partida E2E completa correcta; cap canvi a les dades de HQ345X.
+
+## Perfils amb partides recents i Elo
+
+- [x] Registrar l’Elo real abans/després de noves partides sense modificar resultats anteriors.
+- [x] Mostrar historial compartit al perfil propi i al d’altres jugadors.
+- [x] Organitzar els dos perfils en pestanyes, conservant les funcions existents.
+- [x] Verificar historial, permisos i registre d’una partida completa a mòbil i escriptori.
+
+476 proves unitàries correctes i E2E complet amb registre real abans/després, lectura als dos perfils i intents de manipulació rebutjats. Les partides antigues es mostren amb Elo desconegut, sense reconstruccions ni canvis als resultats.
+
+## Objecte trobat en guanyar
+
+- [ ] Mostrar a la victòria quin objecte havia amagat el rival (cas ZXRSNQ), també després de recarregar.

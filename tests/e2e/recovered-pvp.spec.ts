@@ -46,7 +46,8 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
       attempts.push((await supabase.rpc('execute_game_move',{_game_id:id,_action:'look',_is_story:true})).error?.message);
       attempts.push((await supabase.rpc('execute_game_move',{_game_id:id,_action:'confirm',_is_story:false})).error?.message);
       const after = await supabase.from('game_players').select('tokens_remaining').eq('id',p.data.id).single();
-      return {player:p.data,scenarios:s.data,connections:c.data,attempts,after:after.data,safe:safe.data};
+      const ratings = await supabase.from('profiles').select('user_id,elo').in('user_id',safe.data.map(p => p.user_id));
+      return {player:p.data,scenarios:s.data,connections:c.data,attempts,after:after.data,safe:safe.data,ratings:ratings.data};
     })()`) as {
       player: { id: string; user_id: string; current_scenario_id: string; tokens_remaining: number };
       scenarios: { id: string; name: string }[];
@@ -54,6 +55,7 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
       attempts: (string | undefined)[];
       after: { tokens_remaining: number };
       safe: { user_id: string; hidden_item_id?: string | null; hidden_object_id?: string | null }[];
+      ratings: { user_id: string; elo: number }[];
     };
     expect(state.player.tokens_remaining).toBe(5);
     expect(state.after.tokens_remaining).toBe(5);
@@ -85,7 +87,12 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
     }
     // A similar furniture hint is not a win, and the observation must persist.
     await host.getByRole("button", { name: /Cadira.*accions/i }).click();
-    await host.getByRole("button", { name: "Sobre Cadira", exact: true }).click();
+    const [observation] = await Promise.all([
+      host.waitForResponse(response => response.url().includes("/rpc/execute_game_move") && response.request().postDataJSON()?._action === "look"),
+      host.getByRole("button", { name: "Sobre Cadira", exact: true }).click(),
+    ]);
+    expect(observation.ok()).toBe(true);
+    expect((await observation.json()).found_object).toBe(false);
     await expect(host.getByRole("button", { name: "Sobre Cadira", exact: true })).toBeDisabled();
     await expect(host.getByText("Victòria!", { exact: true })).toHaveCount(0);
     await host.reload();
@@ -98,6 +105,41 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
     await expect(guest.getByText("Derrota...", { exact: true })).toBeVisible();
     await host.goto(gameUrl);
     await expect(host.getByText("Victòria!", { exact: true })).toBeVisible();
+
+    const histories = await host.evaluate(`(async () => {
+      const {supabase} = await import('/src/integrations/supabase/client.ts');
+      const id = location.pathname.split('/').pop();
+      const rows = await supabase.from('player_match_results').select('*').eq('game_id',id);
+      const changes = [];
+      changes.push((await supabase.from('player_match_results').update({elo_after:9999}).eq('game_id',id)).error?.message);
+      changes.push((await supabase.from('player_match_results').delete().eq('game_id',id)).error?.message);
+      const after = await supabase.from('player_match_results').select('*').eq('game_id',id);
+      const ratings = await supabase.from('profiles').select('user_id,elo').in('user_id',rows.data.map(r => r.user_id));
+      const profileHistory = await supabase.rpc('get_player_match_history',{_user_id:rows.data[0].user_id});
+      return {rows:rows.data,after:after.data,ratings:ratings.data,changes,profileHistory:profileHistory.data};
+    })()`) as {
+      rows: { user_id: string; elo_before: number; elo_after: number; elo_change: number; result: string; game_code: string }[];
+      after: { user_id: string; elo_before: number; elo_after: number; elo_change: number; result: string; game_code: string }[];
+      ratings: { user_id: string; elo: number }[];
+      changes: (string | undefined)[];
+      profileHistory: { matches: { game_code: string }[] };
+    };
+    expect(histories.rows).toHaveLength(2);
+    for (const row of histories.rows) {
+      expect(row.elo_before).toBe(state.ratings.find(r => r.user_id === row.user_id)?.elo);
+      expect(row.elo_after).toBe(histories.ratings.find(r => r.user_id === row.user_id)?.elo);
+      expect(row.elo_change).toBe(row.elo_after - row.elo_before);
+      expect(row.result).toBe(row.user_id === state.player.user_id ? "win" : "loss");
+    }
+    expect(histories.after).toEqual(histories.rows);
+    for (const error of histories.changes) expect(error).toBeTruthy();
+    expect(histories.profileHistory.matches.some(m => m.game_code === code)).toBe(true);
+    await host.goto("/profile");
+    await expect(host.getByRole("region", { name: "Partides recents" }).getByText(code, { exact: true })).toBeVisible();
+    const rivalId = state.safe.find(p => p.user_id !== state.player.user_id)?.user_id;
+    if (!rivalId) throw new Error("Rival missing");
+    await host.goto(`/player/${rivalId}`);
+    await expect(host.getByRole("region", { name: "Partides recents" }).getByText(code, { exact: true })).toBeVisible();
     expect(errors).toEqual([]);
   } finally {
     await hostContext.close();
