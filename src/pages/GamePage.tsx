@@ -8,14 +8,12 @@
 //   - GamePopups → src/components/game/GamePopups.tsx
 // ============================================================
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { asError } from "@/lib/errors";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { logError } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getScenarios, getItemsByScenario, getObjects, getConnectedScenarios,
@@ -24,70 +22,25 @@ import {
   ensureTokensReset, TOKEN_COSTS, SOCIAL_ITEMS, type SocialItemType,
   getObjectSpecial, autoFixMissingScenario, getMaterialBlockReason, MATERIAL_LABELS,
   redeemBonusTokens, getItemInteractions, getTagActions, performTagAction,
-  OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame, getBreakableItemsForGame,
+  OUTDOOR_SCENARIOS, toggleLight, getDirtyItemsForGame,
 } from "@/lib/supabase-helpers";
-import {
-  loadPersonalCombatData,
-  loadPersonalCombatDataFromRooms,
-  neighborsOf,
-  parseSnapshot,
-  synthScenario,
-  synthObjects,
-  synthItems,
-  mergeSnapshots,
-  loadFurnitureCatalog,
-  PERSONAL_SCENARIO_ID,
-  type FurnitureCatalogItem,
-} from "@/lib/personal-pvp-adapter";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
-  getMyAccessories, awardAccessory, hasAllAccessories,
+  completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
   rollHealthEvent,
 } from "@/lib/story-helpers";
-const completeChapter = async (_u: string, _c: number, _m: number) => ({ xp: 0, isDead: false, newXp: 0 }); // legacy stub — story v4 viu a StoryModePage
-import { parseTools, POSITIONS, POS_LABELS, type PlayerTools, type Phase, type Position } from "@/lib/game-types";
+import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
-import {
-  CUSTOM_OBJECT_SENTINEL_ID,
-  CUSTOM_OBJECT_MATERIALS,
-  CUSTOM_OBJECT_SIZES,
-  buildCustomObjectSpecialData,
-  validateCustomObject,
-  isSingleEmoji,
-  type CustomObjectMaterial,
-  type CustomObjectSize,
-} from "@/lib/custom-object";
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HelpButton, Tip } from "@/components/HelpButton";
-import { useT } from "@/i18n/LanguageProvider";
-import type { Tables } from "@/integrations/supabase/types";
 
 // Extracted components
 import ItemActions from "@/components/game/ItemActions";
-import PixelRoomGrid, { type PixelCell } from "@/components/room/PixelRoomGrid";
-import { spriteForFurniture } from "@/lib/room-sprites";
-import FurnitureActionSheet from "@/components/game/FurnitureActionSheet";
-import { themeForScenarioName, autoLayoutForItems, backdropsForScenario, PVP_GRID_W, PVP_GRID_H } from "@/lib/pvp-scenario-themes";
-import { SpecialReveal, type SpecialRevealData } from "@/components/game/SpecialReveal";
 import GameFinishedPhase from "@/components/game/GameFinishedPhase";
-import HidingPhase from "@/components/game/HidingPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
-import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup, WinFoundPopup } from "@/components/game/GamePopups";
-import WaitingScreen from "@/components/game/WaitingScreen";
-import ScenarioPicker from "@/components/game/ScenarioPicker";
-import ObjectIcon from "@/components/game/ObjectIcon";
-import { usePersonalCombat } from "@/hooks/game/usePersonalCombat";
-import { useGameLoader } from "@/hooks/game/useGameLoader";
-import { useGameRealtime } from "@/hooks/game/useGameRealtime";
-import { useHidingFlowState } from "@/hooks/game/useHidingFlowState";
-import { useSearchFlowState } from "@/hooks/game/useSearchFlowState";
-
-
-
-
+import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup } from "@/components/game/GamePopups";
 
 const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -95,97 +48,58 @@ export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const t = useT();
-  const posLabel = (p: string) => t(`game.pos.${p}`, p);
-  const toolKey = (tool: string) => `🔧 ${t(`game.toolNames.${tool}`, tool)}`;
-  const getToolName = (tool: string) =>
-    tool === "drap" ? t("game.toolDrap") :
-    tool === "martell" ? t("game.toolMartell") :
-    tool === "llanterna" ? t("game.toolLlanterna") : t("game.screwdriver");
 
   // Core game state
-  const [game, setGame] = useState<GameRow | null>(null);
-  const [player, setPlayer] = useState<PlayerRow | null>(null);
-  const [rival, setRival] = useState<PlayerRow | null>(null);
+  const [game, setGame] = useState<any>(null);
+  const [player, setPlayer] = useState<any>(null);
+  const [rival, setRival] = useState<any>(null);
   const [phase, setPhase] = useState<Phase>("waiting");
 
   // Data lists
-  const [scenarios, setScenarios] = useState<ScenarioRow[]>([]);
-  const [objects, setObjects] = useState<ObjectRow[]>([]);
-  const [items, setItems] = useState<ItemRow[]>([]);
+  const [scenarios, setScenarios] = useState<any[]>([]);
+  const [objects, setObjects] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
 
-  // Hiding state (agrupat en hook)
-  const hiding = useHidingFlowState();
-  const {
-    selectedScenario, setSelectedScenario,
-    selectedObject, setSelectedObject,
-    selectedItem, setSelectedItem,
-    selectedPosition, setSelectedPosition,
-    hideStep, setHideStep,
-    objectSpecial, setObjectSpecial,
-    specialInput, setSpecialInput,
-    selectedVariant, setSelectedVariant,
-    hideMessage, setHideMessage,
-    showHideMessagePopup, setShowHideMessagePopup,
-    customObjectIcon, setCustomObjectIcon,
-    customObjectName, setCustomObjectName,
-    customObjectSize, setCustomObjectSize,
-    customObjectMaterial, setCustomObjectMaterial,
-    customObjectTrait1, setCustomObjectTrait1,
-    customObjectTrait2, setCustomObjectTrait2,
-    customObjectData, setCustomObjectData,
-  } = hiding;
-  const [objectSpecialLoaded, setObjectSpecialLoaded] = useState(false);
-
-  // My hiding-spot reminder (lazy-loaded on demand)
-  const [showMyHideout, setShowMyHideout] = useState(false);
-  const [myHideoutData, setMyHideoutData] = useState<{ item: string; itemIcon: string; scenario: string; scenarioIcon: string } | null>(null);
+  // Hiding state
+  const [selectedScenario, setSelectedScenario] = useState("");
+  const [selectedObject, setSelectedObject] = useState("");
+  const [selectedItem, setSelectedItem] = useState("");
+  const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
+  const [hideStep, setHideStep] = useState(0);
+  const [objectSpecial, setObjectSpecial] = useState<any>(null);
+  const [specialInput, setSpecialInput] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [hideMessage, setHideMessage] = useState("");
+  const [showHideMessagePopup, setShowHideMessagePopup] = useState(false);
 
   // Playing state
-  const [currentScenarioItems, setCurrentScenarioItems] = useState<ItemRow[]>([]);
-  const [pixelView, setPixelView] = useState<boolean>(() => {
-    try { return localStorage.getItem("pvp:pixelView") !== "false"; } catch { return true; }
-  });
-
-  // Search state (agrupat en hook)
-  const search = useSearchFlowState();
-  const {
-    sheetItemId, setSheetItemId,
-    connectedScenarios, setConnectedScenarios,
-    moveHistory, setMoveHistory,
-    actionLoading, setActionLoading,
-    itemInteractions, setItemInteractions,
-    playerTools, setPlayerTools,
-    dirtyItems, setDirtyItems,
-    breakableItems, setBreakableItems,
-    gameBreaks, setGameBreaks,
-    illuminatedScenarios, setIlluminatedScenarios,
-    scenarioIsDarkState, setScenarioIsDarkState,
-  } = search;
-
+  const [currentScenarioItems, setCurrentScenarioItems] = useState<any[]>([]);
+  const [connectedScenarios, setConnectedScenarios] = useState<any[]>([]);
+  const [moveHistory, setMoveHistory] = useState<any[]>([]);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [itemInteractions, setItemInteractions] = useState<any[]>([]);
+  const [playerTools, setPlayerTools] = useState<PlayerTools>(parseTools(null));
+  const [dirtyItems, setDirtyItems] = useState<Set<string>>(new Set());
+  const [gameBreaks, setGameBreaks] = useState<Set<string>>(new Set());
+  const [illuminatedScenarios, setIlluminatedScenarios] = useState<Set<string>>(new Set());
+  const [scenarioIsDarkState, setScenarioIsDarkState] = useState(false);
   const isLoadingGameRef = useRef(false);
   const pendingReloadRef = useRef(false);
   const realtimeReloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hidingSubmitRef = useRef(false);
-  // Wave A UI polish: track newly-revealed specials to animate them once
-  const [pendingReveal, setPendingReveal] = useState<SpecialRevealData | null>(null);
-  const seenRevealMoveIdsRef = useRef<Set<string>>(new Set());
-
 
   // UI state
   const [showSocialPanel, setShowSocialPanel] = useState(false);
   const [bananaEffect, setBananaEffect] = useState(false);
   const [receivedMessage, setReceivedMessage] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [reward, setReward] = useState<Record<string, any> | null>(null);
+  const [reward, setReward] = useState<any>(null);
   const [rivalNearby, setRivalNearby] = useState(false);
   const [bananaBlockedSpot, setBananaBlockedSpot] = useState<string | null>(null);
   const [rivalSmokeBombAt, setRivalSmokeBombAt] = useState<string | null>(null);
   const [rivalTraits, setRivalTraits] = useState<{ trait1: string | null; trait2: string | null }>({ trait1: null, trait2: null });
-  const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<Record<string, any> | null>(null);
-  const [winFoundPopup, setWinFoundPopup] = useState<{ objectIcon?: string; objectName?: string; itemIcon?: string; itemName?: string; positionLabel?: string; rivalName?: string } | null>(null);
+  const [showSpecialFoundPopup, setShowSpecialFoundPopup] = useState<any>(null);
   const [specialFoundInput, setSpecialFoundInput] = useState("");
-  const [specialFoundVariant, setSpecialFoundVariant] = useState<Record<string, any> | null>(null);
+  const [specialFoundVariant, setSpecialFoundVariant] = useState<any>(null);
   const [trollEffect, setTrollEffect] = useState<{ message: string; emoji: string; animation: string } | null>(null);
   const [bonusAvailable, setBonusAvailable] = useState(0);
   const [bonusAmount, setBonusAmount] = useState(1);
@@ -193,221 +107,438 @@ export default function GamePage() {
   const [savingTrophy, setSavingTrophy] = useState(false);
 
   // Story mode
-  const isStory = false; // 🔒 Story mode v4 viu a /story (StoryModePage). PvP no usa is_story.
-  const storyChapter: number | undefined = undefined;
-  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: Record<string, any> | null; consumable?: Record<string, any> | null } | null>(null);
-
-  // ── Personal PvP: override scenaris/objectes amb el snapshot (via hook) ──
-  const { isPersonalGame, personalDataRef } = usePersonalCombat({ game, setScenarios, setObjects });
+  const isStory = !!(game as any)?.is_story;
+  const storyChapter = (game as any)?.story_chapter as number | undefined;
+  const [storyResult, setStoryResult] = useState<{ xp: number; isDead: boolean; newXp: number; accessory?: any; consumable?: any } | null>(null);
 
   // ============================================
-
-  // LOAD GAME — via useGameLoader hook
+  // LOAD GAME
   // ============================================
-  const gameLoaderSetters = useMemo(() => ({
-    setGame, setPlayer, setRival, setPhase, setPlayerTools, setHideStep,
-    setBonusAvailable, setRivalNearby, setRivalTraits,
-    setConnectedScenarios, setDirtyItems, setBreakableItems, setItemInteractions,
-    setMoveHistory, setGameBreaks, setIlluminatedScenarios, setScenarioIsDarkState,
-    setCurrentScenarioItems, setReward, setRivalSmokeBombAt,
-    setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage,
-  }), []);
+  const loadGame = useCallback(async () => {
+    if (!gameId || !user) return;
 
-  const { loadGame, scheduleLoadGame } = useGameLoader({
-    gameId,
-    user,
-    t,
-    personalDataRef,
-    isLoadingGameRef,
-    pendingReloadRef,
-    realtimeReloadTimeoutRef,
-    setters: gameLoaderSetters,
-  });
+    if (isLoadingGameRef.current) {
+      pendingReloadRef.current = true;
+      return;
+    }
 
+    isLoadingGameRef.current = true;
+
+    try {
+
+      // ── BATCH 1: Core game state (always needed) ──
+      const [{ data: gameData }, { data: playerData }, { data: safePlayers }] = await Promise.all([
+        supabase.from("games").select("*").eq("id", gameId).single(),
+        supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
+        supabase.rpc("get_safe_game_players" as any, { _game_id: gameId }),
+      ]);
+      const safePlayersList = (safePlayers as any[]) ?? [];
+      const rivalData = safePlayersList.find((p: any) => p.user_id !== user.id) ?? null;
+
+      setGame(gameData);
+      setPhase((gameData?.status as Phase) ?? "waiting");
+      setRival(rivalData);
+
+      if (playerData && (gameData?.status === "playing" || gameData?.status === "hiding")) {
+        const resetTokens = await ensureTokensReset(playerData);
+        playerData.tokens_remaining = resetTokens;
+        playerData.tokens_last_reset = new Date().toISOString().split("T")[0];
+
+        if (gameData?.status === "playing" && !playerData.current_scenario_id && playerData.hidden_item_id) {
+          const fixedId = await autoFixMissingScenario(gameId, user.id, playerData.hidden_item_id);
+          playerData.current_scenario_id = fixedId;
+        }
+      }
+      setPlayer(playerData);
+      setPlayerTools(parseTools(playerData?.tools));
+
+      if (playerData?.has_hidden) setHideStep(4);
+
+      const isStoryGame = !!(gameData as any)?.is_story;
+      const isPlaying = gameData?.status === "playing";
+      const isFinished = gameData?.status === "finished";
+      const currentScenId = playerData?.current_scenario_id ?? "";
+
+      // ── BATCH 2: ALL secondary queries in ONE Promise.all ──
+      type QKey = "profile" | "hiddenItem" | "items" | "connected" | "moves" | "tagMoves" | "curScen" | "reward" | "smokeBombs" | "blockedSocial" | "unprocessedSocial" | "traits" | "interactions";
+      const batch: Partial<Record<QKey, PromiseLike<any>>> = {};
+
+      if (isPlaying) {
+        batch.profile = supabase.from("profiles").select("bonus_tokens").eq("user_id", user.id).single();
+      }
+      if (!isStoryGame && isPlaying && playerData?.hidden_item_id && rivalData?.current_scenario_id) {
+        batch.hiddenItem = supabase.from("items").select("scenario_id").eq("id", playerData.hidden_item_id).single();
+      }
+      // Use server-side RPC for traits (no longer depends on hidden_object_id)
+      if (!isStoryGame && isPlaying) {
+        batch.traits = supabase.rpc("get_rival_traits" as any, { _game_id: gameId });
+      }
+      if (isPlaying && currentScenId) {
+        batch.items = getItemsByScenario(currentScenId);
+        batch.connected = getConnectedScenarios(currentScenId);
+        batch.curScen = supabase.from("scenarios").select("name").eq("id", currentScenId).single();
+      }
+      batch.moves = supabase.from("game_moves")
+        .select("*, scenarios:target_scenario_id(name, icon), items:target_item_id(name, icon)")
+        .eq("game_id", gameId).eq("player_id", user.id)
+        .order("turn_number", { ascending: false });
+      batch.tagMoves = supabase.from("game_moves").select("bonus_value, player_id")
+        .eq("game_id", gameId).like("bonus_value", "tag:%")
+        .order("created_at", { ascending: true });
+
+      if (isFinished && gameData?.winner_id === user.id) {
+        batch.reward = getGameReward(gameId, user.id);
+      }
+      if (isPlaying && !isStoryGame && rivalData) {
+        batch.smokeBombs = supabase.from("game_social_items").select("created_at")
+          .eq("game_id", gameId).eq("from_player_id", rivalData.user_id)
+          .eq("item_type", "smoke_bomb").eq("blocked_by_shield", false)
+          .order("created_at", { ascending: false }).limit(1);
+        batch.blockedSocial = supabase.from("game_social_items").select("*")
+          .eq("game_id", gameId).eq("to_player_id", user.id)
+          .eq("blocked_by_shield", true).eq("processed", false);
+        batch.unprocessedSocial = getUnprocessedSocialItems(gameId, user.id);
+      }
+
+      // Fire ALL queries at once
+      const keys = Object.keys(batch) as QKey[];
+      const results = await Promise.all(keys.map(k => batch[k]!));
+      const R: Partial<Record<QKey, any>> = {};
+      keys.forEach((k, i) => { R[k] = results[i]; });
+
+      // ── Process results ──
+
+      // Profile bonus
+      if (R.profile) setBonusAvailable(R.profile.data?.bonus_tokens ?? 0);
+
+      // Rival nearby
+      if (R.hiddenItem) {
+        setRivalNearby(R.hiddenItem.data?.scenario_id === rivalData?.current_scenario_id);
+      } else {
+        setRivalNearby(false);
+      }
+
+      // Rival traits — now from server-side RPC (secure, no hidden_object_id leak)
+      if (R.traits) {
+        const traitsData = R.traits.data as any;
+        if (traitsData) {
+          setRivalTraits({ trait1: traitsData.trait1 ?? null, trait2: traitsData.trait2 ?? null });
+        } else {
+          setRivalTraits({ trait1: null, trait2: null });
+        }
+      } else {
+        setRivalTraits({ trait1: null, trait2: null });
+      }
+      
+
+      // Items, connections, interactions (items result is raw array from helper)
+      let loadedItems: any[] = [];
+      let loadedInteractions: any[] = [];
+      if (isPlaying && currentScenId && R.items) {
+        loadedItems = Array.isArray(R.items) ? R.items : (R.items?.data ?? R.items ?? []);
+        if (R.connected) {
+          const conn = Array.isArray(R.connected) ? R.connected : (R.connected?.data ?? []);
+          setConnectedScenarios(conn);
+        }
+        const gameDirty = getDirtyItemsForGame(loadedItems, gameId);
+        setDirtyItems(gameDirty);
+
+        // Auto-give drap if dirty items here (fire-and-forget, don't block)
+        const hasDirtyHere = loadedItems.some((i: any) => gameDirty.has(i.id));
+        if (hasDirtyHere && playerData) {
+          const tools = parseTools(playerData.tools);
+          if (tools.drap === 0) {
+            tools.drap = 1;
+            supabase.from("game_players").update({ tools }).eq("id", playerData.id).then(() => {});
+            playerData.tools = tools;
+            setPlayerTools({ ...tools });
+            toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
+          }
+        }
+        // Load interactions now that we have item IDs (single extra query)
+        loadedInteractions = await getItemInteractions(loadedItems.map((i: any) => i.id));
+        setItemInteractions(loadedInteractions);
+      }
+
+      // Move history
+      const allMoves = R.moves?.data ?? [];
+      setMoveHistory(allMoves);
+
+      // Breaks & illumination from tag moves
+      const allGameMoves = R.tagMoves?.data ?? [];
+      const breaks = new Set<string>();
+      const litScenarios = new Set<string>();
+      for (const m of allGameMoves) {
+        const val = (m.bonus_value as string) ?? "";
+        if (val.startsWith("tag:break:")) breaks.add(val.replace("tag:break:", ""));
+        if (val.startsWith("tag:fix:")) breaks.delete(val.replace("tag:fix:", ""));
+        if (val.startsWith("tag:clean:")) breaks.add(`clean:${val.replace("tag:clean:", "")}`);
+        if (val.startsWith("tag:light_on:")) litScenarios.add(val.replace("tag:light_on:", ""));
+        if (val.startsWith("tag:light_off:")) litScenarios.delete(val.replace("tag:light_off:", ""));
+        if (val.startsWith("tag:flashlight:")) litScenarios.add(val.replace("tag:flashlight:", ""));
+      }
+      setGameBreaks(breaks);
+      setIlluminatedScenarios(litScenarios);
+
+      // Revealed items from interactions
+      const revealed = new Set<string>();
+      for (const ia of loadedInteractions) {
+        if (ia.effect_type === "reveal_items") {
+          const wasUsed = allMoves.some((m: any) => m.target_item_id === ia.item_id);
+          if (wasUsed) {
+            const ids = (ia.effect_data as any)?.reveal_item_ids ?? [];
+            ids.forEach((id: string) => revealed.add(id));
+          }
+        }
+      }
+
+      // Scenario illumination
+      let isOutdoor = false;
+      if (R.curScen) {
+        isOutdoor = OUTDOOR_SCENARIOS.includes(R.curScen.data?.name ?? "");
+      }
+      let indoorLightOff = false;
+      if (!isOutdoor && currentScenId) {
+        for (const m of allGameMoves) {
+          const val = (m.bonus_value as string) ?? "";
+          if (val === `tag:light_off:${currentScenId}`) indoorLightOff = true;
+          if (val === `tag:light_on:${currentScenId}`) indoorLightOff = false;
+        }
+      }
+      const scenarioIsDark = isOutdoor ? !litScenarios.has(currentScenId) : indoorLightOff;
+      setScenarioIsDarkState(scenarioIsDark);
+
+      const visibleItems = loadedItems.filter((i: any) => {
+        if (scenarioIsDark) return !i.hidden;
+        if (!i.hidden) return true;
+        if (revealed.has(i.id)) return true;
+        if (isOutdoor && litScenarios.has(currentScenId)) return true;
+        return false;
+      });
+      setCurrentScenarioItems(visibleItems);
+
+      // Reward
+      if (R.reward) setReward(R.reward);
+
+      // Smoke bomb
+      if (R.smokeBombs) {
+        setRivalSmokeBombAt(R.smokeBombs.data?.[0]?.created_at ?? null);
+      } else {
+        setRivalSmokeBombAt(null);
+      }
+
+      // Process social items (PvP only)
+      if (isPlaying && !isStoryGame) {
+        // Blocked items
+        const blockedItems = R.blockedSocial?.data ?? [];
+        const markPromises: Promise<any>[] = [];
+        for (const blocked of blockedItems) {
+          const info = SOCIAL_ITEMS.find(i => i.type === blocked.item_type);
+          toast.success(`🛡️ El teu escut ha bloquejat ${info?.icon} ${info?.name} del rival!`, { duration: 5000 });
+          markPromises.push(markSocialItemProcessed(blocked.id));
+        }
+
+        // Unprocessed items
+        const unprocessed = R.unprocessedSocial ?? [];
+        for (const item of unprocessed) {
+          if (item.item_type === "banana") {
+            const allPositions = ["sobre", "sota", "dins"] as const;
+            const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
+            if (loadedItems.length > 0) {
+              const randomItem = loadedItems[Math.floor(Math.random() * loadedItems.length)];
+              setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
+              setBananaEffect(true);
+              toast.warning("🍌 El rival t'ha enviat un plàtan podrit! Una posició està bloquejada!", { duration: 5000 });
+              setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
+              setTimeout(() => setTrollEffect(null), 4000);
+            }
+          } else if (item.item_type === "smoke_bomb") {
+            toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+          } else if (item.item_type === "swap") {
+            toast.warning("🔄 El rival ha usat un Intercanvi! Heu intercanviat posicions!", { duration: 5000 });
+          } else if (item.item_type === "message" && item.message_text) {
+            setReceivedMessage(item.message_text);
+          }
+          markPromises.push(markSocialItemProcessed(item.id));
+        }
+        // Mark all processed in parallel
+        if (markPromises.length > 0) await Promise.all(markPromises);
+      }
+    } finally {
+      isLoadingGameRef.current = false;
+      if (pendingReloadRef.current) {
+        pendingReloadRef.current = false;
+        setTimeout(() => {
+          void loadGame();
+        }, 0);
+      }
+    }
+  }, [gameId, user]);
+
+  const scheduleLoadGame = useCallback((delay = 300) => {
+    if (realtimeReloadTimeoutRef.current) {
+      clearTimeout(realtimeReloadTimeoutRef.current);
+    }
+    realtimeReloadTimeoutRef.current = setTimeout(() => {
+      realtimeReloadTimeoutRef.current = null;
+      void loadGame();
+    }, delay);
+  }, [loadGame]);
+
+  const handleRealtimeSocialItem = useCallback(async (item: any) => {
+    if (!user || item?.to_player_id !== user.id || item?.processed) return;
+
+    if (item.blocked_by_shield) return;
+
+    if (item.item_type === "banana") {
+      const scenarioItems = currentScenarioItems.length > 0
+        ? currentScenarioItems
+        : player?.current_scenario_id
+          ? await getItemsByScenario(player.current_scenario_id)
+          : [];
+
+      if (scenarioItems.length > 0) {
+        const allPositions = ["sobre", "sota", "dins"] as const;
+        const randomPos = allPositions[Math.floor(Math.random() * allPositions.length)];
+        const randomItem = scenarioItems[Math.floor(Math.random() * scenarioItems.length)];
+        setBananaBlockedSpot(`${randomItem.id}:${randomPos}`);
+      }
+
+      setBananaEffect(true);
+      toast.warning("🍌 El rival t'ha enviat un plàtan podrit! Una posició està bloquejada!", { duration: 5000 });
+      setTrollEffect({ message: "🍌 PLÀTAN PODRIT!\nUna posició ha quedat bloquejada!", emoji: "🍌", animation: "shake" });
+      setTimeout(() => setTrollEffect(null), 4000);
+      await markSocialItemProcessed(item.id);
+      return;
+    }
+
+    if (item.item_type === "message" && item.message_text) {
+      setReceivedMessage(item.message_text);
+      await markSocialItemProcessed(item.id);
+      return;
+    }
+
+    if (item.item_type === "smoke_bomb") {
+      toast.warning("💨 El rival ha usat una bomba de fum! Ha mogut el seu objecte de posició!", { duration: 5000 });
+      await markSocialItemProcessed(item.id);
+    }
+  }, [currentScenarioItems, player?.current_scenario_id, user]);
 
   // ============================================
-  // REALTIME — via useGameRealtime hook (subscription + initial load + social handler)
+  // EFFECTS
   // ============================================
-  useGameRealtime({
-    gameId, user, isStory, t, loadGame, scheduleLoadGame,
-    currentScenarioItems, player,
-    setScenarios, setObjects,
-    setBananaBlockedSpot, setBananaEffect, setTrollEffect, setReceivedMessage,
-  });
+  useEffect(() => {
+    if (!gameId || !user) return;
+    void loadGame();
+    getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
+    getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
 
+    if (isStory) return;
 
-
-
-
+    const channel = supabase
+      .channel(`game-${gameId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => scheduleLoadGame())
+      .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${gameId}` }, () => scheduleLoadGame())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload: any) => {
+        void handleRealtimeSocialItem(payload.new);
+      })
+      .subscribe();
+    return () => {
+      if (realtimeReloadTimeoutRef.current) {
+        clearTimeout(realtimeReloadTimeoutRef.current);
+        realtimeReloadTimeoutRef.current = null;
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem, scheduleLoadGame]);
 
   // ============================================
   // HIDING HANDLERS
   // ============================================
   const handleSelectScenario = async (id: string) => {
     setSelectedScenario(id);
-    if (isPersonalGame) {
-      const personal = personalDataRef.current;
-      if (personal) {
-        setItems((personal.itemsByScenario.get(id) ?? []) as any);
-      } else if (game) {
-        const catalog = await loadFurnitureCatalog();
-        const merged = mergeSnapshots(
-          parseSnapshot(game.host_space_snapshot),
-          parseSnapshot(game.guest_space_snapshot)
-        );
-        setItems(synthItems(merged, catalog) as any);
-      }
-    } else {
-      setItems(await getItemsByScenario(id));
-    }
+    setItems(await getItemsByScenario(id));
     setHideStep(2);
   };
 
-  // (handleSelectScenario definit més amunt amb suport multi-sala)
-
-
   const handleSelectObject = async (objId: string) => {
     setSelectedObject(objId);
-    setObjectSpecialLoaded(false);
     setActionLoading(true);
     try {
       const special = await getObjectSpecial(objId);
       setObjectSpecial(special);
-      setObjectSpecialLoaded(true);
       setSpecialInput("");
       setSelectedVariant(null);
       setHideMessage("");
       setHideStep(1);
-    } catch (_raw_err) { const err = asError(_raw_err);
-      toast.error(t("game.errors.loadSpecial"));
+    } catch (err: any) {
+      toast.error("Error carregant objecte especial");
       logError(err.message, err.stack, "GamePage:handleSelectObject");
     } finally {
       setActionLoading(false);
     }
   };
 
-  /** Confirm a player-defined custom object and advance to scenario step. */
-  const handleSelectCustomObject = () => {
-    const input = {
-      icon: customObjectIcon.trim(),
-      name: customObjectName.trim(),
-      size: customObjectSize,
-      material: customObjectMaterial,
-      trait1: customObjectTrait1.trim(),
-      trait2: customObjectTrait2.trim(),
-    };
-    const v = validateCustomObject(input);
-    if (!v.ok) {
-      toast.error(v.error || t("game.errors.invalidCustomObject"));
-      return;
-    }
-    setSelectedObject(CUSTOM_OBJECT_SENTINEL_ID);
-    setObjectSpecial(null);          // custom objects never carry a special
-    setSpecialInput("");
-    setSelectedVariant(null);
-    setHideMessage("");
-    setObjectSpecialLoaded(true);
-    setCustomObjectData(buildCustomObjectSpecialData(input));
-    setHideStep(1);
-  };
-
-  const handleSelectPosition = async (pos: Position) => {
-    if (actionLoading || hidingSubmitRef.current) return;
-    const isCustom = selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData;
-    const obj = isCustom
-      ? { icon: customObjectData!.custom_icon, name: customObjectData!.custom_name, size: customObjectData!.custom_size, material: customObjectData!.custom_material }
-      : objects.find((o) => o.id === selectedObject);
-    const itm = items.find((i) => i.id === selectedItem);
+  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
+    const obj = objects.find((o: any) => o.id === selectedObject);
+    const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
-      const objSize = obj?.size ?? 2;
-      const capacity = itm?.inner_capacity ?? 2;
+      const objSize = (obj as any)?.size ?? 2;
+      const capacity = (itm as any)?.inner_capacity ?? 2;
       if (objSize > capacity) {
-        toast.error(t("game.errors.objectTooBig", { obj: `${obj?.icon} ${obj?.name}`, itm: `${itm?.icon} ${itm?.name}` }));
+        toast.error(`${obj?.icon} ${obj?.name} és massa gran per amagar dins de ${itm?.icon} ${itm?.name}!`);
         return;
       }
     }
-    if (pos === "darrere" && itm?.can_behind === false) {
-      toast.error(t("game.errors.cannotHideBehind", { itm: `${itm?.icon} ${itm?.name}` }));
-      return;
-    }
-    const material = obj?.material ?? "generic";
-    const environment = itm?.environment ?? "generic";
+    const material = (obj as any)?.material ?? "generic";
+    const environment = (itm as any)?.environment ?? "generic";
     const blockReason = getMaterialBlockReason(material, environment);
     if (blockReason) {
-      toast.error(t("game.errors.materialBlocked", { obj: `${obj?.icon} ${obj?.name}`, reason: blockReason }));
+      toast.error(`🚫 ${obj?.icon} ${obj?.name}: ${blockReason}`);
       return;
     }
     setSelectedPosition(pos);
-    hidingSubmitRef.current = true;
-    setActionLoading(true);
 
-    try {
-      // Re-fetch objectSpecial if lost (robustness against race conditions)
-      let special = objectSpecial;
-      if (!special && selectedObject && !objectSpecialLoaded) {
-        try {
-          special = await getObjectSpecial(selectedObject);
-          if (special) setObjectSpecial(special);
-          setObjectSpecialLoaded(true);
-        } catch { /* proceed without special */ }
-      }
-
-      // Show hide message popup if object supports it
-      if (special && special.has_hide_message) {
-        setShowHideMessagePopup(true);
-        return;
-      }
-
-      if (special && special.prompt_on === "hide") {
-        setHideStep(5);
-        return;
-      }
-
-      await doHide(pos);
-    } finally {
-      hidingSubmitRef.current = false;
-      setActionLoading(false);
+    // Re-fetch objectSpecial if lost (robustness against race conditions)
+    let special = objectSpecial;
+    if (!special && selectedObject) {
+      try {
+        special = await getObjectSpecial(selectedObject);
+        if (special) setObjectSpecial(special);
+      } catch { /* proceed without special */ }
     }
+
+    // Show hide message popup if object supports it
+    if (special && (special as any).has_hide_message) {
+      setShowHideMessagePopup(true);
+      return;
+    }
+
+    if (special && special.prompt_on === "hide") {
+      setHideStep(5);
+      return;
+    }
+
+    await doHide(pos);
   };
 
-  const doHide = async (pos?: Position, extraSpecialData?: Record<string, any>) => {
-    const finalPos = pos || selectedPosition as Position;
-    if (!gameId || !user || !finalPos || (actionLoading && !hidingSubmitRef.current)) return;
+  const doHide = async (pos?: "sobre" | "sota" | "dins", extraSpecialData?: any) => {
+    const finalPos = pos || selectedPosition as "sobre" | "sota" | "dins";
+    if (!gameId || !user || !finalPos) return;
     setActionLoading(true);
     try {
       let specialData = extraSpecialData || undefined;
       if (hideMessage.trim()) {
         specialData = { ...(specialData || {}), hide_message: hideMessage.trim() };
       }
-      // Merge custom-object metadata if the player created their own object
-      if (selectedObject === CUSTOM_OBJECT_SENTINEL_ID && customObjectData) {
-        specialData = { ...(specialData || {}), ...customObjectData };
-      }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
-      // Optimistic local state: don't wait for realtime to reflect the successful hide.
-      // Without this, `hideStep=4` + stale `player.has_hidden=false` can render an empty
-      // waiting screen until the backend event arrives, which feels like the click did nothing.
-      setPlayer((prev) => prev ? {
-        ...prev,
-        hidden_object_id: selectedObject,
-        hidden_item_id: selectedItem,
-        hidden_position: finalPos,
-        has_hidden: true,
-        ...(specialData ? { special_data: specialData } : {}),
-      } : prev);
       setHideStep(4);
-      toast.success(t("game.toasts.objectHidden"));
+      toast.success("Objecte amagat! 🫣");
       if (await checkBothPlayersHidden(gameId)) {
-        try {
-          await startGame(gameId);
-        } catch (_raw_startErr) { const startErr = asError(_raw_startErr);
-          const message = String(startErr?.message ?? "");
-          if (!message.includes("Game not in hiding phase")) throw startErr;
-        }
-        scheduleLoadGame(120);
-        toast.success(t("game.toasts.searchStarted"));
+        await startGame(gameId);
+        toast.success("Comença la cerca! 🔍");
       }
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -428,34 +559,34 @@ export default function GamePage() {
       const result = await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
       const s = scenarios.find(s => s.id === scenarioId);
       if (result.barricade_hit) {
-        toast.warning(t("game.toasts.barricadeHit", { extra: result.barricade_extra_cost }), { duration: 5000 });
+        toast.warning(`🚧 Camí barricadat! Has pagat ${result.barricade_extra_cost}🪙 extra per forçar el pas.`, { duration: 5000 });
       }
-      toast.success(isStory ? t("game.toasts.moveTo", { icon: s?.icon ?? "", name: s?.name ?? "" }) : t("game.toasts.moveToWithCost", { icon: s?.icon ?? "", name: s?.name ?? "", cost: result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move }));
+      toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move}🪙)`}`);
       clearBanana();
       await loadGame();
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
-  const handleInteraction = async (interaction: Record<string, any>) => {
+  const handleInteraction = async (interaction: any) => {
     if (!gameId || !user || !player) return;
-    const alreadyUsed = moveHistory.some((m) =>
+    const alreadyUsed = moveHistory.some((m: any) =>
       m.action === "look" && m.target_item_id === interaction.item_id &&
-      m.bonus_value === `interact:${interaction.action_name}`
+      (m as any).bonus_value === `interact:${interaction.action_name}`
     );
-    if (interaction.one_time && alreadyUsed) { toast.error(t("game.errors.actionAlreadyDone")); return; }
-    if (player.tokens_remaining < interaction.cost) { toast.error(t("game.errors.notEnoughTokens")); return; }
+    if (interaction.one_time && alreadyUsed) { toast.error("Ja has fet aquesta acció!"); return; }
+    if (player.tokens_remaining < interaction.cost) { toast.error("No tens prou tokens!"); return; }
     setActionLoading(true);
     try {
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
-      const data = interaction.effect_data as Record<string, any> | null;
-      if (interaction.effect_type === "reveal_items") toast.success(t("game.toasts.revealItems", { icon: interaction.action_icon, msg: data.message || t("game.toasts.revealItemsDefault") }), { duration: 6000 });
+      const data = interaction.effect_data as any;
+      if (interaction.effect_type === "reveal_items") toast.success(`${interaction.action_icon} ${data.message || "Nous mobles revelats!"}`, { duration: 6000 });
       else if (interaction.effect_type === "reveal_content") toast.success(`${interaction.action_icon} ${data.message}`, { duration: 6000 });
-      else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || t("game.toasts.hintReceived")}`, { duration: 5000 });
-      else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || t("game.toasts.posUnlocked")}`, { duration: 4000 });
+      else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
+      else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
       clearBanana();
       await loadGame();
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -463,50 +594,21 @@ export default function GamePage() {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
+      const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
       const [actionType] = actionKey.split(":");
       const item = currentScenarioItems.find(i => i.id === itemId);
-      const getToolName = (k: string) => k === "drap" ? t("game.toolDrap") : k === "martell" ? t("game.toolMartell") : k === "llanterna" ? t("game.toolLlanterna") : k === "galleda" ? t("game.toolGalleda") : t("game.screwdriver");
+      const getToolName = (t: string) => t === "drap" ? "🧹 Drap" : t === "martell" ? "🔨 Martell" : t === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
 
-      // Wave C: new RPC paths
-      if (actionType === "fill_water") {
-        const { executeFillWater } = await import("@/lib/supabase-helpers");
-        await executeFillWater(gameId, itemId);
-        toast.success(t("game.toasts.dampClothCreated", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
-        clearBanana();
-        await loadGame();
-        return;
-      }
-      if (actionType === "polish") {
-        const { executePolish } = await import("@/lib/supabase-helpers");
-        const res = await executePolish(gameId, itemId);
-        toast.success(t("game.toasts.polishBonus", { n: res?.bonus ?? 2 }), { duration: 5000 });
-        clearBanana();
-        await loadGame();
-        return;
-      }
+      if (actionType === "clean") toast.success(`🧹 Has netejat ${item?.icon} ${item?.name}!`, { duration: 4000 });
+      else if (actionType === "break") toast.success(`💥 Has trencat ${item?.icon} ${item?.name}! El rival ho sabrà... 🔧+1`, { duration: 5000 });
+      else if (actionType === "fix") toast.success(`🔧 Has arreglat ${item?.icon} ${item?.name}!`, { duration: 4000 });
 
-      const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
-
-      if (actionType === "clean") toast.success(t("game.toasts.itemCleaned", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
-      else if (actionType === "break") toast.success(t("game.toasts.itemBroken", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 5000 });
-      else if (actionType === "fix") toast.success(t("game.toasts.itemFixed", { icon: item?.icon ?? "", name: item?.name ?? "" }), { duration: 4000 });
-
-      if (result.bonusResult) toast.success(t("game.toasts.bonusTokens", { n: result.bonusResult.amount }), { duration: 3000 });
-      if (result.toolFound) toast.info(t("game.toasts.toolFound", { tool: getToolName(result.toolFound) }), { duration: 4000 });
-      if (result.tornavisSpawned) toast.info(t("game.toasts.tornavisSpawned"), { duration: 4000 });
-
-      // Wave C: galleda drop after clean/fix (5%)
-      if (actionType === "clean" || actionType === "fix") {
-        try {
-          const { rollGalledaDrop } = await import("@/lib/supabase-helpers");
-          const drop = await rollGalledaDrop(gameId);
-          if (drop?.dropped) toast.info(t("game.toasts.galledaFound"), { duration: 4000 });
-        } catch { /* silent */ }
-      }
+      if (result.bonusResult) toast.success(`🎁 +${result.bonusResult.amount}🪙 bonus!`, { duration: 3000 });
+      if (result.toolFound) toast.info(`🔍 Has trobat un ${getToolName(result.toolFound)}!`, { duration: 4000 });
 
       clearBanana();
       await loadGame();
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -523,42 +625,42 @@ export default function GamePage() {
       const result = await toggleLight(gameId, user.id, player.current_scenario_id, !isCurrentlyDark, scenarioName);
       if (isOutdoor) {
         if (isCurrentlyDark) {
-          toast.success(t("game.toasts.flashlightOn"), { duration: 5000 });
+          toast.success("🔦 La llanterna il·lumina la zona! Nous mobles revelats!", { duration: 5000 });
         } else {
-          toast.success(t("game.toasts.flashlightOff"), { duration: 4000 });
+          toast.success("🌑 Has apagat la il·luminació de la zona.", { duration: 4000 });
         }
       } else {
         if (!isCurrentlyDark) {
-          toast.success(t("game.toasts.lightsOff"), { duration: 4000 });
+          toast.success("🌑 Has apagat el llum! Ningú veu els mobles.", { duration: 4000 });
         } else {
-          toast.success(t("game.toasts.lightsOn"), { duration: 4000 });
+          toast.success("💡 Has encès el llum! Tots els mobles visibles.", { duration: 4000 });
         }
       }
       if (result.toolFound) {
-        const toolName = result.toolFound === "drap" ? t("game.toolDrap") : result.toolFound === "martell" ? t("game.toolMartell") : result.toolFound === "llanterna" ? t("game.toolLlanterna") : t("game.screwdriver");
-        toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
+        const toolName = result.toolFound === "drap" ? "🧹 Drap" : result.toolFound === "martell" ? "🔨 Martell" : result.toolFound === "llanterna" ? "🔦 Llanterna" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       }
       clearBanana();
       await loadGame();
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
-  const handleLook = async (itemId: string, pos: Position) => {
+  const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
     if (!gameId || !user) return;
     setActionLoading(true);
     try {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
       const item = currentScenarioItems.find(i => i.id === itemId);
       if (result.trapHit) {
-        toast.warning(t("game.toasts.trapHit", { n: result.trapPenalty }), { duration: 4000 });
+        toast.warning(`🪤 Trampa! Has perdut ${result.trapPenalty}🪙`, { duration: 4000 });
       }
       if (result.foundObject) {
         if (isStory && storyChapter) {
           const movesCount = (moveHistory?.length ?? 0) + 1;
           const storyRes = await completeChapter(user.id, storyChapter, movesCount);
-          let wonAccessory: Record<string, any> | null = null;
-          let wonConsumable: Record<string, any> | null = null;
+          let wonAccessory: any = null;
+          let wonConsumable: any = null;
           if (storyChapter >= 3) {
             const accIdx = storyChapter - 3;
             if (accIdx < PET_ACCESSORIES.length) {
@@ -589,31 +691,22 @@ export default function GamePage() {
             healthEvent = await rollHealthEvent(user.id);
           }
           setStoryResult({ ...storyRes, accessory: wonAccessory, consumable: wonConsumable });
-          toast.success(t("game.story.foundXp", { xp: storyRes.xp }), { duration: 6000 });
+          toast.success(`🎉 Trobat! +${storyRes.xp} XP ⭐`, { duration: 6000 });
           if (healthEvent) {
             setTimeout(() => {
-              toast.warning(t("game.story.healthEvent", { icon: healthEvent.icon, desc: healthEvent.desc, xp: healthEvent.xpDamage }), { duration: 8000 });
+              toast.warning(`${healthEvent.icon} La mascota ${healthEvent.desc} (+${healthEvent.xpDamage} XP)`, { duration: 8000 });
             }, 2000);
           }
         } else {
-          // PvP win: fetch revealed rival data FIRST (RLS hides hidden_object_id until game finishes)
-          const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players", { _game_id: gameId });
-          const resolvedRival = ((safePlayersAfterWin as Record<string, any>[]) ?? []).find((p) => p.user_id !== user.id) ?? rival;
-          setRival(resolvedRival as any);
+          toast.success("🏆 HAS GUANYAT! Has trobat l'objecte!", { duration: 6000 });
+        }
+        if (!isStory) {
+          const { data: safePlayersAfterWin } = await supabase.rpc("get_safe_game_players" as any, { _game_id: gameId });
+          const resolvedRival = ((safePlayersAfterWin as any[]) ?? []).find((p: any) => p.user_id !== user.id) ?? rival;
+          setRival(resolvedRival);
 
-          const { data: rivalProf } = await supabase.from("profiles").select("display_name").eq("user_id", resolvedRival?.user_id ?? "").maybeSingle();
           const foundObjectId = resolvedRival?.hidden_object_id;
-          let foundObj = objects.find((o) => o.id === foundObjectId);
-          if (!foundObj && foundObjectId) {
-            const { data: objRow } = await supabase.from("objects").select("name, icon").eq("id", foundObjectId).maybeSingle();
-            foundObj = objRow as any;
-          }
-          const rivalSD = resolvedRival?.special_data as Record<string, any> | null;
-          const isCustomFound = rivalSD?.is_custom === true;
-
-          // Determine if a special popup will appear (custom objects no tenen special)
-          const rivalSpecial = !isCustomFound && foundObjectId ? await getObjectSpecial(foundObjectId) : null;
-          let willShowSpecialPopup = false;
+          const rivalSpecial = foundObjectId ? await getObjectSpecial(foundObjectId) : null;
 
           if (rivalSpecial) {
             if (rivalSpecial.special_type === "troll_effect") {
@@ -624,50 +717,32 @@ export default function GamePage() {
               setSpecialFoundInput("");
               setSpecialFoundVariant(null);
               setShowSpecialFoundPopup({ special: rivalSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
-              willShowSpecialPopup = true;
             } else if (rivalSpecial.find_special_type) {
+              // Dual-behavior objects (e.g. Foto): hide popup already done, now show find popup
               const findSpecial = { ...rivalSpecial, special_type: rivalSpecial.find_special_type, prompt_text: rivalSpecial.find_prompt_text || rivalSpecial.prompt_text };
               setSpecialFoundInput("");
               setSpecialFoundVariant(null);
               setShowSpecialFoundPopup({ special: findSpecial, rivalPlayer: resolvedRival, objectId: foundObjectId });
-              willShowSpecialPopup = true;
             }
           }
 
-          // Only show the generic "win" popup if no trophy popup will steal focus
-          if (!willShowSpecialPopup) {
-            setWinFoundPopup({
-              objectIcon: isCustomFound ? rivalSD.custom_icon : foundObj?.icon,
-              objectName: isCustomFound ? rivalSD.custom_name : foundObj?.name,
-              itemIcon: item?.icon,
-              itemName: item?.name,
-              positionLabel: pos ? `${POS_LABELS[pos as keyof typeof POS_LABELS]?.split(" ")[0] ?? ""} ${posLabel(pos)}`.trim() : undefined,
-              rivalName: rivalProf?.display_name ?? t("game.results.rivalDefault"),
-            });
-          }
-
           const hideMsg = getHideMessage(resolvedRival?.special_data);
-          if (hideMsg) toast.info(t("game.toasts.rivalHideMsg", { msg: hideMsg }), { duration: 8000 });
+          if (hideMsg) toast.info(`✉️ Missatge del rival: "${hideMsg}"`, { duration: 8000 });
         }
-      } else if (result.cursed) {
-        toast.error(`${t("game.items.cursed")} ${result.bonusTokens}🪙`, { duration: 5000 });
       } else if (result.foundBonus === "extra_token" && result.bonusValue?.startsWith("tool:")) {
-        const toolName = result.bonusValue === "tool:drap" ? t("game.toolDrap") : result.bonusValue === "tool:martell" ? t("game.toolMartell") : t("game.screwdriver");
-        toast.info(t("game.toasts.toolFound", { tool: toolName }), { duration: 4000 });
-      } else if (result.foundBonus === "extra_token") toast.success(t("game.toasts.extraToken", { val: result.bonusValue }));
-      else if (result.foundBonus) toast.info(t("game.toasts.magic", { val: result.bonusValue }));
+        const toolName = result.bonusValue === "tool:drap" ? "🧹 Drap" : result.bonusValue === "tool:martell" ? "🔨 Martell" : "🔧 Tornavís";
+        toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
+      } else if (result.foundBonus === "extra_token") toast.success(`🎁 +${result.bonusValue} token extra!`);
+      else if (result.foundBonus) toast.info(`🔮 ${result.bonusValue}`);
       else {
         const level = result.hintLevel ?? 0;
-        const noisy = (result as any).hintNoisy ? " ⚠️" : "";
-        if (level === 0) toast.info(t("game.toasts.hintFrozen", { noisy, cost: TOKEN_COSTS.look }));
-        else if (level === 1) toast.info(t("game.toasts.hintCold", { noisy, cost: TOKEN_COSTS.look }));
-        else if (level === 2) toast.info(t("game.toasts.hintCool", { noisy, cost: TOKEN_COSTS.look }));
-        else if (level === 3) toast.warning(t("game.toasts.hintWarm", { noisy, cost: TOKEN_COSTS.look }));
-        else toast.success(t("game.toasts.hintHot", { noisy, cost: TOKEN_COSTS.look }));
+        if (level === 0) toast.info(`❄️ Fred! L'objecte NO és a ${currentScenario?.icon} ${currentScenario?.name}. (-${TOKEN_COSTS.look}🪙)`);
+        else if (level === 1) toast.warning(`🌡️ Calent! L'objecte ÉS en aquesta habitació, però no a ${item?.icon} ${item?.name}. (-${TOKEN_COSTS.look}🪙)`);
+        else toast.success(`🔥 MOLT CALENT! ${item?.icon} ${item?.name} és el moble correcte! Prova altra posició. (-${TOKEN_COSTS.look}🪙)`);
       }
       clearBanana();
       await loadGame();
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -676,7 +751,7 @@ export default function GamePage() {
     setSavingTrophy(true);
     try {
       const { special, rivalPlayer, objectId } = showSpecialFoundPopup;
-      const rivalObj = objects.find((o) => o.id === objectId);
+      const rivalObj = objects.find((o: any) => o.id === objectId);
       const hideMsg = getHideMessage(rivalPlayer?.special_data);
       const specialData = buildTrophySpecialData({
         special,
@@ -691,27 +766,23 @@ export default function GamePage() {
         .select("id").eq("user_id", user.id).eq("game_id", gameId)
         .eq("item_type", "special_trophy").limit(1);
       if (existing && existing.length > 0) {
-        toast.info(t("game.toasts.trophyAlready"));
+        toast.info("🏆 Ja tens el trofeu d'aquesta partida!");
         setShowSpecialFoundPopup(null);
         setSpecialFoundInput("");
         setSpecialFoundVariant(null);
         return;
       }
 
-      const { error: insErr } = await supabase.from("player_inventory").insert([{
+      await supabase.from("player_inventory").insert([{
         user_id: user.id, game_id: gameId,
         item_type: "special_trophy",
         item_value: special.special_type === "choose_variant" ? specialFoundVariant?.value ?? null : specialFoundInput.trim() || null,
         special_data: specialData,
       }]);
-      if (insErr) throw insErr;
-      toast.success(t("game.toasts.trophySaved"));
+      toast.success(`🏆 Trofeu desat!`);
       setShowSpecialFoundPopup(null);
       setSpecialFoundInput("");
       setSpecialFoundVariant(null);
-    } catch (_raw_err) { const err = asError(_raw_err);
-      toast.error(t("game.toasts.trophyError", { msg: err.message ?? t("game.toasts.errorUnknown") }));
-      logError(err.message ?? String(err), err.stack, "GamePage.handleSpecialFoundSubmit");
     } finally {
       setSavingTrophy(false);
     }
@@ -724,23 +795,23 @@ export default function GamePage() {
       const msg = type === "message" ? messageInput : undefined;
       const result = await sendSocialItem(gameId, user.id, rival.user_id, type, msg, extraData);
       const info = SOCIAL_ITEMS.find(i => i.type === type);
-      if (result.blocked) toast.error(t("game.toasts.blockedShield"));
-      else if (result.espiaResult) toast.success(t("game.toasts.espiaResult", { name: result.espiaResult }), { duration: 8000 });
-      else if (type === "smoke_bomb" && result.smokeBombResult) {
-        const sb = result.smokeBombResult;
-        toast.success(t("game.toasts.smokeBombResult", { scen: sb.new_scenario_name, item: sb.new_item_name, pos: sb.new_position }), { duration: 6000 });
-      } else if (type === "barricada" && result.barricadaResult) {
-        const br = result.barricadaResult;
-        toast.success(t("game.toasts.barricadaResult", { from: br.from_name, to: br.to_name }), { duration: 6000 });
-      } else if (type === "trampa" && result.trampaResult) {
-        const tr = result.trampaResult;
-        toast.success(t("game.toasts.trampaResult", { item: tr.item_name }), { duration: 5000 });
+      if (result.blocked) toast.error(`🛡️ Bloquejat per l'escort del rival!`);
+      else if (result.espiaResult) toast.success(`🕵️ El rival és a: ${result.espiaResult}`, { duration: 8000 });
+      else if (type === "smoke_bomb" && (result as any).smokeBombResult) {
+        const sb = (result as any).smokeBombResult;
+        toast.success(`💣 Bomba de fum! Objecte mogut a ${sb.new_scenario_name} → ${sb.new_item_name} (${sb.new_position})`, { duration: 6000 });
+      } else if (type === "barricada" && (result as any).barricadaResult) {
+        const br = (result as any).barricadaResult;
+        toast.success(`🚧 Barricada col·locada: ${br.from_name} ↔ ${br.to_name} (3 torns)`, { duration: 6000 });
+      } else if (type === "trampa" && (result as any).trampaResult) {
+        const tr = (result as any).trampaResult;
+        toast.success(`🪤 Trampa col·locada a ${tr.item_name}!`, { duration: 5000 });
       }
-      else toast.success(t("game.toasts.socialSent", { icon: info?.icon ?? "", name: info ? t(info.nameKey) : "" }));
+      else toast.success(`${info?.icon} ${info?.name} enviat!`);
       setShowSocialPanel(false);
       setMessageInput("");
       await loadGame();
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
+    } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { setActionLoading(false); }
   };
 
@@ -749,11 +820,11 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       const amount = await redeemBonusTokens(gameId, user.id, bonusAmount);
-      toast.success(t("game.toasts.bonusTokensAdded", { n: amount }));
+      toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
       setShowBonusPicker(false);
       setBonusAmount(1);
       await loadGame();
-    } catch (_raw_err) { const err = asError(_raw_err); toast.error(err.message); }
+    } catch (err: any) { toast.error(err.message); }
     finally { setActionLoading(false); }
   };
 
@@ -766,71 +837,27 @@ export default function GamePage() {
   const scenarioIsDark = scenarioIsDarkState;
 
   const lookedSpots = new Set<string>();
-  const revealedSpecials = new Map<string, { type: "curse" | "bonus"; value: number }>();
   for (const m of moveHistory) {
     if (m.target_item_id && m.target_position && m.action === "look") {
       // Skip looks that happened before the rival's smoke bomb (object moved, hints invalid)
       if (rivalSmokeBombAt && m.created_at < rivalSmokeBombAt) continue;
-      // Skip tag actions (clean/break/fix) — they log as 'look' for audit but are NOT peeks.
-      // Cleaning a furniture must only UNLOCK 'dins', never auto-reveal it.
-      const bv = m.bonus_value as string | null;
-      if (bv && bv.startsWith("tag:")) continue;
-      const spotKey = `${m.target_item_id}:${m.target_position}`;
-      lookedSpots.add(spotKey);
-      // Wave A: derive cursed/bonus reveals from numeric bonus_value
-      const numericBv = bv != null ? Number(bv) : NaN;
-      if (Number.isFinite(numericBv) && numericBv !== 0) {
-        revealedSpecials.set(spotKey, {
-          type: numericBv < 0 ? "curse" : "bonus",
-          value: numericBv,
-        });
-      }
+      lookedSpots.add(`${m.target_item_id}:${m.target_position}`);
     }
   }
-
-  // Wave A polish: detect NEW own-look moves that hit specials → trigger reveal overlay
-  useEffect(() => {
-    if (!user || !moveHistory?.length) return;
-    // Seed on first render so pre-existing reveals don't replay
-    if (seenRevealMoveIdsRef.current.size === 0) {
-      moveHistory.forEach((m) => m?.id && seenRevealMoveIdsRef.current.add(m.id));
-      return;
-    }
-    for (const m of moveHistory as Record<string, any>[]) {
-      if (!m?.id || seenRevealMoveIdsRef.current.has(m.id)) continue;
-      seenRevealMoveIdsRef.current.add(m.id);
-      if (m.action !== "look" || m.user_id !== user.id) continue;
-      const bv = m.bonus_value;
-      if (!bv || typeof bv !== "string" || bv.startsWith("tag:")) continue;
-      const n = Number(bv);
-      if (!Number.isFinite(n) || n === 0) continue;
-      setPendingReveal({ type: n < 0 ? "curse" : "bonus", value: n });
-      break; // one at a time; next reveal (if any) fires after dismiss
-    }
-  }, [moveHistory, user]);
 
   // ============================================
   // LOADING
   // ============================================
-
   if (!game || !player) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="text-5xl mb-3 animate-pulse">🔍</div>
-        <p className="text-muted-foreground text-sm">{t("game.loading")}</p>
+        <p className="text-muted-foreground text-sm">Carregant partida...</p>
       </div>
     </div>;
   }
 
-  
-// Files de BD + camps que el codi afegeix o llegeix en runtime
-type GameRow = Tables<"games"> & Record<string, any>;
-type PlayerRow = Tables<"game_players"> & Record<string, any>;
-type ScenarioRow = Tables<"scenarios"> & { themeHint?: string | null };
-type ObjectRow = Tables<"objects"> & Record<string, any>;
-type ItemRow = Tables<"items"> & Record<string, any>;
-
-const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.steps.item"), t("game.steps.position")];
+  const hideSteps = ["🎯 Objecte", "📍 Escenari", "🪑 Moble", "📌 Posició"];
 
   // ============================================
   // RENDER
@@ -839,12 +866,6 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
     <main className="min-h-screen bg-background p-4 pb-20 max-w-md mx-auto relative" role="main">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-primary/5 blur-[100px] pointer-events-none" aria-hidden="true" />
 
-      <SpecialReveal
-        reveal={pendingReveal}
-        onDone={() => setPendingReveal(null)}
-        labels={{ curse: t("reveal.curse", "Casella maleïda!"), bonus: t("reveal.bonus", "Casella premi!") }}
-      />
-
       {/* Popups */}
       <SpecialFoundPopup show={showSpecialFoundPopup} rival={rival} objects={objects}
         specialFoundInput={specialFoundInput} specialFoundVariant={specialFoundVariant}
@@ -852,11 +873,6 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
         onSubmit={handleSpecialFoundSubmit}
         onClose={() => { setShowSpecialFoundPopup(null); setSpecialFoundInput(""); setSpecialFoundVariant(null); }} />
       <MessagePopup message={receivedMessage} onClose={() => setReceivedMessage(null)} />
-      <WinFoundPopup show={!!winFoundPopup}
-        objectIcon={winFoundPopup?.objectIcon} objectName={winFoundPopup?.objectName}
-        itemIcon={winFoundPopup?.itemIcon} itemName={winFoundPopup?.itemName}
-        positionLabel={winFoundPopup?.positionLabel} rivalName={winFoundPopup?.rivalName}
-        onClose={() => setWinFoundPopup(null)} />
       <TrollEffect effect={trollEffect} onClose={() => setTrollEffect(null)} />
       <HideMessagePopup show={showHideMessagePopup} hideMessage={hideMessage}
         onMessageChange={setHideMessage} loading={actionLoading}
@@ -866,28 +882,20 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
         <button onClick={() => navigate(isStory ? "/story" : "/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-          {isStory ? t("game.header.backStory") : t("game.header.backLobby")}
+          {isStory ? "← Mode Història" : "← Lobby"}
         </button>
         <div className="flex items-center gap-2">
           {isStory ? (
             <span className="text-[11px] bg-accent/10 text-accent px-3 py-1.5 rounded-full border border-accent/20 font-semibold">
-              {t("game.header.chapter", { n: storyChapter ?? "" })}
+              🐾 Capítol {storyChapter}
             </span>
           ) : (
             <>
               <span className="font-mono text-[11px] bg-muted/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/30 tracking-wider font-semibold">{game.code}</span>
-              {isPersonalGame && (
-                <span
-                  className="text-[11px] bg-accent/15 text-accent px-2.5 py-1.5 rounded-full border border-accent/30 font-semibold"
-                  title={t("game.header.personalBadgeTip", "Mode Personal PvP")}
-                >
-                  🏠
-                </span>
-              )}
               {rival && (
                 <button onClick={() => navigate(`/player/${rival.user_id}`)}
                   className="text-[11px] bg-secondary/10 text-secondary px-2.5 py-1.5 rounded-full border border-secondary/20 hover:bg-secondary/20 transition-colors font-medium">
-                  {t("game.header.rivalBtn")}
+                  👤 Rival
                 </button>
               )}
             </>
@@ -904,7 +912,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
                 <button
                   onClick={() => { setBonusAmount(Math.min(bonusAvailable, 0.5)); setShowBonusPicker(true); }}
                   className="flex items-center gap-1 bg-accent/20 text-accent-foreground px-2.5 py-1.5 rounded-full border border-accent/30 hover:bg-accent/40 transition-colors text-[11px] font-bold"
-                  title={t("game.header.bonusAvailable", { n: bonusAvailable })}
+                  title={`Tens ${bonusAvailable} bonus tokens disponibles`}
                 >
                   💰+{bonusAvailable}
                 </button>
@@ -916,57 +924,141 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
               )}
             </div>
           )}
-          {!isStory && game.status !== "finished" && (
-            <button
-              onClick={async () => {
-                const url = `${window.location.origin}/join/${game.id}`;
-                const title = t("game.header.shareTitle");
-                const text = t("game.header.shareText", { code: game.code });
-                if (navigator.share) {
-                  try { await navigator.share({ title, text, url }); return; } catch { /* user cancelled */ }
-                }
-                try {
-                  await navigator.clipboard.writeText(`${text} ${url}`);
-                  toast.success(t("game.header.shareCopied"));
-                } catch {
-                  window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, "_blank");
-                }
-              }}
-              className="text-[11px] bg-primary/15 text-primary px-2.5 py-1.5 rounded-full border border-primary/30 hover:bg-primary/25 transition-colors font-semibold"
-              title={t("game.header.share")}
-              aria-label={t("game.header.share")}
-            >
-              🔗
-            </button>
-          )}
           <HelpButton />
         </div>
       </div>
 
       {/* WAITING — show code + allow hiding */}
       {phase === "waiting" && !player.has_hidden && hideStep < 4 && (
-        <WaitingScreen code={game.code} hasHidden={false} />
+        <Card className="glass glow-primary mb-4">
+          <CardContent className="py-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Comparteix el codi:</p>
+            <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient">{game.code}</div>
+            <p className="text-[11px] text-muted-foreground/60 mt-2">Mentre esperes, amaga el teu objecte! 👇</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* WAITING — already hidden */}
       {phase === "waiting" && player.has_hidden && (
-        <WaitingScreen code={game.code} hasHidden={true} />
+        <div className="text-center py-16">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
+          <h2 className="text-xl font-bold mb-2">Objecte amagat!</h2>
+          <p className="text-sm text-muted-foreground mb-4">Esperant rival...</p>
+          <Card className="glass glow-primary">
+            <CardContent className="py-4">
+              <div className="font-mono text-3xl tracking-[0.5em] font-bold text-gradient text-center">{game.code}</div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* HIDING PHASE */}
       {(phase === "waiting" || phase === "hiding") && !player.has_hidden && hideStep < 4 && (
-        <HidingPhase p={{
-          hideSteps, hideStep, setHideStep, t,
-          scenarios, items, objects, connectedScenarios,
-          selectedScenario, selectedObject, selectedItem,
-          handleSelectScenario, handleSelectObject, handleSelectCustomObject, handleSelectPosition,
-          actionLoading,
-          customObjectIcon, setCustomObjectIcon, customObjectName, setCustomObjectName,
-          customObjectSize, setCustomObjectSize, customObjectMaterial, setCustomObjectMaterial,
-          customObjectTrait1, setCustomObjectTrait1, customObjectTrait2, setCustomObjectTrait2,
-          isPersonalGame, posLabel,
-          customObjectData, setSelectedItem, selectedPosition,
-        }} />
+        <div>
+          <div className="flex items-center gap-1 mb-5">
+            {hideSteps.map((step, i) => (
+              <div key={i} className={`flex-1 text-center text-[10px] py-1.5 rounded-full font-medium transition-all ${
+                i === hideStep ? "gradient-primary text-primary-foreground shadow-md" :
+                i < hideStep ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
+              }`}>{step}</div>
+            ))}
+          </div>
+
+          {hideStep === 0 && (
+            <div>
+              <h2 className="text-lg font-bold mb-1">Què amagues?</h2>
+              <Tip>Escull l'objecte que el rival haurà de trobar. ⭐ = objecte especial!</Tip>
+              <div className="h-3" />
+              <div className="grid grid-cols-3 gap-2">
+                {objects.map(o => (
+                  <Card key={o.id} className={`glass transition-all active:scale-[0.97] relative ${actionLoading ? "opacity-50 pointer-events-none" : "cursor-pointer hover:border-secondary/40"}`} onClick={() => !actionLoading && handleSelectObject(o.id)}>
+                    <CardContent className="py-3 text-center">
+                      <div className="text-2xl mb-1">{o.icon}</div>
+                      <div className="text-[11px] font-medium">{o.name}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {hideStep === 1 && (
+            <div>
+              <h2 className="text-lg font-bold mb-1">On amagues?</h2>
+              <Tip>Tria l'habitació on el rival haurà de buscar. Un bon lloc és on hi ha molts mobles!</Tip>
+              <div className="h-3" />
+              <div className="grid grid-cols-2 gap-2.5">
+                {scenarios.map(s => (
+                  <Card key={s.id} className="cursor-pointer glass hover:border-primary/40 hover:glow-primary transition-all active:scale-[0.97]" onClick={() => handleSelectScenario(s.id)}>
+                    <CardContent className="py-5 text-center">
+                      <div className="text-4xl mb-2">{s.icon}</div>
+                      <div className="text-sm font-semibold">{s.name}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(0)}>← Canviar objecte</Button>
+            </div>
+          )}
+
+          {hideStep === 2 && (
+            <div>
+              <h2 className="text-lg font-bold mb-1">A quin moble?</h2>
+              <Tip>Amaga'l en un moble de l'escenari. 🚫 = incompatible amb el material.</Tip>
+              <div className="h-3" />
+              <div className="grid grid-cols-2 gap-2.5">
+                {items.map(item => {
+                  const obj = objects.find((o: any) => o.id === selectedObject);
+                  const mat = (obj as any)?.material ?? "generic";
+                  const env = (item as any)?.environment ?? "generic";
+                  const blockReason = getMaterialBlockReason(mat, env);
+                  return (
+                    <Card key={item.id}
+                      className={`glass transition-all active:scale-[0.97] ${blockReason ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-accent/40"}`}
+                      onClick={() => !blockReason && (() => { setSelectedItem(item.id); setHideStep(3); })()}>
+                      <CardContent className="py-4 text-center">
+                        <div className="text-3xl mb-1">{item.icon}</div>
+                        <div className="text-sm font-medium">{item.name}</div>
+                        {blockReason && <div className="text-[9px] text-destructive mt-1">🚫 {blockReason}</div>}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(1)}>← Canviar escenari</Button>
+            </div>
+          )}
+
+          {hideStep === 3 && (
+            <div>
+              <h2 className="text-lg font-bold mb-1">Quina posició?</h2>
+              <Tip>Sobre, sota o dins del moble. Alerta: objectes grans no caben dins mobles petits!</Tip>
+              <div className="h-3" />
+
+
+              <div className="grid grid-cols-3 gap-3">
+                {POSITIONS.map(pos => {
+                  const obj = objects.find((o: any) => o.id === selectedObject);
+                  const itm = items.find((i: any) => i.id === selectedItem);
+                  const blocked = pos.value === "dins" && ((obj as any)?.size ?? 2) > ((itm as any)?.inner_capacity ?? 2);
+                  return (
+                    <Card key={pos.value}
+                      className={`glass transition-all active:scale-[0.97] ${blocked ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:border-primary/40"}`}
+                      onClick={() => !blocked && handleSelectPosition(pos.value)}>
+                      <CardContent className="py-6 text-center">
+                        <div className="text-4xl mb-2">{pos.icon}</div>
+                        <div className="text-sm font-semibold">{pos.label}</div>
+                        {blocked && <div className="text-[9px] text-destructive mt-1">🚫 No hi cap</div>}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(2)}>← Canviar moble</Button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* SPECIAL HIDE STEP */}
@@ -974,17 +1066,17 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
         <div className="py-4">
           <Card className="glass glow-accent">
             <CardContent className="py-6 text-center">
-              <div className="flex justify-center mb-3">{(() => { const o = objects.find((x) => x.id === selectedObject); return <ObjectIcon name={o?.name} emoji={o?.icon} size={64} />; })()}</div>
-              <p className="font-bold mb-1">{t("game.hide.specialTitle")}</p>
+              <div className="text-4xl mb-3">{objects.find((o: any) => o.id === selectedObject)?.icon}</div>
+              <p className="font-bold mb-1">⭐ Objecte especial!</p>
               <p className="text-sm text-muted-foreground mb-4">{objectSpecial.prompt_text}</p>
 
               {objectSpecial.special_type === "custom_name" && (
                 <div className="space-y-3">
                   <Input value={specialInput} onChange={e => setSpecialInput(e.target.value)}
-                    placeholder={t("game.hide.customNamePlaceholder")} maxLength={40} className="text-center bg-muted/50" />
+                    placeholder="Nom personalitzat..." maxLength={40} className="text-center bg-muted/50" />
                   <Button disabled={!specialInput.trim() || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "custom_name", name: specialInput.trim() })}>
-                    {t("game.hide.hideWithName")}
+                    Amagar amb nom ✨
                   </Button>
                 </div>
               )}
@@ -992,10 +1084,10 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
               {objectSpecial.special_type === "custom_message" && (
                 <div className="space-y-3">
                   <Input value={specialInput} onChange={e => setSpecialInput(e.target.value)}
-                    placeholder={t("game.hide.customMessagePlaceholder")} maxLength={100} className="text-center bg-muted/50" />
+                    placeholder="El teu missatge..." maxLength={100} className="text-center bg-muted/50" />
                   <Button disabled={!specialInput.trim() || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "custom_message", message: specialInput.trim() })}>
-                    {t("game.hide.hideWithMessage")}
+                    Amagar amb missatge ✉️
                   </Button>
                 </div>
               )}
@@ -1003,7 +1095,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
               {objectSpecial.special_type === "choose_variant" && objectSpecial.variants && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2">
-                    {(objectSpecial.variants as Record<string, any>[]).map((v) => (
+                    {(objectSpecial.variants as any[]).map((v: any) => (
                       <Card key={v.value}
                         className={`cursor-pointer glass transition-all active:scale-[0.97] ${selectedVariant?.value === v.value ? "border-primary glow-primary" : "hover:border-primary/40"}`}
                         onClick={() => setSelectedVariant(v)}>
@@ -1016,12 +1108,12 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
                   </div>
                   <Button disabled={!selectedVariant || actionLoading} className="w-full"
                     onClick={() => doHide(undefined, { type: "choose_variant", variant: selectedVariant })}>
-                    {t("game.hide.hideVariant", { icon: selectedVariant?.icon ?? "⚽" })}
+                    Amagar {selectedVariant?.icon ?? "⚽"}
                   </Button>
                 </div>
               )}
 
-              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(3)}>{t("game.hide.backToPos")}</Button>
+              <Button variant="ghost" size="sm" className="mt-3" onClick={() => setHideStep(3)}>← Canviar posició</Button>
             </CardContent>
           </Card>
         </div>
@@ -1031,8 +1123,8 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
       {phase === "hiding" && player.has_hidden && (
         <div className="text-center py-16">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-secondary flex items-center justify-center text-4xl shadow-lg">✅</div>
-          <h2 className="text-xl font-bold mb-2">{t("game.hide.doneTitle")}</h2>
-          <p className="text-sm text-muted-foreground animate-pulse">{t("game.hide.doneWaiting")}</p>
+          <h2 className="text-xl font-bold mb-2">Objecte amagat!</h2>
+          <p className="text-sm text-muted-foreground animate-pulse">Esperant que el rival amagui...</p>
         </div>
       )}
 
@@ -1043,13 +1135,11 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
           {moveHistory.length === 0 && (
             <Card className="glass border-primary/30 glow-primary">
               <CardContent className="py-3">
-                <p className="text-xs font-semibold mb-1">{t("game.search.tutorialTitle")}</p>
+                <p className="text-xs font-semibold mb-1">🎮 Com jugar:</p>
                 <div className="space-y-1 text-[11px] text-muted-foreground">
-                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial1") }} />
-                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial2") }} />
-                  <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial3") }} />
-                  {!isStory && <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial4") }} />}
-                  {!isStory && <p dangerouslySetInnerHTML={{ __html: t("game.search.tutorial5") }} />}
+                  <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
+                  <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
+                  <p>🎯 Si encertes moble + posició, <strong>trobes l'objecte i guanyes!</strong></p>
                 </div>
               </CardContent>
             </Card>
@@ -1059,12 +1149,12 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
           <Card className="glass">
             <CardContent className="py-3 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("game.search.locationLabel")}</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Ubicació</span>
                 <div className="font-bold text-lg leading-tight">{currentScenario?.icon} {currentScenario?.name}</div>
               </div>
               {!isStory && (
                 <div className="text-right">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("game.search.tokensLabel")}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Tokens</span>
                   <div className="font-bold text-lg leading-tight text-accent">🪙 {player.tokens_remaining}</div>
                 </div>
               )}
@@ -1075,83 +1165,35 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
           <div className="flex gap-2 flex-wrap">
             {!isStory && rivalNearby && (
               <span className="bg-destructive/15 text-destructive text-[11px] font-semibold px-3 py-1 rounded-full animate-pulse border border-destructive/30">
-                {t("game.search.rivalNearby")}
+                ⚠️ Rival a prop del teu objecte!
               </span>
             )}
             {!isStory && player.shield_active && (
-              <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">{t("game.search.shieldActive")}</span>
+              <span className="bg-primary/10 text-primary text-[11px] font-semibold px-3 py-1 rounded-full border border-primary/20">🛡️ Escut actiu</span>
             )}
             {noTokens && (
-              <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">{t("game.search.noTokens")}</span>
+              <span className="bg-accent/10 text-accent text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20">😴 Sense tokens</span>
             )}
-            {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0 || playerTools.llanterna > 0 || playerTools.galleda > 0 || playerTools.drap_mullat > 0) && (
+            {(playerTools.drap > 0 || playerTools.tornavis > 0 || playerTools.martell > 0 || playerTools.llanterna > 0) && (
               <span className="bg-secondary/10 text-secondary text-[11px] font-semibold px-3 py-1 rounded-full border border-secondary/20">
-                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.tornavis > 0 ? ` 🔧${playerTools.tornavis}` : ""}{playerTools.martell > 0 ? ` 🔨${playerTools.martell}` : ""}{playerTools.llanterna > 0 ? ` 🔦${playerTools.llanterna}` : ""}{playerTools.galleda > 0 ? ` 🪣${playerTools.galleda}` : ""}{playerTools.drap_mullat > 0 ? ` ✨${playerTools.drap_mullat}` : ""}
+                🎒 {playerTools.drap > 0 ? `🧹${playerTools.drap}` : ""}{playerTools.tornavis > 0 ? ` 🔧${playerTools.tornavis}` : ""}{playerTools.martell > 0 ? ` 🔨${playerTools.martell}` : ""}{playerTools.llanterna > 0 ? ` 🔦${playerTools.llanterna}` : ""}
               </span>
             )}
           </div>
 
-          {/* My hideout reminder — privat, només per a mi (no aplicable a mode història) */}
-          {!isStory && player.hidden_item_id && player.hidden_object_id && (
-            <Card className="glass border-secondary/20">
-              <CardContent className="py-2.5 px-3">
-                <button
-                  onClick={async () => {
-                    if (!showMyHideout && !myHideoutData && player.hidden_item_id && player.hidden_object_id) {
-                      try {
-                        const [{ data: itm }, { data: obj }] = await Promise.all([
-                          supabase.from("items").select("name, scenario_id").eq("id", player.hidden_item_id).single(),
-                          supabase.from("objects").select("name, icon").eq("id", player.hidden_object_id).single(),
-                        ]);
-                        const sc = scenarios.find(s => s.id === itm?.scenario_id);
-                        setMyHideoutData({
-                          item: itm?.name ?? "?",
-                          itemIcon: "📦",
-                          scenario: sc?.name ?? "?",
-                          scenarioIcon: sc?.icon ?? "🏠",
-                        });
-                      } catch { /* silent */ }
-                    }
-                    setShowMyHideout(v => !v);
-                  }}
-                  className="w-full flex items-center justify-between text-left"
-                >
-                  <span className="text-[11px] font-semibold text-muted-foreground">
-                    {t("game.search.myHideoutLabel")} {showMyHideout ? t("game.search.myHideoutHide") : t("game.search.myHideoutShow")}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{showMyHideout ? "▲" : "▼"}</span>
-                </button>
-                {showMyHideout && (
-                  <div className="mt-2 pt-2 border-t border-border/30 text-[12px]">
-                    {myHideoutData ? (
-                      <p>
-                        <span className="font-medium">{myHideoutData.scenarioIcon} {myHideoutData.scenario}</span>
-                        {" → "}
-                        <span className="font-medium">{myHideoutData.item}</span>
-                        {" → "}
-                        <span className="font-bold text-primary">{player.hidden_position}</span>
-                      </p>
-                    ) : (
-                      <p className="text-muted-foreground">{t("game.search.loadingHideout")}</p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
+          {/* Rival traits (PvP) */}
           {!isStory && (rivalTraits.trait1 || rivalTraits.trait2) && (
             <Card className="glass border-accent/30 glow-accent">
               <CardContent className="py-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">{t("game.search.rivalTraitsTitle")}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">💡 Pistes de l'objecte rival</p>
                 {rivalTraits.trait1 && <p className="text-sm font-medium">1. <span className="text-primary italic">"{rivalTraits.trait1}"</span></p>}
                 {rivalTraits.trait2 && <p className="text-sm font-medium mt-1">2. <span className="text-primary italic">"{rivalTraits.trait2}"</span></p>}
-                {!rivalTraits.trait2 && rivalTraits.trait1 && <p className="text-[10px] text-muted-foreground mt-1">{t("game.search.trait2Locked")}</p>}
+                {!rivalTraits.trait2 && rivalTraits.trait1 && <p className="text-[10px] text-muted-foreground mt-1">🔒 2a pista al torn 5</p>}
               </CardContent>
             </Card>
           )}
           {!isStory && !rivalTraits.trait1 && moveHistory.length < 2 && (
-            <p className="text-[10px] text-center text-muted-foreground">{t("game.search.trait1Locked")}</p>
+            <p className="text-[10px] text-center text-muted-foreground">💡 Pista de l'objecte rival al torn 2</p>
           )}
 
           {/* Move — hidden in story chapter 1 (tutorial: search in same room) */}
@@ -1160,9 +1202,9 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               🚶 Moure's {!isStory && `· ${TOKEN_COSTS.move}🪙`}
             </h3>
-            <Tip>{t("game.search.moveTip")}</Tip>
+            <Tip>Ves a una habitació adjacent (cada sala té 2 portes)</Tip>
             {isStory && storyChapter === 2 && moveHistory.length === 0 && (
-              <p className="text-[11px] text-accent mb-1">{t("game.search.moveStoryHint")}</p>
+              <p className="text-[11px] text-accent mb-1">💡 Ara aprèn a moure't entre habitacions!</p>
             )}
             <div className="grid grid-cols-2 gap-1.5 mt-2">
               {connectedScenarios.map(s => (
@@ -1171,14 +1213,14 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
                   className="glass rounded-xl p-3 text-center hover:border-primary/40 transition-all disabled:opacity-30 active:scale-[0.97]">
                   <div className="text-2xl">{s.icon}</div>
                   <div className="text-[11px] leading-tight font-medium mt-1">{s.name}</div>
-                  <div className="text-[9px] text-muted-foreground mt-0.5">{t("game.search.doorLabel")}</div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">🚪 porta</div>
                 </button>
               ))}
             </div>
           </div>
           )}
           {isStory && storyChapter === 1 && (
-            <p className="text-[11px] text-muted-foreground text-center py-2">{t("game.search.storyCh1Hint")}</p>
+            <p className="text-[11px] text-muted-foreground text-center py-2">📍 Capítol 1: Busca l'objecte en aquesta habitació!</p>
           )}
 
           {/* Unified Light/Illumination toggle */}
@@ -1186,9 +1228,7 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
             {(() => {
               const isCurrentlyDark = scenarioIsDark;
               const hasLlanterna = playerTools.llanterna > 0;
-              // Sempre permetem clicar: si és exterior fosc sense llanterna, el servidor
-              // fa fallback del pool compartit (max 5) i, si s'esgota, retorna error clar.
-              const canToggle = true;
+              const canToggle = isOutdoor ? (isCurrentlyDark ? hasLlanterna : true) : true;
 
               return (
                 <>
@@ -1209,15 +1249,15 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
                       <div className="flex-1 text-left">
                         <div className="text-sm font-semibold">
                           {isCurrentlyDark
-                            ? (isOutdoor ? t("game.search.useFlashlight") : t("game.search.turnLightOn"))
-                            : t("game.search.turnLightOff")}
+                            ? (isOutdoor ? "Usar llanterna" : "Encendre el llum")
+                            : "Apagar el llum"}
                         </div>
                         <div className="text-[11px] text-muted-foreground">
                           {isCurrentlyDark
                             ? (isOutdoor
-                              ? (hasLlanterna ? t("game.search.flashlightDesc") : t("game.search.needFlashlight"))
-                              : t("game.search.turnLightDesc"))
-                            : t("game.search.turnOffLightDesc")}
+                              ? (hasLlanterna ? "⚡ Il·lumina la zona i revela mobles ocults!" : "Necessites una 🔦 Llanterna")
+                              : "Encén per veure els mobles")
+                            : "Apaga perquè ningú vegi els mobles"}
                         </div>
                       </div>
                       <span className="text-[10px] text-muted-foreground">0.2🪙</span>
@@ -1229,32 +1269,13 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
           </div>
 
           {/* Dark warning */}
-          {/* Sala a les fosques: es veu grisa i SENSE mobles (vista pixel) */}
-          {scenarioIsDark && pixelView && (() => {
-            const scenName = currentScenario?.name ?? "";
-            const themeHint = currentScenario?.themeHint as string | undefined;
-            const theme = themeForScenarioName(scenName, themeHint);
-            const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => ({ slot: idx }));
-            return (
-              <div className="mt-2 mb-2">
-                <PixelRoomGrid
-                  theme={theme}
-                  gridW={PVP_GRID_W}
-                  gridH={PVP_GRID_H}
-                  cells={cells}
-                  seed={`pvp:${player?.current_scenario_id ?? ""}`}
-                  dark
-                />
-              </div>
-            );
-          })()}
           {scenarioIsDark && (
             <Card className="glass border-yellow-500/30">
               <CardContent className="py-3 text-center">
                 <div className="text-3xl mb-1">{isOutdoor ? "🌙" : "🌑"}</div>
-                <p className="text-sm font-semibold">{isOutdoor ? t("game.search.darkZoneTitle") : t("game.search.lightOffTitle")}</p>
+                <p className="text-sm font-semibold">{isOutdoor ? "Zona fosca!" : "El llum està apagat!"}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {isOutdoor ? t("game.search.darkZoneSubtitle") : t("game.search.lightOffSubtitle")}
+                  {isOutdoor ? "Usa la llanterna per il·luminar." : "No pots veure cap moble. Encén el llum per investigar."}
                 </p>
               </CardContent>
             </Card>
@@ -1266,111 +1287,21 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
             <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               👀 Investigar mobles {!isStory && `· ${TOKEN_COSTS.look}🪙`}
             </h3>
-            <Tip>{t("game.search.investigateTip")}</Tip>
+            <Tip>Observa posicions per rebre pistes (❄️/🌡️/🔥). Si encertes moble + posició, trobes l'objecte i guanyes!</Tip>
             {bananaEffect && bananaBlockedSpot && (
-              <p className="text-xs text-destructive mt-1 animate-pulse">{t("game.search.bananaBlocked")}</p>
+              <p className="text-xs text-destructive mt-1 animate-pulse">🍌 Una posició està bloquejada! Fes una altra acció per desbloquejar-la.</p>
             )}
-            {/* Toggle vista pixel ↔ clàssica */}
-            <div className="flex items-center justify-end gap-1 mb-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !pixelView;
-                  setPixelView(next);
-                  try { localStorage.setItem("pvp:pixelView", String(next)); } catch { /* ignore */ }
-                }}
-                className="text-[10px] px-2 py-1 rounded-md border border-border/40 bg-muted/30 hover:bg-muted/50 transition"
-                aria-label={pixelView ? t("game.switchToClassic") : t("game.switchToPixel")}
-              >
-                {pixelView ? t("game.pixelToList") : t("game.listToPixel")}
-              </button>
+            <div className="space-y-1.5 mt-2">
+              {currentScenarioItems.map(item => (
+                <ItemActions key={item.id} item={item} positions={POSITIONS}
+                  onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
+                  lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
+                  interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
+                  onInteraction={handleInteraction} moveHistory={moveHistory}
+                  playerTools={playerTools} gameBreaks={gameBreaks}
+                  onTagAction={handleTagAction} dirtyItems={dirtyItems} />
+              ))}
             </div>
-
-            {pixelView ? (
-              (() => {
-                const scenName = currentScenario?.name ?? "";
-                const themeHint = currentScenario?.themeHint as string | undefined;
-                const theme = themeForScenarioName(scenName, themeHint);
-                const slots = autoLayoutForItems(currentScenarioItems, scenName, themeHint);
-                const cells: PixelCell[] = Array.from({ length: PVP_GRID_W * PVP_GRID_H }).map((_, idx) => {
-                  const s = slots.find((x) => x.cellIndex === idx);
-                  if (!s) return { slot: idx };
-                  const item = currentScenarioItems.find((i) => i.id === s.itemId);
-                  const allLooked = POSITIONS.every((p) => lookedSpots.has(`${s.itemId}:${p.value}`));
-                  const sprite = spriteForFurniture(item?.category, item?.name_key, item?.name);
-                  const isBroken = gameBreaks.has(s.itemId);
-                  const isDirty = dirtyItems.has(s.itemId) && !gameBreaks.has(`clean:${s.itemId}`);
-                  return {
-                    slot: idx,
-                    icon: item?.icon,
-                    spriteUrl: sprite ?? undefined,
-                    label: item?.name,
-                    filled: true,
-                    disabled: allLooked,
-                    selectedCell: sheetItemId === s.itemId,
-                    dirty: isDirty,
-                    broken: isBroken,
-                  };
-                });
-                return (
-                  <div className="mt-2">
-                    <PixelRoomGrid
-                      theme={theme}
-                      gridW={PVP_GRID_W}
-                      gridH={PVP_GRID_H}
-                      cells={cells}
-                      seed={`pvp:${player?.current_scenario_id ?? ""}`}
-                      seamless
-                      backdrops={backdropsForScenario(scenName, themeHint)}
-
-                      onCellClick={(idx) => {
-                        const s = slots.find((x) => x.cellIndex === idx);
-                        if (s) setSheetItemId(s.itemId);
-                      }}
-                      ariaLabelPrefix="pvp-slot"
-                    />
-                    <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-                      {t("game.pixel.tapItem", "Toca un moble per veure les accions")}
-                    </p>
-                  </div>
-                );
-              })()
-            ) : (
-              <div className="space-y-1.5 mt-2">
-                {currentScenarioItems.map(item => (
-                  <ItemActions key={item.id} item={item} positions={POSITIONS}
-                    onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
-                    lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
-                    revealedSpecials={revealedSpecials}
-                    interactions={itemInteractions.filter((ia) => ia.item_id === item.id)}
-                    onInteraction={handleInteraction} moveHistory={moveHistory}
-                    playerTools={playerTools} gameBreaks={gameBreaks}
-                    onTagAction={handleTagAction} dirtyItems={dirtyItems} breakableItems={breakableItems} />
-                ))}
-              </div>
-            )}
-
-            {/* Sheet d'accions per la vista pixel */}
-            <FurnitureActionSheet
-              open={!!sheetItemId}
-              onClose={() => setSheetItemId(null)}
-              item={sheetItemId ? currentScenarioItems.find((i) => i.id === sheetItemId) ?? null : null}
-              positions={POSITIONS}
-              onLook={handleLook}
-              disabled={actionLoading}
-              tokensRemaining={player.tokens_remaining}
-              lookedSpots={lookedSpots}
-              bananaBlockedSpot={bananaBlockedSpot}
-              revealedSpecials={revealedSpecials}
-              interactions={sheetItemId ? itemInteractions.filter((ia) => ia.item_id === sheetItemId) : []}
-              onInteraction={handleInteraction}
-              moveHistory={moveHistory}
-              playerTools={playerTools}
-              gameBreaks={gameBreaks}
-              onTagAction={handleTagAction}
-              dirtyItems={dirtyItems}
-              breakableItems={breakableItems}
-            />
           </div>
           )}
 
@@ -1385,39 +1316,33 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
               currentScenarioItems={currentScenarioItems} />
           )}
 
-
           {/* History */}
           {moveHistory.length > 0 && (
             <details className="group">
               <summary className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 cursor-pointer select-none flex items-center gap-1">
-                {t("game.historyTitle", { count: moveHistory.length })}
+                📋 Historial ({moveHistory.length})
                 <span className="text-[9px] group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <div className="space-y-0.5 max-h-40 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" }}>
                 {moveHistory.map(m => {
-                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
-                  const hl = m.hint_level;
+                  const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥" };
+                  const hl = (m as any).hint_level;
                   return (
                     <div key={m.id} className={`text-[10px] rounded-md px-2 py-1 flex justify-between items-center border border-border/15 ${
-                      hl === 4 ? "bg-orange-500/10 border-orange-500/30" :
-                      hl === 3 ? "bg-yellow-500/10 border-yellow-500/30" :
-                      hl === 2 ? "bg-cyan-500/10 border-cyan-500/20" :
-                      hl === 1 ? "bg-blue-500/10 border-blue-500/20" :
-                      hl === 0 ? "bg-slate-500/10 border-slate-500/20" :
+                      hl === 2 ? "bg-orange-500/10 border-orange-500/30" :
+                      hl === 1 ? "bg-yellow-500/10 border-yellow-500/20" :
+                      hl === 0 ? "bg-blue-500/10 border-blue-500/20" :
                       "bg-muted/20"
                     }`}>
                       <span className="truncate mr-1">
                         <span className="text-muted-foreground font-mono">#{m.turn_number}</span>{" "}
-                        {m.action === "move" && `🚶→ ${m.scenarios?.icon} ${m.scenarios?.name}`}
-                        {m.action === "look" && (() => {
-                          const bv = m.bonus_value as string | null;
-                          if (bv && bv.startsWith("tag:")) {
-                            const t = bv.split(":")[1];
-                            const icon = t === "clean" ? "🧹" : t === "break" ? "💥" : t === "fix" ? "🔧" : "⚡";
-                            return <>{icon} {m.items?.icon} {m.items?.name}</>;
-                          }
-                          return <>👀 {m.items?.icon} {m.target_position ? posLabel(m.target_position) : ""}{hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}</>;
-                        })()}
+                        {m.action === "move" && `🚶→ ${(m.scenarios as any)?.icon} ${(m.scenarios as any)?.name}`}
+                        {m.action === "look" && (
+                          <>
+                            👀 {(m.items as any)?.icon} {m.target_position}
+                            {hl != null && <span className="ml-0.5 font-bold">{hintIcons[hl]}</span>}
+                          </>
+                        )}
                         {m.found_object && " 🏆"}
                         {m.found_bonus === "extra_token" && " 🎁"}
                       </span>
@@ -1438,13 +1363,13 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
             {storyResult.isDead ? "💫" : "🎉"}
           </div>
           <h2 className="text-2xl font-bold mb-2">
-            {storyResult.isDead ? t("game.story.maxXp") : <span className="text-gradient">{t("game.story.chapterDone", { n: storyChapter ?? "" })}</span>}
+            {storyResult.isDead ? "Màxim XP assolit!" : <span className="text-gradient">Capítol {storyChapter} completat!</span>}
           </h2>
-          <p className="text-lg text-accent font-bold mb-1">{t("game.story.xpGained", { xp: storyResult.xp })}</p>
-          <p className="text-sm text-muted-foreground mb-2">{t("game.story.movesCount", { n: moveHistory.length })}</p>
+          <p className="text-lg text-accent font-bold mb-1">+{storyResult.xp} XP ⭐</p>
+          <p className="text-sm text-muted-foreground mb-2">Moviments: {moveHistory.length}</p>
           {storyResult.accessory && (
             <p className="text-lg font-bold text-primary mb-2">
-              {t("game.story.newAccessory", { icon: storyResult.accessory.icon, name: storyResult.accessory.name })}
+              Nou accessori: {storyResult.accessory.icon} {storyResult.accessory.name}!
             </p>
           )}
           {storyResult.consumable && (
@@ -1454,11 +1379,11 @@ const hideSteps = [t("game.steps.object"), t("game.steps.scenario"), t("game.ste
           )}
           {storyResult.isDead && (
             <p className="text-sm text-muted-foreground mb-2">
-              {t("game.story.petDied")}
+              La teva mascota ha viscut una vida plena. Podràs adoptar-ne una de nova.
             </p>
           )}
           <div className="flex gap-2 justify-center mt-4">
-            <Button onClick={() => navigate("/story")}>{t("game.story.storyModeBtn")}</Button>
+            <Button onClick={() => navigate("/story")}>📖 Mode Història</Button>
           </div>
         </div>
       )}

@@ -16,7 +16,6 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
-import { asError } from "@/lib/errors";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,12 +25,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTrophyDisplayIcon, getTrophyDisplayName } from "@/lib/object-specials";
 import { toast } from "sonner";
 import { getMyPet, getMyAccessories, getPetEvolution, MAX_PET_XP, getActiveEvents, PET_CONSUMABLES } from "@/lib/story-helpers";
-import { levelFromXp, xpToNextLevel, MAX_LEVEL } from "@/lib/story-progression";
 import { PetHealthBadge } from "@/components/PetHealthBadge";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
-import { getRecentVisits, type RecentVisit } from "@/lib/pet-social";
-import { PetActivityFeed } from "@/components/PetActivityFeed";
-import { useT } from "@/i18n/LanguageProvider";
 
 const WALL_TTL_HOURS = 22;
 const MAX_MSG_LENGTH = 100;
@@ -42,21 +37,16 @@ export default function PlayerProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const t = useT();
-  const [profile, setProfile] = useState<Record<string, any> | null>(null);
-  const [messages, setMessages] = useState<Record<string, any>[]>([]);
-  const [trophies, setTrophies] = useState<Record<string, any>[]>([]);
-  const [pet, setPet] = useState<Record<string, any> | null>(null);
-  const [petAccessories, setPetAccessories] = useState<Record<string, any>[]>([]);
-  const [petEvents, setPetEvents] = useState<Record<string, any>[]>([]);
-  const [myConsumables, setMyConsumables] = useState<Record<string, any>[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [trophies, setTrophies] = useState<any[]>([]);
+  const [pet, setPet] = useState<any>(null);
+  const [petAccessories, setPetAccessories] = useState<any[]>([]);
+  const [petEvents, setPetEvents] = useState<any[]>([]);
+  const [myConsumables, setMyConsumables] = useState<any[]>([]);
   const [giftingConsumable, setGiftingConsumable] = useState(false);
-  const [myStoryInventory, setMyStoryInventory] = useState<Record<string, any>[]>([]);
-  const [sendingVisit, setSendingVisit] = useState(false);
-  const [giftingItem, setGiftingItem] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
-  const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
@@ -84,28 +74,27 @@ export default function PlayerProfilePage() {
     setPetEvents(events);
 
     // Fetch author names
-    const wallMsgs: Record<string, any>[] = (msgs ?? []) as Record<string, any>[];
+    const wallMsgs: any[] = msgs ?? [];
     if (wallMsgs.length > 0) {
-      const authorIds = [...new Set(wallMsgs.map((m) => m.author_user_id))] as string[];
+      const authorIds = [...new Set(wallMsgs.map((m: any) => m.author_user_id))] as string[];
       const { data: authors } = await supabase
         .from("profiles").select("user_id, display_name").in("user_id", authorIds);
       const authorMap = new Map(authors?.map(a => [a.user_id, a.display_name]) ?? []);
       for (const m of wallMsgs) {
-        m._author_name = authorMap.get(m.author_user_id) ?? t("common.anonymous");
+        m._author_name = authorMap.get(m.author_user_id) ?? "Anònim";
       }
     }
     setMessages(wallMsgs);
 
-    // Load visitor's own unused consumables (for gifting) + story inventory
+    // Load visitor's own unused consumables (for gifting)
     if (user && user.id !== userId) {
-      const [{ data: myCons }, { data: myInv }] = await Promise.all([
-        supabase.from("pet_consumables").select("*").eq("user_id", user.id).is("used_at", null),
-        supabase.from("story_inventory").select("*").eq("user_id", user.id).order("obtained_at"),
-      ]);
+      const { data: myCons } = await supabase
+        .from("pet_consumables")
+        .select("*")
+        .eq("user_id", user.id)
+        .is("used_at", null);
       setMyConsumables(myCons ?? []);
-      setMyStoryInventory(myInv ?? []);
     }
-    getRecentVisits(userId).then(setRecentVisits).catch(() => setRecentVisits([]));
   }, [userId, user]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -119,47 +108,13 @@ export default function PlayerProfilePage() {
         _consumable_name: consumableName,
       });
       if (error) throw error;
-      const result = data as Record<string, any>;
+      const result = data as any;
       toast.success(`Has curat ${result.pet_name}! -${result.healed} XP 💊`);
       await loadData();
-    } catch (_raw_err) { const err = asError(_raw_err);
+    } catch (err: any) {
       toast.error(err.message);
     } finally {
       setGiftingConsumable(false);
-    }
-  };
-
-  const handleSendVisit = async () => {
-    if (!user || !userId) return;
-    setSendingVisit(true);
-    try {
-      const { error } = await supabase.rpc("send_pet_visit", { _host_user_id: userId });
-      if (error) throw error;
-      toast.success(`🐾 La teva mascota ha anat a jugar amb ${pet?.pet_name ?? "ell"}!`, {
-        description: "Torna en una estona per veure com ha anat.",
-      });
-    } catch (_raw_err) { const err = asError(_raw_err);
-      toast.error(err.message || "No s'ha pogut enviar la visita");
-    } finally {
-      setSendingVisit(false);
-    }
-  };
-
-  const handleGiftItem = async (item: Record<string, any>) => {
-    if (!user || !userId) return;
-    setGiftingItem(item.id);
-    try {
-      const { error } = await supabase.rpc("gift_inventory_item", {
-        _to_user_id: userId,
-        _item_id: item.id,
-      });
-      if (error) throw error;
-      toast.success(`🎁 Has regalat ${item.item_icon} ${item.item_name}!`);
-      await loadData();
-    } catch (_raw_err) { const err = asError(_raw_err);
-      toast.error(err.message || "No s'ha pogut regalar");
-    } finally {
-      setGiftingItem(null);
     }
   };
 
@@ -176,7 +131,7 @@ export default function PlayerProfilePage() {
       setNewMsg("");
       toast.success("Missatge enviat! 💬");
       await loadData();
-    } catch (_raw_err) { const err = asError(_raw_err);
+    } catch (err: any) {
       toast.error(err.message);
     } finally {
       setSending(false);
@@ -224,22 +179,13 @@ export default function PlayerProfilePage() {
         <div className="text-5xl mb-2">{leagueBadge[profile.league] ?? "🥉"}</div>
         <h1 className="text-2xl font-bold">{profile.display_name}</h1>
         <p className="text-sm text-primary capitalize mt-0.5 font-semibold">{profile.league} League</p>
-        {profile.collection_master_at && (
-          <div
-            className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold shadow-sm"
-            title={t("profile.collectionMasterTooltip")}
-          >
-            <span>👑</span>
-            <span>{t("profile.collectionMasterTitle")}</span>
-          </div>
-        )}
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2 mb-5">
         {[
           { val: profile.games_played, label: "Partides" },
-          { val: profile.games_won, label: t("playerProfile.wins") },
+          { val: profile.games_won, label: "Victòries" },
           { val: `${winRate}%`, label: "Win rate" },
           { val: profile.elo, label: "Elo" },
         ].map((s, i) => (
@@ -252,59 +198,44 @@ export default function PlayerProfilePage() {
         ))}
       </div>
 
-      {/* Pet companion with evolution (same style as Story Mode) */}
+      {/* Pet companion with evolution */}
       {pet && (() => {
-        const xp = pet.xp ?? 0;
-        const max = pet.max_xp ?? MAX_PET_XP;
-        const evo = getPetEvolution(xp, max);
-        const level = levelFromXp(xp);
-        const { remaining } = xpToNextLevel(xp);
-        const sick = petEvents.length > 0;
+        const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
         return (
-          <div className={`glass rounded-2xl p-4 border mb-4 relative z-10 ${sick ? "border-destructive/40" : "border-border/30"}`}>
-            <div className="flex items-center gap-3">
-              <div className={`relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${sick ? "ring-destructive/50" : evo.ring}`}>
-                <span className="text-5xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
-                <span className="absolute -bottom-1 -right-1 bg-background border border-border rounded-full w-7 h-7 flex items-center justify-center text-[10px] font-bold">
-                  {t("evolution.level", { n: level })}
-                </span>
-                {sick && !evo.isDead && (
-                  <span className="absolute -top-1 -right-1 text-base animate-pulse">🤒</span>
+          <Card className={`mb-4 glass relative z-10 ${petEvents.length > 0 ? "border-destructive/40" : "border-accent/30"}`}>
+            <CardContent className="py-3 flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${evo.glow} ring-2 ${petEvents.length > 0 ? "ring-destructive/50" : evo.ring} flex items-center justify-center relative`}>
+                <span className="text-2xl">{evo.isDead ? "🪦" : pet.pet_icon}</span>
+                {petEvents.length > 0 && (
+                  <span className="absolute -top-1 -right-1 text-sm animate-pulse">🤒</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-base font-bold truncate">{pet.pet_name}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {evo.badge} {t(`petTier.${evo.key}`, evo.label)}
+                <p className="font-bold text-sm">
+                  {pet.pet_name} <span className="text-xs font-normal text-muted-foreground">{evo.badge} {evo.label}</span>
                   {evo.isDead
-                    ? <span className="text-destructive font-semibold ml-1">· {t("petStatus.dead")}</span>
-                    : sick
-                      ? <span className="text-destructive font-semibold ml-1">· {t("petStatus.sick")}</span>
-                      : <span className="text-green-500 font-semibold ml-1">· {t("petStatus.healthy")}</span>}
+                    ? <span className="text-xs text-destructive font-semibold ml-1">· Mort 🪦</span>
+                    : petEvents.length > 0
+                      ? <span className="text-xs text-destructive font-semibold ml-1">· Malalt! 🤒</span>
+                      : <span className="text-xs text-green-500 font-semibold ml-1">· Saludable ✅</span>
+                  }
                 </p>
-                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-1.5">
-                  <div className={`h-1.5 rounded-full transition-all duration-500 ${sick ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min((xp / max) * 100, 100)}%` }} />
+                <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+                  <div className={`h-1.5 rounded-full transition-all ${petEvents.length > 0 ? "bg-destructive" : "bg-accent"}`} style={{ width: `${Math.min(((pet.xp ?? 0) / MAX_PET_XP) * 100, 100)}%` }} />
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {level >= MAX_LEVEL ? t("evolution.maxLevel") : t("evolution.xpToNext", { xp: remaining, n: level + 1 })}
-                </p>
+                <p className="text-[10px] text-accent font-semibold mt-0.5">⭐ {pet.xp ?? 0} / {MAX_PET_XP} XP</p>
               </div>
               {petAccessories.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  {petAccessories.map((a) => (
+                <div className="flex gap-1">
+                  {petAccessories.map((a: any) => (
                     <span key={a.id} className="text-sm" title={a.accessory_name}>{a.accessory_icon}</span>
                   ))}
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         );
       })()}
-
-      {/* Recent pet activity (visible on any profile) */}
-      <div className="relative z-10">
-        <PetActivityFeed visits={recentVisits} ownUserId={user?.id ?? null} isOwn={false} petName={pet?.pet_name} />
-      </div>
 
       {/* Pet health events + gift consumables */}
       {pet && !isOwnProfile && user && (
@@ -337,54 +268,6 @@ export default function PlayerProfilePage() {
               </CardContent>
             </Card>
           )}
-
-          {/* 🐾 Visita entre mascotes */}
-          <Card className="glass border-primary/30 mt-2">
-            <CardContent className="py-3">
-              <p className="text-xs font-semibold text-muted-foreground mb-2">
-                🐾 Enviar la teva mascota a jugar
-              </p>
-              <Button
-                size="sm"
-                onClick={handleSendVisit}
-                disabled={sendingVisit}
-                className="w-full text-xs"
-              >
-                {sendingVisit ? "Enviant..." : `🐾 Que jugui amb ${pet.pet_name}`}
-              </Button>
-              <p className="text-[10px] text-muted-foreground mt-1.5">
-                La teva mascota visitarà {pet.pet_name} durant 30 min. Cooldown: 4h.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* 🎁 Regalar objecte de la motxilla */}
-          {myStoryInventory.length > 0 && (
-            <Card className="glass border-accent/30 mt-2">
-              <CardContent className="py-3">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">
-                  🎁 Regalar un objecte de la teva motxilla
-                </p>
-                <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto">
-                  {myStoryInventory.map((it) => (
-                    <Button
-                      key={it.id}
-                      size="sm"
-                      variant="outline"
-                      disabled={giftingItem !== null}
-                      onClick={() => handleGiftItem(it)}
-                      className="text-xs"
-                    >
-                      {it.item_icon} {it.item_name}
-                    </Button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5">
-                  L'objecte sortirà de la teva motxilla i passarà a la seva.
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </div>
       )}
 
@@ -402,14 +285,14 @@ export default function PlayerProfilePage() {
               <div className="text-3xl mb-1.5 opacity-50">🏆</div>
               <p className="text-sm text-muted-foreground">Cap trofeu encara</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                {isOwnProfile ? t("playerProfile.findSpecials") : t("playerProfile.noTrophies")}
+                {isOwnProfile ? "Troba objectes especials per guanyar trofeus!" : "Aquest jugador encara no té trofeus."}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-2">
-            {trophies.map((t) => {
-              const sd = t.special_data as Record<string, any> | null;
+            {trophies.map((t: any) => {
+              const sd = t.special_data as any;
               return (
                 <Card key={t.id} className="glass border-accent/30">
                   <CardContent className="py-2.5 flex items-center gap-3">
@@ -471,21 +354,21 @@ export default function PlayerProfilePage() {
           <Card className="glass">
             <CardContent className="py-8 text-center">
               <div className="text-4xl mb-2 opacity-50">🤫</div>
-              <p className="text-sm text-muted-foreground">{t("playerProfile.noRecentMessages")}</p>
+              <p className="text-sm text-muted-foreground">Cap missatge recent</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                {isOwnProfile ? t("playerProfile.noMessagesYet") : t("playerProfile.beFirst")}
+                {isOwnProfile ? "Encara ningú t'ha deixat missatge!" : "Sigues el primer a escriure!"}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-2">
-            {messages.map((m) => (
+            {messages.map((m: any) => (
               <Card key={m.id} className="glass">
                 <CardContent className="py-2.5 px-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-primary">
-                        {m._author_name ?? t("common.anonymous")}
+                        {m._author_name ?? "Anònim"}
                       </span>
                       <p className="text-sm mt-0.5 break-words">{m.message}</p>
                     </div>
@@ -505,7 +388,7 @@ export default function PlayerProfilePage() {
 
 /** Vitrina — shows which reward items this player has collected */
 function PlayerVitrina({ userId }: { userId: string }) {
-  const [catalog, setCatalog] = useState<Record<string, any>[]>([]);
+  const [catalog, setCatalog] = useState<any[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -519,7 +402,7 @@ function PlayerVitrina({ userId }: { userId: string }) {
           .eq("status", "owned"),
       ]);
       setCatalog(items);
-      setOwnedIds(new Set((owned ?? []).map((r) => r.reward_item_id)));
+      setOwnedIds(new Set((owned ?? []).map((r: any) => r.reward_item_id)));
       setLoading(false);
     })();
   }, [userId]);
@@ -542,7 +425,7 @@ function PlayerVitrina({ userId }: { userId: string }) {
         🏆 Vitrina ({ownedCount}/{catalog.length})
       </h2>
       <div className="flex flex-wrap gap-2">
-        {catalog.map((item) => {
+        {catalog.map((item: any) => {
           const has = ownedIds.has(item.id);
           const rarity = RARITY_CONFIG[item.rarity];
           const border = RARITY_BORDER_MAP[item.rarity] ?? "";

@@ -6,17 +6,82 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { TOKEN_COSTS, getScenarios, getConnectedScenarios } from "@/lib/supabase-helpers";
 import { getRewardCatalog, RARITY_CONFIG } from "@/lib/reward-helpers";
-import { useT } from "@/i18n/LanguageProvider";
 
 const RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"] as const;
-const BASIC_STEPS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"] as const;
-const RULE_KEYS = ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r16", "r17", "r18", "r11", "r12", "r13", "r14", "r15"] as const;
+const DROP_RATES: Record<string, { pct: string; label: string }> = {
+  common: { pct: "50%", label: "Comú" },
+  uncommon: { pct: "30%", label: "Poc comú" },
+  rare: { pct: "13%", label: "Rar" },
+  epic: { pct: "5%", label: "Èpic" },
+  legendary: { pct: "2%", label: "Llegendari" },
+};
+
+const RULES = [
+  {
+    title: "🎯 Objectiu",
+    text: "Amaga un objecte i busca el del rival. El primer que el trobi, guanya!",
+  },
+  {
+    title: "🫣 Fase d'amagar",
+    text: "Tria escenari → objecte → moble → posició (sobre/sota/dins). Pots escriure un missatge opcional que es mostrarà quan el rival trobi l'objecte. Tots dos amaguen alhora.",
+  },
+  {
+    title: "🪙 Tokens",
+    text: "Tens 5 tokens al dia, es reinicien automàticament. Pots gastar bonus tokens guanyats de recompenses. Administra'ls bé!",
+  },
+  {
+    title: "🚶 Moure's · " + TOKEN_COSTS.move + "🪙",
+    text: "Canvia d'habitació. Cada sala té portes que connecten amb altres sales.",
+  },
+  {
+    title: "👀 Observar · " + TOKEN_COSTS.look + "🪙",
+    text: "Mira una posició d'un moble. Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista progressiva:\n❄️ Fred → L'objecte NO és en aquesta habitació.\n🌡️ Calent → Bona habitació, moble incorrecte.\n🔥 Molt calent → Moble correcte, prova altra posició!",
+  },
+  {
+    title: "💡 Pistes de l'objecte rival",
+    text: "Al torn 2 reps la 1a pista sobre l'objecte que busques. Al torn 5, la 2a pista. Serveixen per deduir QUÈ busques.",
+  },
+  {
+    title: "⚡ Ítems socials",
+    text: "Un cop al dia pots usar un ítem (excepte barricada i trampa que es poden usar 2 cops/dia):\n🍌 Plàtan — Bloqueja 1 posició del rival.\n💣 Bomba de fum — Mou el TEU objecte a altra habitació (1 ús/partida).\n🛡️ Escut — Protegeix del pròxim atac.\n🔄 Intercanvi — Intercanvia la teva ubicació amb la del rival.\n🕵️ Espia — Descobreix on és el rival.\n🚧 Barricada (2/dia) — Bloqueja un camí. El rival pot forçar pagant +1🪙 (peatge d'un sol ús: després cau).\n🪤 Trampa (2/dia) — Col·loca trampa en un moble. Si el rival mira, perd 1🪙 (mínim 0).\n🔧 Robar tornavís — Roba 1 tornavís al rival.\n💡 Pista — Envia un missatge o farol.",
+  },
+  {
+    title: "🎁 Bonus i eines",
+    text: "Quan observes, tens un 20% de trobar tokens extra o eines:\n🧹 Drap (×2) — netejar mobles bruts.\n🔨 Martell (×5) — trencar mobles fràgils.\n🔧 Tornavís (×5 extra, tothom comença amb 1).\n🔦 Llanterna (×1) — zones fosques.\n⚠️ POOL COMPARTIT: Qui la troba se la queda! El rival es queda sense!",
+  },
+  {
+    title: "💡 Llum i llanterna",
+    text: "🏠 Interiors: Pots apagar el llum (0.2🪙) perquè ningú vegi els mobles.\n🌿 Exteriors: Usa 🔦 Llanterna (0.2🪙) per revelar mobles ocults.",
+  },
+  {
+    title: "⚡ Mobles interactius",
+    text: "🧹 Netejar (bruts) — 0.3🪙, cal Drap. Desbloqueja la posició \"dins\".\n💥 Trencar (fràgils) — 0.4🪙, cal Martell, notifica el rival! Bloqueja \"sobre\" + \"dins\".\n🔧 Arreglar (trencats) — 0.3🪙, cal Tornavís. Restaura posicions.\n⚠️ Quasi tots els mobles es poden trencar si tens martell!",
+  },
+  {
+    title: "📈 Elo i Lligues",
+    text: "Guanyar: +25 Elo · Perdre: -20 Elo.\n🥉 Bronze → 🥈 Silver → 🥇 Gold → 💎 Platinum → 👑 Diamond.",
+  },
+  {
+    title: "🐾 Mode Història",
+    text: "Juga sol contra la CPU per aprendre el joc. Adopta una mascota virtual que evoluciona amb XP!\n🥚 Bebè → 🌱 Jove → ⭐ Adult → 🔥 Veterà → 👑 Llegendari\nSi l'XP arriba a 5000, la mascota mor (🪦) i cal reiniciar.",
+  },
+  {
+    title: "🤒 Salut de la mascota",
+    text: "Al completar capítols hi ha un 25% de probabilitat d'un event de salut:\n🤒 Virus: +200 XP | 🤕 Caiguda: +150 XP | 🫠 Febre: +100 XP\nEls events pugen l'XP ràpidament! Usa consumibles per curar:\n🍖 Menjar: -100 XP | 💧 Aigua: -50 XP | 💉 Vacuna: -200 XP\nEls consumibles es desbloquegen després d'obtenir tots els accesoris.",
+  },
+  {
+    title: "💊 Regalar consumibles",
+    text: "Pots regalar consumibles a les mascotes d'altres jugadors! Ves al seu perfil → si tens consumibles disponibles, apareixerà un botó per curar la seva mascota.",
+  },
+  {
+    title: "🏆 Vitrina pública",
+    text: "Al perfil de cada jugador pots veure la seva col·lecció de mobles guanyats (vitrina). Els mobles no obtinguts apareixen en gris.",
+  },
+];
 
 export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
-  const t = useT();
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"basics" | "rules" | "rewards">("basics");
-  const [rewardCatalog, setRewardCatalog] = useState<Record<string, any>[]>([]);
+  const [rewardCatalog, setRewardCatalog] = useState<any[]>([]);
   const [scenarioMap, setScenarioMap] = useState<{ name: string; icon: string; connections: string[] }[]>([]);
 
   useEffect(() => {
@@ -25,12 +90,13 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.style.top = `-${window.scrollY}px`;
+      // Load reward catalog + scenario connections
       getRewardCatalog().then(setRewardCatalog).catch(() => {});
       getScenarios().then(async (scenarios) => {
         const result: { name: string; icon: string; connections: string[] }[] = [];
         for (const s of scenarios) {
           const connected = await getConnectedScenarios(s.id);
-          result.push({ name: s.name, icon: s.icon, connections: connected.map((c) => `${c.icon} ${c.name}`) });
+          result.push({ name: s.name, icon: s.icon, connections: connected.map((c: any) => `${c.icon} ${c.name}`) });
         }
         setScenarioMap(result);
       }).catch(() => {});
@@ -51,22 +117,15 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
   }, [open]);
 
   // Group rewards by rarity
-  const groupedRewards: Record<string, Record<string, any>[]> = {};
+  const groupedRewards: Record<string, any[]> = {};
   for (const r of RARITY_ORDER) groupedRewards[r] = [];
   for (const item of rewardCatalog) {
     if (groupedRewards[item.rarity]) groupedRewards[item.rarity].push(item);
   }
 
-  const ruleTitle = (k: string) => {
-    if (k === "r4") return t("helpPvp.rules.r4.title", { cost: TOKEN_COSTS.move });
-    if (k === "r5") return t("helpPvp.rules.r5.title", { cost: TOKEN_COSTS.look });
-    return t(`helpPvp.rules.${k}.title`);
-  };
-
   const modal = open ? createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/30 backdrop-blur-sm"
-      onMouseDown={(e) => e.stopPropagation()}
       onClick={() => setOpen(false)}
       style={{
         touchAction: "none",
@@ -82,137 +141,82 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
-          <h2 className="text-lg font-bold">{t("helpPvp.title")}</h2>
+          <h2 className="text-lg font-bold">📖 Com jugar</h2>
           <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
             ✕
           </Button>
         </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 px-3 pb-2 shrink-0 border-b border-border/30">
-          {([
-            { id: "basics", label: t("helpPvp.tabs.basics") },
-            { id: "rules", label: t("helpPvp.tabs.rules") },
-            { id: "rewards", label: t("helpPvp.tabs.rewards") },
-          ] as const).map(tabItem => (
-            <button
-              key={tabItem.id}
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setTab(tabItem.id); }}
-              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
-                tab === tabItem.id ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/40"
-              }`}
-            >
-              {tabItem.label}
-            </button>
-          ))}
-        </div>
-
         <div
-          className="px-5 pb-5 pt-4 space-y-4 overflow-y-auto flex-1 overscroll-contain"
+          className="px-5 pb-5 space-y-4 overflow-y-auto flex-1 overscroll-contain"
           style={{
             WebkitOverflowScrolling: "touch",
             overscrollBehavior: "contain",
           }}
         >
-          {/* TAB: BÀSIC */}
-          {tab === "basics" && (
-            <>
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
-                <p className="text-xs font-semibold text-primary mb-1">{t("helpPvp.firstTime.title")}</p>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {t("helpPvp.firstTime.body")}
-                </p>
-              </div>
-              {BASIC_STEPS.map((k, i) => (
-                <div key={k} className="flex gap-3 border-b border-border/20 pb-3 last:border-0">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center">
-                    {i + 1}
+          {RULES.map((r, i) => (
+            <div key={i} className="border-b border-border/20 pb-3 last:border-0">
+              <p className="text-sm font-semibold mb-1">{r.title}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{r.text}</p>
+            </div>
+          ))}
+
+          {/* Scenario connections map */}
+          {scenarioMap.length > 0 && (
+            <div className="border-t border-border/40 pt-4">
+              <p className="text-sm font-semibold mb-3">🗺️ Mapa d'habitacions</p>
+              <p className="text-xs text-muted-foreground mb-3">Cada habitació està connectada amb altres per portes. Pots moure't entre habitacions adjacents.</p>
+              <div className="space-y-2">
+                {scenarioMap.map((s, i) => (
+                  <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
+                    <span className="text-sm font-semibold">{s.icon} {s.name}</span>
+                    {s.connections.length > 0 ? (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        → {s.connections.join(" · ")}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground/50 mt-0.5">Sense connexions</p>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold mb-1">{t(`helpPvp.basics.${k}.title`)}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{t(`helpPvp.basics.${k}.text`)}</p>
-                  </div>
-                </div>
-              ))}
-              <div className="bg-secondary/10 border border-secondary/20 rounded-xl p-3 mt-3">
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {t("helpPvp.tipText")}
-                </p>
+                ))}
               </div>
-            </>
+            </div>
           )}
 
-          {/* TAB: REGLES COMPLETES */}
-          {tab === "rules" && (
-            <>
-              {RULE_KEYS.map((k) => (
-                <div key={k} className="border-b border-border/20 pb-3 last:border-0">
-                  <p className="text-sm font-semibold mb-1">{ruleTitle(k)}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{t(`helpPvp.rules.${k}.text`)}</p>
-                </div>
-              ))}
-
-              {/* Scenario connections map */}
-              {scenarioMap.length > 0 && (
-                <div className="border-t border-border/40 pt-4">
-                  <p className="text-sm font-semibold mb-3">{t("helpPvp.mapTitle")}</p>
-                  <p className="text-xs text-muted-foreground mb-3">{t("helpPvp.mapBody")}</p>
-                  <div className="space-y-2">
-                    {scenarioMap.map((s, i) => (
-                      <div key={i} className="bg-muted/30 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold">{s.icon} {s.name}</span>
-                        {s.connections.length > 0 ? (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            → {s.connections.join(" · ")}
-                          </p>
-                        ) : (
-                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">{t("helpPvp.mapNone")}</p>
-                        )}
-                      </div>
+          {/* Reward catalog */}
+          <div className="border-t border-border/40 pt-4">
+            <p className="text-sm font-semibold mb-3">🏆 Catàleg de recompenses</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Guanya partides per obtenir mobles decoratius. Cada victòria dona un moble aleatori amb probabilitat:
+            </p>
+            {RARITY_ORDER.map(rarity => {
+              const items = groupedRewards[rarity] ?? [];
+              const cfg = RARITY_CONFIG[rarity];
+              const drop = DROP_RATES[rarity];
+              if (items.length === 0) return null;
+              return (
+                <div key={rarity} className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold">
+                      {cfg?.emoji} {drop?.label} ({items.length})
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {drop?.pct} · {cfg?.sell}🪙
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {items.map((item: any) => (
+                      <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
+                        {item.icon} {item.name}
+                      </span>
                     ))}
                   </div>
                 </div>
-              )}
-            </>
-          )}
-
-          {/* TAB: PREMIS */}
-          {tab === "rewards" && (
-            <div>
-              <p className="text-sm font-semibold mb-3">{t("helpPvp.rewardsTitle")}</p>
-              <p className="text-xs text-muted-foreground mb-3">
-                {t("helpPvp.rewardsBody")}
-              </p>
-              {RARITY_ORDER.map(rarity => {
-                const items = groupedRewards[rarity] ?? [];
-                const cfg = RARITY_CONFIG[rarity];
-                if (items.length === 0) return null;
-                return (
-                  <div key={rarity} className="mb-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold">
-                        {cfg?.emoji} {t(`helpPvp.rarity.${rarity}.label`)} ({items.length})
-                      </span>
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {t(`helpPvp.rarity.${rarity}.pct`)} · {cfg?.sell}🪙
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {items.map((item) => (
-                        <span key={item.id} className="inline-flex items-center gap-1 bg-muted/40 rounded-lg px-2 py-1 text-[11px]">
-                          {item.icon} {item.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-              <p className="text-[10px] text-muted-foreground mt-2">
-                {t("helpPvp.rewardsTotal", { count: rewardCatalog.length })}
-              </p>
-            </div>
-          )}
+              );
+            })}
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Total: {rewardCatalog.length} mobles · Col·loca'ls en escenaris o ven-los per tokens bonus
+            </p>
+          </div>
         </div>
       </div>
     </div>,
@@ -223,7 +227,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
     <>
       {variant === "menu" ? (
         <button onClick={() => setOpen(true)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2">
-          {t("helpPvp.menuLabel")}
+          ❓ Com jugar
         </button>
       ) : (
         <Button
@@ -231,7 +235,7 @@ export function HelpButton({ variant }: { variant?: "menu" | "icon" }) {
           size="icon"
           onClick={() => setOpen(true)}
           className="text-lg"
-          aria-label={t("helpPvp.ariaLabel")}
+          aria-label="Com jugar"
         >
           ❓
         </Button>

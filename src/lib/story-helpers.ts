@@ -60,19 +60,17 @@ export const MAX_PET_XP = 5000;
 // Evolution tiers
 export const PET_EVOLUTION_TIERS: readonly {
   minXp: number;
-  key: "baby" | "young" | "adult" | "veteran" | "legendary";
   label: string;
   badge: string;
   glow: string;
   ring: string;
 }[] = [
-  { minXp: 0, key: "baby", label: "Bebè", badge: "🥚", glow: "from-gray-400/20 to-gray-300/10", ring: "ring-muted-foreground/30" },
-  { minXp: 500, key: "young", label: "Jove", badge: "🌱", glow: "from-green-400/30 to-emerald-300/15", ring: "ring-green-500/40" },
-  { minXp: 1500, key: "adult", label: "Adult", badge: "⭐", glow: "from-blue-400/30 to-cyan-300/15", ring: "ring-blue-500/40" },
-  { minXp: 3000, key: "veteran", label: "Veterà", badge: "🔥", glow: "from-orange-400/30 to-amber-300/15", ring: "ring-orange-500/50" },
+  { minXp: 0, label: "Bebè", badge: "🥚", glow: "from-gray-400/20 to-gray-300/10", ring: "ring-muted-foreground/30" },
+  { minXp: 500, label: "Jove", badge: "🌱", glow: "from-green-400/30 to-emerald-300/15", ring: "ring-green-500/40" },
+  { minXp: 1500, label: "Adult", badge: "⭐", glow: "from-blue-400/30 to-cyan-300/15", ring: "ring-blue-500/40" },
+  { minXp: 3000, label: "Veterà", badge: "🔥", glow: "from-orange-400/30 to-amber-300/15", ring: "ring-orange-500/50" },
   {
     minXp: 4500,
-    key: "legendary",
     label: "Llegendari",
     badge: "👑",
     glow: "from-purple-400/40 to-pink-300/20",
@@ -91,7 +89,7 @@ export function getPetEvolution(xp: number, maxXp?: number) {
   return { ...tier, nextTier, isDead, xp, maxXp: effectiveMax };
 }
 
-export function hasAllAccessories(accessories: Array<{ slot?: string | null; accessory_name?: string }>): boolean {
+export function hasAllAccessories(accessories: any[]): boolean {
   const owned = new Set(accessories.map((a) => a.accessory_name));
   return PET_ACCESSORIES.every((a) => owned.has(a.name));
 }
@@ -143,18 +141,87 @@ export async function healPetXP(userId: string, xpReduce: number) {
   return { newXp };
 }
 
-// Delete pet + accessories + events + state + inventory + recipe book + skills for rebirth
+// Delete pet + progress + accessories + events for rebirth
 export async function resetPetAndProgress(userId: string) {
   await Promise.all([
     supabase.from("pet_accessories").delete().eq("user_id", userId),
     supabase.from("pet_consumables").delete().eq("user_id", userId),
     supabase.from("pet_events").delete().eq("user_id", userId),
-    supabase.from("pet_state").delete().eq("user_id", userId),
-    supabase.from("pet_skills").delete().eq("user_id", userId),
-    supabase.from("story_inventory").delete().eq("user_id", userId),
-    supabase.from("story_recipe_book").delete().eq("user_id", userId),
+    supabase.from("story_progress").delete().eq("user_id", userId),
     supabase.from("player_pets").delete().eq("user_id", userId),
   ]);
+}
+
+// ============================================
+// STORY PROGRESS
+// ============================================
+
+export async function getStoryProgress(userId: string) {
+  const { data } = await supabase.from("story_progress").select("*").eq("user_id", userId).order("chapter");
+  return data ?? [];
+}
+
+export async function initChapter(userId: string, chapter: number) {
+  const { data: existing } = await supabase
+    .from("story_progress")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("chapter", chapter)
+    .maybeSingle();
+  if (existing) {
+    await supabase.from("story_progress").update({ status: "active", moves_used: 0 }).eq("id", existing.id);
+  } else {
+    await supabase.from("story_progress").insert({
+      user_id: userId,
+      chapter,
+      status: "active",
+    });
+  }
+}
+
+export async function completeChapter(userId: string, chapter: number, movesUsed: number) {
+  const { data: existing } = await supabase
+    .from("story_progress")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("chapter", chapter)
+    .single();
+
+  const bestMoves = existing?.best_moves ? Math.min(existing.best_moves, movesUsed) : movesUsed;
+
+  await supabase
+    .from("story_progress")
+    .update({
+      status: "completed",
+      moves_used: movesUsed,
+      best_moves: bestMoves,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("chapter", chapter);
+
+  // Unlock next chapter (only if not already existing)
+  const nextChapter = chapter + 1;
+  if (nextChapter <= 2 + PET_ACCESSORIES.length) {
+    const { data: next } = await supabase
+      .from("story_progress")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("chapter", nextChapter)
+      .maybeSingle();
+    if (!next) {
+      await supabase.from("story_progress").insert({
+        user_id: userId,
+        chapter: nextChapter,
+        status: "unlocked",
+      });
+    }
+  }
+
+  // Award XP
+  const xp = calculateXP(chapter, movesUsed);
+  const result = await addPetXP(userId, xp);
+  return { xp, isDead: result?.isDead ?? false, newXp: result?.newXp ?? 0 };
 }
 
 // ============================================
@@ -260,7 +327,7 @@ export async function useConsumable(userId: string, consumableName: string) {
 // CPU LOGIC (random decisions)
 // ============================================
 
-export function cpuChooseHidingSpot(items: Array<Record<string, any>>, objects: Array<Record<string, any>>) {
+export function cpuChooseHidingSpot(items: any[], objects: any[]) {
   if (items.length === 0 || objects.length === 0) return null;
   const item = items[Math.floor(Math.random() * items.length)];
   const obj = objects[Math.floor(Math.random() * objects.length)];

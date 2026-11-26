@@ -1,736 +1,401 @@
 // ============================================================
-// StoryModePage.tsx — Mode Història v4
+// StoryModePage.tsx — Mode Història (single-player tutorial)
 // ============================================================
-// 🔒 CRITICAL: INDEPENDENT del PvP. No toca cap RPC ni taula de partida real.
+// Hub de capítols + adopció de mascota.
+// Les partides es juguen al motor real (GamePage) amb CPU random.
 // ============================================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { TypewriterText } from "@/components/TypewriterText";
+import { PetHealthBadge } from "@/components/PetHealthBadge";
 import {
-  PET_OPTIONS, MAX_PET_XP, getMyPet, createPet, getPetEvolution,
+  PET_OPTIONS, PET_ACCESSORIES, PET_CONSUMABLES, MAX_PET_XP,
+  getPetEvolution, hasAllAccessories,
+  getMyPet, createPet, getStoryProgress, initChapter, completeChapter,
+  getMyAccessories, resetPetAndProgress, getActiveEvents, useConsumable,
 } from "@/lib/story-helpers";
-import {
-  getActiveRun, startRun, getNode, getChoices, makeChoice, killAndReset,
-  rewardToReveal,
-  type StoryRun, type StoryNode, type StoryChoice, type RewardOutcome,
-} from "@/lib/story-runs";
-import { getPetState, getInventory, autoDiscoverRecipes, type PetState, type InventoryItem, DEFAULT_STATE } from "@/lib/story-state";
-import {
-  getMySkills, getWorldStatuses, syncLevelAndSkills, getNodeVisitMap,
-  type WorldStatus, SKILLS,
-} from "@/lib/story-progression";
-import { StoryNodeView } from "@/components/story/StoryNodeView";
-import { StoryEndingScreen } from "@/components/story/StoryEndingScreen";
-import { StoryDeathScreen } from "@/components/story/StoryDeathScreen";
-import { RewardReveal, type RevealData } from "@/components/story/RewardReveal";
-import { ChapterCompleteScreen } from "@/components/story/ChapterCompleteScreen";
-import { DailyChallengeCard } from "@/components/story/DailyChallengeCard";
-import { PetStatsBar } from "@/components/story/PetStatsBar";
-import { InventoryDrawer } from "@/components/story/InventoryDrawer";
-import { WorldMap } from "@/components/story/WorldMap";
-import { PuzzleNodeView } from "@/components/story/PuzzleNodeView";
-import { parsePuzzle, getAttempt } from "@/lib/story-puzzle";
-
-import { PetEvolutionCard } from "@/components/story/PetEvolutionCard";
-import { HelpDialog } from "@/components/story/HelpDialog";
-import { resolveAndFetchPendingVisits, fetchAndMarkUnseenNotifications, type ResolvedVisit, type PetNotification } from "@/lib/pet-social";
-import { WhileAwayDialog } from "@/components/story/WhileAwayDialog";
-import { getPetPersonality, TRAIT_META, type Personality } from "@/lib/pet-personality";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useT } from "@/i18n/LanguageProvider";
 
+type StoryPhase = "loading" | "intro" | "hub" | "dead";
 
-type Phase = "loading" | "intro" | "ready" | "playing" | "chapter_break" | "ended";
 export default function StoryModePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const t = useT();
 
+  const [phase, setPhase] = useState<StoryPhase>("loading");
+  const [pet, setPet] = useState<any>(null);
+  const [progress, setProgress] = useState<any[]>([]);
+  const [accessories, setAccessories] = useState<any[]>([]);
+  const [activeEvents, setActiveEvents] = useState<any[]>([]);
+  const [consumables, setConsumables] = useState<any[]>([]);
+  const [playerName, setPlayerName] = useState("aventurer");
 
-  const [phase, setPhase] = useState<Phase>("loading");
-  const [pet, setPet] = useState<Record<string, any> | null>(null);
-  const [run, setRun] = useState<StoryRun | null>(null);
-  const [node, setNode] = useState<StoryNode | null>(null);
-  const [choices, setChoices] = useState<StoryChoice[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [playerName, setPlayerName] = useState("");
-
-  // Adoption flow
-  const [randomPet, setRandomPet] = useState<(typeof PET_OPTIONS)[number]>(PET_OPTIONS[0]);
+  // Intro animation states
+  const [randomPet, setRandomPet] = useState<{ type: string; icon: string; name: string }>(PET_OPTIONS[0]);
   const [introStep, setIntroStep] = useState(0);
   const [giftOpened, setGiftOpened] = useState(false);
   const [petNameInput, setPetNameInput] = useState("");
   const [namingPet, setNamingPet] = useState(false);
+  const [startingChapter, setStartingChapter] = useState(false);
+  const [isRebirth, setIsRebirth] = useState(false);
 
-  // v4: state + inventory
-  const [petState, setPetState] = useState<PetState>(DEFAULT_STATE);
-  const [prevPetState, setPrevPetState] = useState<PetState | null>(null);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [inventoryRefresh, setInventoryRefresh] = useState(0);
+  const allAccsCollected = useMemo(() => hasAllAccessories(accessories), [accessories]);
 
-  // v5: skills + worlds + visits
-  const [skills, setSkills] = useState<Set<string>>(new Set());
-  const [worlds, setWorlds] = useState<WorldStatus[]>([]);
-  const [selectedWorld, setSelectedWorld] = useState<string>("home");
-  const [visitMap, setVisitMap] = useState<Map<string, number>>(new Map());
-  const [recipeCount, setRecipeCount] = useState(0);
-  const [personality, setPersonality] = useState<Personality | null>(null);
-  const [puzzleSolvedNodes, setPuzzleSolvedNodes] = useState<Set<string>>(new Set());
-
-  // Last ending info
-  const [endedNode, setEndedNode] = useState<StoryNode | null>(null);
-  const [endedStatus, setEndedStatus] = useState<"dead" | "completed" | null>(null);
-  const [endedPet, setEndedPet] = useState<{ name: string; icon: string } | null>(null);
-
-  // Chapter break + reveal
-  const [reveal, setReveal] = useState<RevealData | null>(null);
-  const [chapterRewards, setChapterRewards] = useState<RewardOutcome[]>([]);
-  const [pendingNext, setPendingNext] = useState<StoryNode | null>(null);
-  const [completedChapter, setCompletedChapter] = useState<number>(1);
-
-  // 📬 "Mentre no hi eres" popup
-  const [awayOpen, setAwayOpen] = useState(false);
-  const [awayVisits, setAwayVisits] = useState<ResolvedVisit[]>([]);
-  const [awayNotifs, setAwayNotifs] = useState<PetNotification[]>([]);
-
-  const loadAll = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
-    setPhase("loading");
-    try {
-      const [petData, profileRes, runData, stateData, invData, skillSet, visits, recipeBookRes] = await Promise.all([
-        getMyPet(user.id),
-        supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
-        getActiveRun(user.id),
-        getPetState(user.id),
-        getInventory(user.id),
-        getMySkills(user.id),
-        getNodeVisitMap(user.id),
-        supabase.from("story_recipe_book").select("recipe_id", { count: "exact", head: true }).eq("user_id", user.id),
-      ]);
-      const name = profileRes.data?.display_name?.trim()
-        || (user.email ? user.email.split("@")[0] : "")
-        || t("storyPage.adventurer");
+    const [petData, prog, accs, profileRes, events, consumablesRes] = await Promise.all([
+      getMyPet(user.id),
+      getStoryProgress(user.id),
+      getMyAccessories(user.id),
+      supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+      getActiveEvents(user.id),
+      supabase.from("pet_consumables").select("*").eq("user_id", user.id).is("used_at", null).order("obtained_at"),
+    ]);
+    setPet(petData);
+    setProgress(prog);
+    setAccessories(accs);
+    setActiveEvents(events);
+    setConsumables(consumablesRes.data ?? []);
+    if (profileRes.data?.display_name) setPlayerName(profileRes.data.display_name);
 
-      setPlayerName(name);
-      setPet(petData);
-      setPetState(stateData);
-      setInventory(invData);
-      setSkills(skillSet);
-      setVisitMap(visits);
-      const rcCount = recipeBookRes.count ?? 0;
-      setRecipeCount(rcCount);
-      // Carrega personalitat efectiva (espècie + estat)
-      if (petData) {
-        try { setPersonality(await getPetPersonality(user.id)); } catch { /* non-blocking */ }
-      }
-
-      // 🧪 Auto-discover passive: comprova si ja té ingredients per receptes no descobertes
-      if (invData.length > 0) {
-        const newly = await autoDiscoverRecipes(user.id, invData);
-        if (newly.length > 0) {
-          setRecipeCount(rcCount + newly.length);
-          newly.forEach((r) =>
-            toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
-              description: t("storyPage.recipeDiscoveredDesc"),
-              duration: 5000,
-            })
-          );
-        }
-      }
-
-
-      // 🐾 Resoldre visites pendents + notificacions de regals → popup "mentre no hi eres"
-      try {
-        const [pending, notifs] = await Promise.all([
-          resolveAndFetchPendingVisits(user.id),
-          fetchAndMarkUnseenNotifications(user.id),
-        ]);
-        if (pending.length > 0 || notifs.length > 0) {
-          setAwayVisits(pending);
-          setAwayNotifs(notifs);
-          setAwayOpen(true);
-        }
-      } catch { /* silent */ }
-
-      if (!petData) {
-        const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
-        setRandomPet(rp);
-        setIntroStep(0);
-        setGiftOpened(false);
-        setPhase("intro");
-        return;
-      }
-
-      // Sync level/skills from XP, then load worlds
-      const synced = await syncLevelAndSkills(user.id);
-      if (synced.newlyUnlocked.length > 0) {
-        const fresh = await getMySkills(user.id);
-        setSkills(fresh);
-        synced.newlyUnlocked.forEach((s) => toast.success(t("storyPage.skillUnlocked", { icon: s.icon, name: s.name })));
-
-      }
-      const ws = await getWorldStatuses(user.id, {
-        bond: stateData.bond,
-        recipesDiscovered: rcCount,
-        level: synced.level,
-      });
-      setWorlds(ws);
-      // Default selection: most-advanced unlocked world
-      const lastUnlocked = [...ws].reverse().find((w) => w.unlocked);
-      if (lastUnlocked) setSelectedWorld(lastUnlocked.id);
-
-      if (runData && runData.current_node_id) {
-        const n = await getNode(runData.current_node_id);
-        if (!n) {
-          await supabase.from("story_runs").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", runData.id);
-          setPhase("ready");
-          return;
-        }
-        const c = await getChoices(runData.current_node_id);
-        setRun(runData);
-        setNode(n);
-        setChoices(c);
-        if (parsePuzzle(n.puzzle_data)) {
-          const att = await getAttempt(runData.id, n.id);
-          if (att?.solved_at || att?.skipped_at) {
-            setPuzzleSolvedNodes((s) => new Set(s).add(n.id));
-          }
-        }
-        setPhase("playing");
-      } else {
-        setPhase("ready");
-      }
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error("[StoryMode] loadAll error", e);
-      toast.error(t("storyPage.loadError", { msg }));
-      setPhase("ready");
+    if (!petData) {
+      const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
+      setRandomPet(rp);
+      setPhase("intro");
+    } else if (petData.xp >= MAX_PET_XP) {
+      setPhase("dead");
+    } else {
+      setPhase("hub");
     }
-  }, [user, t]);
+  }, [user]);
 
+  useEffect(() => { loadData(); }, [loadData]);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  // ====== INTRO FLOW ======
+  const handleOpenGift = () => {
+    setGiftOpened(true);
+  };
 
-  // Recarrega quan canvia l'idioma (les caches de catàleg s'invaliden soles)
-  useEffect(() => {
-    const handler = () => { loadAll(); };
-    window.addEventListener("lang-changed", handler);
-    return () => window.removeEventListener("lang-changed", handler);
-  }, [loadAll]);
-
-  // ====== INTRO ======
   const handleConfirmPetName = async () => {
     if (!user) return;
     const trimmed = petNameInput.trim();
-    if (!trimmed || trimmed.length > 20) { toast.error(t("storyPage.invalidName")); return; }
-
+    if (!trimmed || trimmed.length > 20) {
+      toast.error("El nom ha de tenir entre 1 i 20 caràcters");
+      return;
+    }
     setNamingPet(true);
     try {
       const p = await createPet(user.id, randomPet.type, trimmed, randomPet.icon);
       setPet(p);
-      toast.success(t("storyPage.adoptedToast", { icon: randomPet.icon, name: trimmed }));
-    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : t("storyPage.errCreatingPet")); }
+      if (isRebirth) {
+        // Returning player: skip tutorial chapters 1-2, mark as completed, start at chapter 3
+        await initChapter(user.id, 1);
+        await completeChapter(user.id, 1, 1);
+        await initChapter(user.id, 2);
+        await completeChapter(user.id, 2, 1);
+        // initChapter(3) is called inside completeChapter(2) automatically
+      } else {
+        await initChapter(user.id, 1);
+      }
+      const prog = await getStoryProgress(user.id);
+      setProgress(prog);
+      setPhase("hub");
+      toast.success(`${randomPet.icon} ${trimmed} és el teu company!${isRebirth ? " Capítols 1-2 superats automàticament!" : ""}`);
+      setIsRebirth(false);
+    } catch (err: any) { toast.error(err.message); }
     finally { setNamingPet(false); }
   };
 
-  // ====== START RUN ======
-  const handleStartRun = async () => {
+  // ====== PET DEATH → REBIRTH ======
+  const handleRebirth = async () => {
     if (!user) return;
-    setBusy(true);
     try {
-      const world = worlds.find((w) => w.id === selectedWorld && w.unlocked);
-      const startNodeId = world?.start_node_id;
-      const worldId = world?.id;
-      const r = await startRun(user.id, startNodeId, worldId);
-      if (!r.current_node_id) throw new Error(t("storyPage.noNode"));
-      const n = await getNode(r.current_node_id);
-      if (!n) throw new Error(t("storyPage.nodeMissing", { id: r.current_node_id }));
-      const c = await getChoices(r.current_node_id);
-      setRun(r);
-      setNode(n);
-      setChoices(c);
-      setChapterRewards([]);
-      setPrevPetState(null);
-      setPhase("playing");
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t("storyPage.unknownError");
-      console.error("[StoryMode] startRun error", e);
-      toast.error(t("storyPage.startError", { msg }));
-    }
-    finally { setBusy(false); }
-
-  };
-
-  // ====== CHOICE ======
-  const handleChoose = async (choice: StoryChoice) => {
-    if (!user || !run || !node) return;
-    setBusy(true);
-    try {
-      const result = await makeChoice(user.id, run, choice, personality ?? undefined);
-      const freshPet = await getMyPet(user.id);
-      setPet(freshPet);
-
-      // Update state bars
-      if (result.reward.newState) {
-        setPrevPetState(petState);
-        setPetState(result.reward.newState);
-        // Estat ha canviat → recalcular personalitat efectiva
-        try { setPersonality(await getPetPersonality(user.id)); } catch { /* non-blocking */ }
-      }
-
-      // Notify trait bonus (if any)
-      if (result.traitBonus) {
-        const { TRAIT_META } = await import("@/lib/pet-personality");
-        const meta = TRAIT_META[result.traitBonus.trait as keyof typeof TRAIT_META];
-        const traitKey = result.traitBonus.trait as keyof typeof TRAIT_META;
-        const traitLabel = t(`petTrait.${traitKey}`, meta?.label ?? result.traitBonus.trait);
-        toast.success(t("storyPage.traitBonus", { label: traitLabel, m: result.traitBonus.multiplier }));
-
-      }
-
-      // Refresh inventory if item/recipe gained
-      if (result.reward.item || result.reward.recipe) {
-        const inv = await getInventory(user.id);
-        setInventory(inv);
-        setInventoryRefresh((n) => n + 1);
-        // 🧪 Auto-descobriment de receptes amb ingredients actuals
-        const newlyDiscovered = await autoDiscoverRecipes(user.id, inv);
-        if (newlyDiscovered.length > 0) {
-          setRecipeCount((c) => c + newlyDiscovered.length);
-          newlyDiscovered.forEach((r) =>
-            toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name }), {
-              description: t("storyPage.recipeDiscoveredDescDrawer"),
-              duration: 5000,
-            })
-          );
-        }
-      }
-
-
-      // Reveal animation
-      setReveal(rewardToReveal(result.reward, t));
-
-      setChapterRewards(prev => [...prev, result.reward]);
-
-      if (result.runEnded) {
-        setEndedNode(result.nextNode ?? node);
-        setEndedStatus(result.runEnded);
-        setEndedPet({ name: freshPet?.pet_name ?? pet?.pet_name ?? "?", icon: freshPet?.pet_icon ?? pet?.pet_icon ?? "🐾" });
-        setPendingNext(null);
-        return;
-      }
-
-      if (result.nextNode) {
-        if (result.nextNode.chapter > node.chapter) {
-          setCompletedChapter(node.chapter);
-        }
-        // Refresh visit map (next node will have its visit recorded server-side)
-        const fresh = await getNodeVisitMap(user.id);
-        setVisitMap(fresh);
-        setPendingNext(result.nextNode);
-        const freshRun = await getActiveRun(user.id);
-        if (freshRun) setRun(freshRun);
-      }
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t("storyPage.choiceFailed");
-      console.error("[StoryMode] choice error", e);
-      toast.error(t("storyPage.choiceError", { msg }));
-    }
-    finally { setBusy(false); }
-  };
-
-  const handleRevealDone = async () => {
-    setReveal(null);
-    if (endedStatus) { setPhase("ended"); return; }
-    if (!pendingNext || !node) return;
-    if (pendingNext.chapter > node.chapter) { setPhase("chapter_break"); return; }
-    const newChoices = await getChoices(pendingNext.id);
-    setNode(pendingNext);
-    setChoices(newChoices);
-    if (run && parsePuzzle(pendingNext.puzzle_data)) {
-      const att = await getAttempt(run.id, pendingNext.id);
-      if (att?.solved_at || att?.skipped_at) {
-        setPuzzleSolvedNodes((s) => new Set(s).add(pendingNext.id));
-      }
-    }
-    setPendingNext(null);
-  };
-
-  const handlePuzzleSolved = async (reward: { item: { id: string; name: string; icon: string }; xp: number }) => {
-    if (!node || !user) return;
-    setPuzzleSolvedNodes((s) => new Set(s).add(node.id));
-    // Refresh inventory + pet + state
-    const [inv, freshPet] = await Promise.all([getInventory(user.id), getMyPet(user.id)]);
-    setInventory(inv);
-    setInventoryRefresh((n) => n + 1);
-    setPet(freshPet);
-    toast.success(t("puzzle.solved", { name: reward.item.name, xp: String(reward.xp) }, `🧩 ${reward.item.icon} ${reward.item.name} +${reward.xp} XP`));
-  };
-
-  const handlePuzzleSkipped = async () => {
-    if (!node || !user) return;
-    setPuzzleSolvedNodes((s) => new Set(s).add(node.id));
-    const st = await getPetState(user.id);
-    setPrevPetState(petState);
-    setPetState(st);
-  };
-
-  const handleContinueChapter = async () => {
-    if (!pendingNext) return;
-    setBusy(true);
-    try {
-      const newChoices = await getChoices(pendingNext.id);
-      setNode(pendingNext);
-      setChoices(newChoices);
-      setPendingNext(null);
-      setChapterRewards([]);
-      setPhase("playing");
-    } finally { setBusy(false); }
-  };
-
-  const handlePauseAdventure = () => {
-    toast.success(t("storyPage.adventureSaved"));
-    navigate("/");
-  };
-
-
-  // ====== ENDING HANDLERS ======
-  const handlePlayAgain = async () => {
-    setEndedNode(null); setEndedStatus(null); setEndedPet(null);
-    await handleStartRun();
-  };
-
-  const handleAdoptAfterDeath = async () => {
-    if (!user) return;
-    setBusy(true);
-    try {
-      await killAndReset(user.id);
-      setEndedNode(null); setEndedStatus(null); setEndedPet(null);
-      setRun(null); setNode(null); setChoices([]); setPet(null);
-      setPetState(DEFAULT_STATE); setInventory([]);
+      await resetPetAndProgress(user.id);
       const rp = PET_OPTIONS[Math.floor(Math.random() * PET_OPTIONS.length)];
       setRandomPet(rp);
-      setIntroStep(0); setGiftOpened(false); setPetNameInput("");
+      setIntroStep(0);
+      setGiftOpened(false);
+      setIsRebirth(true);
       setPhase("intro");
-    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Error reiniciant"); }
-    finally { setBusy(false); }
+      toast("La teva mascota ha viscut una vida plena 💫");
+    } catch (err: any) { toast.error(err.message); }
   };
 
-  // ====== RENDER ======
-  if (phase === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground text-sm animate-pulse">{t("common.loading")}</p>
-
-      </div>
-    );
-  }
-
-  if (phase === "intro") {
-    return (
-      <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
-        {introStep === 0 && (
-          <div className="text-center relative z-10">
-            <TypewriterText
-              text={t("storyPage.giftIntro", { name: playerName })}
-              speed={75}
-              onComplete={() => setTimeout(() => setIntroStep(1), 1200)}
-              className="text-lg font-medium mb-6"
-            />
-          </div>
-        )}
-        {introStep >= 1 && !giftOpened && (
-          <div className="text-center relative z-10 animate-fade-in">
-            <button onClick={() => setGiftOpened(true)}
-              className="text-8xl hover:scale-110 transition-transform active:scale-95 animate-pulse cursor-pointer">
-              🎁
-            </button>
-            <p className="text-sm text-muted-foreground mt-4">{t("storyPage.tapToOpen")}</p>
-          </div>
-        )}
-        {giftOpened && (
-          <div className="text-center relative z-10 animate-scale-in w-full max-w-xs">
-            <div className="text-8xl mb-3">{randomPet.icon}</div>
-            <p className="text-lg font-bold mb-4">{t("storyPage.aPet", { name: randomPet.name })}</p>
-            <p className="text-sm text-muted-foreground mb-2">{t("storyPage.namePrompt")}</p>
-            <Input
-              value={petNameInput}
-              onChange={(e) => setPetNameInput(e.target.value)}
-              placeholder={t("storyPage.petNamePlaceholder")}
-              maxLength={20}
-              className="text-center mb-3"
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && handleConfirmPetName()}
-            />
-            <Button onClick={handleConfirmPetName} disabled={namingPet || !petNameInput.trim()} className="w-full">
-              {namingPet ? "..." : t("storyPage.adopt", { icon: randomPet.icon })}
-            </Button>
-          </div>
-        )}
-
-      </div>
-    );
-  }
-
-  if (phase === "ended" && endedNode && endedPet) {
-    if (endedStatus === "dead") {
-      return (
-        <StoryDeathScreen
-          title={endedNode.title} narrative={endedNode.narrative}
-          petName={endedPet.name} petIcon={endedPet.icon}
-          onAdoptNew={handleAdoptAfterDeath} onLobby={() => navigate("/")}
-        />
-      );
+  // ====== START CHAPTER → CREATE REAL GAME → NAVIGATE ======
+  const startChapter = async (chapter: number) => {
+    if (!user || startingChapter) return;
+    setStartingChapter(true);
+    try {
+      await initChapter(user.id, chapter);
+      const { data: gameId, error } = await supabase.rpc("create_story_game", {
+        _user_id: user.id,
+        _chapter: chapter,
+      });
+      if (error) throw error;
+      if (!gameId) throw new Error("No s'ha pogut crear la partida");
+      navigate(`/game/${gameId}`);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setStartingChapter(false);
     }
-    return (
-      <StoryEndingScreen
-        title={endedNode.title} narrative={endedNode.narrative}
-        endingType={endedNode.ending_type}
-        petName={endedPet.name} petIcon={endedPet.icon}
-        onPlayAgain={handlePlayAgain} onLobby={() => navigate("/")}
-      />
-    );
-  }
+  };
 
-  // READY
-  if (phase === "ready" && pet) {
-    const completedWorlds = worlds.filter((w) => w.endingsCompleted.length > 0).length;
-    const totalEndings = worlds.reduce((acc, w) => acc + w.endingsCompleted.length, 0);
-    const selected = worlds.find((w) => w.id === selectedWorld);
-    return (
-      <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10">
-        <WhileAwayDialog open={awayOpen} onClose={() => setAwayOpen(false)} visits={awayVisits} notifications={awayNotifs} petName={pet?.pet_name} />
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
-        <div className="relative z-10 animate-fade-in">
-          {/* Header de navegació unificat */}
-          <div className="flex items-center justify-between mb-3">
-            <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← {t("common.lobby")}
-            </button>
+  // ====== PET EVOLUTION DISPLAY ======
+  const evolution = pet ? getPetEvolution(pet.xp ?? 0, pet.max_xp) : null;
 
-            <div className="flex items-center gap-1">
-              <HelpDialog />
-              {user && (
-                <InventoryDrawer
-                  userId={user.id}
-                  petName={pet.pet_name}
-                  triggerCount={inventoryRefresh}
-                  onChange={async () => {
-                    const inv = await getInventory(user.id);
-                    setInventory(inv);
-                    const st = await getPetState(user.id);
-                    setPetState(st);
-                    const newly = await autoDiscoverRecipes(user.id, inv);
-                    if (newly.length > 0) {
-                      newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
-                    }
-                  }}
-                />
-              )}
-              {user && <DailyChallengeCard variant="icon" userId={user.id} petName={pet.pet_name} onRewardApplied={loadAll} />}
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground text-center mb-2">{t("storyPage.greeting", { name: playerName })}</p>
+  // ====== RENDER ======
+  if (phase === "loading") return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <p className="text-muted-foreground text-sm animate-pulse">Carregant...</p>
+    </div>
+  );
 
-
-          <PetEvolutionCard
-            pet={{ pet_name: pet.pet_name, pet_icon: pet.pet_icon, xp: pet.xp ?? 0, max_xp: pet.max_xp ?? MAX_PET_XP }}
-            unlockedSkills={skills}
-          />
-
-          {/* Narrative intro */}
-          <div className="text-center mb-3 px-2">
-            <p className="text-sm text-foreground/80 italic leading-relaxed">
-              {t("storyPage.narrativeIntro", { name: pet.pet_name })}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-2">
-              {t("storyPage.statsLine", { cw: completedWorlds, tw: 4, te: totalEndings, rc: recipeCount })}
-            </p>
-
-          </div>
-
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 mt-4">{t("storyPage.chooseStart")}</p>
-
-          <WorldMap worlds={worlds} selectedId={selectedWorld} onSelect={setSelectedWorld} />
-
-          {selected && (
-            <p className="text-[11px] text-muted-foreground text-center mb-3 px-3">
-              {selected.description?.split("{pet}").join(pet.pet_name)}
-            </p>
-          )}
-
-          <Button onClick={handleStartRun} size="lg" disabled={busy || !selected?.unlocked} className="w-full mb-2">
-            {busy ? "..." : t("storyPage.startBtn", { icon: selected?.icon ?? "🏠", name: selected?.name ?? "Casa" })}
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={async () => {
-              if (!user) return;
-              if (!confirm(t("storyPage.resetConfirm"))) return;
-              await killAndReset(user.id);
-              loadAll();
-            }}
-            className="w-full text-[10px] text-destructive hover:text-destructive mt-3"
-          >
-            {t("storyPage.resetAll")}
-          </Button>
-
-        </div>
+  // PET DEAD
+  if (phase === "dead") return (
+    <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-muted/10 blur-[100px] pointer-events-none" />
+      <div className="text-center relative z-10 animate-fade-in">
+        <div className="text-7xl mb-4">🪦</div>
+        <p className="text-sm text-muted-foreground mb-1">{pet?.pet_icon}</p>
+        <h2 className="text-2xl font-bold mb-2">{pet?.pet_name} ha viscut una vida plena</h2>
+        <p className="text-sm text-muted-foreground mb-2">
+          Ha arribat a {MAX_PET_XP} XP — el màxim possible.
+        </p>
+        <p className="text-xs text-muted-foreground mb-6">
+          Descansa en pau, petit amic. Ara pots adoptar una nova mascota!
+        </p>
+        <Button onClick={handleRebirth} size="lg" className="w-full max-w-xs">
+          🥚 Nova mascota
+        </Button>
+        <Button variant="ghost" onClick={() => navigate("/")} className="w-full max-w-xs mt-2">
+          ← Lobby
+        </Button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  // CHAPTER BREAK
-  if (phase === "chapter_break" && pet && pendingNext) {
-    return (
-      <>
-        <ChapterCompleteScreen
-          completedChapter={completedChapter}
-          nextChapter={pendingNext.chapter}
-          rewards={chapterRewards}
-          petName={pet.pet_name}
-          petIcon={pet.pet_icon}
-          petXP={pet.xp ?? 0}
-          petMaxXP={pet.max_xp ?? MAX_PET_XP}
-          onContinue={handleContinueChapter}
-          onPause={handlePauseAdventure}
-          busy={busy}
-        />
-        {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
-      </>
-    );
-  }
+  // INTRO
+  if (phase === "intro") return (
+    <div className="min-h-screen bg-background p-6 max-w-md mx-auto flex flex-col items-center justify-center">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
+      {introStep === 0 && (
+        <div className="text-center relative z-10">
+          <TypewriterText
+            text={`Hola ${playerName}! Aquest regal 🎁 és per tu...`}
+            speed={75}
+            onComplete={() => setTimeout(() => setIntroStep(1), 1200)}
+            className="text-lg font-medium mb-6"
+          />
+        </div>
+      )}
+      {introStep >= 1 && !giftOpened && (
+        <div className="text-center relative z-10 animate-fade-in">
+          <button onClick={handleOpenGift}
+            className="text-8xl hover:scale-110 transition-transform active:scale-95 animate-pulse cursor-pointer">
+            🎁
+          </button>
+          <p className="text-sm text-muted-foreground mt-4">Toca per obrir!</p>
+        </div>
+      )}
+      {giftOpened && (
+        <div className="text-center relative z-10 animate-scale-in w-full max-w-xs">
+          <div className="text-8xl mb-3">{randomPet.icon}</div>
+          <p className="text-lg font-bold mb-4">Un {randomPet.name}!</p>
+          <p className="text-sm text-muted-foreground mb-2">Com el vols dir?</p>
+          <Input
+            value={petNameInput}
+            onChange={(e) => setPetNameInput(e.target.value)}
+            placeholder="Nom de la mascota"
+            maxLength={20}
+            className="text-center mb-3"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && handleConfirmPetName()}
+          />
+          <Button onClick={handleConfirmPetName} disabled={namingPet || !petNameInput.trim()} className="w-full">
+            {namingPet ? "..." : `Adoptar ${randomPet.icon}`}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 
-  // PLAYING
-  if (phase === "playing" && node && pet) {
-    const evo = getPetEvolution(pet.xp ?? 0, pet.max_xp);
+  // HUB
+  if (phase === "hub") {
+    const totalChapters = 2 + PET_ACCESSORIES.length;
+    const completedCount = progress.filter(p => p.status === "completed").length;
+
     return (
-      <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-10 relative">
-        <WhileAwayDialog open={awayOpen} onClose={() => setAwayOpen(false)} visits={awayVisits} notifications={awayNotifs} petName={pet?.pet_name} />
+      <div className="min-h-screen bg-background p-4 max-w-md mx-auto pb-20 relative">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] rounded-full bg-accent/5 blur-[100px] pointer-events-none" />
 
-        <div className="flex items-center justify-between mb-3 relative z-10">
-          <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            ← {t("common.lobby")}
-          </button>
+        <button onClick={() => navigate("/")} className="text-sm text-muted-foreground hover:text-primary mb-5 block transition-colors relative z-10">
+          ← Lobby
+        </button>
 
-          <div className="flex items-center gap-1">
-            <HelpDialog />
-            {user && <InventoryDrawer userId={user.id} petName={pet.pet_name} triggerCount={inventoryRefresh} onChange={async () => {
-              const inv = await getInventory(user.id);
-              setInventory(inv);
-              // Re-trigger auto-discover after using/combining items (state may have changed)
-              const newly = await autoDiscoverRecipes(user.id, inv);
-              if (newly.length > 0) {
-                newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
-
-                newly.forEach((r) => toast.success(t("storyPage.recipeDiscovered", { icon: r.icon, name: r.name })));
-              }
-              // Refresh pet state too (using items affects it)
-              const st = await getPetState(user.id);
-              setPetState(st);
-            }} />}
-
-            {run && (
-              <span className="text-[10px] text-accent/80 font-medium">
-                {t("storyPage.chapterBadge", { n: node.chapter })}
-              </span>
+        {/* Pet info with evolution */}
+        {pet && evolution && (
+          <div className="text-center mb-6 relative z-10">
+            <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br ${evolution.glow} ring-2 ${evolution.ring} mb-2`}>
+              <span className="text-6xl">{pet.pet_icon}</span>
+            </div>
+            <h1 className="text-xl font-bold">{pet.pet_name}</h1>
+            <p className="text-xs text-muted-foreground">
+              {evolution.badge} {evolution.label}
+              {evolution.nextTier && (
+                <span className="ml-1">→ {evolution.nextTier.badge} {evolution.nextTier.label} ({evolution.nextTier.minXp} XP)</span>
+              )}
+            </p>
+            <div className="w-48 mx-auto mt-2">
+              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-2 rounded-full bg-accent transition-all duration-500"
+                  style={{ width: `${Math.min(((pet.xp ?? 0) / (pet.max_xp ?? MAX_PET_XP)) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-accent font-semibold mt-1">⭐ {pet.xp ?? 0} / {pet.max_xp ?? MAX_PET_XP} XP</p>
+            </div>
+            {accessories.length > 0 && (
+              <div className="flex justify-center gap-1.5 mt-2">
+                {accessories.map((a: any) => (
+                  <span key={a.id} className="text-xl" title={a.accessory_name}>{a.accessory_icon}</span>
+                ))}
+              </div>
+            )}
+            {allAccsCollected && (
+              <p className="text-[10px] text-green-500 mt-1">✅ Tots els accesoris! Ara guanyes consumibles + XP</p>
             )}
           </div>
-        </div>
+        )}
 
-
-        {/* Pet status mini */}
-        <div className="flex items-center gap-3 mb-3 relative z-10 glass rounded-xl px-3 py-2 border border-border/30">
-          <span className="text-3xl">{pet.pet_icon}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate">{pet.pet_name}</p>
-            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-1">
-              <div
-                className="h-1.5 rounded-full bg-accent transition-all duration-500"
-                style={{ width: `${Math.min(((pet.xp ?? 0) / (pet.max_xp ?? MAX_PET_XP)) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{evo.badge} {evo.label} · {pet.xp ?? 0}/{pet.max_xp ?? MAX_PET_XP}</p>
-          </div>
-        </div>
-
-        {/* v4: state bars */}
-        <div className="relative z-10">
-          <PetStatsBar state={petState} prevState={prevPetState} />
-        </div>
-
-        {/* FASE 1: Personalitat efectiva (espècie + estat actual) */}
-        {personality && (
-          <div className="relative z-10 flex flex-wrap gap-1.5 justify-center px-1">
-            {(["curious","loyal","brave","gluttonous","calm"] as const).map((tr) => {
-              const meta = TRAIT_META[tr];
-              const value = personality[tr];
-              const strong = value >= 7;
-              const weak = value <= 3;
-              const traitLabel = t(`petTrait.${tr}`, meta.label);
-              return (
-                <span
-                  key={tr}
-                  title={`${traitLabel}: ${value}/10`}
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                    strong ? `bg-purple-500/20 ${meta.color} ring-1 ring-purple-400/40`
-                    : weak ? "bg-muted/30 text-muted-foreground/60"
-                    : "bg-muted/40 text-foreground/70"
-                  }`}
-                >
-                  {meta.icon} {value}
-                </span>
-              );
-            })}
+        {/* Active health events alert */}
+        {activeEvents.length > 0 && (
+          <div className="mb-4 relative z-10">
+            <PetHealthBadge activeEvents={activeEvents} petName={pet?.pet_name} />
           </div>
         )}
 
-        {(() => {
-          const puzzle = parsePuzzle(node.puzzle_data);
-          const puzzleActive = puzzle && run && !puzzleSolvedNodes.has(node.id);
-          return (
-            <div className="relative z-10 space-y-3">
-              <StoryNodeView
-                node={node}
-                choices={choices}
-                petName={pet.pet_name}
-                inventory={inventory}
-                state={petState}
-                unlockedSkills={skills}
-                nodeVisitCount={visitMap.get(node.id) ?? 1}
-                worldLabel={worlds.find((w) => w.id === run?.starting_world)?.icon
-                  ? `${worlds.find((w) => w.id === run?.starting_world)?.icon} ${worlds.find((w) => w.id === run?.starting_world)?.name}`
-                  : undefined}
-                personality={personality ?? undefined}
-                onChoose={handleChoose}
-                busy={busy || !!reveal}
-                hideChoices={!!puzzleActive}
-              />
-              {puzzleActive && user && (
-                <PuzzleNodeView
-                  userId={user.id}
-                  runId={run!.id}
-                  nodeId={node.id}
-                  puzzle={puzzle!}
-                  inventory={inventory}
-                  onSolved={handlePuzzleSolved}
-                  onSkipped={handlePuzzleSkipped}
-                />
+        {/* Consumables section */}
+        {consumables.length > 0 && (
+          <Card className="mb-4 glass border-accent/30 relative z-10">
+            <CardContent className="py-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">💊 Consumibles</p>
+              <div className="flex gap-2 flex-wrap">
+                {PET_CONSUMABLES.map(c => {
+                  const count = consumables.filter((x: any) => x.consumable_name === c.name).length;
+                  if (count === 0) return null;
+                  const matchingEvent = activeEvents.find((e: any) => e.event_type === c.curesEvent);
+                  const cureLabel = { caiguda: "🤕 Caiguda", febre: "🫠 Febre", virus: "🤒 Virus" }[c.curesEvent] ?? "";
+                  return (
+                    <button
+                      key={c.name}
+                      onClick={async () => {
+                        if (!user) return;
+                        try {
+                          const result = await useConsumable(user.id, c.name);
+                          if (result.didCureEvent) {
+                            toast.success(`${c.icon} ${c.name} usat! Ha curat ${cureLabel}! -${c.xpHeal} XP`);
+                          } else if (activeEvents.length > 0) {
+                            toast(`${c.icon} ${c.name} usat! -${c.xpHeal} XP, però no cura ${activeEvents[0].event_icon} ${activeEvents[0].event_name}. Necessites ${cureLabel.split(" ")[0]} per curar-ho!`);
+                          } else {
+                            toast.success(`${c.icon} ${c.name} usat! -${c.xpHeal} XP → ${result.newXp} XP`);
+                          }
+                          loadData();
+                        } catch (err: any) { toast.error(err.message); }
+                      }}
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-2 border transition-all active:scale-95 ${matchingEvent ? "bg-accent/15 border-accent/40 ring-1 ring-accent/30" : "bg-muted/50 border-border/30 hover:bg-accent/10"}`}
+                    >
+                      <span className="text-lg">{c.icon}</span>
+                      <div className="text-left">
+                        <span className="text-xs font-semibold">{c.name} ×{count}</span>
+                        <p className="text-[9px] text-muted-foreground">Cura {cureLabel}</p>
+                        {matchingEvent && <p className="text-[9px] text-accent font-bold">✨ Recomanat!</p>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="flex items-center justify-between mb-3 relative z-10">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            📖 Capítols ({completedCount}/{totalChapters})
+          </h2>
+          <Button variant="ghost" size="sm" className="text-[10px] text-destructive hover:text-destructive h-6 px-2"
+            onClick={async () => {
+              if (!user) return;
+              if (!confirm("Segur que vols reiniciar el Mode Història? Perdràs mascota, progrés i accesoris.")) return;
+              try {
+                await resetPetAndProgress(user.id);
+                toast("Mode Història reiniciat 🔄");
+                loadData();
+              } catch (e: any) { toast.error(e.message); }
+            }}>
+            🔄 Reiniciar
+          </Button>
+        </div>
+
+        <div className="space-y-2 relative z-10">
+          {renderChapterCard(1, `Troba ${pet?.pet_name ?? "la mascota"}!`,
+            "Aprèn a observar i confirmar en una sola habitació.",
+            progress.find(p => p.chapter === 1))}
+
+          {renderChapterCard(2, `${pet?.pet_name ?? "La mascota"} s'ha escapat!`,
+            "Aprèn a moure't entre habitacions per trobar-la.",
+            progress.find(p => p.chapter === 2))}
+
+          {PET_ACCESSORIES.map((acc, i) => {
+            const ch = 3 + i;
+            const chProg = progress.find(p => p.chapter === ch);
+            const alreadyOwned = accessories.some(a => a.accessory_name === acc.name);
+            const desc = alreadyOwned
+              ? `${acc.icon} ${acc.name} ✅ — Repeteix per guanyar XP${allAccsCollected ? " + consumibles" : ""}!`
+              : `Partida vs CPU. Guanya ${acc.icon} ${acc.name} per ${pet?.pet_name ?? "la mascota"}!`;
+            return renderChapterCard(ch, `${acc.icon} Accessori: ${acc.name}`, desc, chProg);
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function renderChapterCard(chapter: number, title: string, desc: string, prog: any) {
+    const isCompleted = prog?.status === "completed";
+    const isLocked = !prog || prog.status === "locked";
+    const canStart = chapter === 1 || !isLocked;
+
+    return (
+      <Card key={chapter} className={`glass transition-all ${isCompleted ? "border-green-500/30" : isLocked ? "opacity-50" : "border-primary/30"}`}>
+        <CardContent className="py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold flex items-center gap-1.5">
+                {isCompleted ? "✅" : isLocked ? "🔒" : "📖"} {title}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{desc}</p>
+              {isCompleted && prog.best_moves && (
+                <p className="text-[10px] text-green-500 mt-0.5">Millor: {prog.best_moves} moviments</p>
               )}
             </div>
-          );
-        })()}
-
-        {reveal && <RewardReveal reveal={reveal} onDone={handleRevealDone} />}
-      </div>
+            {canStart && (
+              <Button size="sm" variant={isCompleted ? "outline" : "default"}
+                onClick={() => startChapter(chapter)}
+                disabled={startingChapter}
+                className="shrink-0 ml-2">
+                {startingChapter ? "..." : isCompleted ? "Repetir" : "Jugar"}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

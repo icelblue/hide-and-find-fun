@@ -15,18 +15,15 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
-import { asError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useT } from "@/i18n/LanguageProvider";
 import { useNavigate } from "react-router-dom";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
-  const t = useT();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,11 +47,11 @@ export default function ResetPasswordPage() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error(t("auth.passwordsMismatch"));
+      toast.error("Les contrasenyes no coincideixen!");
       return;
     }
     if (password.length < 6) {
-      toast.error(t("auth.passwordMin"));
+      toast.error("La contrasenya ha de tenir mínim 6 caràcters.");
       return;
     }
     setLoading(true);
@@ -63,7 +60,7 @@ export default function ResetPasswordPage() {
       if (error) throw error;
       toast.success("Contrasenya actualitzada! 🎉");
       navigate("/");
-    } catch (_raw_err) { const err = asError(_raw_err);
+    } catch (err: any) {
       toast.error(err.message);
     } finally {
       setLoading(false);

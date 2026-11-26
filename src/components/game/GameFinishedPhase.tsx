@@ -4,25 +4,20 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { GameRow, PlayerRow, ObjectRow, ScenarioRow, ItemRow, RewardRow } from "@/lib/runtime-types";
 import { MATERIAL_LABELS } from "@/lib/supabase-helpers";
 import { getHideMessage } from "@/lib/object-specials";
 import { RARITY_CONFIG } from "@/lib/reward-helpers";
+import { POS_LABELS } from "@/lib/game-types";
 import { supabase } from "@/integrations/supabase/client";
-import { useT } from "@/i18n/LanguageProvider";
-import { translateRows } from "@/i18n/translate-data";
-import ObjectIcon from "@/components/game/ObjectIcon";
-
-
 
 interface FinishedPhaseProps {
-  game: GameRow;
-  user: { id: string } | null;
-  rival: PlayerRow | null;
-  reward: RewardRow | null;
+  game: any;
+  user: any;
+  rival: any;
+  reward: any;
   navigate: (path: string) => void;
-  objects: ObjectRow[];
-  scenarios: ScenarioRow[];
+  objects: any[];
+  scenarios: any[];
   gameId: string;
 }
 
@@ -37,16 +32,14 @@ interface ActionLogEntry {
 }
 
 export default function GameFinishedPhase({ game, user, rival, reward, navigate, objects, scenarios, gameId }: FinishedPhaseProps) {
-  const t = useT();
   const [rivalInfo, setRivalInfo] = useState<{
-    obj: ObjectRow | null; item: ItemRow | null; scenario: ScenarioRow | null; position: string;
+    obj: any; item: any; scenario: any; position: string;
     hideMessage: string | null; rivalName: string;
     specialType: string | null; traits: string[];
   } | null>(null);
   const [showRivalInfo, setShowRivalInfo] = useState(false);
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [showActionLog, setShowActionLog] = useState(false);
-
 
   useEffect(() => {
     if (!gameId || !user) return;
@@ -71,23 +64,21 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       const scenarioIds = [...new Set(allMoves.filter(m => m.target_scenario_id).map(m => m.target_scenario_id!))];
       const itemIds = [...new Set(allMoves.filter(m => m.target_item_id).map(m => m.target_item_id!))];
 
-      const [{ data: scenarioDataRaw }, { data: itemDataRaw }] = await Promise.all([
+      const [{ data: scenarioData }, { data: itemData }] = await Promise.all([
         scenarioIds.length > 0
           ? supabase.from("scenarios").select("id, name, icon").in("id", scenarioIds)
-          : { data: [] as Record<string, any>[] },
+          : { data: [] as any[] },
         itemIds.length > 0
           ? supabase.from("items").select("id, name, icon").in("id", itemIds)
-          : { data: [] as Record<string, any>[] },
+          : { data: [] as any[] },
       ]);
-      const scenarioData = await translateRows(scenarioDataRaw ?? [], "pvp_scenario_name", "id", "name");
-      const itemData = await translateRows(itemDataRaw ?? [], "pvp_item_name", "id", "name");
 
-      const scenarioMap = new Map(scenarioData.map(s => [s.id, s]));
-      const itemMap = new Map(itemData.map(i => [i.id, i]));
-      const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? t("game.results.playerDefault")]));
+      const scenarioMap = new Map((scenarioData ?? []).map(s => [s.id, s]));
+      const itemMap = new Map((itemData ?? []).map(i => [i.id, i]));
+      const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name ?? "Jugador"]));
 
       const log: ActionLogEntry[] = allMoves.map(m => {
-        const playerName = profileMap.get(m.player_id) ?? t("game.results.playerDefault");
+        const playerName = profileMap.get(m.player_id) ?? "Jugador";
         const isOwn = m.player_id === user.id;
         let description = "";
 
@@ -97,41 +88,39 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         if (bonusVal.startsWith("tag:light_off:")) {
           const scnId = bonusVal.replace("tag:light_off:", "");
           const scn = scenarioMap.get(scnId);
-          description = t("game.results.logLightOff", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
+          description = `🌑 Apaga el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
         } else if (bonusVal.startsWith("tag:light_on:")) {
           const scnId = bonusVal.replace("tag:light_on:", "");
           const scn = scenarioMap.get(scnId);
-          description = t("game.results.logLightOn", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
+          description = `💡 Encén el llum de ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
         } else if (bonusVal.startsWith("tag:break:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = t("game.results.logBreak", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
+          description = `💥 Trenca ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
         } else if (bonusVal.startsWith("tag:clean:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = t("game.results.logClean", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
+          description = `🧹 Neteja ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
         } else if (bonusVal.startsWith("tag:fix:")) {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = t("game.results.logFix", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
+          description = `🔧 Arregla ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
         } else if (m.action === "move") {
           const scn = scenarioMap.get(m.target_scenario_id ?? "");
-          description = t("game.results.logMoveTo", { name: `${scn?.icon ?? ""} ${scn?.name ?? ""}`.trim() });
+          description = `🚶 Es mou a ${scn?.icon ?? ""} ${scn?.name ?? ""}`;
         } else if (m.action === "look" && m.target_item_id) {
           const itm = itemMap.get(m.target_item_id);
-          const posLabel = m.target_position ? t(`game.pos.${m.target_position}`) : "";
-          const hintIcons: Record<number, string> = { 0: "❄️", 1: "🥶", 2: "🌬️", 3: "🌡️", 4: "🔥" };
+          const posLabel = m.target_position ? POS_LABELS[m.target_position] ?? m.target_position : "";
+          const hintIcons: Record<number, string> = { 0: "❄️", 1: "🌡️", 2: "🔥", 3: "🏆" };
           const hint = m.hint_level != null ? ` ${hintIcons[m.hint_level] ?? ""}` : "";
-          const itmLabel = `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim();
           if (m.found_object) {
-            description = t("game.results.logFound", { name: itmLabel, pos: posLabel });
+            description = `🏆 TROBA l'objecte a ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}!`;
           } else {
-            description = t("game.results.logObserve", { name: itmLabel, pos: posLabel, hint });
+            description = `👀 Observa ${itm?.icon ?? ""} ${itm?.name ?? ""} ${posLabel}${hint}`;
           }
         } else if (m.action === "confirm") {
           const itm = itemMap.get(m.target_item_id ?? "");
-          description = t("game.results.logConfirm", { name: `${itm?.icon ?? ""} ${itm?.name ?? ""}`.trim() });
+          description = `🎯 Confirma ${itm?.icon ?? ""} ${itm?.name ?? ""}`;
         } else {
           description = `${m.action}`;
         }
-
 
         return {
           id: m.id,
@@ -147,65 +136,43 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       setActionLog(log);
     })();
 
-    // Rival's hidden object — shown to BOTH (winner: trofeu, perdedor: descoberta)
-    if (!rival) return;
+    // Rival info (loser only)
+    if (game.winner_id === user?.id || !rival) return;
     (async () => {
-      const rivalSD = rival.special_data as Record<string, any> | null;
-      const isCustom = rivalSD?.is_custom === true;
-
-      const [{ data: objRaw }, { data: itmRaw }, { data: rivalProf }] = await Promise.all([
-        rival.hidden_object_id && !isCustom
-          ? supabase.from("objects").select("id, name, icon, material, size").eq("id", rival.hidden_object_id).single()
+      const [{ data: obj }, { data: itm }, { data: rivalProf }] = await Promise.all([
+        rival.hidden_object_id
+          ? supabase.from("objects").select("name, icon, material, size").eq("id", rival.hidden_object_id).single()
           : { data: null },
         rival.hidden_item_id
-          ? supabase.from("items").select("id, name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
+          ? supabase.from("items").select("name, icon, scenario_id, environment").eq("id", rival.hidden_item_id).single()
           : { data: null },
         supabase.from("profiles").select("display_name").eq("user_id", rival.user_id).single(),
       ]);
-      const [objArr, itmArr] = await Promise.all([
-        objRaw ? translateRows([objRaw as Record<string, any>], "pvp_object_name", "id", "name") : Promise.resolve([null]),
-        itmRaw ? translateRows([itmRaw as Record<string, any>], "pvp_item_name", "id", "name") : Promise.resolve([null]),
-      ]);
-      const obj = objArr[0] as ObjectRow | null;
-      const itm = itmArr[0] as ItemRow | null;
       let scn = null;
       if (itm?.scenario_id) {
-        scn = scenarios.find((s) => s.id === itm.scenario_id) ?? null;
+        scn = scenarios.find((s: any) => s.id === itm.scenario_id) ?? null;
       }
-      const hideMsg = getHideMessage(rival.special_data as any);
+      const hideMsg = getHideMessage(rival.special_data);
 
       let traits: string[] = [];
       let specialType: string | null = null;
-      let displayObj: ObjectRow | Record<string, any> | null = obj;
-      if (isCustom) {
-        displayObj = {
-          name: rivalSD.custom_name,
-          icon: rivalSD.custom_icon,
-          material: rivalSD.custom_material ?? "generic",
-          size: rivalSD.custom_size ?? 2,
-        };
-        if (rivalSD.custom_trait1) traits.push(rivalSD.custom_trait1);
-        if (rivalSD.custom_trait2) traits.push(rivalSD.custom_trait2);
-      } else if (rival.hidden_object_id) {
+      if (rival.hidden_object_id) {
         const [{ data: traitData }, { data: specialData }] = await Promise.all([
-          supabase.from("object_traits").select("id, trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
+          supabase.from("object_traits").select("trait_text").eq("object_id", rival.hidden_object_id).order("trait_number"),
           supabase.from("object_specials").select("special_type").eq("object_id", rival.hidden_object_id).maybeSingle(),
         ]);
-        const translatedTraits = await translateRows((traitData ?? []) as Record<string, any>[], "pvp_object_trait", "id", "trait_text");
-        traits = translatedTraits.map((t) => t.trait_text);
+        traits = (traitData ?? []).map((t: any) => t.trait_text);
         specialType = specialData?.special_type ?? null;
       }
 
       setRivalInfo({
-        obj: displayObj as ObjectRow, item: itm, scenario: scn,
+        obj, item: itm, scenario: scn,
         position: rival.hidden_position ?? "?",
         hideMessage: hideMsg,
-        rivalName: rivalProf?.display_name ?? t("game.results.rivalDefault"),
+        rivalName: rivalProf?.display_name ?? "Rival",
         specialType,
         traits,
       });
-      // Per al guanyador, mostrem automàticament la targeta de l'objecte trobat
-      if (game.winner_id === user?.id) setShowRivalInfo(true);
     })();
   }, [game.winner_id, user?.id, rival, scenarios, gameId]);
 
@@ -219,54 +186,50 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="text-7xl mb-4 opacity-60">😢</div>
       )}
       <h2 className="text-2xl font-bold mb-2">
-        {isWinner ? <span className="text-gradient">{t("game.results.winLabel")}</span> : t("game.results.lossLabel")}
+        {isWinner ? <span className="text-gradient">Victòria!</span> : "Derrota..."}
       </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        {isWinner ? t("game.results.eloUp") : t("game.results.eloDown")}
+        {isWinner ? "Elo +25 ⬆️" : "Elo -20 ⬇️"}
       </p>
-
 
       {reward?.reward_items && (
         <Card className="mb-6 mx-auto max-w-xs glass glow-accent">
           <CardContent className="py-5 text-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">{t("game.results.rewardLabel")}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-semibold">🎁 Recompensa</p>
             <div className="text-5xl mb-2">{reward.reward_items.icon}</div>
             <p className="font-bold text-lg">{reward.reward_items.name}</p>
             <p className="text-xs text-muted-foreground mt-1">
               {RARITY_CONFIG[reward.reward_items.rarity]?.emoji}{" "}
-              {t(RARITY_CONFIG[reward.reward_items.rarity]?.labelKey ?? "", RARITY_CONFIG[reward.reward_items.rarity]?.label ?? "")}
+              {RARITY_CONFIG[reward.reward_items.rarity]?.label}
             </p>
             <p className="text-[10px] text-muted-foreground/60 mt-2">
-              {t("game.results.rewardHint")}
+              Ves al perfil per col·locar-lo o vendre'l
             </p>
-
           </CardContent>
         </Card>
       )}
 
-      {/* Hidden object recap — both winner and loser */}
-      {rivalInfo && (
+      {/* Loser: show where the object was */}
+      {!isWinner && rivalInfo && (
         <div className="mb-6">
           {!showRivalInfo ? (
             <Button variant="outline" onClick={() => setShowRivalInfo(true)} className="mb-2">
-              {t("game.results.seeWhere")}
+              👁️ Veure on era l'objecte
             </Button>
           ) : (
             <Card className="mx-auto max-w-xs glass border-secondary/30">
               <CardContent className="py-4">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold">
-                  {isWinner
-                    ? t("game.results.youFound", { name: rivalInfo.rivalName })
-                    : t("game.results.rivalsObject", { name: rivalInfo.rivalName })}
+                  📍 L'objecte de {rivalInfo.rivalName}
                 </p>
                 {rivalInfo.obj && (
-                  <div className="flex justify-center mb-2"><ObjectIcon name={rivalInfo.obj.name} emoji={rivalInfo.obj.icon} size={56} /></div>
+                  <div className="text-4xl mb-2">{rivalInfo.obj.icon}</div>
                 )}
                 <p className="font-bold text-lg mb-1">{rivalInfo.obj?.name ?? "?"}</p>
                 {rivalInfo.obj?.material && rivalInfo.obj.material !== "generic" && (
                   <p className="text-[10px] text-muted-foreground mb-2">
-                    {t("game.results.material")} <span className="font-medium text-foreground/70">{t(MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material, rivalInfo.obj.material)}</span>
-                    {rivalInfo.obj.size && <span> · {t("game.results.size")} {rivalInfo.obj.size}</span>}
+                    Material: <span className="font-medium text-foreground/70">{MATERIAL_LABELS[rivalInfo.obj.material] ?? rivalInfo.obj.material}</span>
+                    {rivalInfo.obj.size && <span> · Mida {rivalInfo.obj.size}</span>}
                   </p>
                 )}
                 <div className="text-sm text-muted-foreground space-y-1">
@@ -274,27 +237,26 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
                     <p>{rivalInfo.scenario.icon} <strong>{rivalInfo.scenario.name}</strong></p>
                   )}
                   {rivalInfo.item && (
-                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {t(`game.pos.${rivalInfo.position}`, rivalInfo.position)}</p>
+                    <p>{rivalInfo.item.icon} {rivalInfo.item.name} · {POS_LABELS[rivalInfo.position] ?? rivalInfo.position}</p>
                   )}
                 </div>
                 {rivalInfo.traits.length > 0 && (
                   <div className="mt-3 text-xs text-muted-foreground">
-                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">{t("game.results.traitsHad")}</p>
-                    {rivalInfo.traits.map((tr, i) => (
-                      <p key={i} className="text-primary/80 italic">"{tr}"</p>
+                    <p className="font-semibold text-[10px] uppercase tracking-wider mb-1">💡 Pistes que tenia:</p>
+                    {rivalInfo.traits.map((t, i) => (
+                      <p key={i} className="text-primary/80 italic">"{t}"</p>
                     ))}
                   </div>
                 )}
                 {rivalInfo.specialType && (
-                  <p className="text-[10px] text-accent mt-2">{t("game.results.specialObject", { type: rivalInfo.specialType })}</p>
+                  <p className="text-[10px] text-accent mt-2">⭐ Objecte especial ({rivalInfo.specialType})</p>
                 )}
                 {rivalInfo.hideMessage && (
                   <div className="mt-3 p-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <p className="text-xs font-semibold text-accent mb-0.5">{t("game.results.rivalMessage")}</p>
+                    <p className="text-xs font-semibold text-accent mb-0.5">💌 Missatge del rival:</p>
                     <p className="text-sm italic text-foreground/80">"{rivalInfo.hideMessage}"</p>
                   </div>
                 )}
-
               </CardContent>
             </Card>
           )}
@@ -306,16 +268,15 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
         <div className="mb-6">
           {!showActionLog ? (
             <Button variant="outline" onClick={() => setShowActionLog(true)} className="mb-2">
-              {t("game.results.seeHistory", { count: actionLog.length })}
+              📋 Veure historial d'accions ({actionLog.length})
             </Button>
           ) : (
             <Card className="mx-auto max-w-sm glass border-border/30">
               <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                    {t("game.results.historyTitle")}
+                    📋 Historial de la partida
                   </p>
-
                   <button onClick={() => setShowActionLog(false)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
                 </div>
                 <div className="space-y-0.5 max-h-60 overflow-y-auto text-left" style={{ WebkitOverflowScrolling: "touch" }}>
@@ -340,9 +301,8 @@ export default function GameFinishedPhase({ game, user, rival, reward, navigate,
       )}
 
       <div className="flex gap-2 justify-center">
-        <Button onClick={() => navigate("/")} variant="outline">{t("game.results.lobbyBtn")}</Button>
-        <Button onClick={() => navigate("/profile")}>{t("game.results.profileBtn")}</Button>
-
+        <Button onClick={() => navigate("/")} variant="outline">Lobby</Button>
+        <Button onClick={() => navigate("/profile")}>👤 Perfil</Button>
       </div>
     </div>
   );
