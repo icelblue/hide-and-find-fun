@@ -36,6 +36,20 @@
       "when": 1795666671554,
       "tag": "0004_restrict_match_history_client_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795667877343,
+      "tag": "0005_daily_question_and_featured_player",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795667978207,
+      "tag": "0006_featured_player_skip_temporary_test_accounts",
+      "breakpoints": true
     }
   ]
 }

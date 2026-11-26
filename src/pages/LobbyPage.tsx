@@ -14,6 +14,8 @@
 // Realtime: No — l'usuari refresca manualment o amb interval
 // ============================================================
 
+import { FeaturedPlayerCard } from "@/components/lobby/FeaturedPlayerCard";
+import { DailyQuestionCard } from "@/components/lobby/DailyQuestionCard";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -381,6 +383,9 @@ export default function LobbyPage() {
           </span>
         </Button>
       </div>
+
+      <FeaturedPlayerCard myUserId={user?.id} onChallenge={handleChallenge} disabled={loading} />
+      <DailyQuestionCard />
 
       {/* New player recommendation */}
       {profile && profile.games_played === 0 && (

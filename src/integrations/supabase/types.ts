@@ -47,6 +47,68 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_question_answers: {
+        Row: {
+          answer: string
+          answer_date: string
+          created_at: string
+          id: string
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          answer_date: string
+          created_at?: string
+          id?: string
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          answer_date?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "daily_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_questions: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          id: string
+          options: Json | null
+          question: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order: number
+          id?: string
+          options?: Json | null
+          question: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          options?: Json | null
+          question?: string
+        }
+        Relationships: []
+      }
       email_reminders_log: {
         Row: {
           bonus_reward_rarity: string | null
@@ -2000,6 +2062,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      answer_daily_question: {
+        Args: { _answer: string; _question_id: string }
+        Returns: Json
+      }
       buy_room: {
         Args: {
           _custom_name: string
@@ -2087,6 +2153,8 @@ export type Database = {
         Args: { _display_name: string }
         Returns: string
       }
+      get_daily_question: { Args: never; Returns: Json }
+      get_featured_player: { Args: never; Returns: Json }
       get_game_participants: {
         Args: { _game_ids: string[] }
         Returns: {
