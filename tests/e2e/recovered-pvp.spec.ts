@@ -92,13 +92,51 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
       host.getByRole("button", { name: "Sobre Cadira", exact: true }).click(),
     ]);
     expect(observation.ok()).toBe(true);
-    expect((await observation.json()).found_object).toBe(false);
+    const chairHint = await observation.json();
+    expect(chairHint.found_object).toBe(false);
+    expect(chairHint.hint_level).toBeLessThan(4);
     await expect(host.getByRole("button", { name: "Sobre Cadira", exact: true })).toBeDisabled();
     await expect(host.getByText("Victòria!", { exact: true })).toHaveCount(0);
     await host.reload();
     await host.getByRole("button", { name: /Cadira.*accions/i }).click();
     await expect(host.getByRole("button", { name: "Sobre Cadira", exact: true })).toBeDisabled();
     await host.getByRole("button", { name: /Taula.*accions/i }).click();
+    // Correct furniture, wrong position: always level 4, never noisy, never a win.
+    const [correctFurniture] = await Promise.all([
+      host.waitForResponse(response => response.url().includes("/rpc/execute_game_move") && response.request().postDataJSON()?._action === "look"),
+      host.getByRole("button", { name: "Sobre Taula", exact: true }).click(),
+    ]);
+    expect(correctFurniture.ok()).toBe(true);
+    const tableHint = await correctFurniture.json();
+    expect(tableHint.hint_level).toBe(4);
+    expect(tableHint.hint_noisy).toBe(false);
+    expect(tableHint.found_object).toBe(false);
+    await expect(host.getByText("Victòria!", { exact: true })).toHaveCount(0);
+    const spending = await host.evaluate(`(async () => {
+      const {supabase} = await import('/src/integrations/supabase/client.ts');
+      const id = location.pathname.split('/').pop();
+      const player = await supabase.from('game_players').select('tokens_remaining').eq('game_id',id).single();
+      return player.data.tokens_remaining;
+    })()`);
+    expect(Number(spending)).toBeCloseTo(5 - route.length * 0.5 - 2 * 0.3, 5);
+    for (const label of ["Apagar el llum", "Encendre el llum"]) {
+      const [lightResponse] = await Promise.all([
+        host.waitForResponse(response => response.url().includes("/rpc/execute_toggle_light")),
+        host.getByRole("button", { name: new RegExp(label) }).click(),
+      ]);
+      expect(lightResponse.ok()).toBe(true);
+    }
+    await expect(host.getByRole("button", { name: /Apagar el llum/ })).toBeVisible();
+    const afterLights = await host.evaluate(`(async () => {
+      const {supabase} = await import('/src/integrations/supabase/client.ts');
+      const id = location.pathname.split('/').pop();
+      const player = await supabase.from('game_players').select('tokens_remaining').eq('game_id',id).single();
+      return player.data.tokens_remaining;
+    })()`);
+    expect(Number(afterLights)).toBeCloseTo(Number(spending) - 0.4, 5);
+    await host.reload();
+    await host.getByRole("button", { name: /Taula.*accions/i }).click();
+    await expect(host.getByRole("button", { name: "Sobre Taula", exact: true })).toBeDisabled();
     await host.getByRole("button", { name: "Sota Taula", exact: true }).click();
     await expect(host.getByText("Victòria!", { exact: true })).toBeVisible();
     // Same guest page, no reload: proves the result reaches the rival live.
@@ -107,6 +145,7 @@ test("recovered PvP: hide, safe actions, realtime result and readback", async ({
     await expect(host.getByText("Victòria!", { exact: true })).toBeVisible();
     // The winner is told which rival object was found (guest hid Moneda), also after reload.
     await expect(host.getByLabel("Objecte trobat").getByText("Moneda", { exact: true })).toBeVisible();
+    await host.screenshot({ path: `/tmp/browser/quality/victory-${code}.png` });
 
     const histories = await host.evaluate(`(async () => {
       const {supabase} = await import('/src/integrations/supabase/client.ts');

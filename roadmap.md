@@ -39,3 +39,11 @@ Auditoria transversal a docs/HQ345X-HINT-AUDIT.md: 471 proves unitàries i parti
 ## Objecte trobat en guanyar
 
 - [x] Mostrar a la victòria quin objecte havia amagat el rival (cas ZXRSNQ), també després de recarregar.
+
+## Qualitat després de corregir les pistes
+
+- [x] Jugar partides completes autenticades i comprovar pistes fiables, costos, victòria i historial.
+- [x] Executar les proves automàtiques i revisar errors i presentació mòbil.
+- [x] Documentar els resultats reals i els límits de les proves.
+
+Resultats a docs/QUALITY-AUDIT-2026-11-26.md: quatre partides PvP completes, sis demostracions, 482 proves unitàries i tres smoke correctes; cap canvi a partides dels usuaris.
