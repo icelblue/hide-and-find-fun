@@ -11,3 +11,4 @@
 - Interpret server search levels through a shared classifier and preserve the noisy flag; proximity hints must never stand in for the server's found-object result.
 - Record exact pre/post-match Elo atomically in the existing finish handler; expose only completed match summaries through one shared profile history API, leaving legacy Elo deltas unknown.
 - Daily question rewards and the featured player are computed only by security-definer RPCs; clients never write answers or bonus tokens directly, so the one-per-day limit cannot be bypassed.
+- Search hint level 4 is never randomized (noise applies only below 4 and caps at 3), and furniture similarity ignores the universal 'breakable' tag; hints must stay meaningful.

@@ -50,6 +50,13 @@
       "when": 1795667978207,
       "tag": "0006_featured_player_skip_temporary_test_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795668125523,
+      "tag": "0007_truthful_furniture_hint_and_meaningful_similarity",
+      "breakpoints": true
     }
   ]
 }
