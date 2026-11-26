@@ -26,11 +26,12 @@ import {
 } from "@/lib/supabase-helpers";
 import { getGameReward, RARITY_CONFIG } from "@/lib/reward-helpers";
 import {
-  completeChapter, getMyAccessories, awardAccessory, hasAllAccessories,
+  getMyAccessories, awardAccessory, hasAllAccessories,
   PET_ACCESSORIES, PET_CONSUMABLES, getMyPet, getPetEvolution, MAX_PET_XP,
   rollHealthEvent,
 } from "@/lib/story-helpers";
-import { parseTools, POSITIONS, type PlayerTools, type Phase } from "@/lib/game-types";
+import { createActionGate } from "@/lib/action-gate";
+import { parseTools, POSITIONS, type PlayerTools, type Phase, type Position } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -42,6 +43,10 @@ import GameFinishedPhase from "@/components/game/GameFinishedPhase";
 import SocialItemsPanel from "@/components/game/SocialItemsPanel";
 import { SpecialFoundPopup, MessagePopup, TrollEffect, BonusTokenPicker, HideMessagePopup } from "@/components/game/GamePopups";
 
+// Legacy chapter RPCs were retired; current StoryModePage owns story progression.
+async function completeChapter(_user: string, _chapter: number, _moves: number): Promise<{ xp: number; isDead: boolean; newXp: number }> {
+  throw new Error("Aquesta partida antiga del Mode Història no és compatible; obre Mode Història des del menú.");
+}
 const CPU_ID = "00000000-0000-0000-0000-000000000001";
 
 export default function GamePage() {
@@ -53,6 +58,9 @@ export default function GamePage() {
   const [game, setGame] = useState<any>(null);
   const [player, setPlayer] = useState<any>(null);
   const [rival, setRival] = useState<any>(null);
+  const actionGate = useRef(createActionGate());
+  const hidingSelectionGate = useRef(createActionGate());
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("waiting");
 
   // Data lists
@@ -64,7 +72,7 @@ export default function GamePage() {
   const [selectedScenario, setSelectedScenario] = useState("");
   const [selectedObject, setSelectedObject] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState<"sobre" | "sota" | "dins" | "">("");
+  const [selectedPosition, setSelectedPosition] = useState<Position | "">("");
   const [hideStep, setHideStep] = useState(0);
   const [objectSpecial, setObjectSpecial] = useState<any>(null);
   const [specialInput, setSpecialInput] = useState("");
@@ -127,11 +135,16 @@ export default function GamePage() {
     try {
 
       // ── BATCH 1: Core game state (always needed) ──
-      const [{ data: gameData }, { data: playerData }, { data: safePlayers }] = await Promise.all([
+      const [{ data: gameData, error: gameError }, { data: playerData, error: playerError }, { data: safePlayers, error: safePlayersError }] = await Promise.all([
         supabase.from("games").select("*").eq("id", gameId).single(),
         supabase.from("game_players").select("*").eq("game_id", gameId).eq("user_id", user.id).single(),
         supabase.rpc("get_safe_game_players" as any, { _game_id: gameId }),
       ]);
+      if (gameError || playerError || safePlayersError) throw gameError || playerError || safePlayersError;
+      if (!gameData || !playerData) throw new Error("No tens accés a aquesta partida o ja no està disponible.");
+      if (gameData.game_mode === "personal_pvp") throw new Error("Aquesta partida és d’Espai Personal i no és compatible amb la versió d’abril.");
+      if (gameData.is_story) throw new Error("Obre el Mode Història des del menú per continuar el teu progrés.");
+      setLoadError(null);
       const safePlayersList = (safePlayers as any[]) ?? [];
       const rivalData = safePlayersList.find((p: any) => p.user_id !== user.id) ?? null;
 
@@ -202,7 +215,7 @@ export default function GamePage() {
 
       // Fire ALL queries at once
       const keys = Object.keys(batch) as QKey[];
-      const results = await Promise.all(keys.map(k => batch[k]!));
+      const results = await Promise.all(keys.map(k => batch[k]));
       const R: Partial<Record<QKey, any>> = {};
       keys.forEach((k, i) => { R[k] = results[i]; });
 
@@ -243,18 +256,6 @@ export default function GamePage() {
         const gameDirty = getDirtyItemsForGame(loadedItems, gameId);
         setDirtyItems(gameDirty);
 
-        // Auto-give drap if dirty items here (fire-and-forget, don't block)
-        const hasDirtyHere = loadedItems.some((i: any) => gameDirty.has(i.id));
-        if (hasDirtyHere && playerData) {
-          const tools = parseTools(playerData.tools);
-          if (tools.drap === 0) {
-            tools.drap = 1;
-            supabase.from("game_players").update({ tools }).eq("id", playerData.id).then(() => {});
-            playerData.tools = tools;
-            setPlayerTools({ ...tools });
-            toast.info("🧹 Has trobat un Drap a prop d'un moble brut!", { duration: 4000 });
-          }
-        }
         // Load interactions now that we have item IDs (single extra query)
         loadedInteractions = await getItemInteractions(loadedItems.map((i: any) => i.id));
         setItemInteractions(loadedInteractions);
@@ -364,6 +365,8 @@ export default function GamePage() {
         // Mark all processed in parallel
         if (markPromises.length > 0) await Promise.all(markPromises);
       }
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "No s’ha pogut carregar la partida. Torna-ho a provar.");
     } finally {
       isLoadingGameRef.current = false;
       if (pendingReloadRef.current) {
@@ -424,6 +427,9 @@ export default function GamePage() {
     }
   }, [currentScenarioItems, player?.current_scenario_id, user]);
 
+  const socialHandlerRef = useRef(handleRealtimeSocialItem);
+  useEffect(() => { socialHandlerRef.current = handleRealtimeSocialItem; }, [handleRealtimeSocialItem]);
+
   // ============================================
   // EFFECTS
   // ============================================
@@ -431,16 +437,15 @@ export default function GamePage() {
     if (!gameId || !user) return;
     void loadGame();
     getScenarios().then(setScenarios).catch(() => toast.error("Error carregant escenaris"));
-    getObjects().then(setObjects).catch(() => toast.error("Error carregant objectes"));
+    getObjects().then(objects => setObjects(objects.filter(object => object.name !== "__custom__"))).catch(() => toast.error("Error carregant objectes"));
 
     if (isStory) return;
 
     const channel = supabase
       .channel(`game-${gameId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => scheduleLoadGame())
-      .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${gameId}` }, () => scheduleLoadGame())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_social_items", filter: `game_id=eq.${gameId}` }, (payload: any) => {
-        void handleRealtimeSocialItem(payload.new);
+        void socialHandlerRef.current(payload.new);
       })
       .subscribe();
     return () => {
@@ -450,7 +455,7 @@ export default function GamePage() {
       }
       supabase.removeChannel(channel);
     };
-  }, [gameId, user, loadGame, isStory, handleRealtimeSocialItem, scheduleLoadGame]);
+  }, [gameId, user, loadGame, isStory, scheduleLoadGame]);
 
   // ============================================
   // HIDING HANDLERS
@@ -479,7 +484,10 @@ export default function GamePage() {
     }
   };
 
-  const handleSelectPosition = async (pos: "sobre" | "sota" | "dins") => {
+  const handleSelectPosition = async (pos: Position) => {
+    if (!hidingSelectionGate.current.acquire()) return;
+    setActionLoading(true);
+    try {
     const obj = objects.find((o: any) => o.id === selectedObject);
     const itm = items.find((i: any) => i.id === selectedItem);
     if (pos === "dins") {
@@ -520,11 +528,15 @@ export default function GamePage() {
     }
 
     await doHide(pos);
+    } finally {
+      hidingSelectionGate.current.release();
+      setActionLoading(false);
+    }
   };
 
-  const doHide = async (pos?: "sobre" | "sota" | "dins", extraSpecialData?: any) => {
-    const finalPos = pos || selectedPosition as "sobre" | "sota" | "dins";
-    if (!gameId || !user || !finalPos) return;
+  const doHide = async (pos?: Position, extraSpecialData?: any) => {
+    const finalPos = pos || selectedPosition as Position;
+    if (!gameId || !user || !finalPos || !actionGate.current.acquire()) return;
     setActionLoading(true);
     try {
       let specialData = extraSpecialData || undefined;
@@ -532,14 +544,16 @@ export default function GamePage() {
         specialData = { ...(specialData || {}), hide_message: hideMessage.trim() };
       }
       await hideObject(gameId, user.id, selectedObject, selectedItem, finalPos, specialData);
+      setPlayer((previous: any) => previous ? { ...previous, has_hidden: true, hidden_item_id: selectedItem, hidden_object_id: selectedObject, hidden_position: finalPos } : previous);
       setHideStep(4);
       toast.success("Objecte amagat! 🫣");
       if (await checkBothPlayersHidden(gameId)) {
         await startGame(gameId);
         toast.success("Comença la cerca! 🔍");
       }
+      scheduleLoadGame(100);
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
   // ============================================
@@ -554,6 +568,7 @@ export default function GamePage() {
 
   const handleMove = async (scenarioId: string) => {
     if (!gameId || !user) return;
+    if (!actionGate.current.acquire()) return;
     setActionLoading(true);
     try {
       const result = await performMove(gameId, user.id, "move", scenarioId, undefined, undefined, isStory);
@@ -565,7 +580,7 @@ export default function GamePage() {
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
   const handleInteraction = async (interaction: any) => {
@@ -576,6 +591,7 @@ export default function GamePage() {
     );
     if (interaction.one_time && alreadyUsed) { toast.error("Ja has fet aquesta acció!"); return; }
     if (player.tokens_remaining < interaction.cost) { toast.error("No tens prou tokens!"); return; }
+    if (!actionGate.current.acquire()) return;
     setActionLoading(true);
     try {
       await performMove(gameId, user.id, "look", undefined, interaction.item_id, "sobre", isStory);
@@ -587,11 +603,12 @@ export default function GamePage() {
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
   const handleTagAction = async (itemId: string, actionKey: string) => {
     if (!gameId || !user) return;
+    if (!actionGate.current.acquire()) return;
     setActionLoading(true);
     try {
       const result = await performTagAction(gameId, user.id, itemId, actionKey, playerTools);
@@ -609,11 +626,12 @@ export default function GamePage() {
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
   const handleToggleLight = async () => {
     if (!gameId || !user || !player?.current_scenario_id) return;
+    if (!actionGate.current.acquire()) return;
     const scenarioName = currentScenario?.name ?? "";
     const isOutdoor = OUTDOOR_SCENARIOS.includes(scenarioName);
 
@@ -643,11 +661,12 @@ export default function GamePage() {
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
-  const handleLook = async (itemId: string, pos: "sobre" | "sota" | "dins") => {
+  const handleLook = async (itemId: string, pos: Position) => {
     if (!gameId || !user) return;
+    if (!actionGate.current.acquire()) return;
     setActionLoading(true);
     try {
       const result = await performMove(gameId, user.id, "look", undefined, itemId, pos, isStory);
@@ -743,7 +762,7 @@ export default function GamePage() {
       clearBanana();
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
   const handleSpecialFoundSubmit = async () => {
@@ -790,6 +809,7 @@ export default function GamePage() {
 
   const handleSendSocial = async (type: SocialItemType, extraData?: { scenarioFrom?: string; scenarioTo?: string; itemId?: string }) => {
     if (!gameId || !user || !rival) return;
+    if (!actionGate.current.acquire()) return;
     setActionLoading(true);
     try {
       const msg = type === "message" ? messageInput : undefined;
@@ -812,11 +832,12 @@ export default function GamePage() {
       setMessageInput("");
       await loadGame();
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
   const handleRedeemBonus = async () => {
     if (!gameId || !user) return;
+    if (!actionGate.current.acquire()) return;
     setActionLoading(true);
     try {
       const amount = await redeemBonusTokens(gameId, user.id, bonusAmount);
@@ -825,7 +846,7 @@ export default function GamePage() {
       setBonusAmount(1);
       await loadGame();
     } catch (err: any) { toast.error(err.message); }
-    finally { setActionLoading(false); }
+    finally { actionGate.current.release(); setActionLoading(false); }
   };
 
   // ============================================
@@ -848,7 +869,14 @@ export default function GamePage() {
   // ============================================
   // LOADING
   // ============================================
-  if (!game || !player) {
+  if (loadError) {
+    return <main className="min-h-screen bg-background p-4 flex flex-col items-center justify-center gap-4">
+      <p role="alert" className="text-destructive text-center">{loadError}</p>
+      <Button onClick={() => { setLoadError(null); void loadGame(); }}>Torna-ho a provar</Button>
+      <Button variant="outline" onClick={() => navigate("/")}>Tornar al lobby</Button>
+    </main>;
+  }
+  if (!game || !player || !gameId) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="text-5xl mb-3 animate-pulse">🔍</div>
@@ -1038,7 +1066,7 @@ export default function GamePage() {
 
 
               <div className="grid grid-cols-3 gap-3">
-                {POSITIONS.map(pos => {
+                {POSITIONS.filter(p => p.value !== "darrere").map(pos => {
                   const obj = objects.find((o: any) => o.id === selectedObject);
                   const itm = items.find((i: any) => i.id === selectedItem);
                   const blocked = pos.value === "dins" && ((obj as any)?.size ?? 2) > ((itm as any)?.inner_capacity ?? 2);
@@ -1228,7 +1256,7 @@ export default function GamePage() {
             {(() => {
               const isCurrentlyDark = scenarioIsDark;
               const hasLlanterna = playerTools.llanterna > 0;
-              const canToggle = isOutdoor ? (isCurrentlyDark ? hasLlanterna : true) : true;
+              const canToggle = true;
 
               return (
                 <>
@@ -1293,7 +1321,7 @@ export default function GamePage() {
             )}
             <div className="space-y-1.5 mt-2">
               {currentScenarioItems.map(item => (
-                <ItemActions key={item.id} item={item} positions={POSITIONS}
+                <ItemActions key={item.id} item={item} positions={POSITIONS.filter(p => p.value !== "darrere")}
                   onLook={handleLook} disabled={actionLoading} tokensRemaining={player.tokens_remaining}
                   lookedSpots={lookedSpots} bananaBlockedSpot={bananaBlockedSpot}
                   interactions={itemInteractions.filter((ia: any) => ia.item_id === item.id)}
@@ -1391,7 +1419,7 @@ export default function GamePage() {
       {/* FINISHED — PvP */}
       {phase === "finished" && !isStory && (
         <GameFinishedPhase game={game} user={user} rival={rival} reward={reward}
-          navigate={navigate} objects={objects} scenarios={scenarios} gameId={gameId!} />
+          navigate={navigate} objects={objects} scenarios={scenarios} gameId={gameId} />
       )}
     </main>
   );

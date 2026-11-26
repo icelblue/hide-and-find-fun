@@ -13,16 +13,20 @@ export async function ensureTokensReset(player: { id: string; tokens_remaining: 
   const today = new Date().toISOString().split("T")[0];
   if (player.tokens_last_reset === today) return player.tokens_remaining;
 
-  await supabase
+  const { data, error } = await supabase
     .from("game_players")
     .update({
       tokens_remaining: 5.0,
       tokens_last_reset: today,
       social_item_used_today: false,
     })
-    .eq("id", player.id);
+    .eq("id", player.id)
+    .select("tokens_remaining")
+    .single();
 
-  return 4.0;
+  if (error) throw error;
+  if (!data) throw new Error("No s’han pogut actualitzar els tokens.");
+  return data.tokens_remaining;
 }
 
 export async function redeemBonusTokens(gameId: string, userId: string, amount: number) {

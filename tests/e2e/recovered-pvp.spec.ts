@@ -1,0 +1,98 @@
+import { test, expect } from "@playwright/test";
+
+const hostState = process.env.PVP_HOST_STATE_PATH;
+const guestState = process.env.PVP_GUEST_STATE_PATH;
+
+// Supply two temporary users' storage-state files; never commit sessions or credentials.
+test("recovered PvP: hide, safe actions, realtime result and readback", async ({ browser }) => {
+  test.skip(!hostState || !guestState, "Two temporary authenticated players are required");
+  if (!hostState || !guestState) return;
+  const hostContext = await browser.newContext({ baseURL: "http://localhost:8080", storageState: hostState, viewport: { width: 390, height: 844 } });
+  const guestContext = await browser.newContext({ baseURL: "http://localhost:8080", storageState: guestState, viewport: { width: 390, height: 844 } });
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
+  const errors: string[] = [];
+  host.on("pageerror", e => errors.push(e.message));
+  guest.on("pageerror", e => errors.push(e.message));
+  try {
+    await host.goto("/");
+    await host.getByRole("button", { name: /Crear partida/ }).click();
+    await expect(host.getByText("Què amagues?", { exact: true })).toBeVisible();
+    const gameUrl = host.url();
+    const code = (await host.locator("main").innerText()).match(/\b[A-Z0-9]{6}\b/)?.[0];
+    if (!code) throw new Error("Game code missing");
+    for (const name of ["Clau", "Cuina", "Taula", "Sobre"]) await host.getByText(name, { exact: true }).click();
+    await expect(host.getByText("Objecte amagat!", { exact: true })).toBeVisible();
+    await guest.goto("/");
+    await guest.getByPlaceholder("Ex: A3B7K2").fill(code);
+    await guest.getByRole("button", { name: "Entrar", exact: true }).click();
+    for (const name of ["Moneda", "Cuina", "Taula", "Sota"]) await guest.getByText(name, { exact: true }).click();
+    await expect(host.getByText("Ubicació", { exact: true })).toBeVisible();
+    await expect(guest.getByText("Ubicació", { exact: true })).toBeVisible();
+
+    const state = await host.evaluate(`(async () => {
+      const {supabase} = await import('/src/integrations/supabase/client.ts');
+      const id = location.pathname.split('/').pop();
+      const [p,s,c,safe] = await Promise.all([
+        supabase.from('game_players').select('id,user_id,current_scenario_id,tokens_remaining').eq('game_id',id).single(),
+        supabase.from('scenarios').select('id,name'),
+        supabase.from('scenario_connections').select('scenario_a,scenario_b'),
+        supabase.rpc('get_safe_game_players',{_game_id:id})
+      ]);
+      const attempts = [];
+      attempts.push((await supabase.from('game_players').update({tokens_remaining:999}).eq('id',p.data.id)).error?.message);
+      attempts.push((await supabase.from('game_players').update({tools:{llanterna:999}}).eq('id',p.data.id)).error?.message);
+      attempts.push((await supabase.from('games').update({winner_id:p.data.user_id,status:'finished'}).eq('id',id)).error?.message);
+      attempts.push((await supabase.rpc('execute_game_move',{_game_id:id,_action:'look',_is_story:true})).error?.message);
+      attempts.push((await supabase.rpc('execute_game_move',{_game_id:id,_action:'confirm',_is_story:false})).error?.message);
+      const after = await supabase.from('game_players').select('tokens_remaining').eq('id',p.data.id).single();
+      return {player:p.data,scenarios:s.data,connections:c.data,attempts,after:after.data,safe:safe.data};
+    })()`) as {
+      player: { id: string; user_id: string; current_scenario_id: string; tokens_remaining: number };
+      scenarios: { id: string; name: string }[];
+      connections: { scenario_a: string; scenario_b: string }[];
+      attempts: (string | undefined)[];
+      after: { tokens_remaining: number };
+      safe: { user_id: string; hidden_item_id?: string | null; hidden_object_id?: string | null }[];
+    };
+    expect(state.player.tokens_remaining).toBe(5);
+    expect(state.after.tokens_remaining).toBe(5);
+    expect(state.attempts).toHaveLength(5);
+    for (const error of state.attempts) expect(error).toBeTruthy();
+    const rival = state.safe.find(p => p.user_id !== state.player.user_id);
+    expect(rival).toBeDefined();
+    expect(rival?.hidden_item_id ?? null).toBeNull();
+    expect(rival?.hidden_object_id ?? null).toBeNull();
+    const target = state.scenarios.find(s => s.name === "Cuina")?.id;
+    if (!target) throw new Error("Kitchen missing");
+    const queue = [{ id: state.player.current_scenario_id, route: [] as string[] }];
+    const seen = new Set([state.player.current_scenario_id]);
+    let route: string[] | undefined;
+    for (const node of queue) {
+      if (node.id === target) { route = node.route; break; }
+      for (const connection of state.connections) {
+        const next = connection.scenario_a === node.id ? connection.scenario_b : connection.scenario_b === node.id ? connection.scenario_a : undefined;
+        if (next && !seen.has(next)) { seen.add(next); queue.push({ id: next, route: [...node.route, next] }); }
+      }
+    }
+    if (!route) throw new Error("Kitchen unreachable");
+    for (const id of route) {
+      const name = state.scenarios.find(s => s.id === id)?.name;
+      if (!name) throw new Error("Scenario missing");
+      const door = host.getByRole("button").filter({ has: host.getByText(name, { exact: true }) });
+      await door.click();
+      await expect(door).toHaveCount(0);
+    }
+    await host.getByRole("button", { name: /Taula.*accions/i }).click();
+    await host.getByRole("button", { name: "Sota Taula", exact: true }).click();
+    await expect(host.getByText("Victòria!", { exact: true })).toBeVisible();
+    // Same guest page, no reload: proves the result reaches the rival live.
+    await expect(guest.getByText("Derrota...", { exact: true })).toBeVisible();
+    await host.goto(gameUrl);
+    await expect(host.getByText("Victòria!", { exact: true })).toBeVisible();
+    expect(errors).toEqual([]);
+  } finally {
+    await hostContext.close();
+    await guestContext.close();
+  }
+});

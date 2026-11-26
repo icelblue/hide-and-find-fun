@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795664685211,
+      "tag": "0000_harden_recovered_pvp_moves",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795664900979,
+      "tag": "0001_protect_pvp_client_writes",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795664920476,
+      "tag": "0002_serialize_join_without_owner_lock",
+      "breakpoints": true
+    }
+  ]
+}
