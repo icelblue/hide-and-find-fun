@@ -35,7 +35,7 @@ const RULES = [
   },
   {
     title: "👀 Observar · " + TOKEN_COSTS.look + "🪙",
-    text: "Mira una posició d'un moble. Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista de cinc nivells:\n❄️ Glaçat → Habitació llunyana.\n🥶 Fred → Habitació adjacent.\n🌬️ Fresc → Bona habitació, un altre moble.\n🌡️ Tebi → Bona habitació, un altre moble amb característiques semblants.\n🔥 Calent → Moble correcte, prova una altra posició.\n⚠️ Un 20% de les pistes són imprecises (±1 nivell): no confirmen l’habitació ni el moble. La victòria només es confirma quan trobes l’objecte.",
+    text: "Mira una posició d'un moble. Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista de temperatura que t'indica si estàs a prop:\n🧊 Congelat → molt lluny.\n🥶 Fred → lluny.\n🌡️ Tebi → t'hi acostes.\n♨️ Calent → molt a prop.\n🔥 Molt calent → just al costat!\n⚠️ Un 20% de les pistes són imprecises (±1 grau). La victòria només es confirma quan trobes l’objecte.",
   },
   {
     title: "💡 Pistes de l'objecte rival",

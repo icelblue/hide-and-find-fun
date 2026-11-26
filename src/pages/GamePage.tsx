@@ -32,7 +32,7 @@ import {
 } from "@/lib/story-helpers";
 import { createActionGate } from "@/lib/action-gate";
 import { getMoveHistory } from "@/lib/api/move-history-api";
-import { SEARCH_HINT_ICONS, searchHintMessage } from "@/lib/search-hints";
+import { SEARCH_HINT_ICONS, SEARCH_HINT_LABELS, searchHintMessage } from "@/lib/search-hints";
 import { parseTools, POSITIONS, type PlayerTools, type Phase, type Position } from "@/lib/game-types";
 import { buildTrophySpecialData, getHideMessage, getSpecialEffectDescriptor } from "@/lib/object-specials";
 import { supabase } from "@/integrations/supabase/client";
@@ -1165,7 +1165,7 @@ export default function GamePage() {
                 <p className="text-xs font-semibold mb-1">🎮 Com jugar:</p>
                 <div className="space-y-1 text-[11px] text-muted-foreground">
                   <p>🚶 <strong>Mou-te</strong> entre habitacions per explorar</p>
-                  <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: ❄️ fred → 🌡️ calent → 🔥 molt calent!</p>
+                  <p>👀 <strong>Observa</strong> (0.3🪙) posicions per rebre pistes: 🧊 congelat → 🥶 fred → 🌡️ tebi → ♨️ calent → 🔥 molt calent!</p>
                   <p>🎯 Si encertes moble + posició, <strong>trobes l'objecte i guanyes!</strong></p>
                 </div>
               </CardContent>
@@ -1366,7 +1366,7 @@ export default function GamePage() {
                         {m.action === "look" && (
                           <>
                             👀 {(m.items as any)?.icon} {m.target_position}
-                            {hl != null && <span className="ml-0.5 font-bold" title="Pista de proximitat; pot ser imprecisa. Només trobar l’objecte confirma la victòria.">{SEARCH_HINT_ICONS[hl]}</span>}
+                            {hl != null && <span className="ml-0.5 font-bold" title={SEARCH_HINT_LABELS[hl] ?? "Pista"}>{SEARCH_HINT_ICONS[hl]}</span>}
                           </>
                         )}
                         {m.found_object && " 🏆"}
