@@ -803,6 +803,21 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_health_rolls: {
+        Row: {
+          last_roll_at: string
+          user_id: string
+        }
+        Insert: {
+          last_roll_at?: string
+          user_id: string
+        }
+        Update: {
+          last_roll_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pet_notifications: {
         Row: {
           created_at: string
@@ -2062,6 +2077,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _story_add_item: {
+        Args: { _icon: string; _id: string; _name: string; _uid: string }
+        Returns: boolean
+      }
+      _story_add_xp: { Args: { _delta: number; _uid: string }; Returns: Json }
+      _story_apply_core_reward: {
+        Args: { _mult: number; _type: string; _uid: string; _val: Json }
+        Returns: Json
+      }
       answer_daily_question: {
         Args: { _answer: string; _question_id: string }
         Returns: Json
@@ -2256,6 +2280,7 @@ export type Database = {
         Args: { _new_x: number; _new_y: number; _room_id: string }
         Returns: undefined
       }
+      pet_level_from_xp: { Args: { _xp: number }; Returns: number }
       pet_the_pet: { Args: never; Returns: Json }
       place_reward_item: {
         Args: { _player_reward_id: string; _scenario_id: string }
@@ -2275,6 +2300,21 @@ export type Database = {
       sell_reward_item: { Args: { _player_reward_id: string }; Returns: number }
       send_pet_visit: { Args: { _host_user_id: string }; Returns: Json }
       start_game_setup: { Args: { _game_id: string }; Returns: undefined }
+      story_combine_recipe: { Args: { _recipe_id: string }; Returns: Json }
+      story_daily_choice: {
+        Args: { _choice_id: string; _date: string }
+        Returns: Json
+      }
+      story_make_choice: {
+        Args: { _choice_id: string; _run_id: string; _xp_multiplier?: number }
+        Returns: Json
+      }
+      story_roll_health_event: { Args: never; Returns: Json }
+      story_solve_puzzle: {
+        Args: { _node_id: string; _run_id: string; _submission: string[] }
+        Returns: Json
+      }
+      story_use_consumable: { Args: { _name: string }; Returns: Json }
     }
     Enums: {
       action_type: "move" | "look" | "confirm"

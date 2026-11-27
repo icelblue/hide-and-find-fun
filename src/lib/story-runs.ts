@@ -179,16 +179,9 @@ async function applyReward(
   if (!rewardType || !rewardValue) return {};
   const out: RewardOutcome = {};
 
-  if (rewardType === "xp" && typeof rewardValue.xp === "number") {
-    const xp = Math.round(rewardValue.xp * xpMultiplier);
-    const r = await addPetXP(userId, xp);
-    out.xp = xp;
-    if (r?.isDead) out.killed = true;
-  } else if (rewardType === "damage" && typeof rewardValue.damage === "number") {
-    // Mai amplifiquem el dany per personalitat (només upside)
-    const r = await addPetXP(userId, rewardValue.damage);
-    out.damage = rewardValue.damage;
-    if (r?.isDead) out.killed = true;
+  // xp, damage and items are granted by the server (story_make_choice / story_daily_choice)
+  if (rewardType === "xp" || rewardType === "damage" || rewardType === "item") {
+    return out;
   } else if (rewardType === "accessory" && rewardValue.accessory) {
     const icon = rewardValue.icon ?? "🎁";
     await awardAccessory(userId, rewardValue.accessory, icon);
@@ -201,11 +194,6 @@ async function applyReward(
       consumable_icon: icon,
     });
     out.consumable = { name: rewardValue.consumable, icon };
-  } else if (rewardType === "item" && rewardValue.item_id) {
-    const icon = rewardValue.icon ?? "🎁";
-    const name = rewardValue.name ?? rewardValue.item_id;
-    const added = await addInventoryItem(userId, { item_id: rewardValue.item_id, item_name: name, item_icon: icon });
-    if (added) out.item = { id: rewardValue.item_id, name, icon };
   } else if (rewardType === "recipe" && rewardValue.recipe_id) {
     const discovered = await discoverRecipe(userId, rewardValue.recipe_id);
     if (discovered) {
@@ -246,39 +234,20 @@ export async function makeChoice(
       traitBonus = { trait: bonus.trait, multiplier: bonus.multiplier };
     }
   }
-  const reward = await applyReward(userId, choice.reward_type, choice.reward_value, xpMultiplier);
+  const { data: srv, error: srvErr } = await supabase.rpc("story_make_choice", {
+    _run_id: run.id, _choice_id: choice.id, _xp_multiplier: xpMultiplier,
+  });
+  if (srvErr) throw srvErr;
+  const sr = (srv ?? {}) as Record<string, any>;
+  const reward: RewardOutcome = await applyReward(userId, choice.reward_type, choice.reward_value, xpMultiplier);
+  if (typeof sr.xp === "number") reward.xp = sr.xp;
+  if (typeof sr.damage === "number") reward.damage = sr.damage;
+  if (sr.item) reward.item = sr.item;
+  if (sr.stateChanged) { reward.stateChanged = sr.stateChanged; reward.newState = sr.newState; }
+  if (sr.killed) reward.killed = true;
 
-  // Apply state delta (silent — revealed via animated bars)
-  if (choice.state_delta && typeof choice.state_delta === "object") {
-    const newState = await applyStateDelta(userId, choice.state_delta);
-    reward.stateChanged = choice.state_delta;
-    reward.newState = newState;
-    // Big fear penalty
-    if (newState.fear >= 95) {
-      const r = await addPetXP(userId, 50);
-      if (r?.isDead) {
-        reward.killed = true;
-        reward.damage = (reward.damage ?? 0) + 50;
-      }
-    }
-  }
-
-  const nextNode = choice.next_node_id ? await getNode(choice.next_node_id) : null;
-
-  // Determine end status
-  let endStatus: "dead" | "completed" | null = null;
-  if (reward.killed) endStatus = "dead";
-  else if (nextNode?.is_ending) endStatus = nextNode.ending_type === "death" ? "dead" : "completed";
-
-  const newPath = [...(run.path ?? []), ...(nextNode ? [nextNode.id] : [])];
-
-  const update: Record<string, any> = { current_node_id: nextNode?.id ?? run.current_node_id, path: newPath };
-  if (endStatus) {
-    update.status = endStatus;
-    update.ending_type = endStatus === "dead" ? "death" : nextNode?.ending_type ?? null;
-    update.ended_at = new Date().toISOString();
-  }
-  await supabase.from("story_runs").update(update).eq("id", run.id);
+  const nextNode = sr.next_node_id ? await getNode(sr.next_node_id) : null;
+  const endStatus: "dead" | "completed" | null = sr.run_ended ?? null;
 
   // v5: track visits + endings + sync level/skills
   try {
@@ -363,20 +332,15 @@ export async function submitDailyChoice(
   choice: StoryChoice,
 ): Promise<{ reward: RewardOutcome; alreadyDone?: boolean }> {
   const today = todayISO();
-  // Apply reward first
+  const { data: srv, error } = await supabase.rpc("story_daily_choice", { _choice_id: choice.id, _date: today });
+  if (error) throw error;
+  const sr = (srv ?? {}) as Record<string, any>;
+  if (sr.alreadyDone) return { reward: {}, alreadyDone: true };
   const reward = await applyReward(userId, choice.reward_type, choice.reward_value);
-  // Insert log (unique constraint prevents double-claim)
-  const { error } = await supabase.from("daily_challenge_log").insert({
-    user_id: userId,
-    challenge_date: today,
-    node_id: choice.node_id,
-    choice_id: choice.id,
-    reward_type: choice.reward_type,
-    reward_value: choice.reward_value as any,
-  });
-  if (error && error.code === "23505") {
-    return { reward, alreadyDone: true };
-  }
+  if (typeof sr.xp === "number") reward.xp = sr.xp;
+  if (typeof sr.damage === "number") reward.damage = sr.damage;
+  if (sr.item) reward.item = sr.item;
+  if (sr.killed) reward.killed = true;
   if (error) throw error;
   return { reward };
 }

@@ -14,3 +14,4 @@
 - Search hint level 4 is never randomized (noise applies only below 4 and caps at 3), and furniture similarity ignores the universal 'breakable' tag; hints must stay meaningful.
 - Coin balances, furniture, rooms and reward status are written only by security-definer RPCs (buy_furniture, buy_room, sell_reward_item); clients get no direct write path, so the economy cannot be forged.
 - send-push accepts only the service role or a signed-in user targeting players who share a game with them; push must not be an open spam relay.
+- Story progression (run node/path, pet xp/level/max_xp, backpack items) is written only by story_* security-definer RPCs, with guard triggers rejecting client writes; the client may only start runs at world start nodes, close runs and remove items.

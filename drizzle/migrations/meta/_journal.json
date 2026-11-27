@@ -71,6 +71,13 @@
       "when": 1795817360195,
       "tag": "0009_lock_economy_client_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795817641445,
+      "tag": "0010_server_side_story_rewards",
+      "breakpoints": true
     }
   ]
 }

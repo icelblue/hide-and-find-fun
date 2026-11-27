@@ -129,34 +129,27 @@ export async function submitPuzzleOrder(
   puzzle: IngredientOrderPuzzle,
   submission: string[],
 ): Promise<SubmitResult> {
-  const prior = await getAttempt(runId, nodeId);
-  if (prior?.solved_at) {
-    return { solved: true, attempts: prior.attempts, exhausted: false };
-  }
-  const attempts = (prior?.attempts ?? 0) + 1;
-  const ok = checkOrder(submission, puzzle.correct_order);
-
-  if (ok) {
-    await upsertAttempt(userId, runId, nodeId, { attempts, solved_at: new Date().toISOString() });
-    // Grant reward
-    await addInventoryItem(userId, puzzle.reward_item);
-    if (puzzle.reward_xp > 0) {
-      await addPetXP(userId, puzzle.reward_xp);
-    }
+  // Validated and rewarded by the server (story_solve_puzzle).
+  void userId;
+  const { data, error } = await supabase.rpc("story_solve_puzzle", {
+    _run_id: runId, _node_id: nodeId, _submission: submission,
+  });
+  if (error) throw error;
+  const r = (data ?? {}) as { solved?: boolean; attempts?: number; already?: boolean; xp?: number };
+  const attempts = r.attempts ?? 0;
+  if (r.solved) {
+    if (r.already) return { solved: true, attempts, exhausted: false };
     return {
       solved: true,
       attempts,
       exhausted: false,
       reward: {
         item: { id: puzzle.reward_item.item_id, name: puzzle.reward_item.item_name, icon: puzzle.reward_item.item_icon },
-        xp: puzzle.reward_xp,
+        xp: r.xp ?? puzzle.reward_xp,
       },
     };
   }
-
-  const exhausted = attempts >= MAX_PUZZLE_ATTEMPTS;
-  await upsertAttempt(userId, runId, nodeId, { attempts });
-  return { solved: false, attempts, exhausted };
+  return { solved: false, attempts, exhausted: attempts >= MAX_PUZZLE_ATTEMPTS };
 }
 
 export async function skipPuzzle(

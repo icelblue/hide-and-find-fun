@@ -131,10 +131,10 @@ export async function createPet(userId: string, petType: string, petName: string
 export async function addPetXP(userId: string, xp: number) {
   const pet = await getMyPet(userId);
   if (!pet) return null;
+  // XP is changed only by server RPCs; this reports the current value.
+  void xp;
   const effectiveMax = pet.max_xp ?? MAX_PET_XP;
-  const newXp = Math.min((pet.xp ?? 0) + xp, effectiveMax);
-  const { error } = await supabase.from("player_pets").update({ xp: newXp }).eq("user_id", userId);
-  if (error) throw error;
+  const newXp = pet.xp ?? 0;
   return { newXp, isDead: newXp >= effectiveMax };
 }
 
@@ -142,10 +142,8 @@ export async function addPetXP(userId: string, xp: number) {
 export async function healPetXP(userId: string, xpReduce: number) {
   const pet = await getMyPet(userId);
   if (!pet) return null;
-  const newXp = Math.max(0, (pet.xp ?? 0) - xpReduce);
-  const { error } = await supabase.from("player_pets").update({ xp: newXp }).eq("user_id", userId);
-  if (error) throw error;
-  return { newXp };
+  void xpReduce;
+  return { newXp: pet.xp ?? 0 };
 }
 
 // Delete pet + accessories + events + state + inventory + recipe book + skills for rebirth
@@ -194,18 +192,11 @@ export async function getActiveEvents(userId: string) {
 
 /** Roll for a random health event after completing a chapter (25% chance) */
 export async function rollHealthEvent(userId: string): Promise<(typeof PET_HEALTH_EVENTS)[number] | null> {
-  if (Math.random() > 0.25) return null; // 75% nothing happens
-  const event = PET_HEALTH_EVENTS[Math.floor(Math.random() * PET_HEALTH_EVENTS.length)];
-  // Apply XP damage
-  const result = await addPetXP(userId, event.xpDamage);
-  // Record the event
-  await supabase.from("pet_events").insert({
-    user_id: userId,
-    event_type: event.type,
-    event_icon: event.icon,
-    event_name: event.name,
-    xp_change: event.xpDamage,
-  });
+  void userId;
+  const { data } = await supabase.rpc("story_roll_health_event");
+  const type = (data as { type?: string } | null)?.type;
+  if (!type) return null;
+  const event = PET_HEALTH_EVENTS.find((e) => e.type === type) ?? null;
   return event;
 }
 
@@ -214,50 +205,14 @@ export async function useConsumable(userId: string, consumableName: string) {
   const consumable = PET_CONSUMABLES.find((c) => c.name === consumableName);
   if (!consumable) throw new Error("Consumible no vàlid");
 
-  // Check user has an unused consumable
-  const { data: owned } = await supabase
-    .from("pet_consumables")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("consumable_name", consumableName)
-    .is("used_at", null)
-    .limit(1);
-
-  if (!owned || owned.length === 0) throw new Error(`No tens ${consumable.icon} ${consumable.name}!`);
-
-  // Mark consumable as used
-  await supabase.from("pet_consumables").update({ used_at: new Date().toISOString() }).eq("id", owned[0].id);
-
-  // Heal pet
-  const result = await healPetXP(userId, consumable.xpHeal);
-
-  // Extend max life
-  if (consumable.maxXpBoost > 0) {
-    const pet = await getMyPet(userId);
-    if (pet) {
-      const newMaxXp = (pet.max_xp ?? MAX_PET_XP) + consumable.maxXpBoost;
-      await supabase.from("player_pets").update({ max_xp: newMaxXp }).eq("user_id", userId);
-    }
+  void userId;
+  const { data, error } = await supabase.rpc("story_use_consumable", { _name: consumableName });
+  if (error) {
+    if ((error.message ?? "").includes("no_consumable")) throw new Error(`No tens ${consumable.icon} ${consumable.name}!`);
+    throw new Error(error.message);
   }
-
-  // Only resolve events that THIS consumable actually cures
-  const curedEvents = consumable.curesEvent;
-  const { data: resolvedCount } = await supabase
-    .from("pet_events")
-    .update({ resolved: true, resolved_at: new Date().toISOString() })
-    .eq("user_id", userId)
-    .eq("resolved", false)
-    .eq("event_type", curedEvents)
-    .select("id");
-
-  const didCureEvent = (resolvedCount?.length ?? 0) > 0;
-
-  return {
-    healed: consumable.xpHeal,
-    maxXpBoost: consumable.maxXpBoost,
-    newXp: result?.newXp ?? 0,
-    didCureEvent,
-    curesEvent: curedEvents,
+  return data as unknown as {
+    healed: number; maxXpBoost: number; newXp: number; didCureEvent: boolean; curesEvent: string;
   };
 }
 

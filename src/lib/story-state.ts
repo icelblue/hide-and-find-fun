@@ -235,11 +235,9 @@ export async function getInventory(userId: string): Promise<InventoryItem[]> {
   return (data ?? []) as InventoryItem[];
 }
 
-export async function addInventoryItem(userId: string, item: InventoryItem): Promise<boolean> {
-  const { error } = await supabase.from("story_inventory").insert({ user_id: userId, ...item });
-  if (error && error.code === "23505") return false; // duplicate
-  if (error) throw error;
-  return true;
+/** @deprecated Items are granted only by server RPCs; direct inserts are rejected. */
+export async function addInventoryItem(_userId: string, _item: InventoryItem): Promise<boolean> {
+  return false;
 }
 
 export async function consumeItems(userId: string, itemIds: string[]) {
@@ -306,12 +304,9 @@ export async function autoDiscoverRecipes(userId: string, inventory: InventoryIt
 /** Combine: consume inputs, add result. Returns the new item or null if cannot. */
 export async function combineRecipe(userId: string, recipe: Recipe, inventory: InventoryItem[]): Promise<InventoryItem | null> {
   if (!hasItems(inventory, recipe.requires_items)) return null;
-  await consumeItems(userId, recipe.requires_items);
-  const newItem: InventoryItem = {
-    item_id: recipe.result_item_id,
-    item_name: recipe.result_item_name,
-    item_icon: recipe.result_item_icon,
-  };
-  await addInventoryItem(userId, newItem).catch(() => false);
+  void userId;
+  const { data, error } = await supabase.rpc("story_combine_recipe", { _recipe_id: recipe.id });
+  if (error || !data) return null;
+  const newItem = data as unknown as InventoryItem;
   return newItem;
 }
