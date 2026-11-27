@@ -12,3 +12,5 @@
 - Record exact pre/post-match Elo atomically in the existing finish handler; expose only completed match summaries through one shared profile history API, leaving legacy Elo deltas unknown.
 - Daily question rewards and the featured player are computed only by security-definer RPCs; clients never write answers or bonus tokens directly, so the one-per-day limit cannot be bypassed.
 - Search hint level 4 is never randomized (noise applies only below 4 and caps at 3), and furniture similarity ignores the universal 'breakable' tag; hints must stay meaningful.
+- Coin balances, furniture, rooms and reward status are written only by security-definer RPCs (buy_furniture, buy_room, sell_reward_item); clients get no direct write path, so the economy cannot be forged.
+- send-push accepts only the service role or a signed-in user targeting players who share a game with them; push must not be an open spam relay.

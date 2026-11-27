@@ -64,6 +64,13 @@
       "when": 1795803143800,
       "tag": "0008_tighten_permissive_read_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795817360195,
+      "tag": "0009_lock_economy_client_writes",
+      "breakpoints": true
     }
   ]
 }

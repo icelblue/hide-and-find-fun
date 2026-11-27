@@ -464,15 +464,12 @@ export default function RoomPage() {
   const handleBuy = useCallback(async (item: CatalogItem) => {
     if (!user) return;
     if (coins < item.price_coins) { toast.error(t("space.notEnough")); return; }
-    const newCoins = coins - item.price_coins;
-    const { error: e1 } = await supabase.from("profiles").update({ bonus_tokens: newCoins } as never).eq("user_id", user.id);
-    if (e1) { toast.error(t("space.buyError")); return; }
-    const { error: e2 } = await supabase.from("player_furniture").insert({ user_id: user.id, furniture_id: item.id });
-    if (e2) {
-      await supabase.from("profiles").update({ bonus_tokens: coins } as never).eq("user_id", user.id);
-      toast.error(t("space.buyError"));
+    const { data, error } = await supabase.rpc("buy_furniture" as never, { _furniture_id: item.id } as never);
+    if (error) {
+      toast.error((error.message ?? "").includes("not_enough_coins") ? t("space.notEnough") : t("space.buyError"));
       return;
     }
+    const newCoins = Number((data as { coins?: number } | null)?.coins ?? coins - item.price_coins);
     setCoins(newCoins);
     setOwned((p) => [...p, item.id]);
     toast.success(t("space.bought") + " " + item.icon);

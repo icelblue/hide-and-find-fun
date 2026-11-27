@@ -157,24 +157,7 @@ export default function SpacePage() {
     });
     if (e2) {
       const m = e2.message ?? "";
-      // La funció buy_room encara no és a la BD (migració pendent d'aplicar):
-      // per a sales GRATUÏTES fem el camí antic (inserció directa, no toca monedes).
       const rpcMissing = m.includes("buy_room") || (e2 as { code?: string }).code === "PGRST202";
-      if (rpcMissing && tpl.price_coins === 0) {
-        const { error: e3 } = await supabase.from("player_rooms").insert({
-          user_id: user.id, room_template_id: tpl.id, custom_name: name,
-          layout: [], position_x: x, position_y: y,
-        });
-        if (e3) {
-          toast.error(e3.message?.includes("max_rooms_reached") ? t("apartment.maxRooms", "Màxim 8 sales") : t("space.buyError"));
-          setPlacingTemplate(null);
-          return;
-        }
-        setPlacingTemplate(null);
-        toast.success(`${tpl.icon} ${name}`);
-        refresh();
-        return;
-      }
       const msg = rpcMissing ? t("space.dbUpdateNeeded", "Cal aplicar les migracions de BD pendents per comprar sales")
         : m.includes("max_rooms_reached") ? t("apartment.maxRooms", "Màxim 8 sales")
         : m.includes("not_enough_coins") ? t("space.notEnough")

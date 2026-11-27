@@ -27,7 +27,28 @@ Deno.serve(async (req) => {
 
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-    const { user_ids, title, body, icon, url, tag } = await req.json();
+    const json = (status: number, payload: unknown) =>
+      new Response(JSON.stringify(payload), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    // --- Autenticació del cridador ---
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!bearer) return json(401, { error: "unauthorized" });
+    const isService = bearer === serviceKey;
+    let callerId: string | null = null;
+    if (!isService) {
+      const userClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser(bearer);
+      if (userErr || !userData?.user) return json(401, { error: "unauthorized" });
+      callerId = userData.user.id;
+    }
+
+    const raw = await req.json();
+    const { icon, tag } = raw ?? {};
+    let { user_ids, title, body, url } = raw ?? {};
 
     if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
       return new Response(
@@ -48,6 +69,27 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    if (typeof title !== "string" || typeof body !== "string") return json(400, { error: "invalid payload" });
+    title = title.slice(0, 80);
+    body = body.slice(0, 200);
+    url = typeof url === "string" && url.startsWith("/") && !url.startsWith("//") ? url.slice(0, 200) : "/";
+    user_ids = (user_ids as unknown[]).filter((u): u is string => typeof u === "string").slice(0, 10);
+
+    // Un jugador només pot notificar rivals amb qui comparteix una partida
+    if (!isService && callerId) {
+      const { data: myGames } = await supabaseAdmin.from("game_players").select("game_id").eq("user_id", callerId);
+      const { data: myCreated } = await supabaseAdmin.from("games").select("id, invited_user_id").eq("created_by", callerId);
+      const gameIds = [...new Set([...(myGames ?? []).map((g) => g.game_id), ...(myCreated ?? []).map((g) => g.id)])];
+      const allowed = new Set<string>((myCreated ?? []).map((g) => g.invited_user_id).filter(Boolean) as string[]);
+      if (gameIds.length > 0) {
+        const { data: mates } = await supabaseAdmin.from("game_players").select("user_id").in("game_id", gameIds);
+        (mates ?? []).forEach((m) => allowed.add(m.user_id));
+      }
+      allowed.delete(callerId);
+      user_ids = (user_ids as string[]).filter((u) => allowed.has(u));
+      if (user_ids.length === 0) return json(403, { error: "forbidden" });
+    }
 
     // Get all subscriptions for the target users
     const { data: subscriptions, error: fetchError } = await supabaseAdmin
@@ -71,7 +113,7 @@ Deno.serve(async (req) => {
       body,
       icon: icon || "/icons/icon-192x192.png",
       badge: "/icons/icon-192x192.png",
-      url: url || "/",
+      url,
       tag: tag || "deduction-duel",
     });
 

@@ -2066,6 +2066,7 @@ export type Database = {
         Args: { _answer: string; _question_id: string }
         Returns: Json
       }
+      buy_furniture: { Args: { _furniture_id: string }; Returns: Json }
       buy_room: {
         Args: {
           _custom_name: string
