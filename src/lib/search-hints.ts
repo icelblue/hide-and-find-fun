@@ -15,7 +15,7 @@ export function classifySearchHint(level: number | null | undefined, noisy = fal
 
 /** Temperature words only: hints say how close you are, never which room or furniture. */
 export const SEARCH_HINT_LABELS: Record<number, string> = {
-  0: "Congelat", 1: "Fred", 2: "Tebi", 3: "Calent", 4: "Molt calent",
+  0: "Congelat", 1: "Fred", 2: "Tebi", 3: "Calent", 4: "Cremant",
 };
 
 export function searchHintMessage(level: number | null | undefined, noisy: boolean, _furniture?: string) {

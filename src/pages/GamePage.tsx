@@ -577,7 +577,7 @@ export default function GamePage() {
       }
       toast.success(`${s?.icon} ${s?.name}${isStory ? "" : ` (-${result.barricade_hit ? TOKEN_COSTS.move + result.barricade_extra_cost : TOKEN_COSTS.move}🪙)`}`);
       clearBanana();
-      await loadGame();
+      void loadGame(); // refresh in background so the next action is not blocked
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { actionGate.current.release(); setActionLoading(false); }
   };
@@ -600,7 +600,7 @@ export default function GamePage() {
       else if (interaction.effect_type === "give_hint") toast.info(`${interaction.action_icon} ${data.hint || "Pista rebuda!"}`, { duration: 5000 });
       else if (interaction.effect_type === "enable_position") toast.success(`${interaction.action_icon} ${data.hint || "Posició desbloquejada!"}`, { duration: 4000 });
       clearBanana();
-      await loadGame();
+      void loadGame(); // refresh in background so the next action is not blocked
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { actionGate.current.release(); setActionLoading(false); }
   };
@@ -623,7 +623,7 @@ export default function GamePage() {
       if (result.toolFound) toast.info(`🔍 Has trobat un ${getToolName(result.toolFound)}!`, { duration: 4000 });
 
       clearBanana();
-      await loadGame();
+      void loadGame(); // refresh in background so the next action is not blocked
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { actionGate.current.release(); setActionLoading(false); }
   };
@@ -658,7 +658,7 @@ export default function GamePage() {
         toast.info(`🔍 Has trobat un ${toolName}!`, { duration: 4000 });
       }
       clearBanana();
-      await loadGame();
+      void loadGame(); // refresh in background so the next action is not blocked
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { actionGate.current.release(); setActionLoading(false); }
   };
@@ -759,7 +759,7 @@ export default function GamePage() {
         toast.info(`${message} (-${TOKEN_COSTS.look}🪙)`, { duration: 6000 });
       }
       clearBanana();
-      await loadGame();
+      void loadGame(); // refresh in background so the next action is not blocked
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { actionGate.current.release(); setActionLoading(false); }
   };
@@ -829,7 +829,7 @@ export default function GamePage() {
       else toast.success(`${info?.icon} ${info?.name} enviat!`);
       setShowSocialPanel(false);
       setMessageInput("");
-      await loadGame();
+      void loadGame(); // refresh in background so the next action is not blocked
     } catch (err: any) { toast.error(err.message); logError(err.message, err.stack, "GamePage"); }
     finally { actionGate.current.release(); setActionLoading(false); }
   };
@@ -843,7 +843,7 @@ export default function GamePage() {
       toast.success(`+${amount}🪙 bonus tokens afegits a aquesta partida!`);
       setShowBonusPicker(false);
       setBonusAmount(1);
-      await loadGame();
+      void loadGame(); // refresh in background so the next action is not blocked
     } catch (err: any) { toast.error(err.message); }
     finally { actionGate.current.release(); setActionLoading(false); }
   };

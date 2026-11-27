@@ -31,7 +31,7 @@ describe("five-level PvP proximity contract", () => {
 });
 import { searchHintMessage } from "@/lib/search-hints";
 describe("temperature hint wording", () => {
-  it.each([[0, "Congelat"], [1, "Fred"], [2, "Tebi"], [3, "Calent"], [4, "Molt calent"]] as const)(
+  it.each([[0, "Congelat"], [1, "Fred"], [2, "Tebi"], [3, "Calent"], [4, "Cremant"]] as const)(
     "level %i says %s and never names the room or furniture", (level, word) => {
       const msg = searchHintMessage(level, false, "🛏️ Llit");
       expect(msg).toContain(word);
