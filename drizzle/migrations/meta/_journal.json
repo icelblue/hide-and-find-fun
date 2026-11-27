@@ -57,6 +57,13 @@
       "when": 1795668125523,
       "tag": "0007_truthful_furniture_hint_and_meaningful_similarity",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795803143800,
+      "tag": "0008_tighten_permissive_read_policies",
+      "breakpoints": true
     }
   ]
 }
