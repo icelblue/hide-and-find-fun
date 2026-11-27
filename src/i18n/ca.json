@@ -430,7 +430,7 @@
     "feat2Title": "PvP en temps real",
     "feat2Desc": "Amaga el teu objecte i busca el del rival",
     "feat3Title": "Pistes progressives",
-    "feat3Desc": "Fred... Calent... MOLT CALENT! 🔥",
+    "feat3Desc": "Fred... Calent... CREMANT! 🔥",
     "feat4Title": "Elo i Lligues",
     "feat4Desc": "Puja de Bronze a Diamond amb cada victòria",
     "displayNamePlaceholder": "Nom de jugador",
@@ -822,11 +822,11 @@
       "revealItemsDefault": "Nous mobles revelats!",
       "hintReceived": "Pista rebuda!",
       "posUnlocked": "Posició desbloquejada!",
-      "hintFrozen": "❄️ Glaçat{noisy}. Estàs molt lluny. (-{cost}🪙)",
+      "hintFrozen": "🧊 Congelat{noisy}. Estàs molt lluny. (-{cost}🪙)",
       "hintCold": "🥶 Fred{noisy}. T'acostes, però no t'hi escalfes encara. (-{cost}🪙)",
       "hintCool": "🌬️ Fresc{noisy}. Hi ha alguna cosa per aquí... (-{cost}🪙)",
       "hintWarm": "🌡️ Tebi{noisy}. Mires en una zona similar a la correcta. (-{cost}🪙)",
-      "hintHot": "🔥 Calent{noisy}! Aquest moble cou! Prova una altra posició. (-{cost}🪙)",
+      "hintHot": "🔥 Cremant{noisy}! És aquest moble! Prova una altra posició. (-{cost}🪙)",
       "trophyAlready": "🏆 Ja tens el trofeu d'aquesta partida!",
       "trophySaved": "🏆 Trofeu desat!",
       "trophyError": "No s'ha pogut desar el trofeu: {msg}",
@@ -982,7 +982,7 @@
       },
       "s4": {
         "title": "👀 Mira als mobles",
-        "text": "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes de 5 nivells:\n❄️ Glaçat → Molt lluny\n🥶 Fred → Habitació veïna\n🌬️ Fresc → Bona habitació, moble no relacionat\n🌡️ Tebi → Bona habitació, moble similar\n🔥 Calent → Moble correcte! Prova altra posició\n\n⚠️ 20% de pistes poden enganyar-te (±1 nivell). La victòria mai és falsa."
+        "text": "Quan estiguis a una habitació, observa els mobles (0.3🪙 per mirada). Reps pistes de 5 nivells:\n🧊 Congelat → molt lluny\n🥶 Fred → lluny\n🌡️ Tebi → t'hi acostes\n♨️ Calent → molt a prop\n🔥 Cremant → és aquest moble! Prova una altra posició\n\n⚠️ 20% de pistes poden enganyar-te (±1 nivell). La victòria mai és falsa."
       },
       "s5": {
         "title": "🏆 Guanyar",
@@ -1016,7 +1016,7 @@
       },
       "r5": {
         "title": "👀 Observar · {cost}🪙",
-        "text": "Mira una posició d'un moble (⬆️ sobre, ⬇️ sota, 📦 dins, 🔙 darrere). Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista de 5 nivells:\n❄️ Glaçat → Habitació molt lluny.\n🥶 Fred → Habitació pròxima a la correcta.\n🌬️ Fresc → Bona habitació, però el moble no té res a veure.\n🌡️ Tebi → Bona habitació, moble d'una categoria similar a la correcta.\n🔥 Calent → Moble correcte! Prova altra posició.\n\n⚠️ Atenció: hi ha un 20% de probabilitat que la pista t'enganyi amb un nivell adjacent. La victòria, però, mai és falsa.\n\nℹ️ Alguns mobles no permeten totes les posicions (una catifa no té 'dins', un arbre no té 'darrere'…). Els botons bloquejats t'ho indiquen."
+        "text": "Mira una posició d'un moble (⬆️ sobre, ⬇️ sota, 📦 dins, 🔙 darrere). Si encertes moble + posició, trobes l'objecte i guanyes! Si no, reps una pista de 5 nivells:\n🧊 Congelat → molt lluny\n🥶 Fred → lluny\n🌡️ Tebi → t'hi acostes\n♨️ Calent → molt a prop\n🔥 Cremant → és aquest moble! Prova una altra posició.\n\n⚠️ Atenció: hi ha un 20% de probabilitat que la pista t'enganyi amb un nivell adjacent. La victòria, però, mai és falsa.\n\nℹ️ Alguns mobles no permeten totes les posicions (una catifa no té 'dins', un arbre no té 'darrere'…). Els botons bloquejats t'ho indiquen."
       },
       "r6": {
         "title": "💡 Pistes de l'objecte rival",

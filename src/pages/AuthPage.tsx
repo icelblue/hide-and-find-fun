@@ -27,7 +27,7 @@ import { savePendingReferralCode, getPendingReferralCode } from "@/lib/referral-
 const FEATURES = [
   { icon: "🧩", title: "Deducció pura", desc: "Res de sort. Observa, dedueix i troba!" },
   { icon: "⚔️", title: "PvP en temps real", desc: "Amaga el teu objecte i busca el del rival" },
-  { icon: "🌡️", title: "Pistes progressives", desc: "Fred... Calent... MOLT CALENT! 🔥" },
+  { icon: "🌡️", title: "Pistes progressives", desc: "Fred... Calent... CREMANT! 🔥" },
   { icon: "🏆", title: "Elo i Lligues", desc: "Puja de Bronze a Diamond amb cada victòria" },
 ];
 
